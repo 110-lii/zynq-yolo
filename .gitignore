@@ -114,6 +114,13 @@ data/results/*.npy
 data/results/*.bin
 data/results/*.raw
 
+# --- 金标准张量：npz 体积大（实测 320=23 MB / 640=91 MB），json 只有 118 KB -----------
+#     ★ 只排除 .npz 本体；同名 .json 记录了**每个张量的 shape/dtype/统计量/哈希**，
+#       必须入库 —— 它是「金标准确实存在且未被篡改」的凭据，也是复核入口。
+#       需要用 npz 时跑 `python tools/make_golden.py --model ...` 重建（确定性：固定种子）。
+data/golden/*.npz
+data/golden/*.npy
+
 # --- 训练/推理产生的临时目录 ---------------------------------------------------
 runs/
 *.pt.tmp

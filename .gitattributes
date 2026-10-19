@@ -37,6 +37,14 @@
 Makefile text eol=lf
 *.mk     text eol=lf
 *.md     text eol=lf
+# ★ 例外：`ai/raw/` 是**逐字存档**，禁止 git 改写它的行尾。
+#   实测事故：用户在对话里**粘贴过 CRLF 的 CSV**（12 条判罚裁定），这些 CR 落在围栏代码块里，
+#   是**原文内容**而不是行尾缺陷。若仍套上面的 `*.md text eol=lf`，git 会在这个文件进 blob 时
+#   把 CRLF 规范化成 LF（`git add` 会打印 `warning: ... CRLF will be replaced by LF`），
+#   于是 **clone 后的存档与源会话不再逐字节相等** —— `ai/tools/verify_raw_match.py` 的
+#   「逐字节回比会话原文」主张就此失效，而且**在本地看不出来**（本地工作区仍是 CRLF）。
+#   `-text` = 完全不做行尾转换；`diff` = 仍按文本 diff（否则 git 当二进制，评审看不到内容）。
+ai/raw/*.md -text diff
 *.json   text eol=lf
 *.yaml   text eol=lf
 *.yml    text eol=lf

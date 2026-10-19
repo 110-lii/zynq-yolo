@@ -389,3 +389,82 @@ DSH 会话库（~/.dsh/sessions/--<工作区键>--/*/session.v4.jsonl.zstd）
 
 > **`report/llm_logs/` 里的每一条结论都必须能指回整理层，整理层再指回 `ai/raw/` 的原文位置。**
 > 本目录的脚本是这条链**唯一可重复的那一环**：链断了，`raw/` 就是无根记录。
+
+---
+
+## 事故一：`--all` 被 argparse 静默当成 `--all-projects`（**范围越界**）
+
+**现象**：`ai/raw/` 从 9 个分片涨到 **63 个分片 / 59 个唯一会话 id**，
+而本工作区 `--D-zynq-yolo--` 下**只有 19 个会话**。
+多出来的是 `--D-FPGA-oi--`（旧项目 26 个会话）、`--D-weixin-bot--`（1）、
+`--C-Users-L-Documents-deepseek-harness-default-workspace--`（7）、
+`--D-~7535~79D13~73ED--`（14）等**别的项目、别的用途**的会话**全文**。
+当时它们还是 untracked —— 差一步就会被 `git add -A` 提交进**公开仓库**。
+
+**根因**：`argparse` 默认允许**选项前缀缩写**。`export_transcript_dsh.py` 里只有
+`--all-projects`（含义是"不按工作目录过滤"），于是 `--all` 被唯一前缀匹配成它。
+最小复现（已实测）：
+
+```python
+import argparse
+p = argparse.ArgumentParser()
+p.add_argument('--all-projects', action='store_true')
+p.add_argument('--out', default=None)
+print(p.parse_args(['--all']).all_projects)   # -> True，且没有任何警告
+```
+
+**为什么危险**：`--all` 是**看起来完全合理**的写法，写的人以为在说"全都导出"，
+实际语义是"跨工作区都导出"。错的方向恰好是**扩大范围**，而范围一大就静默、不报错。
+
+**修法**：三个脚本的 `ArgumentParser(...)` 全部加 **`allow_abbrev=False`**。
+关掉之后拼错/写短的选项会**报错退出**，而不是变成另一个选项。
+（`export_transcript_dsh.py`、`prompts_index.py`、`verify_raw_match.py` 均已加。）
+
+**验收判据（可复现）**：导出后
+`(Get-ChildItem ai/raw/2026-*.md | ForEach-Object { ($_.BaseName -split '_')[-1] } | Sort-Object -Unique).Count`
+必须等于 `--D-zynq-yolo--` 下的会话目录数；且 `ai/raw/` 里 grep 不到 `D:\FPGA\oi`。
+**只清 `_prompts_all.md` 是不够的**：越界的分片文件必须删掉，然后再跑
+`prompts_index.py --out ai/raw` 重建汇总（否则汇总仍是从脏集合算出来的）。
+
+## 事故二：行尾判据把**围栏内的逐字 CRLF** 也判成缺陷（**导出器卡死在自己产物上**）
+
+**现象**：`python ai/tools/export_transcript_dsh.py --all`（当时还没加 `allow_abbrev=False`）
+在**写完所有分片之后**抛错：
+
+```
+RuntimeError: 2026-10-19_8160c00c.md 含 CR（12 个）—— 分片必须是 LF。请重跑 …
+```
+
+**根因**：写出侧与读回侧**口径不一致**。
+
+| 侧 | 文件 | 口径 |
+|---|---|---|
+| 写 | `export_transcript_dsh.py` | 已放宽：`write_text_lf()` 返回 CR 数，**只打印提示**，「逐字原文含 CRLF，已原样保留，未改写」 |
+| 读 | `prompts_index.py: read_text_lf()` | 仍旧严格：`if b"\r" in b: raise` |
+
+而 `--all` 的最后一步是 `rebuild_prompts_from_raw()`，它**读回刚写的分片** ⇒ 必失败。
+于是导出器**永远卡在自己的产物上**。
+
+**那 12 个 CR 是什么**：用户在对话里**粘贴的 CRLF 的 CSV**（12 条判罚裁定）。
+它在分片里的位置是**围栏代码块内部**，是**逐字原文**。把它改写成 LF，
+就等于破坏原始层唯一的承诺：「逐字节等于原文」。
+实测确认：`2026-10-19_8160c00c.md` CR=12 / CRLF=12，全部在 `incident_id,decision,…` 那个围栏里。
+
+**修法**：把判据从「文件里有没有 CR」改成「**围栏之外**有没有 CR」。
+工具自己生成的每一行（标题、`<sub>` 时间戳、`---`、围栏标记行）必须是 LF；
+围栏内部是别人给的字节，原样保留。三处实现口径必须一致：
+
+- `prompts_index.py: cr_outside_fences()` / `read_text_lf()`
+- `verify_raw_match.py: _eol_counts()` / `audit_line_endings()` / `_read_text_verbatim()`
+- `export_transcript_dsh.py` 的写出侧（原样保留 + 提示）
+
+`verify_raw_match.py` 的输出现在分两栏：`结构行CRLF` / `结构行裸CR`（判据，必须全 0）
+与 `围栏内CRLF`（仅提示，不算缺陷）。
+
+**验收判据**：`VERIFY_RAW_OK`，且汇总里「结构行不合规 = 0」。
+当前实测：`行尾汇总：21 个文件，0 个结构行不合规` +
+`另有…围栏内共 24 个 CRLF —— 那是用户粘贴的 CRLF 原文，按逐字存档口径原样保留，不算缺陷`。
+
+**教训（可迁移）**：一条判据放宽了，**必须同时检查它的对偶**——
+这里"写"与"读"就是一对。只放宽一侧，症状会伪装成"另一侧的 bug"
+（报错指向 `prompts_index.py`，而根因是两侧口径分叉）。

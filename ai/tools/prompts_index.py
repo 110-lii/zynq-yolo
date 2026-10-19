@@ -107,23 +107,49 @@ def _code_fence(body: str) -> str:
     return "`" * max(3, longest + 1)
 
 
+def cr_outside_fences(b: bytes) -> int:
+    """统计**围栏之外**（即工具自己生成的结构行）的 CR 个数。
+
+    ★ 为什么要区分「结构行」与「逐字正文」：
+      - 工具自己写的每一行（标题、`<sub>` 时间戳、`---`、围栏标记）必须是 LF，
+        出现 CR 就是写出点的 bug（Windows 上 `Path.write_text` 默认写 CRLF 就是这个坑）；
+      - 而**围栏里面是逐字原文**：用户在对话里粘贴过 CRLF 的 CSV，
+        把它改写成 LF 就等于破坏「逐字节等于原文」这条唯一的存档承诺。
+    历史教训：写出侧已放宽（`export_transcript_dsh.py` 只打印提示、原样保留），
+    读回侧却仍一律 `b"\\r" in b` 就报错 ⇒ 导出器**永远卡在自己刚写的产物上**
+    （`--all` 必失败，报 `RuntimeError: ...含 CR（12 个）`）。
+    两侧口径必须一致：**只查结构行。**
+    """
+    n = 0
+    in_fence = False
+    for line in b.split(b"\n"):
+        is_fence = line.lstrip().startswith(b"```")
+        if is_fence:
+            n += line.count(b"\r")   # 围栏标记行本身是结构行
+            in_fence = not in_fence
+        elif not in_fence:
+            n += line.count(b"\r")   # 围栏之外 = 工具生成的结构行
+    return n
+
+
 def read_text_lf(path: Path) -> str:
-    """按原始字节读取，并**拒绝含 CR 的分片**（不静默翻译行尾）。
+    """按原始字节读取，**只在围栏之外**拒绝 CR（不静默翻译行尾）。
 
     为什么不用 `path.read_text(encoding="utf-8")`：默认 `newline=None` 开通用换行，
     会把磁盘上的 `\\r\\n` **翻译成** `\\n`。后果有两个假绿：
       1. `--check` 的比对里，盘上 `_prompts_all.md` 是 CRLF 还是 LF **看不出来**
          （两边都被翻译成一样），于是「一致」通过了、而 git 里其实被规范化过；
       2. 分片正文里的 CRLF 被翻译后再写进汇总，汇总与分片的行尾口径悄悄分叉。
-    分片必须是 LF（`.gitattributes` 的 `* text=auto eol=lf`；由
-    `verify_raw_match.py` 的行尾审计保证），所以这里遇到 CR 直接报错要求重导出 ——
-    **宁可失败也不静默改写逐字正文**。
+    结构行必须是 LF（`.gitattributes` 的 `* text=auto eol=lf`）；**围栏内的 CR 是逐字内容**，
+    不属于本判据的范围（见 `cr_outside_fences()`）。
     """
     b = path.read_bytes()
-    if b"\r" in b:
+    n = cr_outside_fences(b)
+    if n:
         raise RuntimeError(
-            "%s 含 CR（%d 个）—— 分片必须是 LF。请重跑 `python ai/tools/export_transcript_dsh.py`"
-            % (path.name, b.count(b"\r")))
+            "%s 围栏之外含 CR（%d 个）—— 结构行必须是 LF，说明写出点有 bug；"
+            "请重跑 `python ai/tools/export_transcript_dsh.py`"
+            % (path.name, n))
     return b.decode("utf-8", errors="replace")
 
 
@@ -202,7 +228,8 @@ def rebuild_prompts_from_raw(raw_dir: Path) -> Tuple[str, int, int]:
 # ---------------------------------------------------------------------------
 def main(argv: List[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
-        description="从 ai/raw/ 全部分片重建 _prompts_all.md（逐字提示词汇总）")
+        description="从 ai/raw/ 全部分片重建 _prompts_all.md（逐字提示词汇总）",
+        allow_abbrev=False)  # 见 export_transcript_dsh.py 的说明：缩写会让 --all 静默变成 --all-projects
     ap.add_argument("--out", default=None, help="raw 目录（默认 <repo>/ai/raw）")
     ap.add_argument("--check", action="store_true",
                     help="只比对，不写；与盘上文件不一致则退出码 1")

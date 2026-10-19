@@ -43,24 +43,42 @@ COCO 预训练 YOLOv8n 在这批真实转播画面里基本看不见球（320 �
 
 实测结论（2026-10-19，40 帧标定集里的 10 个 test 帧，详见 data/results/ball_cv.json）
 -------------------------------------------------------------------------------
-M1 10/10 通过，但**全部是假绿**：自动选出的最优轨迹 0/10 落在球上，10/10 落在
-记分牌、广告牌文字、球员白鞋/手套上（看图确认）。原因分三层：
-  1) 候选层：8 px 的球确实被外观通道抓住（合成 8 px 球进候选 10/10、中心距 0.16 px），
-     但同帧还有 ~40~200 个同规格白块，球在外观排序里只排 19~28 名；
-  2) 轨迹层：DP 最大化「累计得分」⇒ 存在 100 帧的静止白块（记分牌冒号、广告字）
-     永远赢过只存在 20~40 帧的真球；0.4 px/帧 的「轨迹」被判为完美平滑；
-  3) 判据层：M1 只约束长度与平滑，不约束「是球」，连「每帧报画面正中」都能 10/10。
-另外球在这批画面里表观尺寸从 8 px 到 25 px（被球员抱起时）横跨 3 倍，固定尺寸窗口
-不可能同时覆盖；白鞋/白袜/门将手套在 HSV 里与球的分布直接重叠。
-⇒ 结论：**单独靠传统 CV 在这批 1280x720 转播画面上定位球，不可行**。要往前走，至少
-需要其中一个外部约束：更高分辨率/更近机位（球 >= 20 px）、由球员/场地质检出的 ROI
-（球永远在球员脚边或手上）、或训练小目标检测器。
+带 --grass-prior 的最终配置：M1 **9/10 通过**，打乱帧序降到 **0/10**（判别力存在），
+但人眼逐张看图只有 **2/10 真的框住球**（match_004、match_016），另 2/10 疑似
+（match_032、match_036 是球员白鞋旁的白点，10x 双帧看跟着脚同步动，判为鞋/护腿）。
+所以 M1 的 9/10 是**判据假绿**，不是检测成功。原因分四层：
+
+  1) 候选层：球确实被抓住。注入 8 px 合成球的逐帧召回 88~92%（含 grass prior 时
+     cand_hit 8/10、中位距 0.45 px），但同帧仍有 9~40 个同规格白块，球在评分里
+     只排到中位第 9~11。**「看不见」不是主要矛盾。**
+  2) 运动通道对球几乎没贡献：no_appearance（只留运动）球命中 **0/9**，最近候选
+     中位 15.7 px —— 球的残差峰值落在球的高光边缘和紧贴的球员腿影上，不在球心
+     形成紧凑团块。8 px 的球在一帧里只走过 3~6 px，帧差能量本来就稀薄。
+  3) 轨迹层：DP 奖励「活得久」，101 帧都在的静止白块（记分牌冒号、广告字、水印
+     「独播」）赢过只存在 10~30 帧的真球。把挑法从「链最长」改成「够长里取
+     mean_score」，match_004 立刻挑中真球（len=31、seed_dist=1.5 px）——同一批特征、
+     同一个 DP，说明**挑法本身就是失败源**，不能把 0/10 读成「特征不行」。
+  4) 判据层：M1 只约束长度与平滑，不约束「是球」。`static_center`（每帧报画面正中、
+     不做任何检测）必然 10/10 —— 这条对照就是用来证明 M1 单独没有判别力的。
+
+唯一的真先验是「球在草地上」：量半径 6~11 px 环内的草占比，真球 0.84/1.00，而
+记分牌冒号 0.13、球员腿 0.05、广告牌 0.00。加 --grass-prior 后 shuffle 从 6/10
+掉到 0/10（删掉的是静止假绿，真球一个没掉）。但它只判「是不是贴在球员/广告牌上」，
+判不了「是不是球」——白鞋、白袜、门将手套同样长在草地上。
+
+尺寸也不稳定：球表观直径从 8 px（滚动）到 25 px（被球员抱起，超出 AREA_MAX=200/
+MAX_WH=16 的窗口，根本没进候选），横跨 3 倍，单一尺寸窗口覆盖不了。
+⇒ 结论：**单独靠传统 CV 在这批 1280x720 转播画面上定位球，不可行**（人眼 2/10，
+且这 2 帧是球恰好脱离球员、孤零零躺在草地上且对比度最好的时刻）。要走下去至少需要
+其中一个外部约束：更高分辨率/更近机位（球 >= 20 px）、由球员/场地质检出的 ROI
+（球几乎总在球员脚边或手上，可以用人来缩小搜索区）、或训练小目标检测器。
 
 用法
 ----
-    D:\\python\\python.exe tools\\ball_cv.py                 # 全量（10 帧 × 7 个变体）
+    D:\\python\\python.exe tools\\ball_cv.py                 # 全量（10 帧 x 全部变体），草先验默认开
     ... --only 2                # 只跑第 2 个 test 帧（调试）
     ... --variants full,shuffle # 只跑某些变体
+    ... --no-grass-prior        # A/B：关掉「球必须在草地上」这条几何先验
     ... --seed-xy 1:903,585     # 人工给第 1 帧球的坐标，单独测「跟踪机制能不能跟住球」
     ... --no-viz                # 不出图
     ... --help
@@ -974,11 +992,12 @@ def main(argv=None):
                     help="候选来源。ablate_* 变体会自己覆盖它（消融必须真的换掉 mode，"
                          "否则三条曲线一模一样）；正常跑用 full")
     ap.add_argument("--no-affine", action="store_true", help="只用平移估全局运动")
-    ap.add_argument("--grass-prior", action="store_true",
-                    help="加几何先验：候选 15px 邻域内必须有草（否掉记分牌/水印/广告牌）")
+    ap.add_argument("--grass-prior", dest="grass_prior", action="store_true",
+                    help="几何先验：候选 15px 邻域内必须有草（默认开，这是最终配置；"
+                         "它把 shuffle 从 6/10 压到 0/10，删的是静止假绿）")
     ap.add_argument("--no-grass-prior", dest="grass_prior", action="store_false",
-                    help="显式关掉草先验（默认关，A/B 用）")
-    ap.set_defaults(grass_prior=False)
+                    help="关掉草先验（A/B 用；关掉后记分牌/水印/广告牌会大量进候选）")
+    ap.set_defaults(grass_prior=True)
     ap.add_argument("--no-viz", action="store_true")
     ap.add_argument("--out", default=str(OUT_JSON))
     ap.add_argument("--viz-dir", default=str(VIZ_DIR))
@@ -1190,19 +1209,27 @@ def main(argv=None):
                         max_wh=MAX_WH, aspect_max=ASPECT_MAX, extent_min=EXTENT_MIN,
                         round_min=ROUND_MIN, ring_min=RING_MIN, mot_thr=MOT_THR,
                         top_k=TOP_K),
-        frames=[{**x, "name": r["name"], "t_manifest_s": r["t"],
+        frames=[{**_slim_frame(x), "name": r["name"], "t_manifest_s": r["t"],
                  "t_matched_s": r["t_matched"], "t_offset_s": r["t_offset"],
                  "match_mae": r["match_mae"], "n_person": r["n_person"],
-                 "green": r["green"]}
+                 "green": r["green"], "human": HUMAN_HIT.get(r["name"])}
                 for r, x in zip(rows, results.get("full", {}).get("frames", [{}] * len(rows)))],
         controls={k: dict(n_pass=v["n_pass"], n_total=v["n_total"],
-                          pass_rate=v["pass_rate"], frames=v["frames"],
+                          pass_rate=v["pass_rate"],
+                          frames=[_slim_control_frame(f) for f in v["frames"]],
                           note=CONTROL_NOTE.get(k, ""))
                   for k, v in results.items() if k != "full"},
         verdict=verdict, verdict_class=vclass,
         diagnostics=diag,
         human_review=dict(note=REVIEW_NOTE, summary=REVIEW_SUMMARY,
-                          per_frame=HUMAN_REVIEW),
+                          per_frame=HUMAN_REVIEW,
+                          hit={k: v for k, v in HUMAN_HIT.items()},
+                          n_hit=sum(1 for v in HUMAN_HIT.values() if v is True),
+                          n_unsure=sum(1 for v in HUMAN_HIT.values() if v == "unsure"),
+                          n_total=len(HUMAN_HIT),
+                          min_required=HUMAN_MIN_HITS,
+                          note_priority="human_review 能否决 M1；结论由它决定。",
+                          note_unsure="unsure 按未命中计；把 unsure 全算命中也只有 4/10。"),
         notes=NOTES,
     )
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
@@ -1226,6 +1253,9 @@ def main(argv=None):
     log(f"cands/frame(median) = {diag['n_cand_median_per_frame']}")
     log(f"auto winner static   = {diag['winner_static_frames']}/{len(rf)} "
         f"(mean_step<1px: {','.join(diag['winner_static_names']) or '-'})")
+    log(f"human review         = {out['human_review']['n_hit']}/{out['human_review']['n_total']} "
+        f"真的框住球 (+{out['human_review']['n_unsure']} unsure, 门槛 {HUMAN_MIN_HITS})  "
+        f"hit: {','.join(k for k, v in HUMAN_HIT.items() if v is True) or '-'}")
     if "synthetic" in diag:
         s = diag["synthetic"]
         log(f"synthetic probe      : cand_hit {s['n_cand_hit']}/{s['n']}  "
@@ -1246,40 +1276,91 @@ def main(argv=None):
 
 
 REVIEW_NOTE = (
-    "human_review 是作者把 data/results/viz/ball_cv/*.png 逐张看过之后的判定，"
-    "不是自动判据。自动判据（pass）只看长度/步长/加速度，它分不清球和记分牌——"
-    "这正是本次实验的主要发现，所以必须把「人眼看到框在哪」单独记下来。")
+    "human_review 是作者把 data/results/viz/ball_cv/*.png（含 _all10_a/b.png 的 10x 双帧放大）"
+    "逐张看过之后的判定，不是自动判据。自动判据（pass）只看长度/步长/加速度，它分不清球和"
+    "记分牌——这正是本次实验的主要发现，所以必须把「人眼看到框在哪」单独记下来，并且让"
+    "它能否决自动判据（见 build_verdict 的 HUMAN_MIN_HITS）。")
 
-# 每帧：自动最优轨迹在中心帧框住了什么（作者 8x 看图后的判定）。
+# 人眼判定表（**这是结论的真值，优先级高于 M1**）。
+#   True      = 确定框在球上
+#   False     = 确定不是球
+#   "unsure"  = 10x 放大仍分不清（白鞋 vs 球）。**按未命中计**，并单独统计上限。
+# 为什么要有 unsure：match_032/036 框在球员白鞋尖端，10x 双帧看它与脚同步、判为鞋；
+# 但我也试过用它四周的草环分象限来区分「球（四周全草）」和「鞋（上方形是腿）」，
+# 实测没有判别力——真球 match_004 的 up=0.72/left=0.66 与鞋 match_032 的 0.70/0.68
+# 一样，因为真球旁边就站着球员。这个想法失败，所以不给这两帧硬判，记为 unsure。
+HUMAN_HIT = {
+    "match_004.jpg": True,      # 球在赤队球员手边草坪上，t+0->t+4 独立位移
+    "match_008.jpg": False,     # 白鞋；真球被双手抱在胸前、直径约 25px，超出尺寸窗口
+    "match_012.jpg": False,     # 白鞋；同帧草坪上另有清晰的球，但轨迹没落在它上面
+    "match_016.jpg": True,      # 球在守门员脚边，独立滚动
+    "match_020.jpg": False,     # len=1 直接 FAIL，框在鞋上
+    "match_024.jpg": False,     # 球员脚边的白鞋/白块，与腿同步
+    "match_028.jpg": False,     # 小腿外侧白袜/护腿，与腿同步
+    "match_032.jpg": "unsure",  # 白鞋尖端；10x 双帧与脚同步，但象限草环无法证伪
+    "match_036.jpg": "unsure",  # 同上
+    "match_040.jpg": False,     # 边线外摄像师三脚架/广告牌交界，静止 0.1px/帧
+}
+# 人眼最少要命中几帧才算这条路过关。定 5/10：连「把 unsure 全算成命中」都只有 4/10，
+# 所以这个门槛在两种读法下给出同一个结论（不可行），不是靠挑阈值赢的。
+HUMAN_MIN_HITS = 5
+
+# 每帧：自动最优轨迹在中心帧框住了什么（作者 10x 放大 + t+0/t+4 双帧比对后的判定）。
+# 判据：球是脱离身体、贴着草坪、随帧独立移动的紧凑白圆盘 / 与之相反，白块与球员的
+# 脚/腿同步移动、或位于广告牌/记分牌/水印上 ⇒ 那不是球。
 HUMAN_REVIEW = {
-    "match_004.jpg": "记分牌上 05:45 的冒号。真球在 (902,584)、直径约 8px，确实是候选之一，"
-                     "但自动选出的最优轨迹是静止记分牌。",
-    "match_008.jpg": "远端红队球员脚踝处的白鞋/白袜。真球被 3 号白队球员双手抱在胸前"
-                     "（约 (545,372)，直径约 25px），超出 MAX_WH=16/AREA_MAX=200 的尺寸"
-                     "窗口，根本没进候选。",
-    "match_012.jpg": "广告牌与挡板交界处的白块（轨迹沿广告牌水平拉了一条虚线）。",
-    "match_016.jpg": "门将右侧的白块（手套/护腿），轨迹沿门将身上斜着上来。",
-    "match_020.jpg": "广告牌中文字内部的白色空隙（8x 图里是「德」字的笔画间）。",
-    "match_024.jpg": "红色广告牌上的白块（8x 图里是「河」字旁边）。",
-    "match_028.jpg": "白色标牌文字之间的暗块。",
-    "match_032.jpg": "广告牌 C1L 标志上的白块。",
-    "match_036.jpg": "记分牌 14:47 的数字。",
-    "match_040.jpg": "白色标牌文字间的白块。",
+    "match_004.jpg": "**球**。真球约 (902,583)、直径 8px，赤队球员弯腰伸手够它，t+0->t+4 "
+                     "球相对草坪独立位移（不是跟手走）。这是 10 帧里最干净的一次。",
+    "match_008.jpg": "白鞋。框在远端赤队球员的白色球鞋/球袜上，随腿摆动。真球被 3 号白队"
+                     "球员双手抱在胸前（约 (545,372)、直径约 25px），超出 AREA_MAX=200/"
+                     "MAX_WH=16 的尺寸窗口，根本没进候选。",
+    "match_012.jpg": "赤队球员的白色球鞋。同帧草坪上另有一颗清晰可见的白球（画面上方白线"
+                     "附近），但轨迹没落在它上面——候选排序把鞋排在了球前面。",
+    "match_016.jpg": "**球**。约 (1015,392)，守门员脚边，直径约 10px，t+0->t+4 独立滚动。",
+    "match_020.jpg": "len=1，M1 直接 FAIL。框在赤队球员白色球鞋上（该帧镜头大幅运动、"
+                     "画面糊，没有形成长轨迹）。",
+    "match_024.jpg": "白鞋。红队球员脚边，随步伐移动。",
+    "match_028.jpg": "白鞋/护腿。框在赤队球员小腿外侧的白袜上，与腿同步。",
+    "match_032.jpg": "unsure。框在赤队球员白色球鞋尖端，10x 双帧看与脚同步移动（球不会这样），"
+                     "但同帧确实还有一颗球在附近，无法 100% 排除。记为 unsure，不计命中。",
+    "match_036.jpg": "unsure。同上，框在赤队球员白鞋上，与脚同步。不计命中。",
+    "match_040.jpg": "摄像师/广告牌。len=37 但 mean_step=0.1px/帧（完全静止），框在边线外"
+                     "摄像师的三脚架底座和蓝色广告牌交界处。",
 }
 
 REVIEW_SUMMARY = (
-    "10/10 的自动最优轨迹都落在场景上（记分牌 2 帧、广告牌 5 帧、球员白鞋/手套 3 帧），"
-    "0/10 落在球上。判据全部 PASS，但一条都没框住球：M1 只约束了「存在平滑链」，"
-    "没有约束「链上的东西是球」。")
+    "带 --grass-prior 的最终配置：M1 9/10 通过、shuffle 0/10（判别力确实存在），但人眼"
+    "只有 **2/10 确定框住球**（match_004、match_016），**2/10 unsure**（match_032/036 框在"
+    "白鞋尖端，10x 双帧看与脚同步、判为鞋，但四周草环分象限的证伪测试没有判别力），"
+    "其余 6 帧是白鞋/白袜、摄像师/广告牌与 len=1 失败。=> M1 的 9/10 是判据假绿：M1 只问"
+    "「有没有一条长而平滑的链」，不问「链上的东西是不是球」。所以 build_verdict 把人眼"
+    "结果当硬门槛：确定命中 < 5/10 一律判 no_work，无论 M1 多高。把 unsure 全算成命中"
+    "也只有 4/10，结论不随这个读法改变。")
 
 NOTES = [
     "MANIFEST 的 t_approx_s 有系统性漂移，实测 offset 从 -1.84 s (t=1251) 线性走到 "
-    "+0.84 s (t=7173)，斜率约 +0.45 ms/s，等价于整段视频真实帧率约 25.011 而不是 "
+    "+1.16 s (t=7839)，斜率约 +0.45 ms/s，等价于整段视频真实帧率约 25.011 而不是 "
     "25.000。所以每帧都必须用画面匹配重定位，不能直接信 t_approx_s。",
-    "重定位后用 6.4 位小数比对的 MAE 是 1.28~1.93 灰阶，说明匹配可靠（最坏帧 MAE>90）。",
+    "重定位后用灰度 MAE 比对，10 帧的 MAE 是 1.28~2.17，匹配可靠。",
     "片段第一次抽帧可能把 ±2 s 窗口切在片段边缘（因为漂移），所以定位完会再以实测帧"
-    "为中心抽第二次，否则前后帧数不对称。",
+    "为中心抽第二次，否则前后帧数不对称（修复后 10/10 都是 idx=65/130、±2s=101 帧）。",
+    "调参史（三轮，每轮都被下一轮证伪，留着是因为它说明了失败到底在哪一层）："
+    "① 按「链最长」挑 ⇒ 永远挑中 101 帧都在的静止白块，真球 0/10——看上去像特征不行，"
+    "其实是挑法把球排除了；② 改按 DP 累计 val 挑 ⇒ match_004 挑中真球，但水印/广告"
+    "靠活得久仍然赢；③ 定稿「够长里取 mean_score」+ 评分项封顶 1.5 ⇒ 不再被深色背景上的"
+    "白字（环对比度可达 150）压死。",
+    "评分项**刻意不封到 1.0**：全 clip 会让一堆候选并列 1.000，DP 只能靠链长破并列，"
+    "排序等于失效（踩过）。封到 1.5 是「压住水印但不制造并列」的折中。",
+    "草先验的环半径取 6~11 px：球直径只有 ~8 px，环必须紧贴球外侧才能区分「球躺在草坪上」"
+    "和「白块长在球员/广告牌里」。真球实测 0.84/1.00，假阳性 0.00~0.44，阈值取 0.70。",
+    "frames_test 的 JPEG 是 640x360，而候选/轨迹坐标是 1280x720 空间——直接在 640x360 上"
+    "量草环会得到 nan（踩过），必须先放大到 1280x720 再量。",
+    "试过但失败的想法（留档，免得后面有人重做）：把草环按「上/下/左/右」分象限，"
+    "想用「球四周都是草、鞋上方是腿」区分白鞋与球。实测无判别力：真球 match_004 的 "
+    "up=0.72/left=0.66 与白鞋 match_032 的 up=0.70/left=0.68 几乎一样——因为真球就躺在"
+    "球员脚边，上方也是腿。所以 match_032/036 只能记 unsure。",
 ]
+
 
 CONTROL_NOTE = {
     "null": "不产生候选。应为 0/10；若不是 0 说明计分有 bug。",
@@ -1293,37 +1374,98 @@ CONTROL_NOTE = {
 }
 
 
+def _slim_track(tk):
+    """轨迹摘要（去掉逐帧坐标，那是几十 KB 的源头）。坐标只在 viz PNG 里看。"""
+    if not tk:
+        return None
+    return {k: tk.get(k) for k in ("length", "t0", "t1", "gaps", "max_step", "mean_step",
+                                   "max_accel", "mean_score", "mean_app", "mean_mot", "val",
+                                   "seed_dist", "pass")
+            if k in tk}
+
+
+def _slim_frame(x):
+    """单帧结果：只留判定需要的量。原始 dict 里 top3 的 path 字段每帧可达 1 KB 以上，
+    10 帧 7 变体就是 150 KB —— 结论文件要能被 git diff 读，不是数据转储。
+    motion 的逐帧分量与 seeded 只在 diagnostics 里留汇总，不在这里重复。"""
+    out = {k: v for k, v in x.items() if k in
+           ("pass_", "reason", "n_cand_median", "center", "name")}
+    for k in ("best", "best_longest"):
+        if x.get(k) is not None:
+            out[k] = _slim_track(x[k])
+    if x.get("synthetic") is not None:
+        out["synthetic"] = x["synthetic"]
+    return out
+
+
+def _slim_control_frame(x):
+    """对照变体的逐帧记录：pass/fail + 理由 + 最优轨迹的四个数。对照只需要证明
+    「通过率是多少」，不需要把整条轨迹和候选统计再抄一遍（那是 45 KB 的来源）。"""
+    b = x.get("best") or {}
+    return dict(name=x.get("name"), **{"pass": x.get("pass_")}, reason=x.get("reason"),
+                length=b.get("length"), mean_step=b.get("mean_step"),
+                max_step=b.get("max_step"), mean_score=b.get("mean_score"),
+                n_cand=x.get("n_cand_median"), synthetic=x.get("synthetic"))
+
+
 def build_verdict(real, syn, shuf, static, nullb, diag):
+    """结论。**人眼复核是硬门槛，优先级高于 M1**。
+
+    为什么必须这样：M1 只看「有没有一条长而平滑的链」，它问不出「链上的东西是不是球」。
+    带草先验的最终配置 M1 9/10、shuffle 0/10（判别力看起来很好），但人眼只有 2/10。
+    如果让 M1 决定结论，这个实验就会交出一个漂亮的假绿——而那正是这次要防的事。
+    """
     rp = real.get("pass_rate", 0.0)
+    # 单变体调试跑（--variants full --only 1）时对照变体不存在，不能 KeyError。
     sp = syn.get("pass_rate", 0.0)
     hp = shuf.get("pass_rate", 0.0)
+    r_np, r_nt = real.get("n_pass", 0), real.get("n_total", 0)
+    h_np, h_nt = shuf.get("n_pass", 0), shuf.get("n_total", 0)
     n_static = diag.get("winner_static_frames", 0)
     n_tot = len([f for f in real.get("frames", []) if f.get("pass_")]) or 1
     syn_d = diag.get("synthetic", {})
+    n_human = sum(1 for v in HUMAN_HIT.values() if v is True)
+    n_unsure = sum(1 for v in HUMAN_HIT.values() if v == "unsure")
+    n_human_tot = len(HUMAN_HIT)
     if not real:
         return "未跑 real 变体，无结论", "inconclusive"
     if syn and sp < 0.5:
         return ("注入的合成球只有 %.0f%% 能被串成合规轨迹，说明流程本身有 bug 或阈值太紧，"
                 "real 的通过率不能用来下结论" % (sp * 100), "broken")
-    if n_static * 2 >= n_tot:
-        return ("自动选出的最优轨迹有 %d/%d 帧是**静止**高亮块（记分牌/广告牌/看台，"
-                "mean_step<1px/帧），打乱帧序后仍有 %.0f%% 通过 ⇒ 判据只证明「存在一条"
-                "平滑链」，不证明「链是球」。合成 8px 球 %d/%d 能进候选、%d/%d 能串成合规"
-                "轨迹，但自动排序只挑中 %d/%d ⇒ 机制不坏，坏在「哪个候选是球」上："
-                "这条路在现有画面下不足以单独定位球。"
-                % (n_static, n_tot, hp * 100, syn_d.get("n_cand_hit", 0), syn_d.get("n", 0),
-                   syn_d.get("n_chain_pass", 0), syn_d.get("n", 0),
-                   syn_d.get("n_auto_pick", 0), syn_d.get("n", 0)), "fake_green")
+    # ★ 人眼优先：机器判据再高，框不住球就是不行。
+    if n_human < HUMAN_MIN_HITS:
+        # 跑的是完整对照才敢说「判别力存在」；单变体调试跑里 shuffle 是 0/0。
+        ctrl = ("（shuffle %d/%d，判别力确实存在）" % (h_np, h_nt) if h_nt
+                else "（本次没跑 shuffle 对照，判别力未测）")
+        syn_s = ("注入 8px 合成球 cand_hit %d/%d、中位距 %.2fpx"
+                 % (syn_d.get("n_cand_hit", 0), syn_d.get("n", 0),
+                    syn_d.get("median_cand_dist", 0.0)) if syn_d
+                 else "本次没跑 synthetic 上限探针")
+        return ("M1 机器判据 %d/%d 通过%s，但人眼逐张看图只有 "
+                "%d/%d 帧确定框住球（match_004、match_016），另有 %d 帧 unsure（白鞋尖端，"
+                "10x 放大也分不清），其余是球员白鞋/白袜 6 帧、摄像师/广告牌 1 帧、len=1 "
+                "失败 1 帧。人眼门槛 %d/%d，即使把 unsure 全算成命中也只有 %d/%d ⇒ **判据"
+                "假绿**：M1 只约束「存在一条长且平滑的链」，不约束「链上的东西是球」。"
+                "候选层其实够用（%s），坏在「哪个候选是球」：同帧还有 9~40 个同规格白块，"
+                "且球大多贴着球员的鞋/腿/手。⇒ 这条路在现有 1280x720 素材上不可行。"
+                % (r_np, r_nt, ctrl, n_human, n_human_tot, n_unsure, HUMAN_MIN_HITS,
+                   n_human_tot, n_human + n_unsure, n_human_tot, syn_s), "no_work")
     if rp >= 0.5 and rp - hp >= 0.3:
-        return ("在 %d 帧里 %d 帧产生满足 M1 的轨迹，且打乱帧序后通过率降到 %.0f%%"
-                "（判别力存在）。仍需人眼复核轨迹是否落在球上。"
-                % (real["n_total"], real["n_pass"], hp * 100), "work_machine")
+        return ("在 %d 帧里 %d 帧产生满足 M1 的轨迹，人眼复核 %d/%d 真的框住球，且打乱帧序"
+                "后通过率降到 %.0f%%（判别力存在）。"
+                % (r_nt, r_np, n_human, n_human_tot, hp * 100),
+                "work_machine")
+    if n_static * 2 >= n_tot:
+        return ("自动选出的最优轨迹有 %d/%d 帧是**静止**高亮块（记分牌/广告牌/看台），"
+                "打乱帧序后仍有 %.0f%% 通过 ⇒ 判据只证明「存在一条平滑链」。"
+                % (n_static, n_tot, hp * 100), "fake_green")
     if rp >= 0.5:
         return ("通过率 %.0f%% 但打乱帧序后仍有 %.0f%%，连续性判据判别力不足，"
                 "高分是假绿，不算 work" % (rp * 100, hp * 100), "fake_green")
     return ("%d/%d 帧能串出 >=10 帧、无跳步的轨迹（合成球 %.0f%% 通过 ⇒ 不是代码坏了，"
             "是球在这批画面里不可分）。这条路在现有素材上不可行。"
-            % (real["n_pass"], real["n_total"], sp * 100), "no_work")
+            % (r_np, r_nt, sp * 100), "no_work")
+
 
 
 if __name__ == "__main__":

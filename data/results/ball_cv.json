@@ -1,6 +1,6 @@
 {
  "tool": "tools/ball_cv.py",
- "generated": "2026-10-19T21:19:19",
+ "generated": "2026-10-19T23:05:21",
  "video": {
   "path": "D:\\yt-dlp\\downloads\\migu_5106947698\\migu_5106947698.mp4",
   "width": 1280,
@@ -37,588 +37,261 @@
   {
    "pass_": true,
    "reason": "ok",
+   "n_cand_median": 40,
+   "n_cand_total": 3880,
+   "runtime_s": 7.26,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "name": "match_004.jpg",
+   "t_matched": 1249.56,
+   "t_center_real": 1249.56,
    "best": {
-    "length": 31,
-    "t0": 20,
+    "length": 11,
+    "t0": 40,
     "t1": 50,
     "gaps": 0,
-    "max_step": 8.52,
-    "mean_step": 6.79,
-    "path_len": 203.7,
+    "max_step": 7.16,
+    "mean_step": 5.23,
     "max_accel": 3.11,
-    "median_turn_deg": 6.5,
-    "mean_score": 3.775,
-    "mean_app": 0.836,
-    "mean_mot": 126.9,
-    "val": 114.59
+    "mean_score": 3.91,
+    "mean_app": 0.847,
+    "mean_mot": 128.1,
+    "val": 42.38
    },
    "best_longest": {
     "length": 51,
     "t0": 0,
     "t1": 50,
     "gaps": 0,
-    "max_step": 0.4,
-    "mean_step": 0.01,
-    "path_len": 0.4,
-    "max_accel": 0.4,
-    "median_turn_deg": 0.0,
-    "mean_score": 2.366,
-    "mean_app": 0.935,
-    "mean_mot": 10.5,
-    "val": 120.65
+    "max_step": 2.74,
+    "mean_step": 0.74,
+    "max_accel": 1.03,
+    "mean_score": 2.469,
+    "mean_app": 0.708,
+    "mean_mot": 48.9,
+    "val": 125.47
    },
    "best_val": {
-    "length": 42,
-    "t0": 9,
+    "length": 51,
+    "t0": 0,
     "t1": 50,
     "gaps": 0,
-    "max_step": 0.91,
-    "mean_step": 0.22,
-    "path_len": 8.8,
-    "max_accel": 0.81,
-    "median_turn_deg": 91.6,
-    "mean_score": 2.972,
-    "mean_app": 0.751,
-    "mean_mot": 10.6,
-    "val": 124.71
+    "max_step": 2.74,
+    "mean_step": 0.74,
+    "max_accel": 1.03,
+    "mean_score": 2.469,
+    "mean_app": 0.708,
+    "mean_mot": 48.9,
+    "val": 125.47
    },
    "longest": {
-    "length": 101,
+    "length": 87,
     "t0": 0,
-    "t1": 100,
+    "t1": 86,
     "gaps": 0,
-    "max_step": 0.4,
-    "mean_step": 0.0,
-    "path_len": 0.4,
-    "max_accel": 0.4,
-    "median_turn_deg": 0.0,
-    "mean_score": 2.642,
-    "mean_app": 0.931,
-    "mean_mot": 23.7
+    "max_step": 2.97,
+    "mean_step": 0.89,
+    "max_accel": 1.26,
+    "mean_score": 2.154,
+    "mean_app": 0.937,
+    "mean_mot": 7.5
    },
    "seeded": {
-    "length": 31,
-    "t0": 20,
+    "length": 11,
+    "t0": 40,
     "t1": 50,
     "gaps": 0,
-    "max_step": 8.52,
-    "mean_step": 6.79,
-    "path_len": 203.7,
+    "max_step": 7.16,
+    "mean_step": 5.23,
     "max_accel": 3.11,
-    "median_turn_deg": 6.5,
-    "mean_score": 3.775,
-    "mean_app": 0.836,
-    "mean_mot": 126.9,
+    "mean_score": 3.91,
+    "mean_app": 0.847,
+    "mean_mot": 128.1,
     "seed_dist": 1.5,
     "pass": true
    },
-   "synthetic": null,
-   "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 131,
-   "n_mot_blobs_median": 366,
    "motion": {
-    "n": 100,
     "mean_abs_dx": 1.2,
-    "mean_abs_dy": 0.2,
     "max_abs_dx": 46.13,
-    "n_affine": 53,
-    "mean_cc": 0.556
+    "n_affine": 53
    },
-   "runtime_s": 5.13,
-   "center": 50,
-   "center_abs": 65,
-   "lo": 15,
-   "n_frames": 101,
-   "top3": [
-    {
-     "length": 31,
-     "mean_score": 3.775,
-     "x": 1093.7,
-     "y": 624.8,
-     "path": [
-      [
-       1093,
-       624
-      ],
-      [
-       1078,
-       620
-      ],
-      [
-       1062,
-       619
-      ],
-      [
-       1046,
-       618
-      ],
-      [
-       1031,
-       613
-      ],
-      [
-       1016,
-       612
-      ],
-      [
-       1001,
-       612
-      ],
-      [
-       987,
-       608
-      ],
-      [
-       973,
-       608
-      ],
-      [
-       959,
-       604
-      ],
-      [
-       945,
-       602
-      ],
-      [
-       932,
-       598
-      ],
-      [
-       920,
-       593
-      ],
-      [
-       908,
-       591
-      ],
-      [
-       901,
-       589
-      ],
-      [
-       902,
-       583
-      ]
-     ]
-    },
-    {
-     "length": 3,
-     "mean_score": 3.535,
-     "x": 878.0,
-     "y": 554.5,
-     "path": [
-      [
-       878,
-       554
-      ],
-      [
-       879,
-       554
-      ],
-      [
-       879,
-       553
-      ]
-     ]
-    },
-    {
-     "length": 2,
-     "mean_score": 3.466,
-     "x": 94.1,
-     "y": 424.9,
-     "path": [
-      [
-       94,
-       424
-      ],
-      [
-       95,
-       424
-      ]
-     ]
-    }
-   ],
-   "name": "match_004.jpg",
-   "t_matched": 1249.56,
-   "t_center_real": 1249.56,
    "t_manifest_s": 1251.4,
    "t_matched_s": 1249.56,
    "t_offset_s": -1.84,
    "match_mae": 1.933,
    "n_person": 11,
-   "green": 0.5988
+   "green": 0.5988,
+   "human": true
   },
   {
    "pass_": true,
    "reason": "ok",
+   "n_cand_median": 40,
+   "n_cand_total": 3356,
+   "runtime_s": 9.34,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "name": "match_008.jpg",
+   "t_matched": 2093.56,
+   "t_center_real": 2093.56,
    "best": {
     "length": 12,
     "t0": 39,
     "t1": 50,
     "gaps": 0,
-    "max_step": 2.85,
-    "mean_step": 1.51,
-    "path_len": 16.6,
-    "max_accel": 1.24,
-    "median_turn_deg": 46.0,
-    "mean_score": 3.525,
-    "mean_app": 0.967,
-    "mean_mot": 76.9,
-    "val": 42.1
+    "max_step": 4.99,
+    "mean_step": 1.5,
+    "max_accel": 4.43,
+    "mean_score": 2.993,
+    "mean_app": 0.728,
+    "mean_mot": 88.4,
+    "val": 35.72
    },
    "best_longest": {
     "length": 12,
     "t0": 39,
     "t1": 50,
     "gaps": 0,
-    "max_step": 2.85,
-    "mean_step": 1.51,
-    "path_len": 16.6,
-    "max_accel": 1.24,
-    "median_turn_deg": 46.0,
-    "mean_score": 3.525,
-    "mean_app": 0.967,
-    "mean_mot": 76.9,
-    "val": 42.1
+    "max_step": 4.99,
+    "mean_step": 1.5,
+    "max_accel": 4.43,
+    "mean_score": 2.993,
+    "mean_app": 0.728,
+    "mean_mot": 88.4,
+    "val": 35.72
    },
    "best_val": {
     "length": 12,
     "t0": 39,
     "t1": 50,
     "gaps": 0,
-    "max_step": 2.85,
-    "mean_step": 1.51,
-    "path_len": 16.6,
-    "max_accel": 1.24,
-    "median_turn_deg": 46.0,
-    "mean_score": 3.525,
-    "mean_app": 0.967,
-    "mean_mot": 76.9,
-    "val": 42.1
+    "max_step": 4.99,
+    "mean_step": 1.5,
+    "max_accel": 4.43,
+    "mean_score": 2.993,
+    "mean_app": 0.728,
+    "mean_mot": 88.4,
+    "val": 35.72
    },
    "longest": {
     "length": 39,
-    "t0": 0,
-    "t1": 38,
+    "t0": 56,
+    "t1": 94,
     "gaps": 0,
-    "max_step": 0.0,
-    "mean_step": 0.0,
-    "path_len": 0.0,
-    "max_accel": 0.0,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.327,
-    "mean_app": 0.953,
-    "mean_mot": 86.4
+    "max_step": 6.96,
+    "mean_step": 3.25,
+    "max_accel": 3.51,
+    "mean_score": 2.779,
+    "mean_app": 0.901,
+    "mean_mot": 48.9
    },
-   "seeded": null,
-   "synthetic": null,
-   "n_cand_median": 40,
-   "n_cand_total": 4023,
-   "n_app_blobs_median": 137,
-   "n_mot_blobs_median": 470,
    "motion": {
-    "n": 100,
     "mean_abs_dx": 16.32,
-    "mean_abs_dy": 2.09,
     "max_abs_dx": 120.92,
-    "n_affine": 73,
-    "mean_cc": 0.742
+    "n_affine": 73
    },
-   "runtime_s": 7.11,
-   "center": 50,
-   "center_abs": 65,
-   "lo": 15,
-   "n_frames": 101,
-   "top3": [
-    {
-     "length": 2,
-     "mean_score": 3.958,
-     "x": 11.0,
-     "y": 433.0,
-     "path": [
-      [
-       11,
-       433
-      ],
-      [
-       12,
-       436
-      ]
-     ]
-    },
-    {
-     "length": 12,
-     "mean_score": 3.525,
-     "x": 312.0,
-     "y": 368.7,
-     "path": [
-      [
-       312,
-       368
-      ],
-      [
-       313,
-       369
-      ],
-      [
-       315,
-       369
-      ],
-      [
-       317,
-       371
-      ],
-      [
-       318,
-       371
-      ],
-      [
-       318,
-       371
-      ],
-      [
-       319,
-       372
-      ],
-      [
-       319,
-       373
-      ],
-      [
-       320,
-       373
-      ],
-      [
-       321,
-       374
-      ],
-      [
-       323,
-       374
-      ],
-      [
-       325,
-       376
-      ]
-     ]
-    },
-    {
-     "length": 2,
-     "mean_score": 3.424,
-     "x": 962.1,
-     "y": 110.9,
-     "path": [
-      [
-       962,
-       110
-      ],
-      [
-       962,
-       102
-      ]
-     ]
-    }
-   ],
-   "name": "match_008.jpg",
-   "t_matched": 2093.56,
-   "t_center_real": 2093.56,
    "t_manifest_s": 2095.0,
    "t_matched_s": 2093.56,
    "t_offset_s": -1.44,
    "match_mae": 1.653,
    "n_person": 13,
-   "green": 0.4497
+   "green": 0.4497,
+   "human": false
   },
   {
    "pass_": true,
    "reason": "ok",
-   "best": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 6.47,
-    "mean_step": 4.06,
-    "path_len": 202.8,
-    "max_accel": 1.21,
-    "median_turn_deg": 4.0,
-    "mean_score": 3.673,
-    "mean_app": 0.459,
-    "mean_mot": 103.7,
-    "val": 184.87
-   },
-   "best_longest": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 6.47,
-    "mean_step": 4.06,
-    "path_len": 202.8,
-    "max_accel": 1.21,
-    "median_turn_deg": 4.0,
-    "mean_score": 3.673,
-    "mean_app": 0.459,
-    "mean_mot": 103.7,
-    "val": 184.87
-   },
-   "best_val": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 6.47,
-    "mean_step": 4.06,
-    "path_len": 202.8,
-    "max_accel": 1.21,
-    "median_turn_deg": 4.0,
-    "mean_score": 3.673,
-    "mean_app": 0.459,
-    "mean_mot": 103.7,
-    "val": 184.87
-   },
-   "longest": {
-    "length": 101,
-    "t0": 0,
-    "t1": 100,
-    "gaps": 0,
-    "max_step": 7.42,
-    "mean_step": 3.01,
-    "path_len": 301.5,
-    "max_accel": 2.06,
-    "median_turn_deg": 7.9,
-    "mean_score": 3.26,
-    "mean_app": 0.464,
-    "mean_mot": 69.6
-   },
-   "seeded": null,
-   "synthetic": null,
    "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 100,
-   "n_mot_blobs_median": 461,
-   "motion": {
-    "n": 100,
-    "mean_abs_dx": 1.41,
-    "mean_abs_dy": 0.31,
-    "max_abs_dx": 7.68,
-    "n_affine": 58,
-    "mean_cc": 0.825
-   },
-   "runtime_s": 4.56,
+   "n_cand_total": 4009,
+   "runtime_s": 6.91,
    "center": 50,
    "center_abs": 65,
    "lo": 15,
    "n_frames": 101,
-   "top3": [
-    {
-     "length": 1,
-     "mean_score": 3.804,
-     "x": 927.4,
-     "y": 464.4,
-     "path": [
-      [
-       927,
-       464
-      ]
-     ]
-    },
-    {
-     "length": 3,
-     "mean_score": 3.722,
-     "x": 1226.6,
-     "y": 687.4,
-     "path": [
-      [
-       1226,
-       687
-      ],
-      [
-       1217,
-       687
-      ],
-      [
-       1209,
-       690
-      ]
-     ]
-    },
-    {
-     "length": 51,
-     "mean_score": 3.673,
-     "x": 995.5,
-     "y": 244.3,
-     "path": [
-      [
-       995,
-       244
-      ],
-      [
-       1008,
-       243
-      ],
-      [
-       1019,
-       242
-      ],
-      [
-       1034,
-       241
-      ],
-      [
-       1055,
-       239
-      ],
-      [
-       1076,
-       238
-      ],
-      [
-       1095,
-       237
-      ],
-      [
-       1112,
-       235
-      ],
-      [
-       1131,
-       233
-      ],
-      [
-       1146,
-       233
-      ],
-      [
-       1159,
-       231
-      ],
-      [
-       1171,
-       230
-      ],
-      [
-       1188,
-       228
-      ]
-     ]
-    }
-   ],
    "name": "match_012.jpg",
    "t_matched": 2655.56,
    "t_center_real": 2655.56,
+   "best": {
+    "length": 13,
+    "t0": 38,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 4.33,
+    "mean_step": 2.3,
+    "max_accel": 2.94,
+    "mean_score": 3.051,
+    "mean_app": 0.774,
+    "mean_mot": 75.0,
+    "val": 39.33
+   },
+   "best_longest": {
+    "length": 13,
+    "t0": 38,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 4.33,
+    "mean_step": 2.3,
+    "max_accel": 2.94,
+    "mean_score": 3.051,
+    "mean_app": 0.774,
+    "mean_mot": 75.0,
+    "val": 39.33
+   },
+   "best_val": {
+    "length": 13,
+    "t0": 38,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 4.33,
+    "mean_step": 2.3,
+    "max_accel": 2.94,
+    "mean_score": 3.051,
+    "mean_app": 0.774,
+    "mean_mot": 75.0,
+    "val": 39.33
+   },
+   "longest": {
+    "length": 33,
+    "t0": 68,
+    "t1": 100,
+    "gaps": 0,
+    "max_step": 9.44,
+    "mean_step": 3.87,
+    "max_accel": 5.75,
+    "mean_score": 2.164,
+    "mean_app": 0.656,
+    "mean_mot": 36.8
+   },
+   "motion": {
+    "mean_abs_dx": 1.41,
+    "max_abs_dx": 7.68,
+    "n_affine": 58
+   },
    "t_manifest_s": 2656.8,
    "t_matched_s": 2655.56,
    "t_offset_s": -1.24,
    "match_mae": 1.46,
    "n_person": 14,
-   "green": 0.6904
+   "green": 0.6904,
+   "human": false
   },
   {
    "pass_": true,
    "reason": "ok",
+   "n_cand_median": 40,
+   "n_cand_total": 4020,
+   "runtime_s": 7.2,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "name": "match_016.jpg",
+   "t_matched": 3273.54,
+   "t_center_real": 3273.54,
    "best": {
     "length": 51,
     "t0": 0,
@@ -626,9 +299,7 @@
     "gaps": 0,
     "max_step": 8.49,
     "mean_step": 2.59,
-    "path_len": 129.5,
     "max_accel": 4.63,
-    "median_turn_deg": 26.3,
     "mean_score": 3.663,
     "mean_app": 0.955,
     "mean_mot": 85.0,
@@ -641,9 +312,7 @@
     "gaps": 0,
     "max_step": 8.49,
     "mean_step": 2.59,
-    "path_len": 129.5,
     "max_accel": 4.63,
-    "median_turn_deg": 26.3,
     "mean_score": 3.663,
     "mean_app": 0.955,
     "mean_mot": 85.0,
@@ -656,846 +325,358 @@
     "gaps": 0,
     "max_step": 8.49,
     "mean_step": 2.59,
-    "path_len": 129.5,
     "max_accel": 4.63,
-    "median_turn_deg": 26.3,
     "mean_score": 3.663,
     "mean_app": 0.955,
     "mean_mot": 85.0,
     "val": 185.25
    },
    "longest": {
-    "length": 101,
+    "length": 86,
     "t0": 0,
-    "t1": 100,
+    "t1": 85,
     "gaps": 0,
-    "max_step": 8.38,
-    "mean_step": 0.18,
-    "path_len": 17.5,
-    "max_accel": 8.38,
-    "median_turn_deg": 0.0,
-    "mean_score": 2.857,
-    "mean_app": 0.912,
-    "mean_mot": 43.2
+    "max_step": 8.49,
+    "mean_step": 2.25,
+    "max_accel": 4.63,
+    "mean_score": 3.618,
+    "mean_app": 0.937,
+    "mean_mot": 84.3
    },
-   "seeded": null,
-   "synthetic": null,
-   "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 164,
-   "n_mot_blobs_median": 531,
    "motion": {
-    "n": 100,
     "mean_abs_dx": 1.38,
-    "mean_abs_dy": 0.44,
     "max_abs_dx": 12.71,
-    "n_affine": 89,
-    "mean_cc": 0.974
+    "n_affine": 89
    },
-   "runtime_s": 5.12,
-   "center": 50,
-   "center_abs": 65,
-   "lo": 15,
-   "n_frames": 101,
-   "top3": [
-    {
-     "length": 5,
-     "mean_score": 3.802,
-     "x": 108.3,
-     "y": 621.2,
-     "path": [
-      [
-       108,
-       621
-      ],
-      [
-       95,
-       626
-      ],
-      [
-       91,
-       628
-      ],
-      [
-       87,
-       630
-      ],
-      [
-       83,
-       631
-      ]
-     ]
-    },
-    {
-     "length": 5,
-     "mean_score": 3.72,
-     "x": 108.3,
-     "y": 621.2,
-     "path": [
-      [
-       108,
-       621
-      ],
-      [
-       108,
-       622
-      ],
-      [
-       108,
-       622
-      ],
-      [
-       106,
-       623
-      ],
-      [
-       102,
-       625
-      ]
-     ]
-    },
-    {
-     "length": 51,
-     "mean_score": 3.663,
-     "x": 940.0,
-     "y": 470.9,
-     "path": [
-      [
-       940,
-       470
-      ],
-      [
-       962,
-       451
-      ],
-      [
-       980,
-       432
-      ],
-      [
-       993,
-       425
-      ],
-      [
-       1002,
-       412
-      ],
-      [
-       1009,
-       406
-      ],
-      [
-       1014,
-       402
-      ],
-      [
-       1015,
-       397
-      ],
-      [
-       1016,
-       394
-      ],
-      [
-       1015,
-       394
-      ],
-      [
-       1014,
-       393
-      ],
-      [
-       1014,
-       392
-      ],
-      [
-       1015,
-       392
-      ]
-     ]
-    }
-   ],
-   "name": "match_016.jpg",
-   "t_matched": 3273.54,
-   "t_center_real": 3273.54,
    "t_manifest_s": 3274.5,
    "t_matched_s": 3273.54,
    "t_offset_s": -0.96,
    "match_mae": 1.44,
    "n_person": 11,
-   "green": 0.6778
+   "green": 0.6778,
+   "human": true
   },
   {
-   "pass_": true,
-   "reason": "ok",
-   "best": {
-    "length": 28,
-    "t0": 23,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 17.31,
-    "mean_step": 8.64,
-    "path_len": 233.2,
-    "max_accel": 4.62,
-    "median_turn_deg": 8.3,
-    "mean_score": 3.749,
-    "mean_app": 0.919,
-    "mean_mot": 161.0,
-    "val": 102.17
-   },
-   "best_longest": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 0.18,
-    "mean_step": 0.02,
-    "path_len": 1.1,
-    "max_accel": 0.18,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.383,
-    "mean_app": 0.388,
-    "mean_mot": 155.0,
-    "val": 172.51
-   },
-   "best_val": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 0.18,
-    "mean_step": 0.02,
-    "path_len": 1.1,
-    "max_accel": 0.18,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.383,
-    "mean_app": 0.388,
-    "mean_mot": 155.0,
-    "val": 172.51
-   },
-   "longest": {
-    "length": 101,
-    "t0": 0,
-    "t1": 100,
-    "gaps": 0,
-    "max_step": 0.31,
-    "mean_step": 0.04,
-    "path_len": 4.5,
-    "max_accel": 0.29,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.322,
-    "mean_app": 0.403,
-    "mean_mot": 150.9
-   },
-   "seeded": null,
-   "synthetic": null,
+   "pass_": false,
+   "reason": "len 1 < 10",
    "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 38,
-   "n_mot_blobs_median": 204,
-   "motion": {
-    "n": 100,
-    "mean_abs_dx": 10.72,
-    "mean_abs_dy": 1.05,
-    "max_abs_dx": 63.54,
-    "n_affine": 46,
-    "mean_cc": 0.817
-   },
-   "runtime_s": 5.24,
+   "n_cand_total": 3442,
+   "runtime_s": 7.71,
    "center": 50,
    "center_abs": 61,
    "lo": 11,
    "n_frames": 101,
-   "top3": [
-    {
-     "length": 1,
-     "mean_score": 3.832,
-     "x": 468.5,
-     "y": 474.8,
-     "path": [
-      [
-       468,
-       474
-      ]
-     ]
-    },
-    {
-     "length": 3,
-     "mean_score": 3.79,
-     "x": 915.9,
-     "y": 713.0,
-     "path": [
-      [
-       915,
-       713
-      ],
-      [
-       922,
-       714
-      ],
-      [
-       929,
-       715
-      ]
-     ]
-    },
-    {
-     "length": 28,
-     "mean_score": 3.749,
-     "x": 541.0,
-     "y": 429.5,
-     "path": [
-      [
-       541,
-       429
-      ],
-      [
-       509,
-       432
-      ],
-      [
-       476,
-       440
-      ],
-      [
-       449,
-       446
-      ],
-      [
-       429,
-       444
-      ],
-      [
-       414,
-       439
-      ],
-      [
-       411,
-       439
-      ],
-      [
-       423,
-       443
-      ],
-      [
-       438,
-       440
-      ],
-      [
-       453,
-       433
-      ],
-      [
-       470,
-       429
-      ],
-      [
-       485,
-       438
-      ],
-      [
-       491,
-       450
-      ],
-      [
-       491,
-       450
-      ]
-     ]
-    }
-   ],
    "name": "match_020.jpg",
    "t_matched": 3997.54,
    "t_center_real": 3997.54,
+   "best": {
+    "length": 1,
+    "t0": 50,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.0,
+    "mean_step": 0.0,
+    "max_accel": 0.0,
+    "mean_score": 3.395,
+    "mean_app": 0.633,
+    "mean_mot": 129.0,
+    "val": 3.4
+   },
+   "best_longest": {
+    "length": 4,
+    "t0": 47,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 11.88,
+    "mean_step": 6.95,
+    "max_accel": 7.41,
+    "mean_score": 2.197,
+    "mean_app": 0.366,
+    "mean_mot": 60.5,
+    "val": 8.54
+   },
+   "best_val": {
+    "length": 4,
+    "t0": 47,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 11.88,
+    "mean_step": 6.95,
+    "max_accel": 7.41,
+    "mean_score": 2.197,
+    "mean_app": 0.366,
+    "mean_mot": 60.5,
+    "val": 8.54
+   },
+   "longest": {
+    "length": 13,
+    "t0": 4,
+    "t1": 16,
+    "gaps": 0,
+    "max_step": 12.75,
+    "mean_step": 4.98,
+    "max_accel": 8.22,
+    "mean_score": 1.11,
+    "mean_app": 0.0,
+    "mean_mot": 66.6
+   },
+   "motion": {
+    "mean_abs_dx": 10.72,
+    "max_abs_dx": 63.54,
+    "n_affine": 46
+   },
    "t_manifest_s": 3998.1,
    "t_matched_s": 3997.54,
    "t_offset_s": -0.56,
    "match_mae": 1.278,
    "n_person": 11,
-   "green": 0.5092
+   "green": 0.5092,
+   "human": false
   },
   {
    "pass_": true,
    "reason": "ok",
-   "best": {
-    "length": 10,
-    "t0": 41,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 7.68,
-    "mean_step": 5.75,
-    "path_len": 51.7,
-    "max_accel": 1.73,
-    "median_turn_deg": 15.0,
-    "mean_score": 3.276,
-    "mean_app": 0.904,
-    "mean_mot": 90.1,
-    "val": 32.14
-   },
-   "best_longest": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 0.0,
-    "mean_step": 0.0,
-    "path_len": 0.0,
-    "max_accel": 0.0,
-    "median_turn_deg": 0.0,
-    "mean_score": 2.802,
-    "mean_app": 0.941,
-    "mean_mot": 45.0,
-    "val": 142.9
-   },
-   "best_val": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 0.0,
-    "mean_step": 0.0,
-    "path_len": 0.0,
-    "max_accel": 0.0,
-    "median_turn_deg": 0.0,
-    "mean_score": 2.802,
-    "mean_app": 0.941,
-    "mean_mot": 45.0,
-    "val": 142.9
-   },
-   "longest": {
-    "length": 101,
-    "t0": 0,
-    "t1": 100,
-    "gaps": 0,
-    "max_step": 0.0,
-    "mean_step": 0.0,
-    "path_len": 0.0,
-    "max_accel": 0.0,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.13,
-    "mean_app": 0.941,
-    "mean_mot": 78.7
-   },
-   "seeded": null,
-   "synthetic": null,
    "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 129,
-   "n_mot_blobs_median": 338,
-   "motion": {
-    "n": 100,
-    "mean_abs_dx": 9.61,
-    "mean_abs_dy": 0.39,
-    "max_abs_dx": 22.95,
-    "n_affine": 86,
-    "mean_cc": 0.895
-   },
-   "runtime_s": 5.91,
+   "n_cand_total": 3987,
+   "runtime_s": 8.43,
    "center": 50,
    "center_abs": 74,
    "lo": 24,
    "n_frames": 101,
-   "top3": [
-    {
-     "length": 1,
-     "mean_score": 3.732,
-     "x": 368.0,
-     "y": 446.0,
-     "path": [
-      [
-       368,
-       446
-      ]
-     ]
-    },
-    {
-     "length": 1,
-     "mean_score": 3.415,
-     "x": 299.1,
-     "y": 298.1,
-     "path": [
-      [
-       299,
-       298
-      ]
-     ]
-    },
-    {
-     "length": 7,
-     "mean_score": 3.342,
-     "x": 352.5,
-     "y": 222.5,
-     "path": [
-      [
-       352,
-       222
-      ],
-      [
-       350,
-       228
-      ],
-      [
-       351,
-       228
-      ],
-      [
-       352,
-       229
-      ],
-      [
-       354,
-       230
-      ],
-      [
-       357,
-       229
-      ],
-      [
-       359,
-       228
-      ]
-     ]
-    }
-   ],
    "name": "match_024.jpg",
    "t_matched": 5223.56,
    "t_center_real": 5223.56,
+   "best": {
+    "length": 48,
+    "t0": 3,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 5.26,
+    "mean_step": 1.87,
+    "max_accel": 2.32,
+    "mean_score": 2.963,
+    "mean_app": 0.911,
+    "mean_mot": 60.3,
+    "val": 141.15
+   },
+   "best_longest": {
+    "length": 48,
+    "t0": 3,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 5.26,
+    "mean_step": 1.87,
+    "max_accel": 2.32,
+    "mean_score": 2.963,
+    "mean_app": 0.911,
+    "mean_mot": 60.3,
+    "val": 141.15
+   },
+   "best_val": {
+    "length": 48,
+    "t0": 3,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 5.26,
+    "mean_step": 1.87,
+    "max_accel": 2.32,
+    "mean_score": 2.963,
+    "mean_app": 0.911,
+    "mean_mot": 60.3,
+    "val": 141.15
+   },
+   "longest": {
+    "length": 57,
+    "t0": 3,
+    "t1": 59,
+    "gaps": 0,
+    "max_step": 5.26,
+    "mean_step": 1.74,
+    "max_accel": 2.32,
+    "mean_score": 2.928,
+    "mean_app": 0.896,
+    "mean_mot": 60.8
+   },
+   "motion": {
+    "mean_abs_dx": 9.61,
+    "max_abs_dx": 22.95,
+    "n_affine": 86
+   },
    "t_manifest_s": 5223.6,
    "t_matched_s": 5223.56,
    "t_offset_s": -0.04,
    "match_mae": 1.402,
    "n_person": 14,
-   "green": 0.7052
+   "green": 0.7052,
+   "human": false
   },
   {
    "pass_": true,
    "reason": "ok",
-   "best": {
-    "length": 14,
-    "t0": 37,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 11.61,
-    "mean_step": 9.45,
-    "path_len": 122.8,
-    "max_accel": 1.42,
-    "median_turn_deg": 1.6,
-    "mean_score": 3.932,
-    "mean_app": 0.776,
-    "mean_mot": 95.6,
-    "val": 53.57
-   },
-   "best_longest": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 0.5,
-    "mean_step": 0.02,
-    "path_len": 1.0,
-    "max_accel": 0.5,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.428,
-    "mean_app": 0.949,
-    "mean_mot": 91.9,
-    "val": 174.8
-   },
-   "best_val": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 0.5,
-    "mean_step": 0.02,
-    "path_len": 1.0,
-    "max_accel": 0.5,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.428,
-    "mean_app": 0.949,
-    "mean_mot": 91.9,
-    "val": 174.8
-   },
-   "longest": {
-    "length": 78,
-    "t0": 1,
-    "t1": 78,
-    "gaps": 0,
-    "max_step": 0.5,
-    "mean_step": 0.01,
-    "path_len": 0.5,
-    "max_accel": 0.5,
-    "median_turn_deg": 0.0,
-    "mean_score": 2.832,
-    "mean_app": 0.365,
-    "mean_mot": 116.9
-   },
-   "seeded": null,
-   "synthetic": null,
    "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 132,
-   "n_mot_blobs_median": 734,
-   "motion": {
-    "n": 100,
-    "mean_abs_dx": 2.88,
-    "mean_abs_dy": 0.36,
-    "max_abs_dx": 9.91,
-    "n_affine": 81,
-    "mean_cc": 0.964
-   },
-   "runtime_s": 4.83,
+   "n_cand_total": 4009,
+   "runtime_s": 7.03,
    "center": 50,
    "center_abs": 84,
    "lo": 34,
    "n_frames": 101,
-   "top3": [
-    {
-     "length": 1,
-     "mean_score": 4.042,
-     "x": 5.2,
-     "y": 264.8,
-     "path": [
-      [
-       5,
-       264
-      ]
-     ]
-    },
-    {
-     "length": 1,
-     "mean_score": 3.967,
-     "x": 889.0,
-     "y": 457.0,
-     "path": [
-      [
-       889,
-       457
-      ]
-     ]
-    },
-    {
-     "length": 3,
-     "mean_score": 3.944,
-     "x": 1105.0,
-     "y": 373.0,
-     "path": [
-      [
-       1105,
-       373
-      ],
-      [
-       1098,
-       372
-      ],
-      [
-       1093,
-       371
-      ]
-     ]
-    }
-   ],
    "name": "match_028.jpg",
    "t_matched": 5939.56,
    "t_center_real": 5939.56,
+   "best": {
+    "length": 10,
+    "t0": 41,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 12.85,
+    "mean_step": 8.55,
+    "max_accel": 6.06,
+    "mean_score": 3.276,
+    "mean_app": 0.785,
+    "mean_mot": 88.4,
+    "val": 31.84
+   },
+   "best_longest": {
+    "length": 11,
+    "t0": 40,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 11.63,
+    "mean_step": 8.74,
+    "max_accel": 2.74,
+    "mean_score": 2.066,
+    "mean_app": 0.398,
+    "mean_mot": 54.7,
+    "val": 21.67
+   },
+   "best_val": {
+    "length": 10,
+    "t0": 41,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 12.85,
+    "mean_step": 8.55,
+    "max_accel": 6.06,
+    "mean_score": 3.276,
+    "mean_app": 0.785,
+    "mean_mot": 88.4,
+    "val": 31.84
+   },
+   "longest": {
+    "length": 47,
+    "t0": 48,
+    "t1": 94,
+    "gaps": 0,
+    "max_step": 6.88,
+    "mean_step": 2.34,
+    "max_accel": 2.79,
+    "mean_score": 2.324,
+    "mean_app": 0.268,
+    "mean_mot": 71.1
+   },
+   "motion": {
+    "mean_abs_dx": 2.88,
+    "max_abs_dx": 9.91,
+    "n_affine": 81
+   },
    "t_manifest_s": 5939.2,
    "t_matched_s": 5939.56,
    "t_offset_s": 0.36,
    "match_mae": 1.528,
    "n_person": 12,
-   "green": 0.646
+   "green": 0.646,
+   "human": false
   },
   {
    "pass_": true,
    "reason": "ok",
-   "best": {
-    "length": 30,
-    "t0": 21,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 8.95,
-    "mean_step": 3.49,
-    "path_len": 101.3,
-    "max_accel": 7.45,
-    "median_turn_deg": 17.4,
-    "mean_score": 3.49,
-    "mean_app": 0.869,
-    "mean_mot": 101.3,
-    "val": 103.47
-   },
-   "best_longest": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 6.54,
-    "mean_step": 2.34,
-    "path_len": 117.2,
-    "max_accel": 1.47,
-    "median_turn_deg": 5.2,
-    "mean_score": 3.208,
-    "mean_app": 0.935,
-    "mean_mot": 73.7,
-    "val": 162.18
-   },
-   "best_val": {
-    "length": 51,
-    "t0": 0,
-    "t1": 50,
-    "gaps": 0,
-    "max_step": 6.54,
-    "mean_step": 2.34,
-    "path_len": 117.2,
-    "max_accel": 1.47,
-    "median_turn_deg": 5.2,
-    "mean_score": 3.208,
-    "mean_app": 0.935,
-    "mean_mot": 73.7,
-    "val": 162.18
-   },
-   "longest": {
-    "length": 101,
-    "t0": 0,
-    "t1": 100,
-    "gaps": 0,
-    "max_step": 6.54,
-    "mean_step": 1.98,
-    "path_len": 198.2,
-    "max_accel": 1.47,
-    "median_turn_deg": 5.2,
-    "mean_score": 2.914,
-    "mean_app": 0.933,
-    "mean_mot": 54.6
-   },
-   "seeded": null,
-   "synthetic": null,
    "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 180,
-   "n_mot_blobs_median": 490,
-   "motion": {
-    "n": 100,
-    "mean_abs_dx": 0.91,
-    "mean_abs_dy": 0.15,
-    "max_abs_dx": 3.45,
-    "n_affine": 79,
-    "mean_cc": 0.784
-   },
-   "runtime_s": 4.61,
+   "n_cand_total": 4011,
+   "runtime_s": 6.74,
    "center": 50,
    "center_abs": 89,
    "lo": 39,
    "n_frames": 101,
-   "top3": [
-    {
-     "length": 1,
-     "mean_score": 3.534,
-     "x": 72.1,
-     "y": 322.2,
-     "path": [
-      [
-       72,
-       322
-      ]
-     ]
-    },
-    {
-     "length": 30,
-     "mean_score": 3.49,
-     "x": 963.0,
-     "y": 548.5,
-     "path": [
-      [
-       963,
-       548
-      ],
-      [
-       966,
-       549
-      ],
-      [
-       970,
-       550
-      ],
-      [
-       972,
-       547
-      ],
-      [
-       977,
-       551
-      ],
-      [
-       980,
-       552
-      ],
-      [
-       984,
-       550
-      ],
-      [
-       982,
-       545
-      ],
-      [
-       973,
-       542
-      ],
-      [
-       959,
-       544
-      ],
-      [
-       951,
-       550
-      ],
-      [
-       950,
-       553
-      ],
-      [
-       950,
-       553
-      ],
-      [
-       946,
-       549
-      ],
-      [
-       933,
-       544
-      ]
-     ]
-    },
-    {
-     "length": 2,
-     "mean_score": 3.429,
-     "x": 629.5,
-     "y": 358.0,
-     "path": [
-      [
-       629,
-       358
-      ],
-      [
-       623,
-       358
-      ]
-     ]
-    }
-   ],
    "name": "match_032.jpg",
    "t_matched": 6559.56,
    "t_center_real": 6559.56,
+   "best": {
+    "length": 11,
+    "t0": 40,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.64,
+    "mean_step": 3.31,
+    "max_accel": 2.9,
+    "mean_score": 3.102,
+    "mean_app": 0.796,
+    "mean_mot": 87.5,
+    "val": 33.72
+   },
+   "best_longest": {
+    "length": 36,
+    "t0": 15,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 4.41,
+    "mean_step": 1.08,
+    "max_accel": 3.58,
+    "mean_score": 1.916,
+    "mean_app": 0.505,
+    "mean_mot": 29.4,
+    "val": 68.5
+   },
+   "best_val": {
+    "length": 36,
+    "t0": 15,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 4.41,
+    "mean_step": 1.08,
+    "max_accel": 3.58,
+    "mean_score": 1.916,
+    "mean_app": 0.505,
+    "mean_mot": 29.4,
+    "val": 68.5
+   },
+   "longest": {
+    "length": 67,
+    "t0": 15,
+    "t1": 81,
+    "gaps": 0,
+    "max_step": 7.21,
+    "mean_step": 1.92,
+    "max_accel": 5.19,
+    "mean_score": 1.743,
+    "mean_app": 0.415,
+    "mean_mot": 34.1
+   },
+   "motion": {
+    "mean_abs_dx": 0.91,
+    "max_abs_dx": 3.45,
+    "n_affine": 79
+   },
    "t_manifest_s": 6559.0,
    "t_matched_s": 6559.56,
    "t_offset_s": 0.56,
    "match_mae": 1.662,
    "n_person": 11,
-   "green": 0.6591
+   "green": 0.6591,
+   "human": "unsure"
   },
   {
    "pass_": true,
    "reason": "ok",
+   "n_cand_median": 40,
+   "n_cand_total": 4011,
+   "runtime_s": 7.08,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "name": "match_036.jpg",
+   "t_matched": 7173.54,
+   "t_center_real": 7173.54,
    "best": {
     "length": 14,
     "t0": 37,
@@ -1503,389 +684,987 @@
     "gaps": 0,
     "max_step": 7.88,
     "mean_step": 3.04,
-    "path_len": 39.5,
     "max_accel": 3.85,
-    "median_turn_deg": 21.5,
     "mean_score": 3.671,
     "mean_app": 0.943,
     "mean_mot": 97.4,
     "val": 50.92
    },
    "best_longest": {
-    "length": 51,
-    "t0": 0,
+    "length": 23,
+    "t0": 28,
     "t1": 50,
     "gaps": 0,
-    "max_step": 8.38,
-    "mean_step": 0.34,
-    "path_len": 16.8,
-    "max_accel": 8.38,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.496,
-    "mean_app": 0.918,
-    "mean_mot": 105.5,
-    "val": 178.07
+    "max_step": 7.56,
+    "mean_step": 4.34,
+    "max_accel": 4.49,
+    "mean_score": 2.272,
+    "mean_app": 0.19,
+    "mean_mot": 86.3,
+    "val": 51.11
    },
    "best_val": {
-    "length": 51,
-    "t0": 0,
+    "length": 21,
+    "t0": 30,
     "t1": 50,
     "gaps": 0,
-    "max_step": 8.38,
-    "mean_step": 0.17,
-    "path_len": 8.4,
-    "max_accel": 8.38,
-    "median_turn_deg": 0.0,
-    "mean_score": 3.494,
-    "mean_app": 0.913,
-    "mean_mot": 105.6,
-    "val": 178.11
+    "max_step": 3.6,
+    "mean_step": 1.85,
+    "max_accel": 1.24,
+    "mean_score": 3.33,
+    "mean_app": 0.854,
+    "mean_mot": 79.6,
+    "val": 69.48
    },
    "longest": {
-    "length": 89,
-    "t0": 0,
-    "t1": 88,
+    "length": 71,
+    "t0": 30,
+    "t1": 100,
     "gaps": 0,
-    "max_step": 8.68,
-    "mean_step": 4.84,
-    "path_len": 425.9,
-    "max_accel": 1.89,
-    "median_turn_deg": 5.4,
-    "mean_score": 3.314,
-    "mean_app": 0.962,
-    "mean_mot": 64.8
+    "max_step": 5.66,
+    "mean_step": 2.24,
+    "max_accel": 1.84,
+    "mean_score": 3.06,
+    "mean_app": 0.802,
+    "mean_mot": 68.4
    },
-   "seeded": null,
-   "synthetic": null,
-   "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 155,
-   "n_mot_blobs_median": 547,
    "motion": {
-    "n": 100,
     "mean_abs_dx": 2.54,
-    "mean_abs_dy": 0.51,
     "max_abs_dx": 6.78,
-    "n_affine": 52,
-    "mean_cc": 0.801
+    "n_affine": 52
    },
-   "runtime_s": 5.03,
-   "center": 50,
-   "center_abs": 65,
-   "lo": 15,
-   "n_frames": 101,
-   "top3": [
-    {
-     "length": 1,
-     "mean_score": 3.72,
-     "x": 95.1,
-     "y": 409.6,
-     "path": [
-      [
-       95,
-       409
-      ]
-     ]
-    },
-    {
-     "length": 14,
-     "mean_score": 3.671,
-     "x": 1038.5,
-     "y": 602.4,
-     "path": [
-      [
-       1038,
-       602
-      ],
-      [
-       1030,
-       603
-      ],
-      [
-       1024,
-       603
-      ],
-      [
-       1021,
-       604
-      ],
-      [
-       1024,
-       606
-      ],
-      [
-       1025,
-       606
-      ],
-      [
-       1027,
-       606
-      ],
-      [
-       1029,
-       606
-      ],
-      [
-       1029,
-       605
-      ],
-      [
-       1030,
-       603
-      ],
-      [
-       1030,
-       600
-      ],
-      [
-       1028,
-       598
-      ],
-      [
-       1027,
-       597
-      ],
-      [
-       1022,
-       596
-      ]
-     ]
-    },
-    {
-     "length": 51,
-     "mean_score": 3.496,
-     "x": 962.0,
-     "y": 102.5,
-     "path": [
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       102
-      ],
-      [
-       962,
-       110
-      ],
-      [
-       962,
-       110
-      ],
-      [
-       962,
-       102
-      ]
-     ]
-    }
-   ],
-   "name": "match_036.jpg",
-   "t_matched": 7173.54,
-   "t_center_real": 7173.54,
    "t_manifest_s": 7172.7,
    "t_matched_s": 7173.54,
    "t_offset_s": 0.84,
    "match_mae": 1.45,
    "n_person": 12,
-   "green": 0.6404
+   "green": 0.6404,
+   "human": "unsure"
   },
   {
    "pass_": true,
    "reason": "ok",
+   "n_cand_median": 40,
+   "n_cand_total": 3875,
+   "runtime_s": 6.97,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "name": "match_040.jpg",
+   "t_matched": 7839.56,
+   "t_center_real": 7839.56,
    "best": {
-    "length": 16,
-    "t0": 35,
+    "length": 37,
+    "t0": 14,
     "t1": 50,
     "gaps": 0,
-    "max_step": 6.81,
-    "mean_step": 1.0,
-    "path_len": 15.1,
-    "max_accel": 6.81,
-    "median_turn_deg": 30.3,
-    "mean_score": 2.719,
-    "mean_app": 0.934,
-    "mean_mot": 12.2,
-    "val": 43.32
+    "max_step": 0.5,
+    "mean_step": 0.1,
+    "max_accel": 0.5,
+    "mean_score": 2.569,
+    "mean_app": 0.491,
+    "mean_mot": 5.4,
+    "val": 95.01
    },
    "best_longest": {
     "length": 51,
     "t0": 0,
     "t1": 50,
     "gaps": 0,
-    "max_step": 0.57,
-    "mean_step": 0.16,
-    "path_len": 7.9,
-    "max_accel": 0.43,
-    "median_turn_deg": 116.8,
-    "mean_score": 2.562,
-    "mean_app": 0.66,
-    "mean_mot": 6.5,
-    "val": 130.54
+    "max_step": 8.38,
+    "mean_step": 0.59,
+    "max_accel": 8.38,
+    "mean_score": 1.966,
+    "mean_app": 0.583,
+    "mean_mot": 5.5,
+    "val": 99.93
    },
    "best_val": {
     "length": 51,
     "t0": 0,
     "t1": 50,
     "gaps": 0,
-    "max_step": 0.57,
-    "mean_step": 0.16,
-    "path_len": 7.9,
-    "max_accel": 0.43,
-    "median_turn_deg": 116.8,
-    "mean_score": 2.562,
-    "mean_app": 0.66,
-    "mean_mot": 6.5,
-    "val": 130.54
+    "max_step": 8.38,
+    "mean_step": 0.59,
+    "max_accel": 8.38,
+    "mean_score": 1.966,
+    "mean_app": 0.583,
+    "mean_mot": 5.5,
+    "val": 99.93
    },
    "longest": {
-    "length": 74,
+    "length": 64,
     "t0": 0,
-    "t1": 73,
+    "t1": 63,
     "gaps": 0,
-    "max_step": 0.57,
-    "mean_step": 0.13,
-    "path_len": 9.5,
-    "max_accel": 0.52,
-    "median_turn_deg": 111.8,
-    "mean_score": 2.576,
-    "mean_app": 0.661,
-    "mean_mot": 6.2
+    "max_step": 9.0,
+    "mean_step": 0.76,
+    "max_accel": 9.0,
+    "mean_score": 1.958,
+    "mean_app": 0.581,
+    "mean_mot": 5.5
    },
-   "seeded": null,
-   "synthetic": null,
-   "n_cand_median": 40,
-   "n_cand_total": 4040,
-   "n_app_blobs_median": 197,
-   "n_mot_blobs_median": 106,
    "motion": {
-    "n": 100,
     "mean_abs_dx": 2.3,
-    "mean_abs_dy": 0.33,
     "max_abs_dx": 23.26,
-    "n_affine": 26,
-    "mean_cc": 0.27
+    "n_affine": 26
    },
-   "runtime_s": 4.57,
-   "center": 50,
-   "center_abs": 65,
-   "lo": 15,
-   "n_frames": 101,
-   "top3": [
-    {
-     "length": 1,
-     "mean_score": 4.089,
-     "x": 696.0,
-     "y": 483.0,
-     "path": [
-      [
-       696,
-       483
-      ]
-     ]
-    },
-    {
-     "length": 2,
-     "mean_score": 4.018,
-     "x": 768.3,
-     "y": 664.2,
-     "path": [
-      [
-       768,
-       664
-      ],
-      [
-       764,
-       662
-      ]
-     ]
-    },
-    {
-     "length": 5,
-     "mean_score": 3.57,
-     "x": 900.3,
-     "y": 440.4,
-     "path": [
-      [
-       900,
-       440
-      ],
-      [
-       898,
-       439
-      ],
-      [
-       896,
-       439
-      ],
-      [
-       894,
-       439
-      ],
-      [
-       892,
-       438
-      ]
-     ]
-    }
-   ],
-   "name": "match_040.jpg",
-   "t_matched": 7839.56,
-   "t_center_real": 7839.56,
    "t_manifest_s": 7838.4,
    "t_matched_s": 7839.56,
    "t_offset_s": 1.16,
    "match_mae": 2.171,
    "n_person": 11,
-   "green": 0.5991
+   "green": 0.5991,
+   "human": false
   }
  ],
- "controls": {},
- "verdict": "在 10 帧里 10 帧产生满足 M1 的轨迹，且打乱帧序后通过率降到 0%（判别力存在）。仍需人眼复核轨迹是否落在球上。",
- "verdict_class": "work_machine",
+ "controls": {
+  "shuffle": {
+   "n_pass": 0,
+   "n_total": 10,
+   "pass_rate": 0.0,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 3.751,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": false,
+     "reason": "len 2 < 10",
+     "length": 2,
+     "mean_step": 7.69,
+     "max_step": 7.69,
+     "mean_score": 3.538,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 3.839,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 3.988,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 3.395,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": false,
+     "reason": "len 2 < 10",
+     "length": 2,
+     "mean_step": 20.44,
+     "max_step": 20.44,
+     "mean_score": 3.506,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 4.039,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 3.901,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 3.833,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 3.957,
+     "n_cand": 40,
+     "synthetic": null
+    }
+   ],
+   "note": "打乱帧序后重跑。若通过率不下降，说明「轨迹连续性」判据是废的。"
+  },
+  "static_center": {
+   "n_pass": 10,
+   "n_total": 10,
+   "pass_rate": 1.0,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.0,
+     "n_cand": null,
+     "synthetic": null
+    }
+   ],
+   "note": "每帧报画面正中的一个点，完全不做检测。它必然 10/10 —— 这条对照的作用是证明 M1 单独没有判别力，必须看图。"
+  },
+  "null": {
+   "n_pass": 0,
+   "n_total": 10,
+   "pass_rate": 0.0,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null,
+     "max_step": null,
+     "mean_score": null,
+     "n_cand": null,
+     "synthetic": null
+    }
+   ],
+   "note": "不产生候选。应为 0/10；若不是 0 说明计分有 bug。"
+  },
+  "synthetic": {
+   "n_pass": 9,
+   "n_total": 10,
+   "pass_rate": 0.9,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 11,
+     "mean_step": 5.23,
+     "max_step": 7.16,
+     "mean_score": 3.91,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       848,
+       378
+      ],
+      "cand_dist": 0.16,
+      "chain_len": 17,
+      "chain_max_step": 17.88,
+      "chain_mean_step": 17.55,
+      "chain_mean_score": 3.324,
+      "chain_pass": true,
+      "auto_dist": 212.37
+     }
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 12,
+     "mean_step": 1.5,
+     "max_step": 4.99,
+     "mean_score": 2.993,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       388,
+       551
+      ],
+      "cand_dist": 0.68,
+      "chain_len": 9,
+      "chain_max_step": 10.93,
+      "chain_mean_step": 10.77,
+      "chain_mean_score": 3.596,
+      "chain_pass": false,
+      "auto_dist": 409.85
+     }
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 12,
+     "mean_step": 14.66,
+     "max_step": 14.95,
+     "mean_score": 3.536,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       651,
+       516
+      ],
+      "cand_dist": 0.12,
+      "chain_len": 12,
+      "chain_max_step": 14.95,
+      "chain_mean_step": 14.61,
+      "chain_mean_score": 3.373,
+      "chain_pass": true,
+      "auto_dist": 0.52
+     }
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 51,
+     "mean_step": 2.59,
+     "max_step": 8.49,
+     "mean_score": 3.665,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       566,
+       639
+      ],
+      "cand_dist": 0.79,
+      "chain_len": 51,
+      "chain_max_step": 11.08,
+      "chain_mean_step": 10.65,
+      "chain_mean_score": 3.535,
+      "chain_pass": true,
+      "auto_dist": 509.62
+     }
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 3.395,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       871,
+       299
+      ],
+      "cand_dist": 51.52,
+      "chain_len": 1,
+      "chain_max_step": 0.0,
+      "chain_mean_step": 0.0,
+      "chain_mean_score": 0.583,
+      "chain_pass": false,
+      "auto_dist": 450.4
+     }
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 48,
+     "mean_step": 1.87,
+     "max_step": 5.26,
+     "mean_score": 2.962,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       1057,
+       203
+      ],
+      "cand_dist": 147.16,
+      "chain_len": 4,
+      "chain_max_step": 0.28,
+      "chain_mean_step": 0.18,
+      "chain_mean_score": 1.333,
+      "chain_pass": false,
+      "auto_dist": 557.44
+     }
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 34,
+     "mean_step": 11.82,
+     "max_step": 12.14,
+     "mean_score": 3.707,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       273,
+       561
+      ],
+      "cand_dist": 0.65,
+      "chain_len": 34,
+      "chain_max_step": 12.14,
+      "chain_mean_step": 11.82,
+      "chain_mean_score": 3.707,
+      "chain_pass": true,
+      "auto_dist": 0.65
+     }
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 11,
+     "mean_step": 3.31,
+     "max_step": 8.64,
+     "mean_score": 3.102,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       815,
+       298
+      ],
+      "cand_dist": 0.13,
+      "chain_len": 2,
+      "chain_max_step": 16.14,
+      "chain_mean_step": 16.14,
+      "chain_mean_score": 2.381,
+      "chain_pass": false,
+      "auto_dist": 267.87
+     }
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 14,
+     "mean_step": 3.04,
+     "max_step": 7.88,
+     "mean_score": 3.672,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       816,
+       479
+      ],
+      "cand_dist": 0.21,
+      "chain_len": 12,
+      "chain_max_step": 17.09,
+      "chain_mean_step": 16.3,
+      "chain_mean_score": 3.283,
+      "chain_pass": true,
+      "auto_dist": 237.46
+     }
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 37,
+     "mean_step": 0.1,
+     "max_step": 0.5,
+     "mean_score": 2.569,
+     "n_cand": 40,
+     "synthetic": {
+      "gt": [
+       1099,
+       527
+      ],
+      "cand_dist": 0.25,
+      "chain_len": 9,
+      "chain_max_step": 11.78,
+      "chain_mean_step": 11.25,
+      "chain_mean_score": 3.82,
+      "chain_pass": false,
+      "auto_dist": 264.35
+     }
+    }
+   ],
+   "note": "在真实帧上合成 8px 白球（平滑运动）后跑同一流程，是算法上限。"
+  },
+  "ablate_no_motion": {
+   "n_pass": 8,
+   "n_total": 10,
+   "pass_rate": 0.8,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 11,
+     "mean_step": 5.23,
+     "max_step": 7.16,
+     "mean_score": 2.41,
+     "n_cand": 15,
+     "synthetic": null
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 10,
+     "mean_step": 1.21,
+     "max_step": 2.57,
+     "mean_score": 2.066,
+     "n_cand": 7,
+     "synthetic": null
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 13,
+     "mean_step": 2.3,
+     "max_step": 4.33,
+     "mean_score": 1.847,
+     "n_cand": 12,
+     "synthetic": null
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 2.59,
+     "max_step": 8.49,
+     "mean_score": 2.311,
+     "n_cand": 15,
+     "synthetic": null
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "len 2 < 10",
+     "length": 2,
+     "mean_step": 13.42,
+     "max_step": 13.42,
+     "mean_score": 1.917,
+     "n_cand": 4,
+     "synthetic": null
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 47,
+     "mean_step": 1.88,
+     "max_step": 5.26,
+     "mean_score": 1.956,
+     "n_cand": 11,
+     "synthetic": null
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 2.6,
+     "n_cand": 13,
+     "synthetic": null
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 11,
+     "mean_step": 3.31,
+     "max_step": 8.64,
+     "mean_score": 1.903,
+     "n_cand": 10,
+     "synthetic": null
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 14,
+     "mean_step": 3.04,
+     "max_step": 7.88,
+     "mean_score": 2.233,
+     "n_cand": 15,
+     "synthetic": null
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 37,
+     "mean_step": 0.1,
+     "max_step": 0.5,
+     "mean_score": 2.479,
+     "n_cand": 16,
+     "synthetic": null
+    }
+   ],
+   "note": "去掉运动残差项，只用外观（白+小+圆）。"
+  },
+  "ablate_no_appearance": {
+   "n_pass": 6,
+   "n_total": 10,
+   "pass_rate": 0.6,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 18,
+     "mean_step": 4.97,
+     "max_step": 13.93,
+     "mean_score": 0.814,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": false,
+     "reason": "len 3 < 10",
+     "length": 3,
+     "mean_step": 3.03,
+     "max_step": 4.38,
+     "mean_score": 1.244,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.567,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 10,
+     "mean_step": 3.32,
+     "max_step": 5.21,
+     "mean_score": 1.282,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "max_step": 0.0,
+     "mean_score": 1.4,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 50,
+     "mean_step": 3.45,
+     "max_step": 8.27,
+     "mean_score": 1.052,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 14,
+     "mean_step": 7.38,
+     "max_step": 9.22,
+     "mean_score": 0.914,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": false,
+     "reason": "len 2 < 10",
+     "length": 2,
+     "mean_step": 3.25,
+     "max_step": 3.25,
+     "mean_score": 1.883,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 23,
+     "mean_step": 4.13,
+     "max_step": 6.38,
+     "mean_score": 1.496,
+     "n_cand": 40,
+     "synthetic": null
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 12,
+     "mean_step": 1.24,
+     "max_step": 2.11,
+     "mean_score": 1.249,
+     "n_cand": 32,
+     "synthetic": null
+    }
+   ],
+   "note": "去掉外观项，只用运动残差。"
+  }
+ },
+ "verdict": "M1 机器判据 9/10 通过（shuffle 0/10，判别力确实存在），但人眼逐张看图只有 2/10 帧确定框住球（match_004、match_016），另有 2 帧 unsure（白鞋尖端，10x 放大也分不清），其余是球员白鞋/白袜 6 帧、摄像师/广告牌 1 帧、len=1 失败 1 帧。人眼门槛 5/10，即使把 unsure 全算成命中也只有 4/10 ⇒ **判据假绿**：M1 只约束「存在一条长且平滑的链」，不约束「链上的东西是球」。候选层其实够用（注入 8px 合成球 cand_hit 8/10、中位距 0.45px），坏在「哪个候选是球」：同帧还有 9~40 个同规格白块，且球大多贴着球员的鞋/腿/手。⇒ 这条路在现有 1280x720 素材上不可行。",
+ "verdict_class": "no_work",
  "diagnostics": {
   "n_cand_median_per_frame": 40,
   "n_app_blobs_median": 134,
   "n_mot_blobs_median": 465,
-  "winner_len_median": 22,
-  "winner_static_frames": 0,
-  "winner_moving_frames": 9,
-  "winner_static_names": [],
-  "pick_rule_len_static_frames": 6,
-  "winner_mean_score_median": 3.67,
-  "winner_mot_median": 96.5,
+  "winner_len_median": 12,
+  "winner_static_frames": 2,
+  "winner_moving_frames": 8,
+  "winner_static_names": [
+   "match_020.jpg",
+   "match_040.jpg"
+  ],
+  "pick_rule_len_static_frames": 2,
+  "winner_mean_score_median": 3.19,
+  "winner_mot_median": 88.0,
   "motion_abs_dx_mean": 4.93,
   "motion_abs_dx_max": 120.92,
   "n_affine_total": 643,
@@ -1893,37 +1672,68 @@
    "name": "match_004.jpg",
    "t_matched_s": 1249.56,
    "seed_dist_px": 1.5,
-   "length": 31,
-   "max_step": 8.52,
+   "length": 11,
+   "max_step": 7.16,
    "max_accel": 3.11,
-   "mean_step": 6.79,
-   "mean_score": 3.775,
+   "mean_step": 5.23,
+   "mean_score": 3.91,
    "pass_": true,
    "auto_pick": {
-    "x": 31,
-    "mean_step": 6.79
+    "x": 11,
+    "mean_step": 5.23
    }
+  },
+  "synthetic": {
+   "n": 10,
+   "n_cand_hit": 8,
+   "n_chain_pass": 5,
+   "n_auto_pick": 2,
+   "median_cand_dist": 0.45,
+   "median_auto_dist": 266.11
   }
  },
  "human_review": {
-  "note": "human_review 是作者把 data/results/viz/ball_cv/*.png 逐张看过之后的判定，不是自动判据。自动判据（pass）只看长度/步长/加速度，它分不清球和记分牌——这正是本次实验的主要发现，所以必须把「人眼看到框在哪」单独记下来。",
-  "summary": "10/10 的自动最优轨迹都落在场景上（记分牌 2 帧、广告牌 5 帧、球员白鞋/手套 3 帧），0/10 落在球上。判据全部 PASS，但一条都没框住球：M1 只约束了「存在平滑链」，没有约束「链上的东西是球」。",
+  "note": "human_review 是作者把 data/results/viz/ball_cv/*.png（含 _all10_a/b.png 的 10x 双帧放大）逐张看过之后的判定，不是自动判据。自动判据（pass）只看长度/步长/加速度，它分不清球和记分牌——这正是本次实验的主要发现，所以必须把「人眼看到框在哪」单独记下来，并且让它能否决自动判据（见 build_verdict 的 HUMAN_MIN_HITS）。",
+  "summary": "带 --grass-prior 的最终配置：M1 9/10 通过、shuffle 0/10（判别力确实存在），但人眼只有 **2/10 确定框住球**（match_004、match_016），**2/10 unsure**（match_032/036 框在白鞋尖端，10x 双帧看与脚同步、判为鞋，但四周草环分象限的证伪测试没有判别力），其余 6 帧是白鞋/白袜、摄像师/广告牌与 len=1 失败。=> M1 的 9/10 是判据假绿：M1 只问「有没有一条长而平滑的链」，不问「链上的东西是不是球」。所以 build_verdict 把人眼结果当硬门槛：确定命中 < 5/10 一律判 no_work，无论 M1 多高。把 unsure 全算成命中也只有 4/10，结论不随这个读法改变。",
   "per_frame": {
-   "match_004.jpg": "记分牌上 05:45 的冒号。真球在 (902,584)、直径约 8px，确实是候选之一，但自动选出的最优轨迹是静止记分牌。",
-   "match_008.jpg": "远端红队球员脚踝处的白鞋/白袜。真球被 3 号白队球员双手抱在胸前（约 (545,372)，直径约 25px），超出 MAX_WH=16/AREA_MAX=200 的尺寸窗口，根本没进候选。",
-   "match_012.jpg": "广告牌与挡板交界处的白块（轨迹沿广告牌水平拉了一条虚线）。",
-   "match_016.jpg": "门将右侧的白块（手套/护腿），轨迹沿门将身上斜着上来。",
-   "match_020.jpg": "广告牌中文字内部的白色空隙（8x 图里是「德」字的笔画间）。",
-   "match_024.jpg": "红色广告牌上的白块（8x 图里是「河」字旁边）。",
-   "match_028.jpg": "白色标牌文字之间的暗块。",
-   "match_032.jpg": "广告牌 C1L 标志上的白块。",
-   "match_036.jpg": "记分牌 14:47 的数字。",
-   "match_040.jpg": "白色标牌文字间的白块。"
-  }
+   "match_004.jpg": "**球**。真球约 (902,583)、直径 8px，赤队球员弯腰伸手够它，t+0->t+4 球相对草坪独立位移（不是跟手走）。这是 10 帧里最干净的一次。",
+   "match_008.jpg": "白鞋。框在远端赤队球员的白色球鞋/球袜上，随腿摆动。真球被 3 号白队球员双手抱在胸前（约 (545,372)、直径约 25px），超出 AREA_MAX=200/MAX_WH=16 的尺寸窗口，根本没进候选。",
+   "match_012.jpg": "赤队球员的白色球鞋。同帧草坪上另有一颗清晰可见的白球（画面上方白线附近），但轨迹没落在它上面——候选排序把鞋排在了球前面。",
+   "match_016.jpg": "**球**。约 (1015,392)，守门员脚边，直径约 10px，t+0->t+4 独立滚动。",
+   "match_020.jpg": "len=1，M1 直接 FAIL。框在赤队球员白色球鞋上（该帧镜头大幅运动、画面糊，没有形成长轨迹）。",
+   "match_024.jpg": "白鞋。红队球员脚边，随步伐移动。",
+   "match_028.jpg": "白鞋/护腿。框在赤队球员小腿外侧的白袜上，与腿同步。",
+   "match_032.jpg": "unsure。框在赤队球员白色球鞋尖端，10x 双帧看与脚同步移动（球不会这样），但同帧确实还有一颗球在附近，无法 100% 排除。记为 unsure，不计命中。",
+   "match_036.jpg": "unsure。同上，框在赤队球员白鞋上，与脚同步。不计命中。",
+   "match_040.jpg": "摄像师/广告牌。len=37 但 mean_step=0.1px/帧（完全静止），框在边线外摄像师的三脚架底座和蓝色广告牌交界处。"
+  },
+  "hit": {
+   "match_004.jpg": true,
+   "match_008.jpg": false,
+   "match_012.jpg": false,
+   "match_016.jpg": true,
+   "match_020.jpg": false,
+   "match_024.jpg": false,
+   "match_028.jpg": false,
+   "match_032.jpg": "unsure",
+   "match_036.jpg": "unsure",
+   "match_040.jpg": false
+  },
+  "n_hit": 2,
+  "n_unsure": 2,
+  "n_total": 10,
+  "min_required": 5,
+  "note_priority": "human_review 能否决 M1；结论由它决定。",
+  "note_unsure": "unsure 按未命中计；把 unsure 全算命中也只有 4/10。"
  },
  "notes": [
-  "MANIFEST 的 t_approx_s 有系统性漂移，实测 offset 从 -1.84 s (t=1251) 线性走到 +0.84 s (t=7173)，斜率约 +0.45 ms/s，等价于整段视频真实帧率约 25.011 而不是 25.000。所以每帧都必须用画面匹配重定位，不能直接信 t_approx_s。",
-  "重定位后用 6.4 位小数比对的 MAE 是 1.28~1.93 灰阶，说明匹配可靠（最坏帧 MAE>90）。",
-  "片段第一次抽帧可能把 ±2 s 窗口切在片段边缘（因为漂移），所以定位完会再以实测帧为中心抽第二次，否则前后帧数不对称。"
+  "MANIFEST 的 t_approx_s 有系统性漂移，实测 offset 从 -1.84 s (t=1251) 线性走到 +1.16 s (t=7839)，斜率约 +0.45 ms/s，等价于整段视频真实帧率约 25.011 而不是 25.000。所以每帧都必须用画面匹配重定位，不能直接信 t_approx_s。",
+  "重定位后用灰度 MAE 比对，10 帧的 MAE 是 1.28~2.17，匹配可靠。",
+  "片段第一次抽帧可能把 ±2 s 窗口切在片段边缘（因为漂移），所以定位完会再以实测帧为中心抽第二次，否则前后帧数不对称（修复后 10/10 都是 idx=65/130、±2s=101 帧）。",
+  "调参史（三轮，每轮都被下一轮证伪，留着是因为它说明了失败到底在哪一层）：① 按「链最长」挑 ⇒ 永远挑中 101 帧都在的静止白块，真球 0/10——看上去像特征不行，其实是挑法把球排除了；② 改按 DP 累计 val 挑 ⇒ match_004 挑中真球，但水印/广告靠活得久仍然赢；③ 定稿「够长里取 mean_score」+ 评分项封顶 1.5 ⇒ 不再被深色背景上的白字（环对比度可达 150）压死。",
+  "评分项**刻意不封到 1.0**：全 clip 会让一堆候选并列 1.000，DP 只能靠链长破并列，排序等于失效（踩过）。封到 1.5 是「压住水印但不制造并列」的折中。",
+  "草先验的环半径取 6~11 px：球直径只有 ~8 px，环必须紧贴球外侧才能区分「球躺在草坪上」和「白块长在球员/广告牌里」。真球实测 0.84/1.00，假阳性 0.00~0.44，阈值取 0.70。",
+  "frames_test 的 JPEG 是 640x360，而候选/轨迹坐标是 1280x720 空间——直接在 640x360 上量草环会得到 nan（踩过），必须先放大到 1280x720 再量。",
+  "试过但失败的想法（留档，免得后面有人重做）：把草环按「上/下/左/右」分象限，想用「球四周都是草、鞋上方是腿」区分白鞋与球。实测无判别力：真球 match_004 的 up=0.72/left=0.66 与白鞋 match_032 的 up=0.70/left=0.68 几乎一样——因为真球就躺在球员脚边，上方也是腿。所以 match_032/036 只能记 unsure。"
  ]
 }

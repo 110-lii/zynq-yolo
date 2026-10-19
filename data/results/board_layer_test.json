@@ -1,0 +1,235 @@
+{
+  "bitfile": "board/overlay/conv_engine.bit",
+  "bitfile_present": false,
+  "cases": [],
+  "cases_fail": 0,
+  "cases_ok": 0,
+  "elapsed_ns": null,
+  "generated_by": "PC side (Windows build host), not by a board run",
+  "generated_utc": "2026-10-19T14:37:56Z",
+  "gops": null,
+  "hwh_path": "board/overlay/conv_engine.hwh",
+  "hwh_present": true,
+  "next_steps": [
+    "Wait for board/overlay/conv_engine.bit (Vivado run in progress).",
+    "Copy src/ps, data/layers/cases and board/overlay to the board.",
+    "Run: sudo python3 src/ps/host/run_layer_test.py --repeat 3",
+    "Commit the overwritten data/results/board_layer_test.json and quote the BOARD_LAYER_OK token in the report."
+  ],
+  "notes": [
+    "NO board run happened. This file records the attempt state, not a result.",
+    "board/overlay/conv_engine.bit did not exist at 2026-10-19T14:37:56Z (only conv_engine.hwh was present, 285782 bytes).",
+    "The build host is Windows with no Zynq board, no /dev/mem and no PYNQ, so run_layer_test.py cannot execute here.",
+    "elapsed_ns and gops are null on purpose: nothing was measured. Do not fill in estimates, and do not reuse numbers from other engines (the 15.30 GOPS probe figure does not apply to conv_engine).",
+    "A real board run overwrites this file; its last stdout line is BOARD_LAYER_OK <case> <elapsed_ns> <gops> or BOARD_LAYER_FAIL <reason>.",
+    "A real run must do: load conv_engine.bit, write 11 scalar regs + 5 pointer regs, write AP_CTRL=0x01, poll ap_done, invalidate the out buffer, compare byte-for-byte with out_ref.bin."
+  ],
+  "pc_side_checks": {
+    "comparator": {
+      "mutated_byte_detected": true,
+      "reports_first_index_and_both_values": true,
+      "self_compare_bad": 0
+    },
+    "meta_and_case_parsing": {
+      "all_file_sizes_match_meta": true,
+      "cases_found": 6,
+      "per_case": [
+        {
+          "case": "k1s1_smallw",
+          "in": [
+            32,
+            10,
+            10
+          ],
+          "macs": 51200,
+          "mutated_compare_bad": 1,
+          "mutated_first_index": [
+            15,
+            9,
+            9
+          ],
+          "out": [
+            16,
+            10,
+            10
+          ],
+          "ref_bytes": 1600,
+          "self_compare_bad": 0,
+          "w": [
+            16,
+            32,
+            1,
+            1
+          ]
+        },
+        {
+          "case": "k1s1_tailcout",
+          "in": [
+            64,
+            20,
+            20
+          ],
+          "macs": 512000,
+          "mutated_compare_bad": 1,
+          "mutated_first_index": [
+            19,
+            19,
+            19
+          ],
+          "out": [
+            20,
+            20,
+            20
+          ],
+          "ref_bytes": 8000,
+          "self_compare_bad": 0,
+          "w": [
+            20,
+            64,
+            1,
+            1
+          ]
+        },
+        {
+          "case": "k3s1_c3_40",
+          "in": [
+            3,
+            40,
+            40
+          ],
+          "macs": 691200,
+          "mutated_compare_bad": 1,
+          "mutated_first_index": [
+            15,
+            39,
+            39
+          ],
+          "out": [
+            16,
+            40,
+            40
+          ],
+          "ref_bytes": 25600,
+          "self_compare_bad": 0,
+          "w": [
+            16,
+            3,
+            3,
+            3
+          ]
+        },
+        {
+          "case": "k3s1_cin512",
+          "in": [
+            512,
+            10,
+            10
+          ],
+          "macs": 7372800,
+          "mutated_compare_bad": 1,
+          "mutated_first_index": [
+            15,
+            9,
+            9
+          ],
+          "out": [
+            16,
+            10,
+            10
+          ],
+          "ref_bytes": 1600,
+          "self_compare_bad": 0,
+          "w": [
+            16,
+            512,
+            3,
+            3
+          ]
+        },
+        {
+          "case": "k3s1_pad0",
+          "in": [
+            16,
+            20,
+            20
+          ],
+          "macs": 746496,
+          "mutated_compare_bad": 1,
+          "mutated_first_index": [
+            15,
+            17,
+            17
+          ],
+          "out": [
+            16,
+            18,
+            18
+          ],
+          "ref_bytes": 5184,
+          "self_compare_bad": 0,
+          "w": [
+            16,
+            16,
+            3,
+            3
+          ]
+        },
+        {
+          "case": "k3s2_c16_40",
+          "in": [
+            16,
+            40,
+            40
+          ],
+          "macs": 1843200,
+          "mutated_compare_bad": 1,
+          "mutated_first_index": [
+            31,
+            19,
+            19
+          ],
+          "out": [
+            32,
+            20,
+            20
+          ],
+          "ref_bytes": 12800,
+          "self_compare_bad": 0,
+          "w": [
+            32,
+            16,
+            3,
+            3
+          ]
+        }
+      ]
+    },
+    "note": "Executed on the Windows PC. These validate parsing/compare logic and the register protocol against a fake Overlay + fake MMIO. They are NOT board measurements and do not prove the IP works.",
+    "register_protocol_sim": {
+      "ap_ctrl_start_value": "0x01",
+      "get_out_invalidates_before_copy": true,
+      "missing_window_refused": true,
+      "non_idle_start_refused": true,
+      "pointer_regs_written": [
+        "0x10",
+        "0x14",
+        "0x1c",
+        "0x20",
+        "0x28",
+        "0x2c",
+        "0x34",
+        "0x38",
+        "0x40",
+        "0x44"
+      ],
+      "pointer_split_64bit_low_high": true,
+      "scalar_regs_written": 11,
+      "window_lookup_by_mem_id": "conv_engine_0/s_axi_control + conv_engine_0/s_axi_control_r"
+    }
+  },
+  "reason": "not_on_board",
+  "repo_root": "D:\\zynq-yolo",
+  "status": "BOARD_LAYER_FAIL",
+  "tool": "src/ps/host/run_layer_test.py",
+  "verified_on_board": false
+}

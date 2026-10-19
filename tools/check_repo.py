@@ -1,0 +1,299 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""tools/check_repo.py -- D:\\zynq-yolo 仓库自检（纯标准库，无第三方依赖）。
+
+用法::
+
+    python tools/check_repo.py            # 自动定位仓库根（本脚本的上一级目录）
+    python tools/check_repo.py <repo>     # 指定仓库根
+
+退出码：0 = 没有 FAIL；1 = 有 FAIL。
+（承 docs/repo_spec.md §5：**不要用退出码判断成功**，以末行日志令牌为准。）
+
+日志令牌（承 §5 纪律）::
+
+    SUMMARY: X PASS / Y FAIL / Z WARN     # 汇总行，总是打印
+    末行 CHECK_REPO_OK                    # 无 FAIL 且无 WARN
+    末行 CHECK_REPO_WARN                  # 无 FAIL 但有 WARN
+    末行 CHECK_REPO_FAIL                  # 有 FAIL
+
+实现的 5 项检查（承 docs/repo_spec.md §1/§2 与指南 3.3.5.4/3.3.5.5）::
+
+    a) 命名规则   : 遍历仓库（剪掉 .git/.research/ref/build/reports/board/logs 与
+                    .venv/__pycache__），目录名/文件名含非 [A-Za-z0-9_.-] 字符 => FAIL
+    b) 必需路径   : src sim build board data skill report docs ai tools
+                    与根 README.md / LICENSE / .gitignore，缺一 => FAIL
+    c) 目录 README: 上述每个目录必须有 README.md，缺一 => FAIL
+    d) 禁入文件   : *.jou *.str / .Xil 目录 / __pycache__ 目录 / vivado*.log /
+                    根目录 build*.log，命中 => FAIL
+    e) 权重一致性 : report/README.md 必须含指南 3.3.5.5 的 30/20/20/15/15，缺 => WARN（不 FAIL）
+
+设计约束：仓库尚未填满时必须**正常运行**，对缺失项报 FAIL 而不是崩溃。
+"""
+
+import os
+import re
+import sys
+from pathlib import Path
+
+# ---------------------------------------------------------------- 常量（规则真源）
+
+# b) 必需目录（相对仓库根，POSIX 风格）
+REQUIRED_DIRS = [
+    "src", "sim", "build", "board", "data",
+    "skill", "report", "docs", "ai", "tools",
+]
+
+# b) 必需根文件
+REQUIRED_ROOT_FILES = ["README.md", "LICENSE", ".gitignore"]
+
+# a) 命名检查遍历时必须整棵剪掉的目录（相对仓库根）
+SCAN_SKIP_PATHS = {
+    ".git",
+    ".research",
+    "ref",
+    "build/reports",
+    "board/logs",
+}
+
+# a) 命名检查按名字剪掉（出现在任意层级都不扫）
+SCAN_SKIP_NAMES = {".venv", "__pycache__"}
+
+# a) 允许的字符集：纯 ASCII 字母/数字/下划线/连字符/点
+NAME_ALLOWED = re.compile(r"^[A-Za-z0-9_.-]+$")
+
+# d) 禁入文件
+FORBIDDEN_DIR_NAMES = {".Xil", "__pycache__"}
+FORBIDDEN_SUFFIXES = (".jou", ".str")
+
+# e) 指南 3.3.5.5 权重：token -> 至少出现的次数
+REQUIRED_WEIGHTS = {"30": 1, "20": 2, "15": 2}
+WEIGHT_FILE = "report/README.md"
+
+PASS, FAIL, WARN = "PASS", "FAIL", "WARN"
+
+
+# ---------------------------------------------------------------- 工具
+
+def force_utf8_stdout():
+    """Windows 控制台默认可能不是 UTF-8；失败也不能让脚本崩掉。"""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
+def walk(root, skip_paths=frozenset(), skip_names=frozenset(), skip_git=True):
+    """受控遍历：返回 (rel_dir, dirnames, filenames) 的迭代，并按需剪枝。
+
+    rel_dir 为 POSIX 风格相对路径（仓库根为 "."）。
+    剪枝失败的目录被静默跳过，绝不抛出（权限/竞态都不能让自检崩掉）。
+    """
+    def onerror(_err):
+        return  # 忽略无法进入的目录
+
+    for dirpath, dirnames, filenames in os.walk(str(root), topdown=True, onerror=onerror):
+        base = Path(dirpath)
+        try:
+            rel = base.relative_to(root).as_posix()
+        except ValueError:
+            rel = "."
+        keep = []
+        for name in sorted(dirnames):
+            rel_child = name if rel == "." else rel + "/" + name
+            if skip_git and name == ".git":
+                continue
+            if name in skip_names:
+                continue
+            if rel_child in skip_paths:
+                continue
+            keep.append(name)
+        # 先交出本层快照（副本），再就地剪枝，避免调用方看到被删减后的列表
+        yield rel, list(dirnames), list(filenames), keep
+        dirnames[:] = keep
+
+
+def count_token(text, token):
+    """统计 token 作为独立数字出现的次数（避免 2026 里的 20 被误计）。"""
+    return len(re.findall(r"(?<![0-9])" + re.escape(token) + r"(?![0-9])", text))
+
+
+def read_text(path):
+    """尽力读取文本；读不了返回 None（不抛异常）。"""
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------- 检查项
+
+def check_a_naming(root):
+    """a) 目录名/文件名必须纯 ASCII：[A-Za-z0-9_.-]。"""
+    bad = []
+    for rel, _dirnames, filenames, _keep in walk(
+        root, skip_paths=SCAN_SKIP_PATHS, skip_names=SCAN_SKIP_NAMES
+    ):
+        prefix = "" if rel == "." else rel + "/"
+        # 目录名：keep 是尚未剪枝的子目录（含被跳过的），需重新枚举原始 dirnames
+        for name in sorted(_dirnames):
+            rel_child = name if rel == "." else rel + "/" + name
+            if name == ".git" or name in SCAN_SKIP_NAMES or rel_child in SCAN_SKIP_PATHS:
+                continue
+            if not NAME_ALLOWED.match(name):
+                bad.append(prefix + name + "/")
+        for name in sorted(filenames):
+            if not NAME_ALLOWED.match(name):
+                bad.append(prefix + name)
+    bad = sorted(set(bad))
+    if not bad:
+        return PASS, "命名规则：未发现中文/空格/特殊字符的目录名或文件名", []
+    detail = ["发现 %d 处违规命名（只允许 [A-Za-z0-9_.-]）:" % len(bad)]
+    detail += ["    - " + item for item in bad]
+    return FAIL, "命名规则：发现 %d 处非 ASCII / 特殊字符命名" % len(bad), detail
+
+
+def check_b_required_paths(root):
+    """b) 必需目录与必需根文件必须存在。"""
+    missing = []
+    for name in REQUIRED_DIRS:
+        if not (root / name).is_dir():
+            missing.append("缺目录: %s/" % name)
+    for name in REQUIRED_ROOT_FILES:
+        if not (root / name).is_file():
+            missing.append("缺根文件: %s" % name)
+    if not missing:
+        return PASS, "必需路径：%d 个目录 + %d 个根文件齐全" % (
+            len(REQUIRED_DIRS), len(REQUIRED_ROOT_FILES)), []
+    return FAIL, "必需路径：缺 %d 项" % len(missing), missing
+
+
+def check_c_dir_readmes(root):
+    """c) 每个必需目录必须有 README.md。"""
+    missing = []
+    for name in REQUIRED_DIRS:
+        target = root / name
+        if not target.is_dir():
+            missing.append("%s/ 目录不存在，无法检查 README.md" % name)
+        elif not (target / "README.md").is_file():
+            missing.append("缺 README.md: %s/README.md" % name)
+    if not missing:
+        return PASS, "目录 README：%d 个必需目录均有 README.md" % len(REQUIRED_DIRS), []
+    return FAIL, "目录 README：缺 %d 份" % len(missing), missing
+
+
+def check_d_forbidden(root):
+    """d) 仓库内不得有 .jou/.str/.Xil/__pycache__/vivado*.log/根 build*.log。"""
+    hits = []
+    for rel, _dirnames, filenames, _keep in walk(root):
+        prefix = "" if rel == "." else rel + "/"
+        for name in sorted(_dirnames):
+            if name in FORBIDDEN_DIR_NAMES:
+                hits.append("禁入目录: %s%s/" % (prefix, name))
+        for name in sorted(filenames):
+            low = name.lower()
+            if low.endswith(FORBIDDEN_SUFFIXES):
+                hits.append("禁入文件: %s%s" % (prefix, name))
+            elif low.startswith("vivado") and low.endswith(".log"):
+                hits.append("禁入日志: %s%s" % (prefix, name))
+            elif rel == "." and low.startswith("build") and low.endswith(".log"):
+                hits.append("禁入根日志: %s%s" % (prefix, name))
+    hits = sorted(set(hits))
+    if not hits:
+        return PASS, "禁入文件：未发现 .jou/.str/.Xil/__pycache__/vivado*.log/根 build*.log", []
+    detail = ["命中 %d 处禁入项（应被 .gitignore 排除或删除）:" % len(hits)]
+    detail += ["    - " + item for item in hits]
+    return FAIL, "禁入文件：命中 %d 处" % len(hits), detail
+
+
+def check_e_weights(root):
+    """e) report/README.md 必须含指南 3.3.5.5 的 30/20/20/15/15（缺 => WARN）。"""
+    target = root / WEIGHT_FILE
+    if not target.is_file():
+        return WARN, "权重表：%s 不存在，无法核对（指南 3.3.5.5）" % WEIGHT_FILE, []
+    text = read_text(target)
+    if text is None:
+        return WARN, "权重表：%s 读取失败，无法核对" % WEIGHT_FILE, []
+    missing = []
+    for token, need in sorted(REQUIRED_WEIGHTS.items(), key=lambda kv: int(kv[0]), reverse=True):
+        have = count_token(text, token)
+        if have < need:
+            missing.append("缺权重 %s（需要 >= %d 次，实际 %d 次）" % (token, need, have))
+    if not missing:
+        return PASS, "权重表：%s 含 30/20/20/15/15 五项权重（指南 3.3.5.5）" % WEIGHT_FILE, []
+    return WARN, "权重表：%s 权重不全（%d 项缺失）" % (WEIGHT_FILE, len(missing)), missing
+
+
+CHECKS = [
+    ("a", "命名规则（纯 ASCII: [A-Za-z0-9_.-]）", check_a_naming),
+    ("b", "必需目录 / 必需根文件存在", check_b_required_paths),
+    ("c", "每个必需目录有 README.md", check_c_dir_readmes),
+    ("d", "无禁入文件（.jou/.str/.Xil/__pycache__/vivado*.log/build*.log）", check_d_forbidden),
+    ("e", "指南 3.3.5.5 权重一致性（report/README.md）", check_e_weights),
+]
+
+
+# ---------------------------------------------------------------- 主流程
+
+def main(argv):
+    force_utf8_stdout()
+
+    if len(argv) > 1:
+        root = Path(argv[1]).expanduser().resolve()
+    else:
+        root = Path(__file__).resolve().parent.parent
+
+    print("check_repo.py -- 仓库自检（纯标准库）")
+    print("仓库根: %s" % root)
+    print("规则真源: docs/repo_spec.md §1/§2（命名与职责）、指南 3.3.5.3/3.3.5.4/3.3.5.5")
+
+    if not root.is_dir():
+        print("")
+        print("FAIL <仓库根不存在>")
+        print("    - 传入的路径不是目录: %s" % root)
+        print("")
+        print("SUMMARY: 0 PASS / 1 FAIL / 0 WARN")
+        print("CHECK_REPO_FAIL")
+        return 1
+
+    n_pass = n_fail = n_warn = 0
+    for tag, title, func in CHECKS:
+        print("")
+        print("== check %s) %s ==" % (tag, title))
+        try:
+            status, message, details = func(root)
+        except Exception as exc:  # 任何意外都降级为 FAIL，绝不让自检崩溃
+            status, message, details = FAIL, "检查自身异常: %s: %s" % (type(exc).__name__, exc), []
+        print("%s %s" % (status, message))
+        for line in details:
+            print(line)
+        if status == PASS:
+            n_pass += 1
+        elif status == FAIL:
+            n_fail += 1
+        else:
+            n_warn += 1
+
+    print("")
+    print("SUMMARY: %d PASS / %d FAIL / %d WARN" % (n_pass, n_fail, n_warn))
+    if n_fail:
+        print("CHECK_REPO_FAIL")
+        return 1
+    if n_warn:
+        print("CHECK_REPO_WARN")
+        return 0
+    print("CHECK_REPO_OK")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv))
+    except SystemExit:
+        raise
+    except Exception as exc:  # 兜底：任何异常都必须留下可判读的令牌
+        print("FAIL <check_repo.py 未捕获异常>: %s: %s" % (type(exc).__name__, exc))
+        print("SUMMARY: 0 PASS / 1 FAIL / 0 WARN")
+        print("CHECK_REPO_FAIL")
+        sys.exit(1)

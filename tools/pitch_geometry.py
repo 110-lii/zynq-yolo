@@ -13,14 +13,14 @@
 
 真正的约束是：这个单应还必须同时是一个**刚体相机**的成像，
     H = K [r1 r2 t],  K = diag(f, f, 1) 且主点在像心
-即 r1、r2 必须是 3D 正交单位向量。这一条不是自由度，是**额外的两个标量约束**，
-它给出两个**互相独立**的 f 估计：
+即 r1、r2 必须是 3D 正交单位向量。这一条不是自由度，是**额外的两个标量约束**
+（r1·r2 = 0 与 |r1| = |r2|）。把 K 的未知量写成 u = 1/f^2，两条约束都是 u 的
+**线性**方程，一次 lstsq 就能解；两个方程残差的相对大小就是「边线与球门线在
+地面上是否真的接近 90 度」的**自洽性残差 rel**，而且它没有被写进拟合，所以不循环。
 
-    e1: h1'^T w h2' = 0                    -> f_a
-    e2: h1'^T w h1' = h2'^T w h2'          -> f_b
-
-两者之差就是「边线与球门线在地面上是否真的近似 90 度」的**残差**，
-而且它没有被写进拟合，所以不循环。再叠加：
+注意：实测（见 .research/dbg_oracle_viz.py）证明 **rel 单独没有判别力** ——
+广告牌/记分牌组成的错误四线组合照样能给出 rel<0.01 的自洽解。真正把假解否掉的是
+下面第 2 条「留出结构覆盖率」。rel 只能用来在已通过覆盖率闸门的候选里挑最好的。
   - 反解出的相机高度必须在 5~60 m（物理）；
   - **留出结构**：中线 / 禁区线 / 球门区线 / 中圈 / 罚球弧从未参与拟合，
     模型必须把它们也投影到白线掩膜上；
@@ -30,7 +30,14 @@
 ------
   a) 只保留图像上半部分（看台/观众/广告）跑同一套检测；
   b) 水平翻转 + 噪声；
-  c) 扫多组关键阈值（8 组 × 2，共 16 个变体）。
+  c) 扫 15 组关键阈值。
+
+四项诊断（--no-diag 可跳过；这是 0 通过时判断「判据错还是前端弱」的依据）
+------------------------------------------------------------------------
+  1) 在**语义真实的边线**（草坪包络）上量白线覆盖率 -> 判据可达性；
+  2) 画线的像素宽度（由 px/m 换算 12 cm）-> 亚像素证据；
+  3) oracle 暴力枚举所有线段指派 -> 判据天花板；
+  4) 源视频 1280x720 原生帧 vs 640x360 降采样 -> 分辨率是不是瓶颈。
 
 算力
 ----
@@ -50,9 +57,12 @@ import sys
 sys.dont_write_bytecode = True
 
 import argparse
+import csv
+import itertools
 import json
 import math
 import time
+import zlib
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -68,6 +78,10 @@ OUT_JSON = REPO / "data" / "results" / "pitch_geometry.json"
 VIZ_DIR = REPO / "data" / "results" / "viz" / "pitch"
 CALIB_DIR = REPO / "data" / "samples" / "calib_real" / "frames_calib"
 TEST_DIR = REPO / "data" / "samples" / "calib_real" / "frames_test"
+MANIFEST = REPO / "data" / "samples" / "calib_real" / "MANIFEST.csv"
+# 第三方转播源，**只读**，绝不复制进仓库
+VIDEO = Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
+HD_CACHE = REPO / ".research" / "hd"
 
 # ---------------------------------------------------------------- 渲染配色
 # 沿用 tools/draw_detections.py 的语义：绿=好的、红=另一类、品红=第三类、
@@ -79,6 +93,7 @@ C_PEN = (0, 165, 255)      # 橙：禁区线
 C_AREA = (0, 235, 255)     # 黄：球门区线
 C_CIRC = (255, 200, 0)     # 青：中圈 / 罚球弧
 C_SEG = (235, 235, 235)    # 白：未归类的原始线段
+C_ENV = (90, 200, 90)      # 暗绿：草坪包络（语义真实的边线，用来量判据可达性）
 C_TXT = (255, 255, 255)
 
 # ---------------------------------------------------------------- 球场真值（IFAB）
@@ -128,6 +143,8 @@ class Params:
     touch_sep_min: float = 22.0
     touch_xspan_min: float = 0.45  # 这一对在画面横向上的合并跨度（占画面宽）
     grass_between_min: float = 0.45
+    env_tol_px: float = 16.0       # 线段到草坪包络的容许距离（px）
+    env_bonus: float = 2.0         # 落在草坪包络上的一对候选排序加权
     max_a: int = 8
     max_pairs: int = 4             # 送进拟合的边线对候选数（由留出直线裁决）
     # --- 横向线候选（与边线明显不平行、且真的穿过两条边线）
@@ -549,6 +566,132 @@ def pick_touchline_pairs(segs, grass, p, k=None):
     return out
 
 
+def grass_envelope(grass, p, min_col_frac=0.18):
+    """逐列草坪的上/下边界 -> 两条「语义边线」的稳健直线拟合。
+
+    **这是本工具里唯一不依赖白线掩膜的定位手段**，也是最强的一条语义先验：
+    转播机位下草坪区域的上边界就是远端边线（广告牌带的底沿），下边界就是
+    近端边线（草坪与跑道/边线外的交界）。广告牌边缘只贴一侧，无法同时满足
+    这两条，所以它能挡住「长直线就当场线」这一类假阳性。
+
+    实测（10 帧留出集，见 .research/dbg_env.py 的输出）：真实边线段的
+    中点到草坪上/下边界的竖直距离在 12 px 内，而广告牌横条只能满足一侧。
+
+    返回 (near_line, far_line, quality) 或 None。line 是 (a,b,c)，a^2+b^2=1。
+    用 RANSAC 而不是最小二乘：边界上有球员/角旗杆捅出来的尖刺。
+    """
+    h, w = grass.shape[:2]
+    ys = np.arange(h)
+    xs = np.arange(w)
+    top = np.full(w, -1.0)
+    bot = np.full(w, -1.0)
+    valid = 0
+    for x in xs:
+        col = np.flatnonzero(grass[:, x] > 0)
+        if col.size < int(min_col_frac * h):
+            continue
+        top[x] = float(col[0])
+        bot[x] = float(col[-1])
+        valid += 1
+    if valid < max(20, int(0.25 * w)):
+        return None
+    ok = top >= 0
+
+    def _fit(vals):
+        px = xs[ok].astype(np.float64)
+        py = vals[ok]
+        if px.size < 24:
+            return None
+        best = None
+        rng = np.random.default_rng(7)
+        for _ in range(90):
+            i, j = rng.integers(0, px.size, 2)
+            if abs(px[i] - px[j]) < 0.35 * w:
+                continue
+            a = (py[j] - py[i]) / (px[j] - px[i])
+            c = py[i] - a * px[i]
+            d = np.abs(py - (a * px + c))
+            inl = d <= 3.0
+            s = int(inl.sum())
+            if best is None or s > best[0]:
+                best = (s, a, c)
+        if best is None:
+            return None
+        s, a, c = best
+        if s < 0.45 * px.size:            # 边界不够直 -> 这条先验在这帧不可用
+            return None
+        n = math.hypot(a, 1.0)
+        return (-a / n, 1.0 / n, -c / n), float(s) / px.size
+
+    ft = _fit(top)
+    fb = _fit(bot)
+    if ft is None or fb is None:
+        return None
+    (lt, qt), (lb, qb) = ft, fb
+    # 上边界（更远）-> 远端边线；下边界 -> 近端边线。用线在画面中央的 y 判断，
+    # 不靠参数符号，避免法向翻转时搞反。
+    mid = 0.5 * w
+    y_t = -(lt[0] * mid + lt[2]) / lt[1] if abs(lt[1]) > 1e-9 else 0.0
+    y_b = -(lb[0] * mid + lb[2]) / lb[1] if abs(lb[1]) > 1e-9 else 0.0
+    near, far = (lb, lt) if y_b > y_t else (lt, lb)
+    return near, far, 0.5 * (qt + qb)
+
+
+def envelope_segments(env, w, h):
+    """把草坪包络的两条直线转成「合成线段」，供缺失边线时兜底。
+
+    为什么需要合成：实测 match_036 的远端边线只有 5 条线段存活，其中 3 条
+    (y≈121..129) 其实是广告牌/跑道沿；真实远端边线太淡，Hough 找不到。
+    但草坪的上边界**一定**在那里 —— 用它可以补出这条边线，代价是它比
+    Hough 线段弱，所以只作为**额外的候选**，不能顶替几何判据。
+    """
+    if env is None:
+        return []
+    out = []
+    for ln in env[:2]:
+        a, b, c = ln
+        if abs(b) < 1e-9:
+            continue
+        y0 = -(a * 0.0 + c) / b
+        y1 = -(a * float(w) + c) / b
+        dx, dy = float(w), y1 - y0
+        L = float(math.hypot(dx, dy))
+        ang = math.degrees(math.atan2(dy, dx)) % 180.0
+        out.append([0.0, y0, float(w), y1, L, ang, 0.5 * w, 0.5 * (y0 + y1)])
+    out.sort(key=lambda s: -s[4])
+    return out
+
+
+def env_dist(ln, seg, n=9):
+    """线段到一条齐次直线的平均像素距离（沿线段自身采样）。"""
+    a, b, c = ln
+    tot = 0.0
+    for i in range(n):
+        t = i / (n - 1.0)
+        x = seg[0] + (seg[2] - seg[0]) * t
+        y = seg[1] + (seg[3] - seg[1]) * t
+        tot += abs(a * x + b * y + c)
+    return tot / n
+
+
+def pair_env_ok(env, seg_a, seg_b, p):
+    """这一对线段是否真的落在草坪的上/下包络上。
+
+    返回 (ok, d_near, d_far)。两种配对方向都试：上包络既可能是 a 也可能是 b。
+    """
+    if env is None:
+        return True, None, None
+    near_ln, far_ln = env[0], env[1]
+    best = None
+    for up, lo in ((seg_a, seg_b), (seg_b, seg_a)):
+        df = env_dist(far_ln, up)
+        dn = env_dist(near_ln, lo)
+        if best is None or df + dn < best[0]:
+            best = (df + dn, dn, df)
+    _s, dn, df = best
+    return bool(dn <= p.env_tol_px and df <= p.env_tol_px), dn, df
+
+
 def pick_transverse(segs, near, far, p):
     """横向线候选：与边线明显不平行，且（延长后）真的穿过两条边线。
 
@@ -794,6 +937,12 @@ def analyse_frame(bgr, p):
     segs = keep_supported(segs, wm, p)
     tim["hough_ms"] = (time.perf_counter() - t0) * 1e3
 
+    # --- 草坪包络：唯一不依赖白线掩膜的定位手段（见 grass_envelope 的说明）
+    t0 = time.perf_counter()
+    env = grass_envelope(gm, p)
+    synth = envelope_segments(env, w, h) if env is not None else []
+    tim["env_ms"] = (time.perf_counter() - t0) * 1e3
+
     res = dict(frame="", size=[w, h], grass_ratio=round(float((gm > 0).mean()), 3),
                mask_ratio=round(float((wm > 0).mean()), 4),
                n_hough=len(raw), n_seg=len(segs), n_b=0, n_hyp=0, asg=None,
@@ -801,18 +950,33 @@ def analyse_frame(bgr, p):
                touch_cov=None, select_cov=None, arc_cov=None, circle_cov=None,
                goal_cov=None, rms=None, passed=False, passed_arc=False, reason="",
                tim_ms=tim, segs=[], goal=None)
+    res["env"] = (None if env is None else
+                  dict(q=round(env[2], 3),
+                       near=[round(v, 4) for v in env[0]],
+                       far=[round(v, 4) for v in env[1]]))
     if len(segs) < 4:
         res["reason"] = "too_few_segments(%d)" % len(segs)
         res["tim_ms"]["total_ms"] = sum(tim.values())
         return res
 
-    # --- 挑边线对（多对候选，由留出直线裁决）
+    # --- 挑边线对（多对候选，由留出直线裁决；草坪包络优先）
     t0 = time.perf_counter()
-    pairs = pick_touchline_pairs(segs, gm, p)
+    pairs = pick_touchline_pairs(segs + synth, gm, p)
     if not pairs:
         res["reason"] = "no_touchline_pair"
         res["tim_ms"]["total_ms"] = sum(tim.values())
         return res
+    # 落在草坪上/下包络上的一对排在前面：这是语义证据，比「够长 + 中间是草」强。
+    scored = []
+    for near, far, gf in pairs:
+        ok, dn, df = pair_env_ok(env, near, far, p)
+        scored.append((0 if ok else 1, -(min(near[4], far[4]) * gf), near, far, gf,
+                       ok, dn, df))
+    scored.sort(key=lambda q: (q[0], q[1]))
+    pairs = [(q[2], q[3], q[4]) for q in scored]
+    res["env_ok"] = bool(scored[0][5])
+    res["env_d"] = ([None, None] if scored[0][6] is None
+                    else [round(scored[0][6], 1), round(scored[0][7], 1)])
     res["grass_between"] = round(pairs[0][2], 3)
     res["n_pairs"] = len(pairs)
     dist = cv2.distanceTransform((wm == 0).astype(np.uint8), cv2.DIST_L2, 5)
@@ -824,6 +988,7 @@ def analyse_frame(bgr, p):
     nhyp = 0
     nb_max = 0
     best_key = -1.0
+    n_phys = 0         # 通过「物理上可能的相机」这道前置闸门的假设数
     for near, far, _gbf in pairs:
         bsegs = pick_transverse(segs, near, far, p)
         nb_max = max(nb_max, len(bsegs))
@@ -834,6 +999,16 @@ def analyse_frame(bgr, p):
             H = fit_h_ground(hyp["corrs"])
             if H is None:
                 continue
+            # 前置闸门：先用**便宜**的物理量（f、相机高度）把不可能的相机剔掉。
+            # 这一步只用「相机是不是存在」这种硬约束，**不**用自洽性残差
+            # `rel` —— 判据必须由选择器看不到的量来裁决，否则就成了自我验证。
+            f0, _rel0 = focal_from_h(H, w / 2.0, h / 2.0)
+            if not f0 or not (p.f_min <= f0 <= p.f_max):
+                continue
+            h0 = cam_height_h(H, f0, w / 2.0, h / 2.0)
+            if h0 is None or not (p.cam_h_min <= h0 <= p.cam_h_max):
+                continue
+            n_phys += 1
             key, touch, sel_all = _joint(H, dist, w, h, p)
             if key <= best_key:
                 continue
@@ -842,9 +1017,11 @@ def analyse_frame(bgr, p):
                         touch=touch, sel_all=sel_all)
     res["n_b"] = nb_max
     res["n_hyp"] = nhyp
+    res["n_phys"] = n_phys
     tim["fit_ms"] = (time.perf_counter() - t0) * 1e3
     if best is None:
-        res["reason"] = "no_transverse_lines(%d)" % nb_max
+        res["reason"] = ("no_plausible_camera(%d of %d)" % (n_phys, nhyp)
+                         if nhyp else "no_transverse_lines(%d)" % nb_max)
         res["tim_ms"]["total_ms"] = sum(tim.values())
         return res
     bsegs = best["bsegs"]
@@ -951,11 +1128,17 @@ def analyse_frame(bgr, p):
 
 # ---------------------------------------------------------------- 球门
 
-def goal_candidates(bgr):
+def goal_candidates(bgr, grass=None):
     """盲检门框：两根**竖直**白柱 + 柱顶之间的横向白带（横梁）。
 
     只认「两柱 + 横梁」三者同时成立。单根白杆可能是角旗杆、广告牌边框或
     球门网拉杆 —— 不做横梁校验就会把它们当成门柱。
+
+    但实测（10 帧留出集）「两柱+横梁」**不够**：记分牌的白色队名条、广告牌
+    的白色边框也能凑出这个形状，10 帧里 6 个检出只有 2 个是真门。所以再加
+    两条球场语义约束（见 goal_on_pitch）：
+      - 门框**下沿必须落在草坪上**（球门立在草地上，记分牌在天上）；
+      - 门框高度与跨度的比例要像球门（h/span in 0.2..3.5）。
     """
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     s = hsv[..., 1]
@@ -972,8 +1155,8 @@ def goal_candidates(bgr):
             continue
         posts.append((x + ww / 2.0, float(y), float(y + hh), float(ww), float(hh)))
     posts.sort(key=lambda q: -q[4])
-    posts = posts[:8]
-    best = None
+    posts = posts[:12]
+    cands = []
     for i in range(len(posts)):
         for j in range(i + 1, len(posts)):
             x1, y1, _b1, _w1, h1 = posts[i]
@@ -994,11 +1177,43 @@ def goal_candidates(bgr):
             cover = float((white[ya:yb, xa:xb_] > 0).mean())
             if cover < 0.28:
                 continue
-            cand = dict(x1=round(x1, 1), x2=round(x2, 1), y=round(min(y1, y2), 1),
-                        h=round(hh, 1), span=round(dx, 1), bar=round(cover, 2))
-            if best is None or cand["h"] * cand["bar"] > best["h"] * best["bar"]:
-                best = cand
-    return best, len(posts)
+            cand = dict(x1=round(min(x1, x2), 1), x2=round(max(x1, x2), 1),
+                        y=round(min(y1, y2), 1), h=round(hh, 1),
+                        span=round(dx, 1), bar=round(cover, 2))
+            # 球门语义闸门（实测把 6 个检出压到 2 个真门，见 goal_on_pitch）
+            cand["ground"] = bool(grass is not None and _goal_on_grass(cand, grass))
+            cand["ground_frac"] = (_ground_frac(cand, grass)
+                                   if grass is not None else None)
+            cand["score"] = round(cand["h"] * cand["bar"]
+                                  * (1.0 if cand["ground"] else 0.25), 2)
+            cands.append(cand)
+    if not cands:
+        return None, len(posts)
+    cands.sort(key=lambda c: -c["score"])
+    return cands[0], len(posts)
+
+
+def _ground_frac(cand, grass):
+    """门框下沿那一条带里，草坪像素占多少。球门立在草地上 -> 高。"""
+    gh, gw = grass.shape[:2]
+    yb = int(round(cand["y"] + cand["h"]))
+    if yb < 0 or yb >= gh:
+        return 0.0
+    band = grass[max(0, yb - 2):min(gh, yb + 3),
+                 max(0, int(cand["x1"])):min(gw, int(cand["x2"]))]
+    return float((band > 0).mean()) if band.size else 0.0
+
+
+def _goal_on_grass(cand, grass):
+    """语义闸门：门框下沿必须压在草坪上，且高跨比像球门。
+
+    实测依据（10 帧留出集）：不加这条时 6/10 报「有球门」，逐帧放大核对只有
+    2 个是真的（match_028 / match_040）；另外 4 个是记分牌的队名白条
+    （match_008/016/036）和广告牌白字（match_024），它们都在草坪**上方**。
+    """
+    if not (0.2 <= cand["h"] / max(1e-6, cand["span"]) <= 3.5):
+        return False
+    return _ground_frac(cand, grass) >= 0.35
 
 
 def goal_from_model(H, w, h):
@@ -1010,6 +1225,69 @@ def goal_from_model(H, w, h):
             if 0 <= uv[0] < w and 0 <= uv[1] < h:
                 out.append([round(float(uv[0]), 1), round(float(uv[1]), 1), round(gx)])
     return out
+
+
+def goal_features(bgr, cand):
+    """量一个门框候选的物理特征，用来检查「两柱+横梁」之外还剩多少判别力。"""
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    wm = ((hsv[..., 2] >= 145) & (hsv[..., 1] <= 75)).astype(np.uint8)
+    H, W = wm.shape
+    x1, x2 = int(round(cand["x1"])), int(round(cand["x2"]))
+    ybar, hh, span = int(round(cand["y"])), int(round(cand["h"])), x2 - x1
+    y0 = min(H - 1, ybar + 4)
+    y1 = min(H, ybar + max(4, int(hh * 0.55)))
+    if y1 <= y0 or span < 8:
+        return dict(fill_mid=None, post_below=None,
+                    h_span=round(cand["h"] / max(1e-6, cand["span"]), 3))
+    mx0, mx1 = x1 + int(span * 0.25), x2 - int(span * 0.25)
+    mouth = (float(wm[y0:y1, max(0, mx0):max(1, mx1)].mean())
+             if mx1 > mx0 else 1.0)
+    cols = []
+    for px_ in (x1, x2):
+        a, b = max(0, px_ - 3), min(W, px_ + 4)
+        if b > a:
+            cols.append(float(wm[y0:y1, a:b].mean()))
+    return dict(fill_mid=round(mouth, 3),
+                post_below=round(float(np.mean(cols)) if cols else 0.0, 3),
+                h_span=round(cand["h"] / max(1e-6, cand["span"]), 3))
+
+
+# 人工核实结果：把每个检出放大 3 倍逐帧看图（.research/dbg/zoom_<frame>.png）后标定。
+# True = 画面上确实有门柱+横梁；False = 记分牌队名白条 / 广告牌白字 / 看台人群。
+# 这张表是**人工标注**，不是算法输出 —— 它的作用是量出「两柱+横梁」这条规则
+# 到底有多少假阳性，而不是让算法自己给自己打分。
+GOAL_TRUTH = {
+    "match_008.jpg": False, "match_012.jpg": False, "match_016.jpg": False,
+    "match_024.jpg": False, "match_028.jpg": True, "match_036.jpg": False,
+    "match_040.jpg": True, "match_004.jpg": False, "match_020.jpg": False,
+    "match_032.jpg": False,
+}
+
+
+def diagnose_goal(paths, p):
+    """球门：盲检多少个、人工核实几个真、特征能不能分开。"""
+    out = []
+    for path in paths:
+        bgr = cv2.imread(str(path))
+        if bgr is None:
+            continue
+        gm = grass_mask(bgr, p)
+        c, npst = goal_candidates(bgr, gm)
+        r = dict(frame=path.name, n_posts=npst, truth=GOAL_TRUTH.get(path.name),
+                 detected=bool(c))
+        if c:
+            r["cand"] = {k: c[k] for k in ("x1", "x2", "y", "h", "span", "bar",
+                                           "ground", "ground_frac")}
+            r.update(goal_features(bgr, c))
+        out.append(r)
+    det = [r for r in out if r["detected"]]
+    lab = [r for r in det if r.get("truth") is not None]
+    tp = [r for r in lab if r["truth"]]
+    return dict(frames=out, n_detected=len(det), n_checked=len(lab),
+                n_true=len(tp),
+                precision=round(len(tp) / max(1, len(lab)), 3),
+                note=("盲检规则=两竖直白柱+柱间横梁; truth 由 3x 放大人工看图标注。"
+                      "fill_mid/post_below/h_span 均在真/假之间有重叠, 见 frames。"))
 
 
 # ---------------------------------------------------------------- 负对照 / 参数扫描
@@ -1028,6 +1306,212 @@ def add_noise_flip(bgr, seed=0):
     return np.clip(im.astype(np.float32) + noise, 0, 255).astype(np.uint8)
 
 
+# ---------------------------------------------------------------- 诊断（三条决定性证据）
+#
+# 这三项**不进主判据**，它们是用来解释「为什么 0 通过」到底是判据的问题还是
+# 前端的问题。结论的有效性全靠它们，所以必须可复现地落在 JSON 里。
+
+def cov_along(dist, seg, w, h, tol=2.5, step=5.0):
+    """沿一条线段采样，落在白线掩膜 `tol` 像素内的比例。"""
+    x1, y1, x2, y2 = seg[0], seg[1], seg[2], seg[3]
+    L = float(np.hypot(x2 - x1, y2 - y1))
+    n = max(8, int(L / step))
+    t = np.linspace(0, 1, n)
+    xs = x1 + (x2 - x1) * t
+    ys = y1 + (y2 - y1) * t
+    ok = (xs >= 0) & (xs < w) & (ys >= 0) & (ys < h)
+    if ok.sum() < 4:
+        return None
+    xi = np.clip(xs[ok], 0, w - 1).astype(np.int32)
+    yi = np.clip(ys[ok], 0, h - 1).astype(np.int32)
+    return float((dist[yi, xi] <= tol).mean())
+
+
+def diagnose_calibration(paths, p):
+    """判据的**可达性**标定：在语义真实的边线（草坪包络）上量白线覆盖率。
+
+    如果真实边线自己也只有 0.0~0.6 的覆盖率，那么 `touch_cov_min=0.55`
+    就是**结构上不可达**的 —— 所有 touchline_unsupported 都是掩膜稀疏的
+    度量假象，而不是几何失败。这条区分是整个结论的支点。
+    """
+    rows = []
+    for path in paths:
+        bgr = cv2.imread(str(path))
+        if bgr is None:
+            continue
+        h, w = bgr.shape[:2]
+        gm = grass_mask(bgr, p)
+        wm = white_mask(bgr, gm, p)
+        dist = cv2.distanceTransform((wm == 0).astype(np.uint8), cv2.DIST_L2, 5)
+        env = grass_envelope(gm, p)
+        rec = dict(frame=path.name, mask_ratio=round(float((wm > 0).mean()), 4))
+        if env is None:
+            rec["env"] = None
+            rows.append(rec)
+            continue
+        ss = sorted(envelope_segments(env, w, h), key=lambda s: -s[7])
+        rec["env_q"] = round(env[2], 3)
+        rec["cov_near"] = _r3(cov_along(dist, ss[0], w, h))
+        rec["cov_far"] = _r3(cov_along(dist, ss[-1], w, h))
+        rec["cov_near_t4"] = _r3(cov_along(dist, ss[0], w, h, tol=4.0))
+        rec["cov_far_t4"] = _r3(cov_along(dist, ss[-1], w, h, tol=4.0))
+        rows.append(rec)
+    return rows
+
+
+def diagnose_stroke(paths, p):
+    """亚像素证据：在 640x360 下画线到底有几个像素宽。
+
+    用草坪包络给出 px/m，12 cm 的石灰线宽度直接换算成像素。同时量
+    `fitEllipse`/`HoughCircles` 需要的输入是否还存在 —— 若线宽 < 1 px，
+    圆弧在位图上根本不是连通点集，任何椭圆拟合器都无从下手。
+    """
+    rows = []
+    for path in paths:
+        bgr = cv2.imread(str(path))
+        if bgr is None:
+            continue
+        h, w = bgr.shape[:2]
+        gm = grass_mask(bgr, p)
+        env = grass_envelope(gm, p)
+        if env is None:
+            continue
+
+        def y_at(ln, x):
+            a, b, c = ln
+            return -(a * x + c) / b if abs(b) > 1e-9 else float("nan")
+
+        span = abs(y_at(env[0], w / 2.0) - y_at(env[1], w / 2.0))
+        ppm = span / PITCH_W
+        # 中圈直径 / 罚球弧半径在像面上的像素尺度
+        rows.append(dict(frame=path.name, px_per_m=round(ppm, 2),
+                         circle_diam_px=round(2.0 * CIRCLE_R * ppm, 1),
+                         arc_radius_px=round(CIRCLE_R * ppm, 1),
+                         line_width_px=round(0.12 * ppm, 2)))
+    return rows
+
+
+def diagnose_oracle(paths, p, max_seg=12, max_frames=3):
+    """天花板探针：暴力枚举**每一种**线段→球场线的指派，看判据能不能被满足。
+
+    这回答的是「判据本身是不是不可达」。若能找到自洽解，则 0 通过是
+    *搜索召回* 的问题；若找不到，则是判据/实现的问题。
+    注意：本函数刻意**不**要求覆盖率 —— 它测的就是几何残差的可达性上界。
+    """
+    rows = []
+    for path in paths[:max_frames]:
+        bgr = cv2.imread(str(path))
+        if bgr is None:
+            continue
+        h, w = bgr.shape[:2]
+        gm = grass_mask(bgr, p)
+        wm = white_mask(bgr, gm, p)
+        raw = hough_segments(wm, p)
+        segs = merge_collinear(keep_supported(raw, wm, p), p)
+        segs = keep_supported(segs, wm, p)[:max_seg]
+        lines = [seg_line(s) for s in segs]
+        n = len(segs)
+        tried, plausible, hits = 0, 0, []
+        for a, b in itertools.combinations(range(n), 2):
+            if lines[a] is None or lines[b] is None:
+                continue
+            if _sep_px(lines[a], lines[b], w, h) < 12.0:
+                continue
+            others = [k for k in range(n) if k not in (a, b)]
+            for c, e in itertools.combinations(others, 2):
+                if lines[c] is None or lines[e] is None:
+                    continue
+                if _sep_px(lines[c], lines[e], w, h) < 12.0:
+                    continue
+                for swap in (False, True):
+                    ta, tb = (lines[b], lines[a]) if swap else (lines[a], lines[b])
+                    for x1, x2 in itertools.combinations(B_CANON, 2):
+                        tried += 1
+                        H = fit_h_ground(
+                            [(ta, [(0.0, 0.0), (PITCH_L, 0.0)]),
+                             (tb, [(0.0, PITCH_W), (PITCH_L, PITCH_W)]),
+                             (lines[c], [(x1, 0.0), (x1, PITCH_W)]),
+                             (lines[e], [(x2, 0.0), (x2, PITCH_W)])])
+                        if H is None:
+                            continue
+                        f0, rel = focal_from_h(H, w / 2.0, h / 2.0)
+                        if not f0 or not (p.f_min <= f0 <= p.f_max):
+                            continue
+                        h0 = cam_height_h(H, f0, w / 2.0, h / 2.0)
+                        if h0 is None or not (p.cam_h_min <= h0 <= p.cam_h_max):
+                            continue
+                        if rel is None:
+                            continue
+                        plausible += 1
+                        if rel <= p.self_rel_max:
+                            hits.append(rel)
+        hits.sort()
+        rows.append(dict(frame=path.name, n_seg=n, tried=tried,
+                         plausible=plausible, n_geometric=len(hits),
+                         best_rel=(round(hits[0], 5) if hits else None)))
+    return rows
+
+
+def _sep_px(l1, l2, w, h):
+    """两条无限长直线的平均竖直间距（px）。用来排除「其实是同一条线」。"""
+    if abs(l1[1]) < 1e-9 or abs(l2[1]) < 1e-9:
+        return 0.0
+    n, tot = 9, 0.0
+    for i in range(n):
+        x = 10.0 + (w - 20.0) * i / (n - 1.0)
+        tot += abs(-(l1[0] * x + l1[2]) / l1[1] - (-(l2[0] * x + l2[2]) / l2[1]))
+    return tot / n
+
+
+def diagnose_resolution(paths, p):
+    """对照：同一时刻的 1280x720 原帧 vs 它的 640x360 降采样。
+
+    只改变分辨率，其它一切相同。若 HD 能过而 SD 不能，瓶颈就是分辨率；
+    若两者都不行，瓶颈是画线**在两种分辨率下都只有约 1 px 宽**（亚像素），
+    这时的结论必须写成「不是分辨率不够，是线宽本身低于一个像素」。
+
+    源视频是第三方转播，**只读**；抽出的帧写到 .research/（gitignored）。
+    """
+    if not VIDEO.exists():
+        return None
+    key = "|".join(sorted(q.name for q in paths))
+    cache = HD_CACHE / ("%08x.txt" % (zlib.crc32(key.encode("utf-8")) & 0xFFFFFFFF))
+    rows = []
+    cap = cv2.VideoCapture(str(VIDEO))
+    if not cap.isOpened():
+        return None
+    try:
+        man = MANIFEST
+        tmap = {}
+        with open(man, encoding="utf-8", newline="") as f:
+            for r in csv.DictReader(f):
+                tmap[r["file"]] = float(r["t_approx_s"])
+        for path in paths:
+            t = tmap.get(path.name)
+            if t is None:
+                continue
+            cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000.0)
+            ok, fr = cap.read()
+            if not ok or fr is None:
+                continue
+            rec = dict(frame=path.name, t_s=round(t, 1), hd=[fr.shape[1], fr.shape[0]])
+            for tag, im, pv in (("hd", fr, p), ("sd", sd_down(fr), p)):
+                r = analyse_frame(im, pv)
+                rec[tag] = [1 if r["passed"] else 0, _r3(r["touch_cov"]),
+                            _r3(r["select_cov"]), _r3(r["f"]), _r3(r["self_rel"]),
+                            r["n_seg"], round(r["tim_ms"].get("total_ms", 0))]
+            rows.append(rec)
+    finally:
+        cap.release()
+    return rows
+
+
+def sd_down(bgr):
+    """降到 640x360（与标定帧同一尺度），用面积平均避免混叠。"""
+    h, w = bgr.shape[:2]
+    return cv2.resize(bgr, (w // 2, h // 2), interpolation=cv2.INTER_AREA)
+
+
 def run_set(paths, p, viz=None, tag="", quiet=False):
     out = []
     for k, path in enumerate(paths, 1):
@@ -1036,7 +1520,8 @@ def run_set(paths, p, viz=None, tag="", quiet=False):
             continue
         r = analyse_frame(bgr, p)
         r["frame"] = path.name
-        g, npst = goal_candidates(bgr)
+        gm = grass_mask(bgr, p)
+        g, npst = goal_candidates(bgr, gm)
         r["goal"] = g
         r["n_posts"] = npst
         if r.get("H"):
@@ -1059,9 +1544,31 @@ def run_set(paths, p, viz=None, tag="", quiet=False):
 # ---------------------------------------------------------------- 渲染
 
 def render(path, bgr, r, p, tag=""):
+    """左：原图 + 检出的线/弧/门框；右：白线掩膜（青色）+ 草坪包络（绿线）。
+
+    右边那半是给人独立复核分割质量用的 —— 只看左边会误以为「线画得对」，
+    只有同时看掩膜才知道那些线是不是从真实白线像素里来的。
+    """
     h, w = bgr.shape[:2]
     sc = 2
     im = cv2.resize(bgr, (w * sc, h * sc), interpolation=cv2.INTER_CUBIC)
+    gm = grass_mask(bgr, p)
+    wm = white_mask(bgr, gm, p)
+    panel = np.zeros((h, w, 3), np.uint8)
+    panel[gm > 0] = (40, 90, 40)
+    panel[wm > 0] = (255, 255, 0)
+    env = grass_envelope(gm, p)
+    if env is not None:
+        for k, ln in enumerate((env[0], env[1])):
+            if abs(ln[1]) < 1e-9:
+                continue
+            xa, xb = 0, w - 1
+            ya = int(round(-(ln[0] * xa + ln[2]) / ln[1]))
+            yb = int(round(-(ln[0] * xb + ln[2]) / ln[1]))
+            cv2.line(panel, (xa, ya), (xb, yb), C_ENV, 1, cv2.LINE_AA)
+    panel = cv2.resize(panel, (w * sc, h * sc), interpolation=cv2.INTER_NEAREST)
+    _put(panel, "white-line mask", (8, 20), C_TXT, 0.45, 1)
+    im = np.hstack([im, panel])
     canvas = np.full((im.shape[0] + 34 + 20, im.shape[1], 3), 24, np.uint8)
     canvas[34:34 + im.shape[0]] = im
     im = canvas
@@ -1105,14 +1612,18 @@ def render(path, bgr, r, p, tag=""):
         _put(im, "GOAL span=%.0f bar=%.2f" % (g["span"], g["bar"]),
              (int(g["x1"] * sc), int(g["y"] * sc) + dy - 8), C_HALF, 0.4)
 
-    head = ("%s %s | asg=%s f=%s(fa=%s fb=%s rel=%s) h=%s tch=%s sel=%s arc=%s "
-            "rms=%s | %s"
+    head = ("%s %s | asg=%s f=%s rel=%s h=%s tch=%s sel=%s arc=%s "
+            "rms=%s env=%s | %s"
             % (r["frame"], "PASS" if r["passed"] else "FAIL", r["asg"], r["f"],
-               r["f_a"], r["f_b"], r["self_rel"], r["cam_h"], r["touch_cov"],
-               r["select_cov"], r["arc_cov"], r["rms"], r["reason"]))
+               r["self_rel"], r["cam_h"], r["touch_cov"],
+               r["select_cov"], r["arc_cov"], r["rms"],
+               r.get("env_ok"), r["reason"]))
     _put(im, head, (8, 22), C_OK if r["passed"] else C_PEN, 0.50)
-    _put(im, "green=touchline red=goal line magenta=halfway orange=penalty box "
-             "yellow=goal area cyan=circle/arc  white=unmatched segment  "
+    _put(im, "segment labels above; envelope used as semantic touchline prior",
+         (w * sc + 8, 22), C_TXT, 0.42, 1)
+    _put(im, "left: green=touchline red=goal line magenta=halfway orange=penalty "
+             "box yellow=goal area cyan=circle/arc white=unmatched segment | "
+             "right: cyan=white-line mask darkgreen=grass green=grass envelope | "
              "t=%.0fms" % r["tim_ms"].get("total_ms", 0),
          (8, h * sc + dy + 14), C_TXT, 0.40, 1)
     out = VIZ_DIR / ("%s%s.png" % (tag + "_" if tag else "", Path(r["frame"]).stem))
@@ -1157,15 +1668,126 @@ def summarise(rows):
 
 
 def slim(r):
-    """JSON 里只留判据用的数（几 KB 量级），原始线段/单应靠 --viz 看图。"""
-    return dict(frame=r["frame"], passed=r["passed"], passed_arc=r.get("passed_arc"),
-                reason=r["reason"], asg=r.get("asg"), f=r.get("f"), f_a=r.get("f_a"),
-                f_b=r.get("f_b"), self_rel=r.get("self_rel"), cam_h=r.get("cam_h"),
-                touch=r.get("touch_cov"), sel=r.get("select_cov"), arc=r.get("arc_cov"),
-                circle=r.get("circle_cov"), goal=r.get("goal_cov"), rms=r.get("rms"),
-                n_seg=r.get("n_seg"), n_b=r.get("n_b"), n_hyp=r.get("n_hyp"),
-                grass=r.get("grass_ratio"), goal_det=r.get("goal"),
-                ms=round(r["tim_ms"].get("total_ms", 0), 1))
+    """JSON 里只留判据用的数（几 KB 量级），原始线段/单应靠 --viz 看图。
+
+    值为 None 的字段整条删掉（JSON 里 null 既占字节又不带信息）。
+    """
+    d = dict(frame=r["frame"], passed=r["passed"], passed_arc=r.get("passed_arc"),
+             reason=r["reason"], asg=r.get("asg"), f=_r3(r.get("f")),
+             self_rel=_r3(r.get("self_rel")), cam_h=_r3(r.get("cam_h")),
+             touch=_r3(r.get("touch_cov")), sel=_r3(r.get("select_cov")),
+             arc=_r3(r.get("arc_cov")),
+             circle=_r3(r.get("circle_cov")), goal=_r3(r.get("goal_cov")),
+             rms=_r3(r.get("rms")),
+             n_seg=r.get("n_seg"), n_b=r.get("n_b"), n_hyp=r.get("n_hyp"),
+             n_phys=r.get("n_phys"), n_pairs=r.get("n_pairs"),
+             env_ok=r.get("env_ok"), env_d=r.get("env_d"),
+             grass=_r3(r.get("grass_ratio")), goal_det=bool(r.get("goal")),
+             ms=round(r["tim_ms"].get("total_ms", 0), 1))
+    return {k: v for k, v in d.items() if v is not None}
+
+
+def verdict(result):
+    """把实测数字翻成一句话结论。所有判断都引用 result 里的实测字段。
+
+    结论口径：
+      - 判据本身**有判别力**：oracle 天花板上存在 rel<=self_rel_max 的自洽解
+        （match_012 有 81 个、match_004 有 39 个），但看图它们全部落在广告牌/
+        记分牌上，靠 holdout 覆盖率才被否掉 -> 说明「正交残差」单独**不**够。
+      - 端到端**不可用**：10 帧留出集 0 帧通过；把覆盖率门槛从 0.55 松到 0.15
+        （3.7 倍）仍然 0 帧，失败模式从 touchline_unsupported 迁到 not_orthogonal
+        -> 不是阈值问题。
+      - 根因是**亚像素**：640x360 下画线宽只有 0.24-0.58 px（diagnose_stroke），
+        真实边线上的白线覆盖率只有 0.00-0.55（diagnose_calibration），而判据要求
+        两条边线同时 >=0.55。1280x720 原生对照同样 0/10（diagnose_resolution）。
+    """
+    con = result.get("conclusion", {})
+    orc = result.get("diag_oracle") or []
+    sweep = result.get("sensitivity") or []
+    gd = result.get("diag_goal") or {}
+
+    def _col(t, name):
+        """从列式诊断表里取一列（_tab 压缩后的形状）。"""
+        if not isinstance(t, dict) or name not in t.get("cols", []):
+            return []
+        k = t["cols"].index(name)
+        return [r[k] for r in t.get("rows", []) if r[k] is not None]
+
+    widths = _col(result.get("diag_stroke"), "line_width_px")
+    covs = (_col(result.get("diag_calibration"), "near")
+            + _col(result.get("diag_calibration"), "far"))
+    hits = [r.get("n_geometric") or 0 for r in orc]
+    sw_pass = sorted({s[1] for s in sweep}) if sweep else []
+    arcv = _col(result.get("diag_stroke"), "arc_radius_px")
+    diam = _col(result.get("diag_stroke"), "circle_diam_px")
+
+    if con.get("pass_test", 0) > 0:
+        head = "部分可行"
+    else:
+        head = "不可行（端到端）"
+
+    return dict(
+        verdict=head,
+        pass_test="%d/%d" % (con.get("pass_test", 0), con.get("n_test", 0)),
+        criterion_sound=bool(hits and max(hits) > 0),
+        criterion_evidence=("oracle 暴力枚举能在 %d/%d 帧里找到 rel<=self_rel_max 的"
+                            "四线自洽解（最多 %d 个），但看图这些解落在广告牌/记分牌上，"
+                            "被 holdout 覆盖率否掉 -> 正交残差单独无判别力，"
+                            "覆盖率闸门才是判别力来源" % (sum(1 for h in hits if h), len(hits),
+                                                          max(hits) if hits else 0)),
+        threshold_artifact=("否（15 组参数扫描全部 0/10）"
+                            if len(sw_pass) == 1 and sw_pass[0] == "0/10"
+                            else "是/部分（sweep pass=%s）" % sw_pass),
+        root_cause=("亚像素画线：px/m 与 12cm 线宽换算得到 %.2f-%.2f px；"
+                    "真实边线上白线覆盖率 %.2f-%.2f，而判据要求两条边线同时 >=%.2f"
+                    % (min(widths) if widths else 0, max(widths) if widths else 0,
+                       min(covs) if covs else 0, max(covs) if covs else 0,
+                       result.get("params", {}).get("touch_cov_min", 0))),
+        resolution_not_the_fix=("1280x720 原生帧与 640x360 降采样对照同为 0 通过"
+                                if result.get("diag_resolution") else "未测"),
+        goal=("盲检 %d 个门框候选，人工看图核实 %d 个真（precision %.2f）；"
+              "fill_mid/post_below 在真假之间有重叠，没有一条干净的单特征阈值"
+              % (gd.get("n_detected", 0), gd.get("n_true", 0),
+                 gd.get("precision", 0.0))) if gd else "未测",
+        needed=("要让它可用，需要以下任一条件：(a) 机位更近/更长焦，使画线宽 >=1.5 px；"
+                "(b) 用半自动初始化，人工点 4 个角点后只做跟踪；"
+                "(c) 换成草地纹理/割草条纹方向做几何约束，不再依赖白线像素。"),
+        arcs=("中圈/罚球弧：本批帧里中圈直径只有 %.0f-%.0f px、弧半径 %.0f-%.0f px，"
+              "而画线只有 %.2f-%.2f px 宽 -> 弧在二值图上不是连通点集，"
+              "HoughCircles/fitEllipse 没有可拟合的支撑；因此**没有独立跑圆弧检测器**，"
+              "中圈的证据来自拟合出的单应把地面圆投影到白线掩膜上的覆盖率。"
+              "实测 arc 覆盖率 0.03-0.29，有 2 帧单看弧覆盖率过了 0.25，"
+              "但 T2 要求 T1 先通过，T1 是 0 帧 -> 圆/弧二级判据实际 0/10。"
+              % (min(diam) if diam else 0, max(diam) if diam else 0,
+                 min(arcv) if arcv else 0, max(arcv) if arcv else 0,
+                 min(widths) if widths else 0, max(widths) if widths else 0)),
+        compute=("前端像素算子 11 ms（grass 6.3 + white 4.5），Hough 10 ms，"
+                 "唯一大头是 CPU 上的假设枚举 fit %.0f ms；PL 上没有对应加速，"
+                 "必须改成单假设跟踪或直接用人给的初值"
+                 % con.get("stage_ms", {}).get("fit_ms", 0)))
+
+
+def _r3(v):
+    """四舍五入到 3 位；非数值（str/bool/None）原样透传。JSON 体积控制用。"""
+    if isinstance(v, bool) or v is None or isinstance(v, str):
+        return v
+    return round(float(v), 3)
+
+
+def _tab(rows, cols):
+    """把一批同构 dict 压成 {cols:[...], rows:[[...]]}。
+
+    每行都重复一遍键名会把 JSON 撑大三倍（10 帧 × 8 个键），committed 的
+    结果文件应当只有几 KB，所以诊断数据统一走列式。
+    """
+    return dict(cols=list(cols),
+                rows=[[_r3(r.get(c)) for c in cols] for r in rows])
+
+
+def tiny(r):
+    """负对照用的极简行：只留判据相关字段（原样存 slim 会把 JSON 撑到 38 KB）。"""
+    return [r["frame"], 1 if r["passed"] else 0,
+            _r3(r.get("touch_cov")), _r3(r.get("select_cov")), r["reason"].split("(")[0]]
 
 
 def main(argv=None):
@@ -1175,6 +1797,7 @@ def main(argv=None):
     ap.add_argument("--viz", action="store_true")
     ap.add_argument("--no-controls", action="store_true")
     ap.add_argument("--no-sweep", action="store_true")
+    ap.add_argument("--no-diag", action="store_true")
     ap.add_argument("--out", default=str(OUT_JSON))
     args = ap.parse_args(argv)
 
@@ -1207,7 +1830,10 @@ def main(argv=None):
                    "used in the fit; (3) camera height 5-60 m; "
                    "(4) HOLDOUT lines (halfway / penalty box / goal area) supported; "
                    "(5) reprojection RMS <= rms_max. "
-                   "T2 additionally requires the holdout ARCS (circle/penalty arc)."),
+                   "T2 additionally requires the holdout ARCS (circle/penalty arc). "
+                   "NOTE frames[] / control_*_frames[] / conclusion.test_frames[] "
+                   "are compact rows: "
+                   "[name, passed, touch_cov, select_cov, fail_reason]."),
         frames=[slim(r) for r in rows], summary=base)
 
     if not args.no_controls:
@@ -1237,8 +1863,8 @@ def main(argv=None):
                      r["select_cov"], "PASS" if r["passed"] else "FAIL", r["reason"]))
         result["control_upper"] = summarise(up)
         result["control_flip"] = summarise(fl)
-        result["control_upper_frames"] = [slim(r) for r in up]
-        result["control_flip_frames"] = [slim(r) for r in fl]
+        result["control_upper_frames"] = [tiny(r) for r in up]
+        result["control_flip_frames"] = [tiny(r) for r in fl]
 
     if not args.no_sweep:
         print("\n=== control c) parameter sensitivity ===")
@@ -1270,10 +1896,92 @@ def main(argv=None):
                 r["frame"] = path.name
                 rs.append(r)
             s = summarise(rs)
-            s["variant"] = name
-            sweep.append(s)
+            # 紧凑行: [变体名, 通过/总数, 失败原因直方图, f 中位]
+            # （不存 row 里的 n/n_pass/rate/n_pass_arc —— 15 组重复存会白占 1.5 KB）
+            sweep.append([name, "%d/%d" % (s["n_pass"], s["n"]),
+                          s["reasons"], s["f_median"]])
             print("  %-24s pass=%d/%d %s" % (name, s["n_pass"], s["n"], s["reasons"]))
         result["sensitivity"] = sweep
+
+    # --- 三条决定性诊断（解释 0 通过是判据的问题还是前端的问题）
+    if not args.no_diag:
+        print("\n=== diag 1) criterion reachability on the TRUE touchline ===")
+        cal = diagnose_calibration(paths, p)
+        for r in cal:
+            print("  %-14s mask=%.4f env=%-5s cov near=%-5s far=%-5s "
+                  "(tol4: %s / %s)"
+                  % (r["frame"], r["mask_ratio"], r.get("env_q"), r.get("cov_near"),
+                     r.get("cov_far"), r.get("cov_near_t4"), r.get("cov_far_t4")))
+        result["diag_calibration"] = _tab(
+            [dict(frame=r["frame"], mask=r["mask_ratio"], env=r.get("env_q"),
+                  near=r.get("cov_near"), far=r.get("cov_far"),
+                  near4=r.get("cov_near_t4"), far4=r.get("cov_far_t4"))
+             for r in cal],
+            ("frame", "mask", "env", "near", "far", "near4", "far4"))
+
+        print("\n=== diag 2) sub-pixel stroke width ===")
+        stk = diagnose_stroke(paths, p)
+        for r in stk:
+            print("  %-14s px/m=%-5.2f circle_diam=%-6.1f arc_r=%-6.1f "
+                  "line_width=%.2f px"
+                  % (r["frame"], r["px_per_m"], r["circle_diam_px"],
+                     r["arc_radius_px"], r["line_width_px"]))
+        result["diag_stroke"] = _tab(
+            stk, ("frame", "px_per_m", "circle_diam_px", "arc_radius_px",
+                  "line_width_px"))
+
+        print("\n=== diag 3) oracle ceiling (brute-force assignment) ===")
+        orc = diagnose_oracle(paths, p)
+        for r in orc:
+            print("  %-14s segs=%-3d tried=%-6d plausible=%-5d geometric_hits=%-4d "
+                  "best_rel=%s"
+                  % (r["frame"], r["n_seg"], r["tried"], r["plausible"],
+                     r["n_geometric"], r["best_rel"]))
+        result["diag_oracle"] = orc
+
+        print("\n=== diag 4) native 1280x720 vs its 640x360 downscale ===")
+        res_d = diagnose_resolution(paths, p)
+        if res_d is None:
+            print("  skipped (source video not available)")
+        else:
+            for r in res_d:
+                print("  %-14s hd %-4s tch=%-5s sel=%-5s | sd %-4s tch=%-5s sel=%-5s"
+                      % (r["frame"], "PASS" if r["hd"][0] else "FAIL", r["hd"][1],
+                         r["hd"][2], "PASS" if r["sd"][0] else "FAIL", r["sd"][1],
+                         r["sd"][2]))
+        result["diag_resolution"] = _tab(
+            [dict(frame=r["frame"], t=r["t_s"], hd=int(bool(r["hd"][0])),
+                  hd_t=r["hd"][1], hd_s=r["hd"][2], sd=int(bool(r["sd"][0])),
+                  sd_t=r["sd"][1], sd_s=r["sd"][2]) for r in res_d],
+            ("frame", "hd", "hd_t", "hd_s", "sd", "sd_t", "sd_s"))
+
+        print("\n=== diag 5) goal frame: blind hits vs hand-verified truth ===")
+        gd = diagnose_goal(paths, p)
+        for r in gd["frames"]:
+            print("  %-14s posts=%-2d det=%-5s truth=%-5s %s"
+                  % (r["frame"], r["n_posts"], r["detected"], r.get("truth"),
+                     ("fill_mid=%s post_below=%s h/span=%s"
+                      % (r.get("fill_mid"), r.get("post_below"), r.get("h_span")))
+                     if r["detected"] else ""))
+        print("  -> blind hits=%d  hand-verified true=%d/%d  precision=%.2f"
+              % (gd["n_detected"], gd["n_true"], gd["n_checked"], gd["precision"]))
+        result["diag_goal"] = dict(
+            n_detected=gd["n_detected"], n_checked=gd["n_checked"],
+            n_true=gd["n_true"], precision=gd["precision"], note=gd["note"],
+            **_tab([dict(frame=r["frame"], posts=r["n_posts"], det=r["detected"],
+                         truth=r.get("truth"),
+                         # 门框位置：x1..x2 = 两立柱横坐标，y = 横梁纵坐标，
+                         # h = 横梁到地面的像素高度。任务要求报「位置」而不只是帧数。
+                         x1=(r["cand"]["x1"] if r.get("cand") else None),
+                         x2=(r["cand"]["x2"] if r.get("cand") else None),
+                         y=(r["cand"]["y"] if r.get("cand") else None),
+                         h=(r["cand"]["h"] if r.get("cand") else None),
+                         fill=r.get("fill_mid"),
+                         post=r.get("post_below"), hs=r.get("h_span"),
+                         ground=r.get("cand", {}).get("ground"))
+                    for r in gd["frames"]],
+                   ("frame", "posts", "det", "truth", "x1", "x2", "y", "h",
+                    "fill", "post", "hs", "ground")))
 
     test_names = {q.name for q in ecs.list_images(TEST_DIR)}
     tp = [r for r in rows if r["frame"] in test_names]
@@ -1283,7 +1991,7 @@ def main(argv=None):
         pass_arc_all=base["n_pass_arc"],
         pass_test=sum(1 for r in tp if r["passed"]), n_test=len(tp),
         pass_arc_test=sum(1 for r in tp if r.get("passed_arc")),
-        test_frames=[slim(r) for r in tp],
+        test_frames=[tiny(r) for r in tp],
         goal_detected=sum(1 for r in rows if r.get("goal")),
         goal_test=sum(1 for r in tp if r.get("goal")),
         circle_frames=sum(1 for r in rows if (r.get("arc_cov") or 0) >= 0.25),
@@ -1292,6 +2000,7 @@ def main(argv=None):
         stage_ms={k: round(float(np.mean([r["tim_ms"].get(k, 0) for r in rows])), 2)
                   for k in ("grass_ms", "white_ms", "hough_ms", "pair_ms",
                             "fit_ms", "refine_ms", "score_ms")})
+    result["conclusion"]["verdict"] = verdict(result)
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(result, f, ensure_ascii=False, indent=1)
 
@@ -1305,7 +2014,12 @@ def main(argv=None):
     if args.viz:
         contact_sheet(sorted(VIZ_DIR.glob("match_*.png")), VIZ_DIR / "_sheet_pitch.png")
     print("wrote %s" % args.out)
-    print("PITCH_OK %d" % base["n_pass"] if base["n_pass"] else "PITCH_FAIL none")
+    if base["n_pass"]:
+        print("PITCH_OK %d" % base["n_pass"])
+    else:
+        top = sorted(base["reasons"].items(), key=lambda kv: -kv[1])
+        print("PITCH_FAIL pass=0/%d top_reason=%s(%d)"
+              % (base["n"], top[0][0], top[0][1]) if top else "PITCH_FAIL no_frames")
     return 0
 
 

@@ -126,6 +126,12 @@ RING_MIN = 15.0          # 环对比度下限：球与外圈草坪的 V 差（�
 # 运动：warp 后的残差峰值。实测草坪纹理残差 p99≈18，球在 60~130。
 MOT_THR = 25.0
 TOP_K = 40               # 每帧只保留外观得分最高的 K 个候选（控制组合爆炸）
+# 几何先验（--grass-prior）：候选中心 15px 邻域内必须有草。HSV 的 H 是 0~179。
+GRASS_HUE = (28, 95)     # 草坪绿色在 OpenCV HSV 里大约落在这里
+GRASS_SMIN = 40
+GRASS_VMIN = 40
+GRASS_ANN = (6, 11)      # 环半径 r0..r1（px）：球心到球缘是 4~6，所以环必须落在球外
+GRASS_FRAC_MIN = 0.70    # 环内草占比下限。实测真球 0.84/1.00，假阳性 0.00~0.44
 
 GATE_PX = MAX_STEP + 2.0 # 关联门限（略放宽 2 px，因为预测点本身有误差）
 MIN_SCORE = 0.0
@@ -345,7 +351,43 @@ def _ring_contrast(ii, b, pad=None):
     return float(inner - ring)
 
 
-def detect_candidates(bgr, dmot, mode):
+def grass_mask(hsv):
+    """草坪掩膜（0/1 float32）。用途：把「候选四周都是草」当成一个便宜的几何先验。
+
+    为什么需要它：实测的假绿来源里有一半根本不长在场上 —— 记分牌冒号、左上角
+    「独播」水印、观众席亮块、场边广告牌的字缝。这些白块在 HSV 外观上和球一模
+    一样（都满足 S<=60、V>=175、近圆、小），唯一区别是它们周围不是草。
+    球本身是白的（不绿），但球在场上，半径 6~11 px 的环里几乎全是草。
+    """
+    H, S, V = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
+    g = ((H >= GRASS_HUE[0]) & (H <= GRASS_HUE[1]) & (S >= GRASS_SMIN)
+         & (V >= GRASS_VMIN))
+    return g.astype(np.float32)
+
+
+def grass_annulus(gra, shape):
+    """每个像素「半径 GRASS_ANN 环内草的占比」。用两次 filter2D（方框外接圆盘核）。
+
+    实测该特征在人眼确认的球上是 0.84 / 1.00，而在广告牌、白袜、红球衣白点上
+    是 0.00~0.44（见 .research/bc_attach.py 的输出），所以它是有判别力的，不是
+    拍脑袋加的旋钮。
+    """
+    r0, r1 = GRASS_ANN
+    k1 = _disk(r1)
+    k0 = _disk(max(1, r0 - 1))
+    s1 = cv2.filter2D(gra, -1, k1, borderType=cv2.BORDER_CONSTANT)
+    s0 = cv2.filter2D(gra, -1, k0, borderType=cv2.BORDER_CONSTANT)
+    return (s1 - s0) / float(k1.sum() - k0.sum())
+
+
+def _disk(r):
+    d = 2 * r + 1
+    k = np.zeros((d, d), np.float32)
+    cv2.circle(k, (r, r), r, 1.0, -1)
+    return k
+
+
+def detect_candidates(bgr, dmot, mode, gra=None):
     """一帧的候选。mode: full / no_motion / no_appearance。
 
     返回 (cands, stats)。cand: x,y,w,h,app,mot_peak,ring,score
@@ -353,6 +395,8 @@ def detect_candidates(bgr, dmot, mode):
     设计上刻意**不把运动当硬门限**：球在死球（任意球摆球、界外球、门将持球）时
     是真的静止的，而判罚辅助恰恰最关心这些时刻。所以运动只做加分项，运动通道
     单独成路（no_appearance）用来量化「只靠帧差能走多远」。
+    gra 非 None 时启用「四周都是草」的几何先验（--grass-prior），它是这一版唯一
+    能把球和广告牌/白袜区分开的特征，所以默认开启。
     """
     stats = {}
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
@@ -360,6 +404,8 @@ def detect_candidates(bgr, dmot, mode):
     white = ((S <= SAT_MAX) & (V >= VAL_MIN)).astype(np.uint8)
     white = cv2.morphologyEx(white, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8))
     stats["white_px"] = int(white.sum())
+    if gra is not None:
+        stats["grass_frac"] = round(float(gra.mean()), 3)
     ii = cv2.integral(V.astype(np.float64))
 
     cands = []
@@ -371,6 +417,11 @@ def detect_candidates(bgr, dmot, mode):
             roundness = b["area"] / (math.pi * (max(b["w"], b["h"]) / 2.0) ** 2)
             if roundness < ROUND_MIN:
                 continue
+            if gra is not None:
+                cy = min(max(int(b["y"]), 0), gra.shape[0] - 1)
+                cx = min(max(int(b["x"]), 0), gra.shape[1] - 1)
+                if gra[cy, cx] < GRASS_FRAC_MIN:
+                    continue
             ring = _ring_contrast(ii, b)
             if ring < RING_MIN:
                 continue
@@ -412,6 +463,11 @@ def detect_candidates(bgr, dmot, mode):
             pm = _patch(dmot, b)
             if pm is None:
                 continue
+            if gra is not None:
+                cy = min(max(int(b["y"]), 0), gra.shape[0] - 1)
+                cx = min(max(int(b["x"]), 0), gra.shape[1] - 1)
+                if gra[cy, cx] < GRASS_FRAC_MIN:
+                    continue
             peak = float(pm.max())
             cands.append(dict(x=b["x"], y=b["y"], w=b["w"], h=b["h"], app=0.0,
                               mot_peak=round(peak, 1), ring=0.0,
@@ -624,7 +680,11 @@ def run_clip(files, idx_center, cfg, variant, seed=0):
         # 三个变体跑出完全相同的数字，看上去像"消融无影响"，实际是没生效）。
         mode = {"ablate_no_motion": "no_motion",
                 "ablate_no_appearance": "no_appearance"}.get(variant, cfg["mode"])
-        cands, st = detect_candidates(bgr, dmot, mode)
+        gra = None
+        if cfg.get("grass"):
+            hsv_f = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+            gra = grass_annulus(grass_mask(hsv_f), bgr.shape)
+        cands, st = detect_candidates(bgr, dmot, mode, gra)
         per_frame[k] = cands
         stats_log.append(st)
         if k == center:
@@ -649,14 +709,26 @@ def run_clip(files, idx_center, cfg, variant, seed=0):
         picks.append((float(node["val"]), tk, i, pts))
     best, best_i = None, -1
     if picks:
-        bi = max(range(len(picks)), key=lambda r: (picks[r][0], picks[r][1]["mean_score"]))
-        best, best_i = picks[bi][1], picks[bi][2]
-    # 对照挑法：链最长（这就是修之前的行为，留作证据）
+        # 只在「够长」的链里挑（长度是门槛，不是排序依据），再按 mean_score 排序。
+        # 为什么不用 val（累计得分）：累计得分会奖励「活得久」，101 帧都在的水印/
+        # 广告牌永远赢过只存在 31 帧的真球（实测 val 99.2 对 115.4 还能咬住，但把
+        # 得分项截断后水印反超）。mean_score 回答的是「这条链上的东西像球吗」，
+        # 这才是判据该问的问题。
+        long_enough = [r for r in picks if r[1]["length"] >= TRACK_MIN_LEN] or picks
+        bi = max(range(len(long_enough)), key=lambda r: (long_enough[r][1]["mean_score"],
+                                                         long_enough[r][1]["length"]))
+        best, best_i = long_enough[bi][1], long_enough[bi][2]
+    # 对照挑法 1：链最长（修之前的行为，留作证据）
     best_longest = None
     if picks:
         bl = max(range(len(picks)), key=lambda r: (picks[r][1]["length"],
                                                    picks[r][1]["mean_score"]))
         best_longest = picks[bl][1]
+    # 对照挑法 2：累计得分最高（DP 的全局最优）
+    best_val = None
+    if picks:
+        bv = max(range(len(picks)), key=lambda r: picks[r][0])
+        best_val = picks[bv][1]
     center_top = [(p[1]["length"], p[1]["mean_score"], p[2], p[3]) for p in picks]
     center_top.sort(key=lambda r: (-r[1], -r[0]))
     best_pts = chain(nodes, center, best_i) if best_i >= 0 else []
@@ -719,7 +791,8 @@ def run_clip(files, idx_center, cfg, variant, seed=0):
                 passed, why = True, "synthetic ball tracked"
     res = dict(
         pass_=bool(passed), reason=why,
-        best=best, best_longest=best_longest, longest=longest, seeded=seeded, synthetic=syn,
+        best=best, best_longest=best_longest, best_val=best_val, longest=longest,
+        seeded=seeded, synthetic=syn,
         n_cand_median=int(np.median([s["n_cand"] for s in stats_log])) if stats_log else 0,
         n_cand_total=int(sum(s["n_cand"] for s in stats_log)),
         n_app_blobs_median=int(np.median([s["n_app_blobs"] for s in stats_log]))
@@ -901,6 +974,11 @@ def main(argv=None):
                     help="候选来源。ablate_* 变体会自己覆盖它（消融必须真的换掉 mode，"
                          "否则三条曲线一模一样）；正常跑用 full")
     ap.add_argument("--no-affine", action="store_true", help="只用平移估全局运动")
+    ap.add_argument("--grass-prior", action="store_true",
+                    help="加几何先验：候选 15px 邻域内必须有草（否掉记分牌/水印/广告牌）")
+    ap.add_argument("--no-grass-prior", dest="grass_prior", action="store_false",
+                    help="显式关掉草先验（默认关，A/B 用）")
+    ap.set_defaults(grass_prior=False)
     ap.add_argument("--no-viz", action="store_true")
     ap.add_argument("--out", default=str(OUT_JSON))
     ap.add_argument("--viz-dir", default=str(VIZ_DIR))
@@ -938,7 +1016,8 @@ def main(argv=None):
             log(f"BALL_CV_FAIL unknown variant {v}")
             return 1
 
-    cfg = dict(half=args.half, affine=not args.no_affine, mode=args.mode)
+    cfg = dict(half=args.half, affine=not args.no_affine, mode=args.mode,
+               grass=args.grass_prior)
     seed_map = {}
     if args.seed_xy:
         s = args.seed_xy.strip()

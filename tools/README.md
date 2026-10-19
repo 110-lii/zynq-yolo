@@ -19,6 +19,7 @@
 | `check_repo.py` | **仓库自检**：目录/文件命名纯 ASCII（§1）、每个目录有 `README.md`、`src/rtl/` 前缀与目录对应（§2.2）、tb 命名 `x_tb.v`、禁止入库文件（`build*.log`/`*.dcp`/`__pycache__/`…） | **TODO（未创建）** |
 | `collect_metrics.py` | **资源/时序度量采集**：解析 `build/reports/{resource,timing,*}/*.rpt`，产出可写进报告的指标表（LUT6/FF/DSP48/BRAM、WNS/TNS/WHS/THS） | **TODO（未创建）** |
 | `md_to_docx.py` | **报告渲染**：把 `report/` 下 Markdown 渲染为提交用文档（docx/PDF） | **TODO（未创建）** |
+| `ball_visibility_sweep.py` | **球可见性扫描**：COCO 预训练 YOLOv8 在真实转播画面里能不能看见 `sports ball`——分辨率 320/640/960/1280/1600 × 切图 640/512/320 × yolov8n/yolov8s × 置信度 0.25→0.01，附基线复现/阴性/阳性三重对照与 Zynq 算力投影 | ✅ 已创建（2026-10-19） |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |
 
 ## 规则
@@ -63,3 +64,4 @@ Get-ChildItem D:\zynq-yolo\tools
 | `check_repo.py` | ✅ 已实现（5 项检查：命名 / 必需目录与根文件 / 每目录 README / 禁入文件 / 权重表） | `CHECK_REPO_OK` |
 | `collect_metrics.py` | ⬜ TODO | —— |
 | `md_to_docx.py` | ⬜ TODO | —— |
+| `ball_visibility_sweep.py` | ✅ 已实现（分辨率 × 切图 × 模型 × 置信度四组扫描 + 基线/阴性/阳性对照） | `SWEEP_DONE <n>` / `SWEEP_FAIL <原因>` |

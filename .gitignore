@@ -143,6 +143,12 @@ data/golden/*.npy
 build/hls*/
 build/vivado/
 build/*.onnx
+# --- 导出的 Vivado IP：4.6 MB 且完全可由 src/hls/accel/scripts/export_engine.py 重建 -------
+#     ★ 它是**产物**不是真源：真源是 conv_engine.cpp + 那三个 tcl/py 脚本。
+#     ★ 之所以特别说明：这个 IP 的打包过程有个 2026 年才触发的工具链 bug（core_revision
+#       超出 int32），重建**不是**一条命令就能成 —— 必须先跑 export_engine.py 绕过它。
+#       所以"可重建"的凭据是那个脚本 + 它里面的根因注释，不是这个目录本身。
+build/ip_repo/
 
 # --- Python 字节码：tools/check_repo.py 检查 d) 是**扫盘**的，不入 gitignore 也会 FAIL --
 #     这里加进来是双保险（万一手滑 commit -f）；根治办法是脚本里前置

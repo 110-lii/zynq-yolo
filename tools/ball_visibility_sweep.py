@@ -305,26 +305,49 @@ def summarize(dets, confs, n_frames):
 
 
 def _slim(rec):
-    """把一条 config 记录压成列式：25 档 × 5 阈值若按字典存要 40 KB，列式只要几 KB。
+    """把一条 config 记录压成「列式 + 定长数组」：25 档 × 5 阈值按字典存要 65 KB。
 
-    返回 {"cols": [...], "rows": {阈值: [值...]}, "detail": {阈值: {...}}}，
-    另把与阈值无关的 _ball_response 提成 "ball_response"。
+    列名只在顶层 `decoding.layout` 里写一次（见 `LAYOUT`），每条记录只存数字数组，
+    这样文件落到十几 KB 且人仍然读得懂（顺序由 layout 给出）。
     """
-    out = {k: v for k, v in rec.items() if k != "by_conf"}
     bc = rec["by_conf"]
     zoom = [k for k in ("0.25", "0.01") if k in bc]
-    out["by_conf"] = {
-        "cols": list(CONF_COLS),
-        "rows": {k: [bc[k][c] for c in CONF_COLS] for k in bc if not k.startswith("_")},
-        "detail_cols": list(DETAIL_COLS),
-        "detail": {k: {c: bc[k][c] for c in DETAIL_COLS} for k in zoom},
+    out = {
+        "id": rec["id"],
+        "model": rec.get("model"),          # 阴性对照记录不一定带 model/source
+        "source": rec.get("source"),
+        "mode": rec["mode"],
+        "imgsz": rec["imgsz"],
+        "tile": rec["tile"],
+        "n": rec["n_frames"],
+        "ms": rec["ms_per_frame"],
+        "inf": rec["inferences_per_frame"],
+        # 每档两数，顺序 = 阈值从高到低（同 decoding.confs），展平成一维：
+        # [bf, bb, bf, bb, ...]
+        "rows": [x for k in sorted((q for q in bc if not q.startswith("_")),
+                                   key=float, reverse=True)
+                 for x in (bc[k]["ball_frames"], bc[k]["ball_boxes"])],
+        # 两档细节（0.25 / 0.01）展平：[w, h, aspect, score, person, zero, w, h, ...]
+        "detail": [x for k in zoom for x in (bc[k][c] for c in DETAIL_COLS)],
+        # [input_scale, ball_px_in_input, ball_px_in_input_measured]
+        "px": [bc["0.25"]["input_scale"], bc["0.25"]["ball_px_in_input"],
+               bc["0.25"]["ball_px_in_input_measured"]],
+        # [gop_per_frame, fps_ceiling_pl, ms_per_frame_pl]
+        "zynq": [rec["zynq_projection"]["gop_per_frame"],
+                 rec["zynq_projection"]["fps_ceiling_pl"],
+                 rec["zynq_projection"]["ms_per_frame_pl"]],
+        # [score_max, score_p50, frames_with_any_response]
+        "resp": [bc["_ball_response"]["score_max_overall"],
+                 bc["_ball_response"]["score_p50_of_frame_max"],
+                 bc["_ball_response"]["frames_with_any_ball_ge_floor"]],
     }
-    # 球在**网络输入**里有多少像素（跨配置唯一可比的尺度）
-    out["by_conf"]["scale_cols"] = ["input_scale", "ball_px_in_input", "ball_px_in_input_measured"]
-    out["by_conf"]["scale"] = {k: [bc[k]["input_scale"], bc[k]["ball_px_in_input"],
-                                  bc[k]["ball_px_in_input_measured"]]
-                               for k in zoom}
-    out["ball_response"] = {k: v for k, v in bc.get("_ball_response", {}).items()}
+    p = rec.get("patch_conf025")
+    out["patch"] = ([p["n"], p["white_frac_median"], p["contrast_median"]] if p else None)
+    # 阴性对照专用（其它记录没有这些键）
+    for k in ("control", "base", "base_ball_frames", "pass_strict", "pass_tol1"):
+        if k in rec:
+            out[k] = rec[k]
+    return out
     return out
 
 
@@ -420,6 +443,29 @@ def patch_montage(frames, dets, conf, title, cols=8, patch=64, zoom=4):
         r, q = divmod(i, cols)
         canvas[24 + r * (ch + 4):24 + r * (ch + 4) + ch, q * cw:(q + 1) * cw] = c
     return canvas
+
+
+def write_json(data, path):
+    """顶层键缩进美化、记录列表**每条一行**。
+
+    直接 json.dump(indent=1) 会把每个数组元素拆成一行，25 档配置能把文件撑到 60 KB；
+    每条记录压成一行后同样的信息只有十几 KB，diff 时也是一行一档，仍然好读。
+    """
+    parts = ["{"]
+    items = list(data.items())
+    for i, (k, v) in enumerate(items):
+        comma = "," if i < len(items) - 1 else ""
+        key = json.dumps(k, ensure_ascii=False)
+        if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
+            rows = ",\n".join("    " + json.dumps(x, ensure_ascii=False, separators=(", ", ": "))
+                              for x in v)
+            parts.append("  %s: [\n%s\n  ]%s" % (key, rows, comma))
+        else:
+            body = json.dumps(v, ensure_ascii=False, indent=1).replace("\n", "\n  ")
+            parts.append("  %s: %s%s" % (key, body, comma))
+    parts.append("}")
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(parts) + "\n")
 
 
 def _zynq_projection(imgsz, inferences_per_frame):
@@ -815,6 +861,8 @@ def main(argv=None):
             rec, _d = run_config(models[base_rec["model"]], _prep(kind), base_rec["mode"],
                                  base_rec["imgsz"], confs, base_rec["tile"])
             rec["id"] = "neg_%s_on_%s" % (kind, base_id)
+            rec["model"] = base_rec.get("model")
+            rec["source"] = "negative_control"
             rec["control"] = kind
             rec["base"] = base_id
             neg.append(rec)
@@ -865,29 +913,25 @@ def main(argv=None):
 
     # 可见性曲线：把每档配置画成「球在网络输入里有多少像素 → 检出率（conf=0.25）」
     # 这是本工具的核心结论载体：所有配置都落在同一条曲线上，说明决定因素只有一个。
+    # 落盘用扁平数组（[id, ball_px_in_input, ball_frames, ms_per_frame]），否则和
+    # configs 重复一遍会让文件从 3 KB 涨到 5 KB。
     visibility = []
     for rec in configs:
         b = rec["by_conf"]["0.25"]
         if b.get("ball_px_in_input") is None:
             continue
-        visibility.append({
-            "id": rec["id"],
-            "model": rec["model"],
-            "mode": rec["mode"],
-            "ball_px_in_input": b["ball_px_in_input"],
-            "ball_frames": b["ball_frames"],
-            "n_frames": rec["n_frames"],
-            "recall": round(b["ball_frames"] / float(rec["n_frames"]), 3),
-            "ball_score_max": b["ball_score_max"],
-            "ms_per_frame": rec["ms_per_frame"],
-        })
-    visibility.sort(key=lambda d: d["ball_px_in_input"])
-    # 检出率首次 >= 0.9 的位置 —— 「球要有多少输入像素才看得见」的定量答案
-    need_px = None
-    for v in visibility:
-        if v["recall"] >= 0.90:
-            need_px = v["ball_px_in_input"]
-            break
+        visibility.append((b["ball_px_in_input"], rec["id"], b["ball_frames"],
+                           rec["n_frames"], rec["ms_per_frame"]))
+    visibility.sort(key=lambda t: (t[0], t[1]))
+    # 「球要有多少输入像素才看得见」——本实验最重要的一条定量答案。
+    # 给三档 recall 阈值：0.90 可能整个扫描都达不到（那就是结论本身），所以不硬编造。
+    def _first_px(bar):
+        for px, _id, bf, nf, _ms in visibility:
+            if bf / float(max(nf, 1)) >= bar:
+                return px
+        return None
+    need_px = {"recall50_px": _first_px(0.50), "recall75_px": _first_px(0.75),
+               "recall90_px": _first_px(0.90)}
 
     # 阴性对照判据：破坏图像后球检出**不应上升**（涂灰必须归零）。
     # 同时记「严格」与「+1 容差」两个版本，避免事后改判据。
@@ -916,8 +960,10 @@ def main(argv=None):
         "positive_control_ball_frames": pos["by_conf"]["0.25"]["ball_frames"] if pos else None,
         "negative_controls_ok_strict": neg_strict,
         "negative_controls_ok_tol1": neg_tol1,
-        # 「球要多大的输入像素才看得见」——本实验最重要的一条数字
-        "ball_px_in_input_for_recall90": need_px,
+        # 「球要有多少输入像素才看得见」——本实验最重要的一条数字（按 recall 分档）
+        # recall90_px 为 null = 整个扫描里没有任何配置达到 90%（本身就是一个结论）
+        "ball_px_in_input_thresholds": need_px,
+        "visibility_curve_cols": ["ball_px_in_input", "id", "ball_frames", "n_frames", "ms_per_frame"],
         "visibility_curve": visibility,
     }
 
@@ -931,12 +977,24 @@ def main(argv=None):
             "device": "cpu",
         },
         "models": model_meta,
-        "decoding": {"conf_floor": CONF_FLOOR, "nms_iou": NMS_IOU, "max_det": MAX_DET,
-                     "confs": confs, "class_id_checked": SPORTS_BALL,
-                     "class_name_checked": "sports ball",
-                     "by_conf_layout": "by_conf.rows[conf] = [%s]" % ", ".join(CONF_COLS),
-                     "detail_layout": "by_conf.detail[conf] = {%s}（只存 %.2f/%.2f 两档）"
-                                    % (", ".join(DETAIL_COLS), confs[0], confs[-1])},
+        "decoding": {
+            "conf_floor": CONF_FLOOR, "nms_iou": NMS_IOU, "max_det": MAX_DET,
+            "confs": confs, "class_id_checked": SPORTS_BALL,
+            "class_name_checked": "sports ball",
+            "layout": {
+                "rows": "rows = 一维展平 [ball_frames, ball_boxes] × len(confs)，顺序同 confs（高→低）",
+                "detail": "detail = 一维展平 [%s] × 2 档（0.25 后接 0.01）" % ", ".join(DETAIL_COLS),
+                "px": "px = [input_scale, ball_px_in_input, ball_px_in_input_measured]"
+                      "（BALL_PX_NATIVE=%.1f px @1280x720；measured=实测框中位宽×scale）" % BALL_PX_NATIVE,
+                "zynq": "zynq = [gop_per_frame, fps_ceiling_pl, ms_per_frame_pl]"
+                        "（投影：GOP ∝ imgsz^2 × 每帧推理次数，PL=%.1f GOPS；非板上实测）" % PL_GOPS,
+                "resp": "resp = [ball_score_max, ball_score_p50_of_frame_max,"
+                        " frames_with_any_ball_response]",
+                "patch": "patch = [n, white_frac_median, contrast_median] @conf>=0.25"
+                         "（白且低饱和像素占比 / 球与周围亮度差）",
+                "ms": "ms = CPU 单帧墙钟（含解码前处理），同机同线程数单次测量",
+            },
+        },
         "sources": {
             "calib360": {"dirs": args.dirs.split(","), "n": n, "w": w0, "h": h0},
             "native720": {"dir": str(native_dir), "n": len(frames_native),
@@ -954,9 +1012,7 @@ def main(argv=None):
     # --- 入库 JSON ---
     outp = _abs(args.out)
     outp.parent.mkdir(parents=True, exist_ok=True)
-    with open(outp, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(data, f, ensure_ascii=False, indent=1)
-        f.write("\n")
+    write_json(data, outp)
     print("")
     print("已写 %s (%.1f KB)" % (outp.relative_to(REPO), outp.stat().st_size / 1024.0))
 
@@ -1060,9 +1116,11 @@ def main(argv=None):
           % (b320, b640, base_repro["ok"]))
     print("网络对球的最高原始响应: %.4f（全配置）" % resp)
     print("阳性对照（大球能检出）: %s" % summary["positive_control_ok"])
-    if need_px is not None:
-        print("球在网络输入里 >= %.1f px 时 recall>=0.90（当前 4-12 px 原图 => 640 下只有 %s px）"
-              % (need_px, round(BALL_PX_NATIVE * 640 / 1280.0, 1)))
+    if need_px["recall50_px"] is not None:
+        print("球在网络输入里的像素 -> recall@conf0.25: "
+              + " | ".join("%s px=%.1f" % (lbl, need_px[k])
+                           for k, lbl in (("recall50_px", "50%"), ("recall75_px", "75%"),
+                                          ("recall90_px", "90%")) if need_px[k] is not None))
     print("SWEEP_DONE %d" % len(configs))
     return 0
 

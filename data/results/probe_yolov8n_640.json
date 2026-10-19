@@ -1,0 +1,155 @@
+{
+  "model": "data\\models\\yolov8n_640.onnx",
+  "onnx_ir_version": 7,
+  "opset": [
+    "ai.onnx:12"
+  ],
+  "nodes": 262,
+  "initializers": 127,
+  "weight_bytes": 12607616,
+  "weight_MB": 12.6076,
+  "weight_MiB": 12.0236,
+  "params_estimate": 3151904,
+  "mac_total": 4371993600,
+  "GMAC": 4.372,
+  "GOP": 8.744,
+  "op_histogram": {
+    "Conv": 64,
+    "Mul": 60,
+    "Sigmoid": 58,
+    "Constant": 22,
+    "Concat": 17,
+    "Add": 9,
+    "Split": 8,
+    "Reshape": 8,
+    "MaxPool": 3,
+    "Resize": 2,
+    "Transpose": 2,
+    "Div": 2,
+    "Slice": 2,
+    "Sub": 2,
+    "Softmax": 1,
+    "Shape": 1,
+    "Gather": 1
+  },
+  "top_mac_layers": [
+    {
+      "op": "Conv",
+      "name": "/model.22/cv3.0/cv3.0.1/conv/Conv",
+      "mac": 368640000
+    },
+    {
+      "op": "Conv",
+      "name": "/model.22/cv3.0/cv3.0.0/conv/Conv",
+      "mac": 294912000
+    },
+    {
+      "op": "Conv",
+      "name": "/model.22/cv2.0/cv2.0.0/conv/Conv",
+      "mac": 235929600
+    },
+    {
+      "op": "Conv",
+      "name": "/model.22/cv2.0/cv2.0.1/conv/Conv",
+      "mac": 235929600
+    },
+    {
+      "op": "Conv",
+      "name": "/model.22/cv3.1/cv3.1.0/conv/Conv",
+      "mac": 147456000
+    },
+    {
+      "op": "Conv",
+      "name": "/model.1/conv/Conv",
+      "mac": 117964800
+    },
+    {
+      "op": "Conv",
+      "name": "/model.3/conv/Conv",
+      "mac": 117964800
+    },
+    {
+      "op": "Conv",
+      "name": "/model.5/conv/Conv",
+      "mac": 117964800
+    },
+    {
+      "op": "Conv",
+      "name": "/model.7/conv/Conv",
+      "mac": 117964800
+    },
+    {
+      "op": "Conv",
+      "name": "/model.22/cv2.1/cv2.1.0/conv/Conv",
+      "mac": 117964800
+    },
+    {
+      "op": "Conv",
+      "name": "/model.22/cv3.1/cv3.1.1/conv/Conv",
+      "mac": 92160000
+    },
+    {
+      "op": "Conv",
+      "name": "/model.12/cv1/conv/Conv",
+      "mac": 78643200
+    },
+    {
+      "op": "Conv",
+      "name": "/model.15/cv1/conv/Conv",
+      "mac": 78643200
+    },
+    {
+      "op": "Conv",
+      "name": "/model.22/cv3.2/cv3.2.0/conv/Conv",
+      "mac": 73728000
+    },
+    {
+      "op": "Conv",
+      "name": "/model.2/m.0/cv1/conv/Conv",
+      "mac": 58982400
+    }
+  ],
+  "mac_concentration_top5": 0.2934,
+  "top5_weight_layers": [
+    {
+      "name": "model.7.conv.weight",
+      "elems": 294912,
+      "bytes": 1179648
+    },
+    {
+      "name": "model.22.cv3.2.0.conv.weight",
+      "elems": 184320,
+      "bytes": 737280
+    },
+    {
+      "name": "model.8.m.0.cv1.conv.weight",
+      "elems": 147456,
+      "bytes": 589824
+    },
+    {
+      "name": "model.8.m.0.cv2.conv.weight",
+      "elems": 147456,
+      "bytes": 589824
+    },
+    {
+      "name": "model.19.conv.weight",
+      "elems": 147456,
+      "bytes": 589824
+    },
+    {
+      "name": "model.21.m.0.cv1.conv.weight",
+      "elems": 147456,
+      "bytes": 589824
+    },
+    {
+      "name": "model.21.m.0.cv2.conv.weight",
+      "elems": 147456,
+      "bytes": 589824
+    },
+    {
+      "name": "model.22.cv2.2.0.conv.weight",
+      "elems": 147456,
+      "bytes": 589824
+    }
+  ]
+}

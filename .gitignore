@@ -98,3 +98,23 @@ build/reports/baseline*/*/*
 board/logs/*
 !board/logs/*.md
 !board/logs/.gitkeep
+
+# --- 模型权重：单文件已超 data/README.md 的 10 MB 线 ⇒ 走「下载脚本 + SHA256」替代 --
+#     实测大小：yolov8n.pt 6.25 MB、yolov8n_{640,320}.onnx ≈12 MB 各一。
+#     ★ 只排除权重本体；data/download/ 下的脚本、README、SHA256SUMS.txt **必须入库**
+#       —— 它们是「可复现」的凭据。父目录排除后子内容无法用 `!` 放回，故按文件逐个排除。
+data/models/*.pt
+data/models/*.onnx
+data/models/*.pth
+data/models/*.ckpt
+data/models/*.h5
+data/models/*.tflite
+#     data/results 里的探针 JSON（几 KB）是**指标来源**，必须入库；只排除原始大输出
+data/results/*.npy
+data/results/*.bin
+data/results/*.raw
+
+# --- 训练/推理产生的临时目录 ---------------------------------------------------
+runs/
+*.pt.tmp
+*.onnx.part

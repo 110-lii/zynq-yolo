@@ -428,20 +428,26 @@ def detect_candidates(bgr, dmot, mode, gra=None):
 
     cands = []
     n_app_blobs = 0
+    # 被筛掉的候选（给可视化用：图上要能同时看到「筛选前」和「筛选后」，否则人眼
+    # 无法判断是「没检测到」还是「检测到了但被筛掉/排到后面」）。
+    rejected = []
     if mode in ("full", "no_motion"):
         blobs, lab = comps(white, AREA_MIN, AREA_MAX, MAX_WH, ASPECT_MAX, EXTENT_MIN)
         n_app_blobs = len(blobs)
         for b in blobs:
             roundness = b["area"] / (math.pi * (max(b["w"], b["h"]) / 2.0) ** 2)
             if roundness < ROUND_MIN:
+                rejected.append((b["x"], b["y"], b["w"], b["h"], "round"))
                 continue
             if gra is not None:
                 cy = min(max(int(b["y"]), 0), gra.shape[0] - 1)
                 cx = min(max(int(b["x"]), 0), gra.shape[1] - 1)
                 if gra[cy, cx] < GRASS_FRAC_MIN:
+                    rejected.append((b["x"], b["y"], b["w"], b["h"], "nograss"))
                     continue
             ring = _ring_contrast(ii, b)
             if ring < RING_MIN:
+                rejected.append((b["x"], b["y"], b["w"], b["h"], "flat"))
                 continue
             pm = _patch(dmot, b)
             pl = _patch(lab, b)
@@ -492,6 +498,8 @@ def detect_candidates(bgr, dmot, mode, gra=None):
                               score=round(peak / 60.0, 3)))
     stats["n_app_blobs"] = n_app_blobs
     stats["n_mot_blobs"] = n_mot_blobs
+    stats["n_rejected"] = len(rejected)
+    stats["rejected"] = rejected
     if len(cands) > TOP_K:
         cands.sort(key=lambda c: -c["score"])
         cands = cands[:TOP_K]
@@ -708,6 +716,7 @@ def run_clip(files, idx_center, cfg, variant, seed=0):
         if k == center:
             gr["bgr"] = bgr.copy()
             gr["cands"] = cands
+            gr["rejected"] = st.get("rejected", [])
             gr["dmot"] = dmot.copy()
             gr["file"] = files[fi].name
         prev_s, prev_g = gs, g
@@ -867,9 +876,24 @@ def up(img, k):
     return cv2.resize(img, None, fx=k, fy=k, interpolation=cv2.INTER_NEAREST)
 
 
-def viz_frame(bgr, cands, dmot, best_pts, center, t_info, n_frames, path):
-    """全帧标注 + 3 个候选的 6x 放大。"""
+def viz_frame(bgr, cands, dmot, best_pts, center, t_info, n_frames, path,
+              rejected=None):
+    """全帧标注 + 3 个候选的 6x 放大。
+
+    图上必须同时能看到「筛选前」和「筛选后」，否则人眼看不出失败的层次：
+      灰框  = 过了连通域尺寸但在后级被否掉的（圆度/无草/无环对比）
+      青框  = 最终候选（cands，已按 score 截断到 TOP_K）
+      红框+十字 = 自动选出的最优轨迹在中心帧的位置
+    """
     img = bgr.copy()
+    # 先画「筛选前」：1px 灰框在草地上几乎看不见，所以再加一个灰色小十字
+    # （不做这一步会让人误以为「球根本没被检测到」，其实它进了连通域、只是被后级否掉）。
+    for (x, y, w, h, why) in (rejected or []):
+        xi, yi, wi, hi = int(x), int(y), int(w), int(h)
+        cv2.rectangle(img, (xi - wi // 2, yi - hi // 2),
+                      (xi + wi // 2, yi + hi // 2), (150, 150, 150), 1)
+        cv2.line(img, (xi - 5, yi), (xi + 5, yi), (150, 150, 150), 1)
+        cv2.line(img, (xi, yi - 5), (xi, yi + 5), (150, 150, 150), 1)
     for c in cands:
         x0, y0 = int(c["x"] - c["w"] / 2), int(c["y"] - c["h"] / 2)
         cv2.rectangle(img, (x0 - 3, y0 - 3), (x0 + c["w"] + 3, y0 + c["h"] + 3),
@@ -887,12 +911,16 @@ def viz_frame(bgr, cands, dmot, best_pts, center, t_info, n_frames, path):
                      (0, 0, 255), 1)
             cv2.line(img, (int(p["x"]), int(p["y"] - 14)), (int(p["x"]), int(p["y"] + 14)),
                      (0, 0, 255), 1)
-    head = "%s  t=%.2fs  frame %d/%d  cands=%d  PASS=%s" % (
+    head = "%s  t=%.2fs  frame %d/%d  candidates=%d (rejected %d)  PASS=%s" % (
         t_info["name"], t_info["t_matched"], center, n_frames, len(cands),
-        "Y" if t_info["pass"] else "N")
-    cv2.rectangle(img, (0, 0), (SRC_W, 26), (0, 0, 0), -1)
+        len(rejected or []), "Y" if t_info["pass"] else "N")
+    legend = ("grey cross+box = rejected by size/roundness/grass/ring  |  "
+              "cyan box = final candidate  |  red box+cross = auto-picked track")
+    cv2.rectangle(img, (0, 0), (SRC_W, 46), (0, 0, 0), -1)
     cv2.putText(img, head, (8, 19), cv2.FONT_HERSHEY_SIMPLEX, 0.62, (0, 255, 120), 1,
                 cv2.LINE_AA)
+    cv2.putText(img, legend, (8, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200),
+                1, cv2.LINE_AA)
 
     # 3 个放大块：轨迹中心点 + 次优候选
     picks = []
@@ -1115,7 +1143,8 @@ def main(argv=None):
                         viz_frame(ctx["gr"]["bgr"], ctx["gr"]["cands"], ctx["gr"]["dmot"],
                                   ctx["best_pts"], ctx["center"],
                                   dict(name=r["name"], t_matched=res["t_center_real"],
-                                       **{"pass": res["pass_"]}), ctx["n"], p)
+                                       **{"pass": res["pass_"]}), ctx["n"], p,
+                                  rejected=ctx["gr"].get("rejected"))
                         c = [q for q in ctx["best_pts"] if q["t"] == ctx["center"]]
                         if c:
                             viz_rows.append(dict(
@@ -1399,13 +1428,14 @@ def _slim_frame(x):
 
 
 def _slim_control_frame(x):
-    """对照变体的逐帧记录：pass/fail + 理由 + 最优轨迹的四个数。对照只需要证明
-    「通过率是多少」，不需要把整条轨迹和候选统计再抄一遍（那是 45 KB 的来源）。"""
+    """对照变体的逐帧记录：只需要「这一帧过没过、为什么」。对照的作用是给一个通过率，
+    逐帧的轨迹细节对结论没有增量信息（那是十几 KB 的来源）。"""
     b = x.get("best") or {}
-    return dict(name=x.get("name"), **{"pass": x.get("pass_")}, reason=x.get("reason"),
-                length=b.get("length"), mean_step=b.get("mean_step"),
-                max_step=b.get("max_step"), mean_score=b.get("mean_score"),
-                n_cand=x.get("n_cand_median"), synthetic=x.get("synthetic"))
+    o = dict(name=x.get("name"), **{"pass": x.get("pass_")}, reason=x.get("reason"),
+             length=b.get("length"), mean_step=b.get("mean_step"))
+    if x.get("synthetic"):
+        o["synthetic"] = x["synthetic"]
+    return o
 
 
 def build_verdict(real, syn, shuf, static, nullb, diag):

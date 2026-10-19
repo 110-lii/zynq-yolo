@@ -90,8 +90,11 @@ def probe_video(path: Path):
     return info
 
 
-def extract_keyframes(video: Path, pool: Path):
-    """只解关键帧（-skip_frame nokey），比全解码快两个数量级。"""
+def extract_keyframes(video: Path, pool: Path, width: int = 0):
+    """只解关键帧（-skip_frame nokey），比全解码快两个数量级。
+
+    `width` = 关键帧池的缩放宽度；**0 表示原分辨率不缩放**（默认）。
+    """
     if pool.exists():
         shutil.rmtree(pool)
     pool.mkdir(parents=True, exist_ok=True)
@@ -106,8 +109,10 @@ def extract_keyframes(video: Path, pool: Path):
         str(video),
         "-vsync",
         "0",
-        "-vf",
-        "scale=640:-2",
+    ]
+    if width and width > 0:
+        cmd += ["-vf", f"scale={width}:-2"]
+    cmd += [
         "-q:v",
         "3",
         str(pool / "%05d.jpg"),
@@ -154,6 +159,17 @@ def main():
     ap.add_argument("--holdout-every", type=int, default=4,
                     help="每第 K 帧进留出集（默认 4 ⇒ 40 帧里 10 张留出）")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument(
+        "--pool-width",
+        type=int,
+        default=0,
+        help=(
+            "关键帧池的缩放宽度像素；0 = 原分辨率不缩放（默认）。"
+            "★ 2026-10-19 起默认原分辨率：此前写死 640 宽，"
+            "导致下游所有「输入分辨率」实验实际是在 640x360 的降采样源上做的"
+            "（1280 输入等于上采样 2 倍），会低估原生 1280 喂入时的精度。"
+        ),
+    )
     args = ap.parse_args()
 
     video = Path(args.video)
@@ -175,7 +191,7 @@ def main():
     SCRATCH.mkdir(parents=True, exist_ok=True)
     pool = SCRATCH / "pool"
     print("extracting keyframes ...")
-    frames = extract_keyframes(video, pool)
+    frames = extract_keyframes(video, pool, args.pool_width)
     if not frames:
         print("CALIB_VIDEO_FAIL no keyframes extracted")
         return 1
@@ -274,6 +290,13 @@ def main():
         r["sha256"] = hashlib.sha256(data).hexdigest()
         r["bytes"] = len(data)
         r["file"] = dst.name
+        # ★ 修于 2026-10-19：原来这里写的是 `info["width"]`（= **源视频** 尺寸 1280x720），
+        # 而落盘的是 `-vf scale=640:-2` 缩放后的 640x360 ⇒ MANIFEST 的 width/height
+        # 对 40 行**全部**是错的（实测 disk=640x360 vs manifest=1280x720，40/40 不符）。
+        # 判据教训：记录尺寸必须读**落盘的那个文件**，不能读上游对象。
+        _im = cv2.imread(str(dst))
+        r["width"] = int(_im.shape[1])
+        r["height"] = int(_im.shape[0])
         rows.append(r)
 
     man = OUT / "MANIFEST.csv"
@@ -294,8 +317,8 @@ def main():
                         r["file"],
                         r["split"],
                         f"{r['t_approx']:.1f}",
-                        str(info["width"]),
-                        str(info["height"]),
+                        str(r["width"]),
+                        str(r["height"]),
                         str(r["bytes"]),
                         r["sha256"],
                         str(r["n_person"]),

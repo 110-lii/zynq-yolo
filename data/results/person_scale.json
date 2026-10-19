@@ -1,0 +1,79 @@
+{
+  "generated": "2026-10-19T23:38:33+08:00",
+  "tool": "tools/person_scale_check.py",
+  "model": "data\\models\\yolov8n.pt",
+  "frames_dir": "data\\samples\\calib_real\\frames_test",
+  "n_frames": 10,
+  "conf": 0.25,
+  "iou_match": 0.5,
+  "ref_size": 1280,
+  "n_ref_total": 211,
+  "controls": {
+    "self_match_recall": 1.0,
+    "wrong_frame": {},
+    "wrong_frame_320": {
+      "match_004.jpg": 0.0,
+      "match_008.jpg": 0.0,
+      "match_012.jpg": 0.0,
+      "match_016.jpg": 0.0,
+      "match_020.jpg": 0.0,
+      "match_024.jpg": 0.0,
+      "match_028.jpg": 0.0,
+      "match_032.jpg": 0.047619047619047616,
+      "match_036.jpg": 0.0,
+      "match_040.jpg": 0.0
+    },
+    "wrong_frame_640": {
+      "match_004.jpg": 0.0,
+      "match_008.jpg": 0.0,
+      "match_012.jpg": 0.0,
+      "match_016.jpg": 0.0,
+      "match_020.jpg": 0.0,
+      "match_024.jpg": 0.0,
+      "match_028.jpg": 0.0,
+      "match_032.jpg": 0.047619047619047616,
+      "match_036.jpg": 0.0,
+      "match_040.jpg": 0.0
+    }
+  },
+  "by_size": {
+    "320": {
+      "input_px": 320,
+      "n_boxes": 109,
+      "n_matched": 100,
+      "recall_vs_ref": 0.47393364928909953,
+      "mean_matched_iou": 0.786937234653371,
+      "per_frame_recall_median": 0.4891304347826087,
+      "per_frame_recall_min": 0.3333333333333333,
+      "wrong_frame_recall_mean": 0.0047619047619047615,
+      "person_height_px_in_input": {
+        "n": 211,
+        "p05": 10.017868041992188,
+        "p50": 17.896408081054688,
+        "min": 5.161529541015625,
+        "note": "参考框高度 × (输入长边 / 原图长边)；只统计参考检出的人，漏检者不在此列"
+      }
+    },
+    "640": {
+      "input_px": 640,
+      "n_boxes": 183,
+      "n_matched": 174,
+      "recall_vs_ref": 0.8246445497630331,
+      "mean_matched_iou": 0.8709945658249393,
+      "per_frame_recall_median": 0.8164983164983165,
+      "per_frame_recall_min": 0.7083333333333334,
+      "wrong_frame_recall_mean": 0.0047619047619047615,
+      "person_height_px_in_input": {
+        "n": 211,
+        "p05": 20.035736083984375,
+        "p50": 35.792816162109375,
+        "min": 10.32305908203125,
+        "note": "参考框高度 × (输入长边 / 原图长边)；只统计参考检出的人，漏检者不在此列"
+      }
+    }
+  },
+  "caveat": "这是【相对】召回：参考是 ref_size 的检测结果，不是人工真值。参考自身的召回/精度未知，因此本表只能回答「低分辨率相对于高分辨率漏了多少人」，不能回答「绝对漏检率是多少」。",
+  "env": {
+    "python": "3.13.1"
+  }
+}

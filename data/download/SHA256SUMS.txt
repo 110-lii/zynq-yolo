@@ -1,0 +1,8 @@
+# SHA256SUMS —— 由 data/download/fetch_models.py --write-sums 生成，勿手改
+#
+# 严格项（.pt，下载所得）：字节必须一致。
+# 非严格项（.onnx，本地导出）：随 torch/ultralytics/onnx 版本变化，仅供对照。
+
+f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36  yolov8n.pt
+d338b1e23913c56bd55cba7759876df190b8c2986715cb10a4ecdaf9ff54a24b  yolov8n_320.onnx
+719ccd64cac19104f60b365b44a1dfbcc33a940c959763d139756af9547184b7  yolov8n_640.onnx

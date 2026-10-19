@@ -13,29 +13,34 @@
 
 | 路径 | 说明 | 谁产生 | 进 git |
 |---|---|---|---|
-| `models/` | 学习模型权重与网络定义文件（**目录名沿用 `models`，但「本题是否采用学习模型」尚未裁定**，见 `docs/repo_spec.md` §7 第 2 项；若裁定为传统 CV 算法，本目录改存该算法的参数/查找表） | 工具产生 / 外部下载 | 小文件 ✅；大权重 ❌ |
+| `models/` | 模型权重与网络定义（`.pt` / `.onnx` 等）。★ **D004 已裁定走 YOLO**（2026-10-19），故本目录现放 YOLOv8n 权重；**权重本体不入 git**（见下「大文件」） | 外部下载 + 本地导出 | ❌ 权重本体；✅ 目录 `.gitkeep` |
 | `calib/` | 标定数据：摄像头/传感器标定参数、色彩与坐标换算系数 | 手写 + 工具产生 | ✅ |
 | `samples/` | 测试样本：单帧图片、视频片段、输入激励 | 手写 / 外部采集 | 小样本 ✅；大样本 ❌ |
 | `golden/` | 金标准：参考输出、逐样本期望结果，用于比对与回归 | 手写 + 工具产生 | ✅ |
 | `results/` | 结果产物：推理输出、评测指标、对比表数据 | 工具产生 | 择优 ✅（摘要/指标进，原始大文件不进） |
-| （`download/` 或 `*.ps1`） | **外部下载脚本落点**（替代方案，见规则） | 手写 | ✅ |
+| `download/` | ★ **外部下载脚本 + `SHA256SUMS.txt`**（大文件替代方案 1 的落点，**已实现**：`fetch_models.py`） | 手写 | ✅ **必须入库**（它是可复现的凭据） |
 
-> 当前磁盘事实：`data/{models,calib,samples,golden,results}/` **目录均已存在但为空**；
-> **「本题用不用学习模型」以及数据集/算法参数的来源与许可 尚未由用户裁定**，不得擅自填入。见 `<待用户裁定：见 docs/repo_spec.md §7>`。
-> `models/` 这个目录名沿用既有骨架，**不代表方案已定为神经网络** —— 目录名不等于题目。
+> 当前磁盘事实（2026-10-19）：
+> `data/models/` 有 `yolov8n.pt`（6.25 MB）+ `yolov8n_{640,320}.onnx`（各 ≈12 MB）—— **三者都被 `.gitignore` 排除**，
+> 靠 [`download/fetch_models.py`](download/fetch_models.py) + [`download/SHA256SUMS.txt`](download/SHA256SUMS.txt) 复现；
+> `data/results/` 有 `probe_yolov8n_*.json`（**几 KB 的指标，入库**，是报告里 MAC/权重的数字来源）；
+> `calib/` `samples/` `golden/` **仍为空**（金标准链路见 M1 计划）。
+> ⚠️ **`models/` 这个目录名是骨架沿用的**；方案在 D004 裁定前曾长期未定，现已定为 YOLO。
 
 ## 规则
 
 - ### ★ 大文件不入 git
   单个大文件（算法权重、原始视频、大图集等）**不得直接提交**。判定线由团队在根 `.gitignore` 中固化；
   实践建议：单文件 > 10 MB（或总量 > 100 MB）即视为大文件，必须走下列替代方案之一。
-- ### 替代方案（二选一，必须在本文件写明选择）
-  1. **外部下载脚本**：提交一个可复现的下载脚本（含 URL、校验值 `SHA256`、目标目录），由使用者自行拉取；
-     例：`data/download/fetch_models.ps1`（**TODO：尚未创建**）。
-  2. **Git LFS**：对指定扩展名启用 LFS 追踪，仓库内只存指针。
-     例：`git lfs track "data/models/*.onnx"`（**具体扩展名待裁定**）。
-  > 采用哪种方案、追踪哪些扩展名，尚未确定：`<待用户裁定：见 docs/repo_spec.md §7>`。
+- ### 替代方案（**已选定方案 1**，2026-10-19）
+  1. **✅ 采用：外部下载脚本** —— 已落地为 [`download/fetch_models.py`](download/fetch_models.py) +
+     [`download/SHA256SUMS.txt`](download/SHA256SUMS.txt)（URL 钉版本、下载后核 SHA256、
+     严格项不符即 exit 1；导出项哈希随工具版本变化时**打印实际值并继续**，不假装可逐字节复现）。
+  2. **未采用：Git LFS** —— 理由：Gitee/GitHub 的 LFS 配额与评审端是否装 `git-lfs` 都不可控，
+     而「脚本 + 校验值」在纯 `git clone` 的机器上也能复现。**若日后再需要，须在此登记并改根 `.gitignore`。**
 - **可复现性底线**：任何下载来的数据，必须记录**来源 URL + 版本/日期 + 校验值**，否则 `report/` 无法复现。
+  ★ 本项目的做法：URL 写死在脚本里（含版本 tag），哈希写进 `SHA256SUMS.txt`（**入库**），
+  并用 `scripts/../tools/onnx_probe.py` 把「权重 → MAC / 体积」这一步也变成可重跑的测量。
 - **数字必须标来源**（§6 纪律）：`results/` 里的任何指标，都要能追溯到生成它的脚本与输入样本。
 - **不要用退出码判断成功**（§5）：数据转换/评测脚本的结论要落到日志令牌或显式比对结果上。
 - 命名硬约束（§1）：目录名与文件名只用 `a-z 0-9 _ - .`；日期后缀用 `_YYYYMMDD`；**文件正文可用中文**。
@@ -46,21 +51,24 @@
 ## 怎么用
 
 ```powershell
-# 0. 现状核对（目录均在，尚无内容）
+# 0. 现状核对
 Get-ChildItem -Recurse D:\zynq-yolo\data
 
-# 1. 放入小样本/标定/金标准（可直接进 git）
+# 1. ✅ 已实现：拉权重 + 导出 onnx + 核 SHA256（需要代理访问 GitHub）
+$env:HTTP_PROXY="http://127.0.0.1:7890"; $env:HTTPS_PROXY="http://127.0.0.1:7890"
+python data\download\fetch_models.py
+#    期望末行 FETCH_MODELS_OK；严格项（.pt）哈希不符会 exit 1
+
+# 2. ✅ 已实现：量出模型的计算量与权重体积（报告里 MAC / 权重的数字来源）
+python tools\onnx_probe.py --model data\models\yolov8n_640.onnx --json data\results\probe_yolov8n_640.json
+#    期望末行 PROBE_OK
+
+# 3. 放入小样本/标定/金标准（可直接进 git）
 #    Copy-Item <样本> D:\zynq-yolo\data\samples\
 #    Copy-Item <期望输出> D:\zynq-yolo\data\golden\
 
-# 2. 【TODO，尚未创建】大文件：外部下载脚本
-#    TODO: data/download/fetch_models.ps1  （含 URL + SHA256 + 目标路径）
-#    或改用 Git LFS：
-#    git lfs install
-#    git lfs track "<待用户裁定：见 docs/repo_spec.md §7>"   # 例：data/models/*.onnx
-
-# 3. 跑评测 -> 结果落 results/
+# 4. 跑评测 -> 结果落 results/
 #    评测脚本见 ../src/ps/host/ 与 ../tools/collect_metrics.py（TODO：尚未创建）
 
-# 4. 只把「指标摘要 / 对比表 / 金标准」提交入库，原始大文件保持本地
+# 5. 只把「指标摘要 / 对比表 / 金标准」提交入库，原始大文件保持本地
 ```

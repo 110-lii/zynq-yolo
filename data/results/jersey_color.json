@@ -1,0 +1,3374 @@
+{
+ "tool": "tools/jersey_color.py",
+ "model": "yolov8n.pt",
+ "conf_lo": 0.05,
+ "conf": 0.25,
+ "conf_hi": 0.5,
+ "torso": {
+  "top": 0.18,
+  "bot": 0.58,
+  "inset": 0.18
+ },
+ "ring_margin": 0.3,
+ "min_torso_px": 24,
+ "clustering": {
+  "k": 6,
+  "merge": 0.1,
+  "min_w": 0.02,
+  "seed": 0
+ },
+ "clips": [
+  {
+   "clip": "t1471",
+   "t0_s": 1471.0,
+   "n_frames": 60,
+   "imgsz": 640,
+   "frame_wh": [
+    1280,
+    720
+   ],
+   "n_det": 1257,
+   "n_conf_ge_025": 1054,
+   "n_low_005_025": 203,
+   "palette": [
+    {
+     "id": "P0",
+     "name": "WHITE",
+     "role": "jersey",
+     "share_torso": 0.407,
+     "share_ring": 0.007,
+     "centroid": [
+      -0.02,
+      0.03,
+      0.97
+     ]
+    },
+    {
+     "id": "P1",
+     "name": "GREEN",
+     "role": "context",
+     "share_torso": 0.192,
+     "share_ring": 0.979,
+     "centroid": [
+      -0.022,
+      0.406,
+      0.76
+     ]
+    },
+    {
+     "id": "P2",
+     "name": "RED",
+     "role": "jersey",
+     "share_torso": 0.243,
+     "share_ring": 0.0,
+     "centroid": [
+      0.595,
+      -0.067,
+      0.849
+     ]
+    },
+    {
+     "id": "P3",
+     "name": "ORANGE",
+     "role": "jersey",
+     "share_torso": 0.077,
+     "share_ring": 0.0,
+     "centroid": [
+      0.366,
+      0.128,
+      0.767
+     ]
+    },
+    {
+     "id": "P4",
+     "name": "CYAN",
+     "role": "jersey",
+     "share_torso": 0.04,
+     "share_ring": 0.015,
+     "centroid": [
+      -0.217,
+      0.042,
+      0.506
+     ]
+    },
+    {
+     "id": "P5",
+     "name": "YELLOW",
+     "role": "jersey",
+     "share_torso": 0.04,
+     "share_ring": 0.0,
+     "centroid": [
+      0.334,
+      0.7,
+      0.97
+     ]
+    }
+   ],
+   "families": {
+    "WHITE": {
+     "role": "jersey",
+     "torso": 0.407,
+     "ring": 0.007,
+     "boxes_hi": 387
+    },
+    "GREEN": {
+     "role": "context",
+     "torso": 0.192,
+     "ring": 0.979,
+     "boxes_hi": 100
+    },
+    "RED": {
+     "role": "jersey",
+     "torso": 0.243,
+     "ring": 0.0,
+     "boxes_hi": 248
+    },
+    "ORANGE": {
+     "role": "jersey",
+     "torso": 0.077,
+     "ring": 0.0,
+     "boxes_hi": 69
+    },
+    "CYAN": {
+     "role": "jersey",
+     "torso": 0.04,
+     "ring": 0.015,
+     "boxes_hi": 24
+    },
+    "YELLOW": {
+     "role": "jersey",
+     "torso": 0.04,
+     "ring": 0.0,
+     "boxes_hi": 46
+    }
+   },
+   "team_families": [
+    "WHITE",
+    "RED"
+   ],
+   "temporal": {
+    "all": {
+     "subset": "all",
+     "family": {
+      "n_tracks": 82,
+      "n_pairs": 845,
+      "strict": 0.2804878048780488,
+      "strict_short": 0.3269230769230769,
+      "n_tracks_short": 52,
+      "consec": 0.7325443786982249,
+      "len_median": 8.0,
+      "len_max": 43,
+      "shuffle_consec": 0.27688757396449704,
+      "shuffle_strict_short": 0.004807692307692308
+     },
+     "proto": {
+      "n_tracks": 82,
+      "n_pairs": 845,
+      "strict": 0.2804878048780488,
+      "strict_short": 0.3269230769230769,
+      "n_tracks_short": 52,
+      "consec": 0.7325443786982249,
+      "len_median": 8.0,
+      "len_max": 43,
+      "shuffle_consec": 0.27727810650887574
+     }
+    },
+    "claims_team": {
+     "subset": "majority label is a team colour",
+     "family": {
+      "n_tracks": 58,
+      "n_pairs": 679,
+      "strict": 0.2413793103448276,
+      "strict_short": 0.25806451612903225,
+      "n_tracks_short": 31,
+      "consec": 0.7525773195876289,
+      "len_median": 10.0,
+      "len_max": 43,
+      "shuffle_consec": 0.27969808541973484,
+      "shuffle_strict_short": 0.0033870967741935483
+     },
+     "proto": {
+      "n_tracks": 58,
+      "n_pairs": 679,
+      "strict": 0.2413793103448276,
+      "strict_short": 0.25806451612903225,
+      "n_tracks_short": 31,
+      "consec": 0.7525773195876289,
+      "len_median": 10.0,
+      "len_max": 43,
+      "shuffle_consec": 0.278961708394698
+     }
+    },
+    "claims_context": {
+     "subset": "majority label is not a team colour",
+     "family": {
+      "n_tracks": 24,
+      "n_pairs": 166,
+      "strict": 0.375,
+      "strict_short": 0.42857142857142855,
+      "n_tracks_short": 21,
+      "consec": 0.6506024096385542,
+      "len_median": 6.5,
+      "len_max": 22,
+      "shuffle_consec": 0.2689156626506024,
+      "shuffle_strict_short": 0.004047619047619047
+     },
+     "proto": {
+      "n_tracks": 24,
+      "n_pairs": 166,
+      "strict": 0.375,
+      "strict_short": 0.42857142857142855,
+      "n_tracks_short": 21,
+      "consec": 0.6506024096385542,
+      "len_median": 6.5,
+      "len_max": 22,
+      "shuffle_consec": 0.2740060240963855
+     }
+    },
+    "ring_control": {
+     "subset": "background ring (same boxes, offset region)",
+     "family": {
+      "n_tracks": 74,
+      "n_pairs": 725,
+      "strict": 0.9864864864864865,
+      "strict_short": 0.9791666666666666,
+      "n_tracks_short": 48,
+      "consec": 0.9958620689655172,
+      "len_median": 8.0,
+      "len_max": 37,
+      "shuffle_consec": 0.8931025011614605,
+      "shuffle_strict_short": 0.7068609540847625
+     }
+    },
+    "by_size": [
+     {
+      "h_lo": 0,
+      "h_hi": 32,
+      "n_tracks": 2,
+      "n_pairs": 11,
+      "consec": 0.8181818181818182,
+      "shuffle_consec": 0.5754545454545454,
+      "strict": 0.5,
+      "strict_short": 0.5
+     },
+     {
+      "h_lo": 32,
+      "h_hi": 56,
+      "n_tracks": 11,
+      "n_pairs": 58,
+      "consec": 0.7931034482758621,
+      "shuffle_consec": 0.4673275862068965,
+      "strict": 0.45454545454545453,
+      "strict_short": 0.45454545454545453
+     },
+     {
+      "h_lo": 56,
+      "h_hi": 96,
+      "n_tracks": 67,
+      "n_pairs": 755,
+      "consec": 0.7205298013245033,
+      "shuffle_consec": 0.35053642384105954,
+      "strict": 0.23880597014925373,
+      "strict_short": 0.2631578947368421
+     },
+     {
+      "h_lo": 96,
+      "h_hi": 400,
+      "n_tracks": 2,
+      "n_pairs": 21,
+      "consec": 0.9523809523809523,
+      "shuffle_consec": 0.7614285714285713,
+      "strict": 0.5,
+      "strict_short": 1.0
+     }
+    ]
+   },
+   "low": {
+    "n": 203,
+    "torso_team": 71,
+    "ring_team": 10,
+    "torso_context": 53,
+    "ring_context": 123,
+    "torso_jersey": 150,
+    "ring_jersey": 63,
+    "torso_team_rate": 0.35,
+    "ring_team_rate": 0.049,
+    "torso_context_rate": 0.261,
+    "ring_context_rate": 0.606,
+    "torso_jersey_rate": 0.739,
+    "ring_jersey_rate": 0.31,
+    "mean_p_team": 0.304,
+    "by_size": [
+     {
+      "h_lo": 0,
+      "h_hi": 32,
+      "n": 73,
+      "torso_team_rate": 0.178,
+      "ring_team_rate": 0.055,
+      "ring_context_rate": 0.411,
+      "torso_context_rate": 0.219
+     },
+     {
+      "h_lo": 32,
+      "h_hi": 56,
+      "n": 71,
+      "torso_team_rate": 0.394,
+      "ring_team_rate": 0.085,
+      "ring_context_rate": 0.563,
+      "torso_context_rate": 0.155
+     },
+     {
+      "h_lo": 56,
+      "h_hi": 96,
+      "n": 41,
+      "torso_team_rate": 0.634,
+      "ring_team_rate": 0.0,
+      "ring_context_rate": 0.854,
+      "torso_context_rate": 0.293
+     },
+     {
+      "h_lo": 96,
+      "h_hi": 400,
+      "n": 18,
+      "torso_team_rate": 0.222,
+      "ring_team_rate": 0.0,
+      "ring_context_rate": 1.0,
+      "torso_context_rate": 0.778
+     }
+    ]
+   },
+   "rerank_top": [
+    {
+     "score": 0.07,
+     "p_team": 0.937,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 79.9,
+     "box": [
+      876.4,
+      313.5,
+      894.5,
+      393.4
+     ],
+     "fi": 34
+    },
+    {
+     "score": 0.051,
+     "p_team": 0.908,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 24.5,
+     "box": [
+      1136.7,
+      258.8,
+      1156.4,
+      283.4
+     ],
+     "fi": 28
+    },
+    {
+     "score": 0.061,
+     "p_team": 0.907,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "CYAN",
+     "h": 26.9,
+     "box": [
+      1099.5,
+      258.2,
+      1121.7,
+      285.1
+     ],
+     "fi": 26
+    },
+    {
+     "score": 0.097,
+     "p_team": 0.882,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 40.4,
+     "box": [
+      447.0,
+      482.7,
+      483.2,
+      523.1
+     ],
+     "fi": 37
+    },
+    {
+     "score": 0.099,
+     "p_team": 0.881,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 48.1,
+     "box": [
+      1158.4,
+      280.3,
+      1181.2,
+      328.5
+     ],
+     "fi": 49
+    },
+    {
+     "score": 0.207,
+     "p_team": 0.878,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": null,
+     "h": 36.6,
+     "box": [
+      691.5,
+      280.8,
+      710.8,
+      317.4
+     ],
+     "fi": 45
+    },
+    {
+     "score": 0.167,
+     "p_team": 0.877,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 72.8,
+     "box": [
+      728.8,
+      305.0,
+      750.3,
+      377.8
+     ],
+     "fi": 29
+    },
+    {
+     "score": 0.097,
+     "p_team": 0.846,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 49.7,
+     "box": [
+      790.9,
+      270.6,
+      810.4,
+      320.2
+     ],
+     "fi": 7
+    },
+    {
+     "score": 0.102,
+     "p_team": 0.837,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 73.7,
+     "box": [
+      1077.0,
+      308.0,
+      1099.6,
+      381.7
+     ],
+     "fi": 46
+    },
+    {
+     "score": 0.051,
+     "p_team": 0.833,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 30.6,
+     "box": [
+      1110.9,
+      259.2,
+      1141.9,
+      289.8
+     ],
+     "fi": 26
+    },
+    {
+     "score": 0.247,
+     "p_team": 0.81,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 108.9,
+     "box": [
+      907.2,
+      311.3,
+      929.6,
+      420.3
+     ],
+     "fi": 36
+    },
+    {
+     "score": 0.221,
+     "p_team": 0.81,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 52.7,
+     "box": [
+      634.2,
+      393.8,
+      658.3,
+      446.5
+     ],
+     "fi": 43
+    },
+    {
+     "score": 0.224,
+     "p_team": 0.81,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 46.3,
+     "box": [
+      693.7,
+      195.9,
+      713.5,
+      242.1
+     ],
+     "fi": 55
+    },
+    {
+     "score": 0.062,
+     "p_team": 0.808,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 30.3,
+     "box": [
+      1128.0,
+      260.1,
+      1159.1,
+      290.4
+     ],
+     "fi": 27
+    },
+    {
+     "score": 0.237,
+     "p_team": 0.808,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 59.7,
+     "box": [
+      845.6,
+      327.0,
+      865.8,
+      386.7
+     ],
+     "fi": 52
+    },
+    {
+     "score": 0.059,
+     "p_team": 0.806,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 37.9,
+     "box": [
+      812.0,
+      274.1,
+      827.7,
+      312.0
+     ],
+     "fi": 5
+    },
+    {
+     "score": 0.152,
+     "p_team": 0.771,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 37.1,
+     "box": [
+      483.3,
+      277.2,
+      507.9,
+      314.3
+     ],
+     "fi": 19
+    },
+    {
+     "score": 0.109,
+     "p_team": 0.76,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 63.9,
+     "box": [
+      1074.1,
+      304.3,
+      1098.6,
+      368.3
+     ],
+     "fi": 47
+    },
+    {
+     "score": 0.113,
+     "p_team": 0.76,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 47.6,
+     "box": [
+      589.3,
+      192.9,
+      613.9,
+      240.5
+     ],
+     "fi": 57
+    },
+    {
+     "score": 0.146,
+     "p_team": 0.75,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 80.3,
+     "box": [
+      895.2,
+      311.5,
+      921.1,
+      391.8
+     ],
+     "fi": 35
+    },
+    {
+     "score": 0.131,
+     "p_team": 0.738,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": null,
+     "h": 39.8,
+     "box": [
+      651.3,
+      269.1,
+      675.0,
+      308.9
+     ],
+     "fi": 46
+    },
+    {
+     "score": 0.221,
+     "p_team": 0.709,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": null,
+     "h": 44.7,
+     "box": [
+      219.7,
+      422.0,
+      247.1,
+      466.7
+     ],
+     "fi": 48
+    },
+    {
+     "score": 0.171,
+     "p_team": 0.702,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 71.3,
+     "box": [
+      579.2,
+      352.2,
+      600.9,
+      423.5
+     ],
+     "fi": 24
+    },
+    {
+     "score": 0.235,
+     "p_team": 0.685,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 66.0,
+     "box": [
+      784.6,
+      351.8,
+      808.3,
+      417.7
+     ],
+     "fi": 29
+    },
+    {
+     "score": 0.136,
+     "p_team": 0.675,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 66.3,
+     "box": [
+      1088.5,
+      315.9,
+      1114.7,
+      382.3
+     ],
+     "fi": 45
+    }
+   ]
+  },
+  {
+   "clip": "t1939",
+   "t0_s": 1939.0,
+   "n_frames": 60,
+   "imgsz": 640,
+   "frame_wh": [
+    1280,
+    720
+   ],
+   "n_det": 819,
+   "n_conf_ge_025": 575,
+   "n_low_005_025": 244,
+   "palette": [
+    {
+     "id": "P0",
+     "name": "RED",
+     "role": "jersey",
+     "share_torso": 0.349,
+     "share_ring": 0.286,
+     "centroid": [
+      0.18,
+      0.031,
+      0.502
+     ]
+    },
+    {
+     "id": "P1",
+     "name": "WHITE",
+     "role": "jersey",
+     "share_torso": 0.355,
+     "share_ring": 0.008,
+     "centroid": [
+      -0.116,
+      0.016,
+      0.835
+     ]
+    },
+    {
+     "id": "P2",
+     "name": "RED",
+     "role": "jersey",
+     "share_torso": 0.212,
+     "share_ring": 0.0,
+     "centroid": [
+      0.551,
+      -0.102,
+      0.679
+     ]
+    },
+    {
+     "id": "P3",
+     "name": "CYAN",
+     "role": "context",
+     "share_torso": 0.02,
+     "share_ring": 0.277,
+     "centroid": [
+      -0.188,
+      -0.034,
+      0.461
+     ]
+    },
+    {
+     "id": "P4",
+     "name": "GREEN",
+     "role": "context",
+     "share_torso": 0.033,
+     "share_ring": 0.289,
+     "centroid": [
+      -0.107,
+      0.399,
+      0.61
+     ]
+    },
+    {
+     "id": "P5",
+     "name": "GREEN",
+     "role": "context",
+     "share_torso": 0.032,
+     "share_ring": 0.139,
+     "centroid": [
+      0.014,
+      0.422,
+      0.818
+     ]
+    }
+   ],
+   "families": {
+    "RED": {
+     "role": "jersey",
+     "torso": 0.56,
+     "ring": 0.287,
+     "boxes_hi": 196
+    },
+    "WHITE": {
+     "role": "jersey",
+     "torso": 0.355,
+     "ring": 0.008,
+     "boxes_hi": 153
+    },
+    "CYAN": {
+     "role": "context",
+     "torso": 0.02,
+     "ring": 0.277,
+     "boxes_hi": 0
+    },
+    "GREEN": {
+     "role": "context",
+     "torso": 0.065,
+     "ring": 0.429,
+     "boxes_hi": 95
+    }
+   },
+   "team_families": [
+    "RED",
+    "WHITE"
+   ],
+   "temporal": {
+    "all": {
+     "subset": "all",
+     "family": {
+      "n_tracks": 50,
+      "n_pairs": 441,
+      "strict": 0.28,
+      "strict_short": 0.30303030303030304,
+      "n_tracks_short": 33,
+      "consec": 0.7891156462585034,
+      "len_median": 8.0,
+      "len_max": 25,
+      "shuffle_consec": 0.3350566893424036,
+      "shuffle_strict_short": 0.005757575757575758
+     },
+     "proto": {
+      "n_tracks": 50,
+      "n_pairs": 441,
+      "strict": 0.22,
+      "strict_short": 0.21212121212121213,
+      "n_tracks_short": 33,
+      "consec": 0.7596371882086168,
+      "len_median": 8.0,
+      "len_max": 25,
+      "shuffle_consec": 0.3001133786848073
+     }
+    },
+    "claims_team": {
+     "subset": "majority label is a team colour",
+     "family": {
+      "n_tracks": 40,
+      "n_pairs": 359,
+      "strict": 0.3,
+      "strict_short": 0.3333333333333333,
+      "n_tracks_short": 27,
+      "consec": 0.8022284122562674,
+      "len_median": 8.0,
+      "len_max": 25,
+      "shuffle_consec": 0.33930362116991647,
+      "shuffle_strict_short": 0.005
+     },
+     "proto": {
+      "n_tracks": 40,
+      "n_pairs": 359,
+      "strict": 0.225,
+      "strict_short": 0.2222222222222222,
+      "n_tracks_short": 27,
+      "consec": 0.766016713091922,
+      "len_median": 8.0,
+      "len_max": 25,
+      "shuffle_consec": 0.3049860724233983
+     }
+    },
+    "claims_context": {
+     "subset": "majority label is not a team colour",
+     "family": {
+      "n_tracks": 10,
+      "n_pairs": 82,
+      "strict": 0.2,
+      "strict_short": 0.16666666666666666,
+      "n_tracks_short": 6,
+      "consec": 0.7317073170731707,
+      "len_median": 8.0,
+      "len_max": 15,
+      "shuffle_consec": 0.31609756097560976,
+      "shuffle_strict_short": 0.005833333333333333
+     },
+     "proto": {
+      "n_tracks": 10,
+      "n_pairs": 82,
+      "strict": 0.2,
+      "strict_short": 0.16666666666666666,
+      "n_tracks_short": 6,
+      "consec": 0.7317073170731707,
+      "len_median": 8.0,
+      "len_max": 15,
+      "shuffle_consec": 0.2899390243902439
+     }
+    },
+    "ring_control": {
+     "subset": "background ring (same boxes, offset region)",
+     "family": {
+      "n_tracks": 42,
+      "n_pairs": 358,
+      "strict": 0.8333333333333334,
+      "strict_short": 0.8333333333333334,
+      "n_tracks_short": 30,
+      "consec": 0.9553072625698324,
+      "len_median": 8.0,
+      "len_max": 25,
+      "shuffle_consec": 0.6587446113918037,
+      "shuffle_strict_short": 0.2278882562913273
+     }
+    },
+    "by_size": [
+     {
+      "h_lo": 0,
+      "h_hi": 32,
+      "n_tracks": 2,
+      "n_pairs": 12,
+      "consec": 1.0,
+      "shuffle_consec": 0.4958333333333333,
+      "strict": 1.0,
+      "strict_short": 1.0
+     },
+     {
+      "h_lo": 32,
+      "h_hi": 56,
+      "n_tracks": 6,
+      "n_pairs": 40,
+      "consec": 0.825,
+      "shuffle_consec": 0.37987499999999996,
+      "strict": 0.5,
+      "strict_short": 0.6
+     },
+     {
+      "h_lo": 56,
+      "h_hi": 96,
+      "n_tracks": 38,
+      "n_pairs": 354,
+      "consec": 0.7768361581920904,
+      "shuffle_consec": 0.3501553672316384,
+      "strict": 0.23684210526315788,
+      "strict_short": 0.21739130434782608
+     },
+     {
+      "h_lo": 96,
+      "h_hi": 400,
+      "n_tracks": 2,
+      "n_pairs": 8,
+      "consec": 0.75,
+      "shuffle_consec": 0.75,
+      "strict": 0.0,
+      "strict_short": 0.0
+     }
+    ]
+   },
+   "low": {
+    "n": 244,
+    "torso_team": 146,
+    "ring_team": 52,
+    "torso_context": 98,
+    "ring_context": 171,
+    "torso_jersey": 146,
+    "ring_jersey": 52,
+    "torso_team_rate": 0.598,
+    "ring_team_rate": 0.213,
+    "torso_context_rate": 0.402,
+    "ring_context_rate": 0.701,
+    "torso_jersey_rate": 0.598,
+    "ring_jersey_rate": 0.213,
+    "mean_p_team": 0.575,
+    "by_size": [
+     {
+      "h_lo": 0,
+      "h_hi": 32,
+      "n": 70,
+      "torso_team_rate": 0.543,
+      "ring_team_rate": 0.386,
+      "ring_context_rate": 0.571,
+      "torso_context_rate": 0.457
+     },
+     {
+      "h_lo": 32,
+      "h_hi": 56,
+      "n": 102,
+      "torso_team_rate": 0.716,
+      "ring_team_rate": 0.196,
+      "ring_context_rate": 0.706,
+      "torso_context_rate": 0.284
+     },
+     {
+      "h_lo": 56,
+      "h_hi": 96,
+      "n": 45,
+      "torso_team_rate": 0.644,
+      "ring_team_rate": 0.089,
+      "ring_context_rate": 0.822,
+      "torso_context_rate": 0.356
+     },
+     {
+      "h_lo": 96,
+      "h_hi": 400,
+      "n": 24,
+      "torso_team_rate": 0.125,
+      "ring_team_rate": 0.0,
+      "ring_context_rate": 0.917,
+      "torso_context_rate": 0.875
+     }
+    ]
+   },
+   "rerank_top": [
+    {
+     "score": 0.066,
+     "p_team": 1.0,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 25.2,
+     "box": [
+      528.8,
+      228.7,
+      543.4,
+      253.9
+     ],
+     "fi": 0
+    },
+    {
+     "score": 0.079,
+     "p_team": 1.0,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 20.2,
+     "box": [
+      544.4,
+      263.6,
+      559.0,
+      283.8
+     ],
+     "fi": 24
+    },
+    {
+     "score": 0.162,
+     "p_team": 1.0,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "CYAN",
+     "h": 50.6,
+     "box": [
+      516.2,
+      283.8,
+      533.2,
+      334.4
+     ],
+     "fi": 29
+    },
+    {
+     "score": 0.053,
+     "p_team": 1.0,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 24.6,
+     "box": [
+      851.4,
+      287.7,
+      865.2,
+      312.2
+     ],
+     "fi": 29
+    },
+    {
+     "score": 0.139,
+     "p_team": 1.0,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "CYAN",
+     "h": 109.7,
+     "box": [
+      183.3,
+      62.0,
+      281.6,
+      171.7
+     ],
+     "fi": 47
+    },
+    {
+     "score": 0.078,
+     "p_team": 0.994,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "RED",
+     "h": 500.9,
+     "box": [
+      3.2,
+      205.6,
+      671.7,
+      706.5
+     ],
+     "fi": 56
+    },
+    {
+     "score": 0.171,
+     "p_team": 0.992,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 46.3,
+     "box": [
+      491.5,
+      291.2,
+      512.6,
+      337.4
+     ],
+     "fi": 28
+    },
+    {
+     "score": 0.058,
+     "p_team": 0.991,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "CYAN",
+     "h": 22.0,
+     "box": [
+      1068.8,
+      255.3,
+      1087.8,
+      277.3
+     ],
+     "fi": 20
+    },
+    {
+     "score": 0.187,
+     "p_team": 0.986,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 43.2,
+     "box": [
+      495.8,
+      265.5,
+      521.0,
+      308.6
+     ],
+     "fi": 25
+    },
+    {
+     "score": 0.191,
+     "p_team": 0.984,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 47.1,
+     "box": [
+      1145.4,
+      279.0,
+      1165.8,
+      326.1
+     ],
+     "fi": 25
+    },
+    {
+     "score": 0.13,
+     "p_team": 0.983,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 41.0,
+     "box": [
+      779.8,
+      298.3,
+      795.2,
+      339.4
+     ],
+     "fi": 28
+    },
+    {
+     "score": 0.059,
+     "p_team": 0.982,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 26.2,
+     "box": [
+      745.9,
+      231.8,
+      762.5,
+      257.9
+     ],
+     "fi": 3
+    },
+    {
+     "score": 0.112,
+     "p_team": 0.981,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 49.1,
+     "box": [
+      492.8,
+      262.6,
+      522.0,
+      311.8
+     ],
+     "fi": 22
+    },
+    {
+     "score": 0.227,
+     "p_team": 0.977,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": null,
+     "h": 46.4,
+     "box": [
+      1086.4,
+      287.3,
+      1110.8,
+      333.7
+     ],
+     "fi": 3
+    },
+    {
+     "score": 0.056,
+     "p_team": 0.971,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 32.7,
+     "box": [
+      1086.1,
+      288.5,
+      1111.6,
+      321.2
+     ],
+     "fi": 24
+    },
+    {
+     "score": 0.248,
+     "p_team": 0.97,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "CYAN",
+     "h": 49.3,
+     "box": [
+      485.3,
+      279.7,
+      504.4,
+      329.0
+     ],
+     "fi": 31
+    },
+    {
+     "score": 0.228,
+     "p_team": 0.967,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 34.9,
+     "box": [
+      1008.7,
+      284.2,
+      1031.5,
+      319.1
+     ],
+     "fi": 15
+    },
+    {
+     "score": 0.163,
+     "p_team": 0.964,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "CYAN",
+     "h": 33.8,
+     "box": [
+      538.4,
+      254.9,
+      558.6,
+      288.7
+     ],
+     "fi": 21
+    },
+    {
+     "score": 0.208,
+     "p_team": 0.963,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 47.0,
+     "box": [
+      724.7,
+      286.1,
+      740.2,
+      333.1
+     ],
+     "fi": 27
+    },
+    {
+     "score": 0.14,
+     "p_team": 0.963,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": null,
+     "h": 21.7,
+     "box": [
+      519.9,
+      299.8,
+      534.5,
+      321.5
+     ],
+     "fi": 32
+    },
+    {
+     "score": 0.14,
+     "p_team": 0.957,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 39.6,
+     "box": [
+      263.9,
+      293.0,
+      285.6,
+      332.5
+     ],
+     "fi": 22
+    },
+    {
+     "score": 0.059,
+     "p_team": 0.956,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 23.1,
+     "box": [
+      834.2,
+      238.0,
+      849.7,
+      261.1
+     ],
+     "fi": 7
+    },
+    {
+     "score": 0.083,
+     "p_team": 0.955,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 27.4,
+     "box": [
+      797.6,
+      232.6,
+      813.5,
+      260.0
+     ],
+     "fi": 4
+    },
+    {
+     "score": 0.052,
+     "p_team": 0.955,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "CYAN",
+     "h": 22.8,
+     "box": [
+      592.8,
+      298.3,
+      608.9,
+      321.0
+     ],
+     "fi": 28
+    },
+    {
+     "score": 0.229,
+     "p_team": 0.95,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "WHITE",
+     "h": 50.8,
+     "box": [
+      487.7,
+      264.0,
+      520.5,
+      314.9
+     ],
+     "fi": 23
+    }
+   ]
+  },
+  {
+   "clip": "t6000",
+   "t0_s": 6000.0,
+   "n_frames": 60,
+   "imgsz": 640,
+   "frame_wh": [
+    1280,
+    720
+   ],
+   "n_det": 1171,
+   "n_conf_ge_025": 963,
+   "n_low_005_025": 208,
+   "palette": [
+    {
+     "id": "P0",
+     "name": "WHITE",
+     "role": "jersey",
+     "share_torso": 0.403,
+     "share_ring": 0.011,
+     "centroid": [
+      -0.053,
+      -0.007,
+      0.944
+     ]
+    },
+    {
+     "id": "P1",
+     "name": "GREEN",
+     "role": "context",
+     "share_torso": 0.163,
+     "share_ring": 0.731,
+     "centroid": [
+      0.01,
+      0.42,
+      0.72
+     ]
+    },
+    {
+     "id": "P2",
+     "name": "RED",
+     "role": "jersey",
+     "share_torso": 0.154,
+     "share_ring": 0.0,
+     "centroid": [
+      0.715,
+      -0.12,
+      0.842
+     ]
+    },
+    {
+     "id": "P3",
+     "name": "RED",
+     "role": "jersey",
+     "share_torso": 0.119,
+     "share_ring": 0.0,
+     "centroid": [
+      0.377,
+      0.054,
+      0.744
+     ]
+    },
+    {
+     "id": "P4",
+     "name": "BLUE",
+     "role": "context",
+     "share_torso": 0.087,
+     "share_ring": 0.258,
+     "centroid": [
+      -0.356,
+      -0.155,
+      0.567
+     ]
+    },
+    {
+     "id": "P5",
+     "name": "RED",
+     "role": "jersey",
+     "share_torso": 0.075,
+     "share_ring": 0.0,
+     "centroid": [
+      0.881,
+      -0.172,
+      0.558
+     ]
+    }
+   ],
+   "families": {
+    "WHITE": {
+     "role": "jersey",
+     "torso": 0.403,
+     "ring": 0.011,
+     "boxes_hi": 334
+    },
+    "GREEN": {
+     "role": "context",
+     "torso": 0.163,
+     "ring": 0.731,
+     "boxes_hi": 144
+    },
+    "RED": {
+     "role": "jersey",
+     "torso": 0.348,
+     "ring": 0.0,
+     "boxes_hi": 229
+    },
+    "BLUE": {
+     "role": "context",
+     "torso": 0.087,
+     "ring": 0.258,
+     "boxes_hi": 54
+    }
+   },
+   "team_families": [
+    "WHITE",
+    "RED"
+   ],
+   "temporal": {
+    "all": {
+     "subset": "all",
+     "family": {
+      "n_tracks": 60,
+      "n_pairs": 806,
+      "strict": 0.21666666666666667,
+      "strict_short": 0.3103448275862069,
+      "n_tracks_short": 29,
+      "consec": 0.7816377171215881,
+      "len_median": 11.0,
+      "len_max": 44,
+      "shuffle_consec": 0.32596774193548383,
+      "shuffle_strict_short": 0.00603448275862069
+     },
+     "proto": {
+      "n_tracks": 60,
+      "n_pairs": 806,
+      "strict": 0.21666666666666667,
+      "strict_short": 0.3103448275862069,
+      "n_tracks_short": 29,
+      "consec": 0.739454094292804,
+      "len_median": 11.0,
+      "len_max": 44,
+      "shuffle_consec": 0.2931885856079404
+     }
+    },
+    "claims_team": {
+     "subset": "majority label is a team colour",
+     "family": {
+      "n_tracks": 47,
+      "n_pairs": 697,
+      "strict": 0.2127659574468085,
+      "strict_short": 0.38095238095238093,
+      "n_tracks_short": 21,
+      "consec": 0.7776183644189383,
+      "len_median": 14.0,
+      "len_max": 44,
+      "shuffle_consec": 0.32522955523672875,
+      "shuffle_strict_short": 0.004999999999999999
+     },
+     "proto": {
+      "n_tracks": 47,
+      "n_pairs": 697,
+      "strict": 0.2127659574468085,
+      "strict_short": 0.38095238095238093,
+      "n_tracks_short": 21,
+      "consec": 0.7288378766140603,
+      "len_median": 14.0,
+      "len_max": 44,
+      "shuffle_consec": 0.29109038737446197
+     }
+    },
+    "claims_context": {
+     "subset": "majority label is not a team colour",
+     "family": {
+      "n_tracks": 13,
+      "n_pairs": 109,
+      "strict": 0.23076923076923078,
+      "strict_short": 0.125,
+      "n_tracks_short": 8,
+      "consec": 0.8073394495412844,
+      "len_median": 8.0,
+      "len_max": 20,
+      "shuffle_consec": 0.3238990825688073,
+      "shuffle_strict_short": 0.01125
+     },
+     "proto": {
+      "n_tracks": 13,
+      "n_pairs": 109,
+      "strict": 0.23076923076923078,
+      "strict_short": 0.125,
+      "n_tracks_short": 8,
+      "consec": 0.8073394495412844,
+      "len_median": 8.0,
+      "len_max": 20,
+      "shuffle_consec": 0.29674311926605507
+     }
+    },
+    "ring_control": {
+     "subset": "background ring (same boxes, offset region)",
+     "family": {
+      "n_tracks": 44,
+      "n_pairs": 534,
+      "strict": 0.9090909090909091,
+      "strict_short": 0.9090909090909091,
+      "n_tracks_short": 22,
+      "consec": 0.9868913857677902,
+      "len_median": 10.0,
+      "len_max": 40,
+      "shuffle_consec": 0.9361678272452348,
+      "shuffle_strict_short": 0.7751865538254689
+     }
+    },
+    "by_size": [
+     {
+      "h_lo": 0,
+      "h_hi": 32,
+      "n_tracks": 0,
+      "n_pairs": 0,
+      "consec": null,
+      "shuffle_consec": null,
+      "strict": null,
+      "strict_short": null
+     },
+     {
+      "h_lo": 32,
+      "h_hi": 56,
+      "n_tracks": 4,
+      "n_pairs": 30,
+      "consec": 0.9,
+      "shuffle_consec": 0.4925,
+      "strict": 0.5,
+      "strict_short": 0.3333333333333333
+     },
+     {
+      "h_lo": 56,
+      "h_hi": 96,
+      "n_tracks": 47,
+      "n_pairs": 705,
+      "consec": 0.7716312056737589,
+      "shuffle_consec": 0.3511702127659575,
+      "strict": 0.2127659574468085,
+      "strict_short": 0.3684210526315789
+     },
+     {
+      "h_lo": 96,
+      "h_hi": 400,
+      "n_tracks": 8,
+      "n_pairs": 64,
+      "consec": 0.828125,
+      "shuffle_consec": 0.44390625,
+      "strict": 0.125,
+      "strict_short": 0.16666666666666666
+     }
+    ]
+   },
+   "low": {
+    "n": 208,
+    "torso_team": 110,
+    "ring_team": 4,
+    "torso_context": 98,
+    "ring_context": 167,
+    "torso_jersey": 110,
+    "ring_jersey": 4,
+    "torso_team_rate": 0.529,
+    "ring_team_rate": 0.019,
+    "torso_context_rate": 0.471,
+    "ring_context_rate": 0.803,
+    "torso_jersey_rate": 0.529,
+    "ring_jersey_rate": 0.019,
+    "mean_p_team": 0.499,
+    "by_size": [
+     {
+      "h_lo": 0,
+      "h_hi": 32,
+      "n": 24,
+      "torso_team_rate": 0.5,
+      "ring_team_rate": 0.0,
+      "ring_context_rate": 0.875,
+      "torso_context_rate": 0.5
+     },
+     {
+      "h_lo": 32,
+      "h_hi": 56,
+      "n": 81,
+      "torso_team_rate": 0.481,
+      "ring_team_rate": 0.012,
+      "ring_context_rate": 0.827,
+      "torso_context_rate": 0.519
+     },
+     {
+      "h_lo": 56,
+      "h_hi": 96,
+      "n": 69,
+      "torso_team_rate": 0.638,
+      "ring_team_rate": 0.014,
+      "ring_context_rate": 0.841,
+      "torso_context_rate": 0.362
+     },
+     {
+      "h_lo": 96,
+      "h_hi": 400,
+      "n": 34,
+      "torso_team_rate": 0.441,
+      "ring_team_rate": 0.059,
+      "ring_context_rate": 0.618,
+      "torso_context_rate": 0.559
+     }
+    ]
+   },
+   "rerank_top": [
+    {
+     "score": 0.181,
+     "p_team": 1.0,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 48.9,
+     "box": [
+      355.3,
+      160.7,
+      369.9,
+      209.5
+     ],
+     "fi": 52
+    },
+    {
+     "score": 0.246,
+     "p_team": 0.977,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 50.0,
+     "box": [
+      376.0,
+      166.7,
+      394.1,
+      216.7
+     ],
+     "fi": 49
+    },
+    {
+     "score": 0.131,
+     "p_team": 0.963,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": null,
+     "h": 157.2,
+     "box": [
+      1254.5,
+      267.4,
+      1279.5,
+      424.6
+     ],
+     "fi": 5
+    },
+    {
+     "score": 0.232,
+     "p_team": 0.946,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 48.9,
+     "box": [
+      449.3,
+      297.8,
+      471.9,
+      346.7
+     ],
+     "fi": 24
+    },
+    {
+     "score": 0.162,
+     "p_team": 0.941,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 64.4,
+     "box": [
+      620.3,
+      281.2,
+      649.7,
+      345.5
+     ],
+     "fi": 20
+    },
+    {
+     "score": 0.117,
+     "p_team": 0.937,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": null,
+     "h": 72.2,
+     "box": [
+      693.1,
+      239.9,
+      717.9,
+      312.1
+     ],
+     "fi": 12
+    },
+    {
+     "score": 0.069,
+     "p_team": 0.931,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 69.3,
+     "box": [
+      643.8,
+      256.0,
+      662.3,
+      325.4
+     ],
+     "fi": 19
+    },
+    {
+     "score": 0.105,
+     "p_team": 0.928,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 53.5,
+     "box": [
+      630.0,
+      275.6,
+      650.8,
+      329.1
+     ],
+     "fi": 19
+    },
+    {
+     "score": 0.226,
+     "p_team": 0.927,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 54.3,
+     "box": [
+      622.9,
+      244.8,
+      646.9,
+      299.2
+     ],
+     "fi": 57
+    },
+    {
+     "score": 0.161,
+     "p_team": 0.926,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 56.9,
+     "box": [
+      621.2,
+      290.9,
+      647.7,
+      347.8
+     ],
+     "fi": 21
+    },
+    {
+     "score": 0.193,
+     "p_team": 0.925,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 58.6,
+     "box": [
+      699.6,
+      257.5,
+      722.5,
+      316.1
+     ],
+     "fi": 21
+    },
+    {
+     "score": 0.128,
+     "p_team": 0.92,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": null,
+     "h": 92.7,
+     "box": [
+      882.8,
+      262.3,
+      919.3,
+      355.1
+     ],
+     "fi": 8
+    },
+    {
+     "score": 0.142,
+     "p_team": 0.905,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 52.3,
+     "box": [
+      967.4,
+      320.3,
+      989.6,
+      372.7
+     ],
+     "fi": 25
+    },
+    {
+     "score": 0.071,
+     "p_team": 0.899,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "BLUE",
+     "h": 176.9,
+     "box": [
+      580.8,
+      275.0,
+      696.4,
+      451.8
+     ],
+     "fi": 9
+    },
+    {
+     "score": 0.134,
+     "p_team": 0.896,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 50.9,
+     "box": [
+      705.8,
+      241.3,
+      724.2,
+      292.2
+     ],
+     "fi": 59
+    },
+    {
+     "score": 0.054,
+     "p_team": 0.893,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": null,
+     "h": 118.1,
+     "box": [
+      1227.8,
+      235.4,
+      1279.6,
+      353.5
+     ],
+     "fi": 5
+    },
+    {
+     "score": 0.219,
+     "p_team": 0.885,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 51.2,
+     "box": [
+      621.5,
+      189.3,
+      640.7,
+      240.5
+     ],
+     "fi": 41
+    },
+    {
+     "score": 0.059,
+     "p_team": 0.882,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 76.9,
+     "box": [
+      701.1,
+      257.0,
+      731.8,
+      333.8
+     ],
+     "fi": 15
+    },
+    {
+     "score": 0.241,
+     "p_team": 0.878,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 45.9,
+     "box": [
+      354.6,
+      158.8,
+      370.6,
+      204.7
+     ],
+     "fi": 51
+    },
+    {
+     "score": 0.185,
+     "p_team": 0.877,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 47.3,
+     "box": [
+      427.0,
+      166.7,
+      441.6,
+      214.0
+     ],
+     "fi": 54
+    },
+    {
+     "score": 0.109,
+     "p_team": 0.875,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": null,
+     "h": 132.0,
+     "box": [
+      1155.7,
+      264.8,
+      1198.8,
+      396.9
+     ],
+     "fi": 6
+    },
+    {
+     "score": 0.211,
+     "p_team": 0.862,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 38.6,
+     "box": [
+      549.6,
+      293.5,
+      574.6,
+      332.1
+     ],
+     "fi": 23
+    },
+    {
+     "score": 0.185,
+     "p_team": 0.86,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 51.9,
+     "box": [
+      645.5,
+      256.9,
+      661.8,
+      308.7
+     ],
+     "fi": 20
+    },
+    {
+     "score": 0.227,
+     "p_team": 0.859,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 56.9,
+     "box": [
+      626.3,
+      249.7,
+      653.7,
+      306.6
+     ],
+     "fi": 17
+    },
+    {
+     "score": 0.107,
+     "p_team": 0.858,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": "BLUE",
+     "h": 97.7,
+     "box": [
+      504.0,
+      290.2,
+      563.9,
+      387.9
+     ],
+     "fi": 9
+    }
+   ]
+  }
+ ],
+ "pooled": {
+  "all": {
+   "family": {
+    "n_tracks": 192,
+    "n_pairs": 2092,
+    "n_tracks_short": 114,
+    "len_max": 112,
+    "strict": 0.2604166666666667,
+    "strict_short": 0.3157894736842105,
+    "consec": 0.7633843212237094,
+    "shuffle_consec": 0.3080592734225622,
+    "shuffle_strict_short": 0.005394736842105263,
+    "len_median": null
+   },
+   "proto": {
+    "n_tracks": 192,
+    "n_pairs": 2092,
+    "n_tracks_short": 114,
+    "len_max": 112,
+    "strict": 0.24479166666666666,
+    "strict_short": 0.2894736842105263,
+    "consec": 0.7409177820267686,
+    "shuffle_consec": 0.2882217973231358,
+    "shuffle_strict_short": null,
+    "len_median": null
+   },
+   "subset": "all"
+  },
+  "claims_team": {
+   "family": {
+    "n_tracks": 145,
+    "n_pairs": 1735,
+    "n_tracks_short": 79,
+    "len_max": 112,
+    "strict": 0.2482758620689655,
+    "strict_short": 0.31645569620253167,
+    "consec": 0.7729106628242075,
+    "shuffle_consec": 0.3103227665706051,
+    "shuffle_strict_short": 0.004367088607594936,
+    "len_median": null
+   },
+   "proto": {
+    "n_tracks": 145,
+    "n_pairs": 1735,
+    "n_tracks_short": 79,
+    "len_max": 112,
+    "strict": 0.22758620689655173,
+    "strict_short": 0.27848101265822783,
+    "consec": 0.745821325648415,
+    "shuffle_consec": 0.2892190201729106,
+    "shuffle_strict_short": null,
+    "len_median": null
+   },
+   "subset": "claims_team"
+  },
+  "claims_context": {
+   "family": {
+    "n_tracks": 47,
+    "n_pairs": 357,
+    "n_tracks_short": 35,
+    "len_max": 57,
+    "strict": 0.2978723404255319,
+    "strict_short": 0.3142857142857143,
+    "consec": 0.7170868347338936,
+    "shuffle_consec": 0.2965406162464986,
+    "shuffle_strict_short": 0.006,
+    "len_median": null
+   },
+   "proto": {
+    "n_tracks": 47,
+    "n_pairs": 357,
+    "n_tracks_short": 35,
+    "len_max": 57,
+    "strict": 0.2978723404255319,
+    "strict_short": 0.3142857142857143,
+    "consec": 0.7170868347338936,
+    "shuffle_consec": 0.28460784313725485,
+    "shuffle_strict_short": null,
+    "len_median": null
+   },
+   "subset": "claims_context"
+  },
+  "ring_control": {
+   "family": {
+    "n_tracks": 160,
+    "n_pairs": 1617,
+    "n_tracks_short": 100,
+    "len_max": 102,
+    "strict": 0.925,
+    "strict_short": 0.92,
+    "consec": 0.9839208410636983,
+    "shuffle_consec": 0.8554381595357329,
+    "shuffle_strict_short": 0.5782007766896873,
+    "len_median": null
+   },
+   "proto": {},
+   "subset": "ring_control"
+  },
+  "by_size": [
+   {
+    "h_lo": 0,
+    "h_hi": 32,
+    "n_tracks": 4,
+    "n_pairs": 23,
+    "consec": 0.9130434782608695,
+    "shuffle_consec": 0.5339130434782609,
+    "strict": 0.75,
+    "strict_short": 0.75
+   },
+   {
+    "h_lo": 32,
+    "h_hi": 56,
+    "n_tracks": 21,
+    "n_pairs": 128,
+    "consec": 0.828125,
+    "shuffle_consec": 0.44589843749999997,
+    "strict": 0.47619047619047616,
+    "strict_short": 0.473015873015873
+   },
+   {
+    "h_lo": 56,
+    "h_hi": 96,
+    "n_tracks": 152,
+    "n_pairs": 1814,
+    "consec": 0.7513781697905182,
+    "shuffle_consec": 0.35070837927232634,
+    "strict": 0.23026315789473684,
+    "strict_short": 0.2842647235938817
+   },
+   {
+    "h_lo": 96,
+    "h_hi": 400,
+    "n_tracks": 12,
+    "n_pairs": 93,
+    "consec": 0.8494623655913979,
+    "shuffle_consec": 0.5419354838709677,
+    "strict": 0.16666666666666666,
+    "strict_short": 0.27777777777777773
+   }
+  ]
+ },
+ "low_pooled": {
+  "n": 655,
+  "torso_team": 327,
+  "ring_team": 66,
+  "torso_context": 249,
+  "ring_context": 461,
+  "torso_jersey": 406,
+  "ring_jersey": 119,
+  "torso_team_rate": 0.4992274809160306,
+  "ring_team_rate": 0.10056641221374048,
+  "torso_context_rate": 0.38021221374045805,
+  "ring_context_rate": 0.7039480916030535,
+  "torso_jersey_rate": 0.619787786259542,
+  "ring_jersey_rate": 0.18145648854961832,
+  "mean_p_team": 0.46687633587786254,
+  "by_size": [
+   {
+    "h_lo": 0,
+    "h_hi": 32,
+    "n": 167,
+    "torso_team_rate": 0.3772694610778443,
+    "ring_team_rate": 0.18583832335329342,
+    "torso_context_rate": 0.35914371257485034,
+    "ring_context_rate": 0.544748502994012
+   },
+   {
+    "h_lo": 32,
+    "h_hi": 56,
+    "n": 254,
+    "torso_team_rate": 0.5510511811023622,
+    "ring_team_rate": 0.10629527559055119,
+    "torso_context_rate": 0.3228818897637795,
+    "ring_context_rate": 0.7046141732283464
+   },
+   {
+    "h_lo": 56,
+    "h_hi": 96,
+    "n": 155,
+    "torso_team_rate": 0.638683870967742,
+    "ring_team_rate": 0.032070967741935484,
+    "torso_context_rate": 0.3420064516129032,
+    "ring_context_rate": 0.8389225806451612
+   },
+   {
+    "h_lo": 96,
+    "h_hi": 400,
+    "n": 76,
+    "torso_team_rate": 0.2893421052631579,
+    "ring_team_rate": 0.02639473684210526,
+    "torso_context_rate": 0.7106578947368422,
+    "ring_context_rate": 0.8028947368421053
+   }
+  ]
+ },
+ "inspect_image": "data\\results\\viz\\jersey\\hd\\_inspect_hd.png",
+ "inspect_boxes": [
+  {
+   "#": 1,
+   "clip": "t6000",
+   "score": 0.249,
+   "h": 45.1,
+   "fam": "WHITE",
+   "p_team": 0.759,
+   "ring_fam": "GREEN",
+   "ring_team": false,
+   "box": [
+    485.1,
+    674.9,
+    509.3,
+    720.0
+   ]
+  },
+  {
+   "#": 2,
+   "clip": "t1471",
+   "score": 0.05,
+   "h": 48.7,
+   "fam": "ORANGE",
+   "p_team": 0.088,
+   "ring_fam": "GREEN",
+   "ring_team": false,
+   "box": [
+    0.0,
+    306.3,
+    9.7,
+    354.9
+   ]
+  },
+  {
+   "#": 3,
+   "clip": "t1939",
+   "score": 0.248,
+   "h": 49.3,
+   "fam": "RED",
+   "p_team": 0.97,
+   "ring_fam": "CYAN",
+   "ring_team": false,
+   "box": [
+    485.3,
+    279.7,
+    504.4,
+    329.0
+   ]
+  },
+  {
+   "#": 4,
+   "clip": "t1471",
+   "score": 0.05,
+   "h": 32.2,
+   "fam": "CYAN",
+   "p_team": 0.0,
+   "ring_fam": "CYAN",
+   "ring_team": false,
+   "box": [
+    91.9,
+    187.3,
+    116.9,
+    219.4
+   ]
+  },
+  {
+   "#": 5,
+   "clip": "t1471",
+   "score": 0.247,
+   "h": 108.9,
+   "fam": "WHITE",
+   "p_team": 0.81,
+   "ring_fam": "GREEN",
+   "ring_team": false,
+   "box": [
+    907.2,
+    311.3,
+    929.6,
+    420.3
+   ]
+  },
+  {
+   "#": 6,
+   "clip": "t1471",
+   "score": 0.05,
+   "h": 22.2,
+   "fam": "CYAN",
+   "p_team": 0.0,
+   "ring_fam": "CYAN",
+   "ring_team": false,
+   "box": [
+    1150.9,
+    204.0,
+    1162.5,
+    226.3
+   ]
+  },
+  {
+   "#": 7,
+   "clip": "t1939",
+   "score": 0.247,
+   "h": 60.9,
+   "fam": "RED",
+   "p_team": 0.743,
+   "ring_fam": "GREEN",
+   "ring_team": false,
+   "box": [
+    542.8,
+    365.5,
+    569.0,
+    426.4
+   ]
+  },
+  {
+   "#": 8,
+   "clip": "t1471",
+   "score": 0.051,
+   "h": 35.4,
+   "fam": "CYAN",
+   "p_team": 0.01,
+   "ring_fam": "CYAN",
+   "ring_team": false,
+   "box": [
+    1046.7,
+    226.2,
+    1068.3,
+    261.6
+   ]
+  },
+  {
+   "#": 9,
+   "clip": "t1939",
+   "score": 0.246,
+   "h": 56.7,
+   "fam": "WHITE",
+   "p_team": 0.725,
+   "ring_fam": "GREEN",
+   "ring_team": false,
+   "box": [
+    1008.3,
+    279.9,
+    1040.3,
+    336.5
+   ]
+  },
+  {
+   "#": 10,
+   "clip": "t1471",
+   "score": 0.051,
+   "h": 63.1,
+   "fam": "GREEN",
+   "p_team": 0.17,
+   "ring_fam": "GREEN",
+   "ring_team": false,
+   "box": [
+    732.7,
+    372.5,
+    788.3,
+    435.5
+   ]
+  }
+ ],
+ "deploy": {
+  "imgsz": 320,
+  "n_frames": 40,
+  "frame_wh": [
+   640,
+   360
+  ],
+  "n_det": 675,
+  "n_conf_ge_025": 450,
+  "n_low_005_025": 225,
+  "palette": [
+   {
+    "id": "P0",
+    "name": "GREEN",
+    "role": "context",
+    "share_torso": 0.169,
+    "share_ring": 0.057,
+    "centroid": [
+     -0.034,
+     0.634,
+     0.948
+    ]
+   },
+   {
+    "id": "P1",
+    "name": "WHITE",
+    "role": "jersey",
+    "share_torso": 0.317,
+    "share_ring": 0.006,
+    "centroid": [
+     -0.076,
+     0.014,
+     0.921
+    ]
+   },
+   {
+    "id": "P2",
+    "name": "GREEN",
+    "role": "context",
+    "share_torso": 0.149,
+    "share_ring": 0.875,
+    "centroid": [
+     -0.015,
+     0.365,
+     0.663
+    ]
+   },
+   {
+    "id": "P3",
+    "name": "RED",
+    "role": "jersey",
+    "share_torso": 0.283,
+    "share_ring": 0.033,
+    "centroid": [
+     0.536,
+     -0.022,
+     0.746
+    ]
+   },
+   {
+    "id": "P4",
+    "name": "CYAN",
+    "role": "jersey",
+    "share_torso": 0.05,
+    "share_ring": 0.014,
+    "centroid": [
+     -0.265,
+     0.05,
+     0.461
+    ]
+   },
+   {
+    "id": "P5",
+    "name": "BLUE",
+    "role": "jersey",
+    "share_torso": 0.032,
+    "share_ring": 0.014,
+    "centroid": [
+     -0.786,
+     -0.342,
+     0.737
+    ]
+   }
+  ],
+  "families": {
+   "GREEN": {
+    "role": "context",
+    "torso": 0.318,
+    "ring": 0.932,
+    "boxes_hi": 32
+   },
+   "WHITE": {
+    "role": "jersey",
+    "torso": 0.317,
+    "ring": 0.006,
+    "boxes_hi": 40
+   },
+   "RED": {
+    "role": "jersey",
+    "torso": 0.283,
+    "ring": 0.033,
+    "boxes_hi": 57
+   },
+   "CYAN": {
+    "role": "jersey",
+    "torso": 0.05,
+    "ring": 0.014,
+    "boxes_hi": 8
+   },
+   "BLUE": {
+    "role": "jersey",
+    "torso": 0.032,
+    "ring": 0.014,
+    "boxes_hi": 1
+   }
+  },
+  "team_families": [
+   "RED",
+   "WHITE"
+  ],
+  "high_conf": {
+   "n": 450,
+   "team": 329,
+   "team_rate": 0.731
+  },
+  "low": {
+   "n": 225,
+   "torso_team": 141,
+   "ring_team": 18,
+   "torso_context": 60,
+   "ring_context": 176,
+   "torso_jersey": 165,
+   "ring_jersey": 26,
+   "torso_team_rate": 0.627,
+   "ring_team_rate": 0.08,
+   "torso_context_rate": 0.267,
+   "ring_context_rate": 0.782,
+   "torso_jersey_rate": 0.733,
+   "ring_jersey_rate": 0.116,
+   "mean_p_team": 0.548,
+   "by_size": [
+    {
+     "h_lo": 0,
+     "h_hi": 24,
+     "n": 23,
+     "torso_team_rate": 0.565,
+     "ring_team_rate": 0.087,
+     "ring_context_rate": 0.826
+    },
+    {
+     "h_lo": 24,
+     "h_hi": 40,
+     "n": 127,
+     "torso_team_rate": 0.724,
+     "ring_team_rate": 0.11,
+     "ring_context_rate": 0.803
+    },
+    {
+     "h_lo": 40,
+     "h_hi": 64,
+     "n": 56,
+     "torso_team_rate": 0.464,
+     "ring_team_rate": 0.018,
+     "ring_context_rate": 0.786
+    },
+    {
+     "h_lo": 64,
+     "h_hi": 400,
+     "n": 19,
+     "torso_team_rate": 0.526,
+     "ring_team_rate": 0.053,
+     "ring_context_rate": 0.579
+    }
+   ]
+  },
+  "p_team_vs_height": {
+   "spearman": -0.09609073570109881,
+   "p": 0.012501418030272311,
+   "n": 675
+  },
+  "rerank_top": [
+   {
+    "frame": "match_020.jpg",
+    "score": 0.181,
+    "p_team": 1.0,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "RED",
+    "h": 37.7,
+    "box": [
+     413.3,
+     179.8,
+     435.3,
+     217.5
+    ]
+   },
+   {
+    "frame": "match_020.jpg",
+    "score": 0.057,
+    "p_team": 1.0,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "RED",
+    "h": 31.2,
+    "box": [
+     448.0,
+     188.7,
+     466.0,
+     219.9
+    ]
+   },
+   {
+    "frame": "match_020.jpg",
+    "score": 0.057,
+    "p_team": 1.0,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "RED",
+    "h": 33.6,
+    "box": [
+     540.3,
+     199.0,
+     563.6,
+     232.6
+    ]
+   },
+   {
+    "frame": "match_020.jpg",
+    "score": 0.052,
+    "p_team": 1.0,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "RED",
+    "h": 31.5,
+    "box": [
+     179.1,
+     159.9,
+     199.9,
+     191.5
+    ]
+   },
+   {
+    "frame": "match_040.jpg",
+    "score": 0.051,
+    "p_team": 1.0,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "RED",
+    "h": 21.9,
+    "box": [
+     628.4,
+     338.1,
+     639.5,
+     360.0
+    ]
+   },
+   {
+    "frame": "match_009.jpg",
+    "score": 0.165,
+    "p_team": 0.988,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 29.9,
+    "box": [
+     276.1,
+     103.5,
+     287.8,
+     133.4
+    ]
+   },
+   {
+    "frame": "match_008.jpg",
+    "score": 0.094,
+    "p_team": 0.988,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "BLUE",
+    "h": 67.0,
+    "box": [
+     403.7,
+     149.2,
+     428.0,
+     216.2
+    ]
+   },
+   {
+    "frame": "match_008.jpg",
+    "score": 0.124,
+    "p_team": 0.985,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": null,
+    "h": 66.8,
+    "box": [
+     384.9,
+     163.8,
+     408.5,
+     230.7
+    ]
+   },
+   {
+    "frame": "match_008.jpg",
+    "score": 0.219,
+    "p_team": 0.983,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "CYAN",
+    "h": 37.0,
+    "box": [
+     60.2,
+     158.8,
+     73.2,
+     195.8
+    ]
+   },
+   {
+    "frame": "match_025.jpg",
+    "score": 0.203,
+    "p_team": 0.979,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 28.8,
+    "box": [
+     470.6,
+     129.8,
+     484.2,
+     158.6
+    ]
+   },
+   {
+    "frame": "match_040.jpg",
+    "score": 0.235,
+    "p_team": 0.968,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 31.0,
+    "box": [
+     68.9,
+     129.6,
+     80.3,
+     160.6
+    ]
+   },
+   {
+    "frame": "match_005.jpg",
+    "score": 0.137,
+    "p_team": 0.962,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 32.8,
+    "box": [
+     0.1,
+     186.9,
+     10.9,
+     219.7
+    ]
+   },
+   {
+    "frame": "match_004.jpg",
+    "score": 0.238,
+    "p_team": 0.957,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 33.8,
+    "box": [
+     390.2,
+     181.6,
+     406.6,
+     215.4
+    ]
+   },
+   {
+    "frame": "match_013.jpg",
+    "score": 0.146,
+    "p_team": 0.944,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 22.7,
+    "box": [
+     607.7,
+     106.4,
+     619.4,
+     129.1
+    ]
+   },
+   {
+    "frame": "match_030.jpg",
+    "score": 0.163,
+    "p_team": 0.935,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 27.7,
+    "box": [
+     422.6,
+     159.2,
+     433.6,
+     186.9
+    ]
+   },
+   {
+    "frame": "match_021.jpg",
+    "score": 0.133,
+    "p_team": 0.932,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 30.6,
+    "box": [
+     424.1,
+     131.2,
+     441.4,
+     161.7
+    ]
+   },
+   {
+    "frame": "match_038.jpg",
+    "score": 0.174,
+    "p_team": 0.925,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 25.8,
+    "box": [
+     160.7,
+     154.6,
+     172.5,
+     180.4
+    ]
+   },
+   {
+    "frame": "match_010.jpg",
+    "score": 0.144,
+    "p_team": 0.921,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "WHITE",
+    "h": 23.5,
+    "box": [
+     245.8,
+     103.1,
+     256.1,
+     126.6
+    ]
+   },
+   {
+    "frame": "match_011.jpg",
+    "score": 0.052,
+    "p_team": 0.899,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": null,
+    "h": 65.0,
+    "box": [
+     505.5,
+     99.3,
+     531.1,
+     164.3
+    ]
+   },
+   {
+    "frame": "match_003.jpg",
+    "score": 0.21,
+    "p_team": 0.889,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 24.5,
+    "box": [
+     261.9,
+     105.6,
+     272.2,
+     130.1
+    ]
+   },
+   {
+    "frame": "match_019.jpg",
+    "score": 0.089,
+    "p_team": 0.889,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 25.4,
+    "box": [
+     546.0,
+     136.1,
+     560.4,
+     161.5
+    ]
+   },
+   {
+    "frame": "match_030.jpg",
+    "score": 0.064,
+    "p_team": 0.888,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 24.9,
+    "box": [
+     53.7,
+     125.9,
+     66.7,
+     150.8
+    ]
+   },
+   {
+    "frame": "match_021.jpg",
+    "score": 0.211,
+    "p_team": 0.886,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 24.4,
+    "box": [
+     180.4,
+     126.1,
+     192.0,
+     150.5
+    ]
+   },
+   {
+    "frame": "match_007.jpg",
+    "score": 0.115,
+    "p_team": 0.881,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 28.7,
+    "box": [
+     133.9,
+     138.4,
+     144.2,
+     167.1
+    ]
+   },
+   {
+    "frame": "match_012.jpg",
+    "score": 0.067,
+    "p_team": 0.87,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 35.9,
+    "box": [
+     393.5,
+     166.8,
+     410.3,
+     202.7
+    ]
+   },
+   {
+    "frame": "match_016.jpg",
+    "score": 0.229,
+    "p_team": 0.86,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 36.7,
+    "box": [
+     343.0,
+     245.0,
+     359.9,
+     281.7
+    ]
+   },
+   {
+    "frame": "match_033.jpg",
+    "score": 0.122,
+    "p_team": 0.858,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 24.7,
+    "box": [
+     314.8,
+     203.5,
+     332.4,
+     228.2
+    ]
+   },
+   {
+    "frame": "match_021.jpg",
+    "score": 0.203,
+    "p_team": 0.85,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 23.2,
+    "box": [
+     339.1,
+     107.7,
+     351.3,
+     130.9
+    ]
+   },
+   {
+    "frame": "match_024.jpg",
+    "score": 0.135,
+    "p_team": 0.85,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 26.1,
+    "box": [
+     225.9,
+     97.6,
+     237.0,
+     123.7
+    ]
+   },
+   {
+    "frame": "match_037.jpg",
+    "score": 0.129,
+    "p_team": 0.836,
+    "fam": "WHITE",
+    "team": true,
+    "ring_fam": "GREEN",
+    "h": 28.3,
+    "box": [
+     291.5,
+     174.6,
+     307.9,
+     202.8
+    ]
+   }
+  ],
+  "inspect_image": "data\\results\\viz\\jersey\\deploy\\_inspect_deploy.png",
+  "inspect_boxes": [
+   {
+    "#": 1,
+    "score": 0.247,
+    "h": 31.9,
+    "fam": "WHITE",
+    "p_team": 0.715,
+    "ring_fam": "GREEN",
+    "ring_team": false,
+    "box": [
+     473.6,
+     177.6,
+     489.4,
+     209.5
+    ]
+   },
+   {
+    "#": 2,
+    "score": 0.051,
+    "h": 62.6,
+    "fam": "GREEN",
+    "p_team": 0.253,
+    "ring_fam": "GREEN",
+    "ring_team": false,
+    "box": [
+     362.6,
+     155.5,
+     386.3,
+     218.2
+    ]
+   },
+   {
+    "#": 3,
+    "score": 0.242,
+    "h": 49.9,
+    "fam": "WHITE",
+    "p_team": 0.668,
+    "ring_fam": "GREEN",
+    "ring_team": false,
+    "box": [
+     166.3,
+     134.0,
+     183.1,
+     183.9
+    ]
+   },
+   {
+    "#": 4,
+    "score": 0.051,
+    "h": 30.5,
+    "fam": "GREEN",
+    "p_team": 0.341,
+    "ring_fam": "WHITE",
+    "ring_team": true,
+    "box": [
+     361.7,
+     329.5,
+     385.4,
+     360.0
+    ]
+   },
+   {
+    "#": 5,
+    "score": 0.239,
+    "h": 40.7,
+    "fam": "WHITE",
+    "p_team": 0.679,
+    "ring_fam": "GREEN",
+    "ring_team": false,
+    "box": [
+     213.1,
+     180.5,
+     232.9,
+     221.2
+    ]
+   },
+   {
+    "#": 6,
+    "score": 0.052,
+    "h": 54.8,
+    "fam": "GREEN",
+    "p_team": 0.383,
+    "ring_fam": "GREEN",
+    "ring_team": false,
+    "box": [
+     373.4,
+     146.8,
+     394.9,
+     201.6
+    ]
+   },
+   {
+    "#": 7,
+    "score": 0.238,
+    "h": 31.4,
+    "fam": "WHITE",
+    "p_team": 0.729,
+    "ring_fam": "GREEN",
+    "ring_team": false,
+    "box": [
+     336.5,
+     128.5,
+     350.5,
+     159.9
+    ]
+   },
+   {
+    "#": 8,
+    "score": 0.053,
+    "h": 73.8,
+    "fam": "GREEN",
+    "p_team": 0.0,
+    "ring_fam": "GREEN",
+    "ring_team": false,
+    "box": [
+     627.4,
+     210.9,
+     639.6,
+     284.8
+    ]
+   },
+   {
+    "#": 9,
+    "score": 0.238,
+    "h": 33.8,
+    "fam": "RED",
+    "p_team": 0.957,
+    "ring_fam": "GREEN",
+    "ring_team": false,
+    "box": [
+     390.2,
+     181.6,
+     406.6,
+     215.4
+    ]
+   },
+   {
+    "#": 10,
+    "score": 0.053,
+    "h": 51.7,
+    "fam": "GREEN",
+    "p_team": 0.29,
+    "ring_fam": null,
+    "ring_team": false,
+    "box": [
+     75.6,
+     235.7,
+     114.4,
+     287.4
+    ]
+   }
+  ]
+ },
+ "human_check": {
+  "method": "看 data/results/viz/jersey/hd/_inspect_hd.png：每行一个低分框(score in [0.05,0.25))，左=框外扩80%的上下文、中=躯干切片、右=同尺寸框外背景环。逐条判断框里到底是什么。抽样是刻意的：5 个 p_team>=0.5(颜色说是球员)、5 个 p_team<=0.17(颜色说不是球员)，两边都看，避免只验成功的半边。",
+  "reviewed_at": "2026-10-19",
+  "n": 10,
+  "items": [
+   {
+    "#": 1,
+    "clip": "t6000",
+    "score": 0.249,
+    "h_px": 45,
+    "fam": "WHITE",
+    "p_team": 0.76,
+    "ring": "GREEN",
+    "verdict": "真球员",
+    "detail": "白衣球员（天津），框贴住其上身，画面下边缘近景；躯干切片是白色球衣+一点深色短裤边。",
+    "colour_call_correct": true
+   },
+   {
+    "#": 2,
+    "clip": "t1471",
+    "score": 0.05,
+    "h_px": 49,
+    "fam": "ORANGE",
+    "p_team": 0.09,
+    "ring": "GREEN",
+    "verdict": "说不清",
+    "detail": "框是画面最左边缘一条 10px 宽的窄条(x=0..10)，像是被画框切掉一半的红衣球员，但可见像素太少，无法确认。判成 ORANGE 未进任何队色。",
+    "colour_call_correct": false
+   },
+   {
+    "#": 3,
+    "clip": "t1939",
+    "score": 0.248,
+    "h_px": 49,
+    "fam": "RED",
+    "p_team": 0.97,
+    "ring": "CYAN",
+    "verdict": "真球员",
+    "detail": "红衣球员（河南）在红衣人群中，躯干切片几乎纯红；背景环是蓝色 LED 广告牌(CYAN)。",
+    "colour_call_correct": true
+   },
+   {
+    "#": 4,
+    "clip": "t1471",
+    "score": 0.05,
+    "h_px": 32,
+    "fam": "CYAN",
+    "p_team": 0.0,
+    "ring": "CYAN",
+    "verdict": "广告牌",
+    "detail": "场地边 LED 广告围挡（蓝底白字），躯干与环带同色 CYAN；颜色判据正确拒绝。",
+    "colour_call_correct": true
+   },
+   {
+    "#": 5,
+    "clip": "t1471",
+    "score": 0.247,
+    "h_px": 109,
+    "fam": "WHITE",
+    "p_team": 0.81,
+    "ring": "GREEN",
+    "verdict": "真球员",
+    "detail": "白衣球员近景（旁边还有一名白衣队友），框高 109px；躯干切片白球衣+手臂。",
+    "colour_call_correct": true
+   },
+   {
+    "#": 6,
+    "clip": "t1471",
+    "score": 0.05,
+    "h_px": 22,
+    "fam": "CYAN",
+    "p_team": 0.0,
+    "ring": "CYAN",
+    "verdict": "广告牌",
+    "detail": "广告围挡上缘的灰蓝色块（h 只有 22px），躯干与环带同为 CYAN；正确拒绝。",
+    "colour_call_correct": true
+   },
+   {
+    "#": 7,
+    "clip": "t1939",
+    "score": 0.247,
+    "h_px": 61,
+    "fam": "RED",
+    "p_team": 0.74,
+    "ring": "GREEN",
+    "verdict": "真球员",
+    "detail": "红衣球员侧身，躯干切片红球衣+手臂；环带是草地。",
+    "colour_call_correct": true
+   },
+   {
+    "#": 8,
+    "clip": "t1471",
+    "score": 0.051,
+    "h_px": 35,
+    "fam": "CYAN",
+    "p_team": 0.01,
+    "ring": "CYAN",
+    "verdict": "广告牌",
+    "detail": "广告围挡/看台交界的暗青色区域，没有任何人体结构；正确拒绝。",
+    "colour_call_correct": true
+   },
+   {
+    "#": 9,
+    "clip": "t1939",
+    "score": 0.246,
+    "h_px": 57,
+    "fam": "WHITE",
+    "p_team": 0.72,
+    "ring": "GREEN",
+    "verdict": "真球员",
+    "detail": "白衣球员全身(远景)，躯干切片白球衣；环带草地+白线。",
+    "colour_call_correct": true
+   },
+   {
+    "#": 10,
+    "clip": "t1471",
+    "score": 0.051,
+    "h_px": 63,
+    "fam": "GREEN",
+    "p_team": 0.17,
+    "ring": "GREEN",
+    "verdict": "真球员(被判成草地→漏判)",
+    "detail": "框同时压住一名红衣球员和一名黄衣裁判，躯干带里草地占比最大，被判 GREEN(p_team=0.17)，颜色判据把它当背景拒绝了——这是本抽样里唯一的漏判。",
+    "colour_call_correct": false
+   }
+  ],
+  "summary": {
+   "real_player": 6,
+   "ad_board": 3,
+   "goal_net": 0,
+   "crowd": 0,
+   "unclear": 1,
+   "positives_checked": 5,
+   "positives_correct": 5,
+   "negatives_checked": 5,
+   "negatives_correct": 3,
+   "negatives_missed_player": 1,
+   "negatives_unclear": 1,
+   "note": "p_team>=0.5 的 5 个框全部是真球员(5/5)；p_team<=0.17 的 5 个里 3 个是广告牌(正确拒绝)、1 个是真人被误拒、1 个说不清。误拒的那一个是框跨到了相邻的黄衣裁判+草地。"
+  }
+ }
+}

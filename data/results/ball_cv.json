@@ -1,0 +1,8821 @@
+{
+ "tool": "tools/ball_cv.py",
+ "generated": "2026-10-19T21:15:37",
+ "video": {
+  "path": "D:\\yt-dlp\\downloads\\migu_5106947698\\migu_5106947698.mp4",
+  "width": 1280,
+  "height": 720,
+  "fps": 24.999882602100953,
+  "frames": 212950
+ },
+ "clip": {
+  "fps": 25.0,
+  "half_window_s": 2.0,
+  "extract_pad_s": 3.0,
+  "frames_per_clip": 101
+ },
+ "thresholds": {
+  "ball_d_px": 8.0,
+  "max_step_px": 24.0,
+  "max_accel_px": 10.0,
+  "track_min_len": 10,
+  "max_gap": 1,
+  "gate_px": 26.0,
+  "sat_max": 60,
+  "val_min": 175,
+  "area_min": 5,
+  "area_max": 200,
+  "max_wh": 16,
+  "aspect_max": 2.0,
+  "extent_min": 0.5,
+  "round_min": 0.55,
+  "ring_min": 15.0,
+  "mot_thr": 25.0,
+  "top_k": 40
+ },
+ "frames": [
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 31,
+    "t0": 20,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.52,
+    "mean_step": 6.79,
+    "path_len": 203.7,
+    "max_accel": 3.11,
+    "median_turn_deg": 6.5,
+    "mean_score": 3.801,
+    "mean_app": 0.836,
+    "mean_mot": 126.9,
+    "val": 115.39
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.4,
+    "mean_step": 0.01,
+    "path_len": 0.4,
+    "max_accel": 0.4,
+    "median_turn_deg": 0.0,
+    "mean_score": 1.946,
+    "mean_app": 0.935,
+    "mean_mot": 10.5,
+    "val": 99.22
+   },
+   "longest": {
+    "length": 101,
+    "t0": 0,
+    "t1": 100,
+    "gaps": 0,
+    "max_step": 0.4,
+    "mean_step": 0.0,
+    "path_len": 0.4,
+    "max_accel": 0.4,
+    "median_turn_deg": 0.0,
+    "mean_score": 2.211,
+    "mean_app": 0.931,
+    "mean_mot": 23.7
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 131,
+   "n_mot_blobs_median": 366,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 1.2,
+    "mean_abs_dy": 0.2,
+    "max_abs_dx": 46.13,
+    "n_affine": 53,
+    "mean_cc": 0.556
+   },
+   "runtime_s": 7.79,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 31,
+     "mean_score": 3.801,
+     "x": 1093.7,
+     "y": 624.8,
+     "path": [
+      [
+       1093,
+       624
+      ],
+      [
+       1078,
+       620
+      ],
+      [
+       1062,
+       619
+      ],
+      [
+       1046,
+       618
+      ],
+      [
+       1031,
+       613
+      ],
+      [
+       1016,
+       612
+      ],
+      [
+       1001,
+       612
+      ],
+      [
+       987,
+       608
+      ],
+      [
+       973,
+       608
+      ],
+      [
+       959,
+       604
+      ],
+      [
+       945,
+       602
+      ],
+      [
+       932,
+       598
+      ],
+      [
+       920,
+       593
+      ],
+      [
+       908,
+       591
+      ],
+      [
+       901,
+       589
+      ],
+      [
+       902,
+       583
+      ]
+     ]
+    },
+    {
+     "length": 13,
+     "mean_score": 3.029,
+     "x": 753.5,
+     "y": 596.9,
+     "path": [
+      [
+       753,
+       596
+      ],
+      [
+       753,
+       596
+      ],
+      [
+       754,
+       595
+      ],
+      [
+       755,
+       595
+      ],
+      [
+       757,
+       594
+      ],
+      [
+       759,
+       594
+      ],
+      [
+       761,
+       594
+      ],
+      [
+       764,
+       595
+      ],
+      [
+       766,
+       595
+      ],
+      [
+       769,
+       595
+      ],
+      [
+       770,
+       595
+      ],
+      [
+       771,
+       595
+      ],
+      [
+       772,
+       596
+      ]
+     ]
+    },
+    {
+     "length": 3,
+     "mean_score": 3.006,
+     "x": 878.0,
+     "y": 554.5,
+     "path": [
+      [
+       878,
+       554
+      ],
+      [
+       879,
+       554
+      ],
+      [
+       879,
+       553
+      ]
+     ]
+    }
+   ],
+   "name": "match_004.jpg",
+   "t_matched": 1249.56,
+   "t_center_real": 1249.56,
+   "t_manifest_s": 1251.4,
+   "t_matched_s": 1249.56,
+   "t_offset_s": -1.84,
+   "match_mae": 1.933,
+   "n_person": 11,
+   "green": 0.5988
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 12,
+    "t0": 39,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 16.5,
+    "mean_step": 5.16,
+    "path_len": 56.8,
+    "max_accel": 6.61,
+    "median_turn_deg": 27.6,
+    "mean_score": 3.543,
+    "mean_app": 0.832,
+    "mean_mot": 130.7,
+    "val": 41.83
+   },
+   "best_longest": {
+    "length": 12,
+    "t0": 39,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 16.5,
+    "mean_step": 5.16,
+    "path_len": 56.8,
+    "max_accel": 6.61,
+    "median_turn_deg": 27.6,
+    "mean_score": 3.543,
+    "mean_app": 0.832,
+    "mean_mot": 130.7,
+    "val": 41.83
+   },
+   "longest": {
+    "length": 39,
+    "t0": 0,
+    "t1": 38,
+    "gaps": 0,
+    "max_step": 0.0,
+    "mean_step": 0.0,
+    "path_len": 0.0,
+    "max_accel": 0.0,
+    "median_turn_deg": 0.0,
+    "mean_score": 3.704,
+    "mean_app": 0.855,
+    "mean_mot": 133.1
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4023,
+   "n_app_blobs_median": 137,
+   "n_mot_blobs_median": 470,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 16.32,
+    "mean_abs_dy": 2.09,
+    "max_abs_dx": 120.92,
+    "n_affine": 73,
+    "mean_cc": 0.742
+   },
+   "runtime_s": 13.18,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 2,
+     "mean_score": 4.42,
+     "x": 11.0,
+     "y": 433.0,
+     "path": [
+      [
+       11,
+       433
+      ],
+      [
+       12,
+       436
+      ]
+     ]
+    },
+    {
+     "length": 1,
+     "mean_score": 3.773,
+     "x": 1107.5,
+     "y": 108.0,
+     "path": [
+      [
+       1107,
+       108
+      ]
+     ]
+    },
+    {
+     "length": 12,
+     "mean_score": 3.543,
+     "x": 38.5,
+     "y": 336.0,
+     "path": [
+      [
+       38,
+       336
+      ],
+      [
+       50,
+       347
+      ],
+      [
+       56,
+       355
+      ],
+      [
+       60,
+       355
+      ],
+      [
+       63,
+       357
+      ],
+      [
+       65,
+       356
+      ],
+      [
+       67,
+       358
+      ],
+      [
+       69,
+       360
+      ],
+      [
+       72,
+       361
+      ],
+      [
+       75,
+       362
+      ],
+      [
+       78,
+       363
+      ],
+      [
+       83,
+       362
+      ]
+     ]
+    }
+   ],
+   "name": "match_008.jpg",
+   "t_matched": 2093.56,
+   "t_center_real": 2093.56,
+   "t_manifest_s": 2095.0,
+   "t_matched_s": 2093.56,
+   "t_offset_s": -1.44,
+   "match_mae": 1.653,
+   "n_person": 13,
+   "green": 0.4497
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 6.47,
+    "mean_step": 4.06,
+    "path_len": 202.8,
+    "max_accel": 1.21,
+    "median_turn_deg": 4.0,
+    "mean_score": 3.429,
+    "mean_app": 0.459,
+    "mean_mot": 103.7,
+    "val": 172.43
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 6.47,
+    "mean_step": 4.06,
+    "path_len": 202.8,
+    "max_accel": 1.21,
+    "median_turn_deg": 4.0,
+    "mean_score": 3.429,
+    "mean_app": 0.459,
+    "mean_mot": 103.7,
+    "val": 172.43
+   },
+   "longest": {
+    "length": 101,
+    "t0": 0,
+    "t1": 100,
+    "gaps": 0,
+    "max_step": 7.42,
+    "mean_step": 3.01,
+    "path_len": 301.5,
+    "max_accel": 2.06,
+    "median_turn_deg": 7.9,
+    "mean_score": 2.942,
+    "mean_app": 0.464,
+    "mean_mot": 69.6
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 100,
+   "n_mot_blobs_median": 461,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 1.41,
+    "mean_abs_dy": 0.31,
+    "max_abs_dx": 7.68,
+    "n_affine": 58,
+    "mean_cc": 0.825
+   },
+   "runtime_s": 9.08,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 3,
+     "mean_score": 4.051,
+     "x": 1226.6,
+     "y": 687.4,
+     "path": [
+      [
+       1226,
+       687
+      ],
+      [
+       1217,
+       687
+      ],
+      [
+       1209,
+       690
+      ]
+     ]
+    },
+    {
+     "length": 3,
+     "mean_score": 3.628,
+     "x": 1226.6,
+     "y": 687.4,
+     "path": [
+      [
+       1226,
+       687
+      ],
+      [
+       1235,
+       688
+      ],
+      [
+       1238,
+       688
+      ]
+     ]
+    },
+    {
+     "length": 43,
+     "mean_score": 3.474,
+     "x": 1114.9,
+     "y": 58.5,
+     "path": [
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1114,
+       58
+      ],
+      [
+       1115,
+       58
+      ]
+     ]
+    }
+   ],
+   "name": "match_012.jpg",
+   "t_matched": 2655.56,
+   "t_center_real": 2655.56,
+   "t_manifest_s": 2656.8,
+   "t_matched_s": 2655.56,
+   "t_offset_s": -1.24,
+   "match_mae": 1.46,
+   "n_person": 14,
+   "green": 0.6904
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.49,
+    "mean_step": 2.59,
+    "path_len": 129.5,
+    "max_accel": 4.63,
+    "median_turn_deg": 26.3,
+    "mean_score": 3.179,
+    "mean_app": 0.955,
+    "mean_mot": 85.0,
+    "val": 160.58
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.49,
+    "mean_step": 2.59,
+    "path_len": 129.5,
+    "max_accel": 4.63,
+    "median_turn_deg": 26.3,
+    "mean_score": 3.179,
+    "mean_app": 0.955,
+    "mean_mot": 85.0,
+    "val": 160.58
+   },
+   "longest": {
+    "length": 86,
+    "t0": 0,
+    "t1": 85,
+    "gaps": 0,
+    "max_step": 8.49,
+    "mean_step": 2.25,
+    "path_len": 191.1,
+    "max_accel": 4.63,
+    "median_turn_deg": 18.2,
+    "mean_score": 3.141,
+    "mean_app": 0.937,
+    "mean_mot": 84.3
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 164,
+   "n_mot_blobs_median": 531,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 1.38,
+    "mean_abs_dy": 0.44,
+    "max_abs_dx": 12.71,
+    "n_affine": 89,
+    "mean_cc": 0.974
+   },
+   "runtime_s": 9.81,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 2,
+     "mean_score": 3.536,
+     "x": 761.3,
+     "y": 381.4,
+     "path": [
+      [
+       761,
+       381
+      ],
+      [
+       762,
+       402
+      ]
+     ]
+    },
+    {
+     "length": 5,
+     "mean_score": 3.339,
+     "x": 108.3,
+     "y": 621.2,
+     "path": [
+      [
+       108,
+       621
+      ],
+      [
+       95,
+       626
+      ],
+      [
+       91,
+       628
+      ],
+      [
+       87,
+       630
+      ],
+      [
+       83,
+       631
+      ]
+     ]
+    },
+    {
+     "length": 9,
+     "mean_score": 3.222,
+     "x": 903.1,
+     "y": 675.8,
+     "path": [
+      [
+       903,
+       675
+      ],
+      [
+       900,
+       677
+      ],
+      [
+       897,
+       678
+      ],
+      [
+       894,
+       680
+      ],
+      [
+       892,
+       681
+      ],
+      [
+       890,
+       684
+      ],
+      [
+       888,
+       686
+      ],
+      [
+       887,
+       688
+      ],
+      [
+       885,
+       689
+      ]
+     ]
+    }
+   ],
+   "name": "match_016.jpg",
+   "t_matched": 3273.54,
+   "t_center_real": 3273.54,
+   "t_manifest_s": 3274.5,
+   "t_matched_s": 3273.54,
+   "t_offset_s": -0.96,
+   "match_mae": 1.44,
+   "n_person": 11,
+   "green": 0.6778
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.18,
+    "mean_step": 0.02,
+    "path_len": 1.1,
+    "max_accel": 0.18,
+    "median_turn_deg": 0.0,
+    "mean_score": 3.92,
+    "mean_app": 0.388,
+    "mean_mot": 155.0,
+    "val": 199.92
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.18,
+    "mean_step": 0.02,
+    "path_len": 1.1,
+    "max_accel": 0.18,
+    "median_turn_deg": 0.0,
+    "mean_score": 3.92,
+    "mean_app": 0.388,
+    "mean_mot": 155.0,
+    "val": 199.92
+   },
+   "longest": {
+    "length": 101,
+    "t0": 0,
+    "t1": 100,
+    "gaps": 0,
+    "max_step": 0.31,
+    "mean_step": 0.04,
+    "path_len": 4.5,
+    "max_accel": 0.29,
+    "median_turn_deg": 0.0,
+    "mean_score": 3.788,
+    "mean_app": 0.403,
+    "mean_mot": 150.9
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 38,
+   "n_mot_blobs_median": 204,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 10.72,
+    "mean_abs_dy": 1.05,
+    "max_abs_dx": 63.54,
+    "n_affine": 46,
+    "mean_cc": 0.817
+   },
+   "runtime_s": 12.1,
+   "center": 50,
+   "center_abs": 61,
+   "lo": 11,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 1,
+     "mean_score": 4.509,
+     "x": 468.5,
+     "y": 474.8,
+     "path": [
+      [
+       468,
+       474
+      ]
+     ]
+    },
+    {
+     "length": 28,
+     "mean_score": 4.269,
+     "x": 541.0,
+     "y": 429.5,
+     "path": [
+      [
+       541,
+       429
+      ],
+      [
+       509,
+       432
+      ],
+      [
+       476,
+       440
+      ],
+      [
+       449,
+       446
+      ],
+      [
+       429,
+       444
+      ],
+      [
+       414,
+       439
+      ],
+      [
+       411,
+       439
+      ],
+      [
+       423,
+       443
+      ],
+      [
+       438,
+       440
+      ],
+      [
+       453,
+       433
+      ],
+      [
+       470,
+       429
+      ],
+      [
+       485,
+       438
+      ],
+      [
+       491,
+       450
+      ],
+      [
+       491,
+       450
+      ]
+     ]
+    },
+    {
+     "length": 5,
+     "mean_score": 3.949,
+     "x": 490.6,
+     "y": 393.9,
+     "path": [
+      [
+       490,
+       393
+      ],
+      [
+       498,
+       395
+      ],
+      [
+       507,
+       397
+      ],
+      [
+       514,
+       398
+      ],
+      [
+       521,
+       400
+      ]
+     ]
+    }
+   ],
+   "name": "match_020.jpg",
+   "t_matched": 3997.54,
+   "t_center_real": 3997.54,
+   "t_manifest_s": 3998.1,
+   "t_matched_s": 3997.54,
+   "t_offset_s": -0.56,
+   "match_mae": 1.278,
+   "n_person": 11,
+   "green": 0.5092
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.0,
+    "mean_step": 0.0,
+    "path_len": 0.0,
+    "max_accel": 0.0,
+    "median_turn_deg": 0.0,
+    "mean_score": 2.327,
+    "mean_app": 0.941,
+    "mean_mot": 45.0,
+    "val": 118.68
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.0,
+    "mean_step": 0.0,
+    "path_len": 0.0,
+    "max_accel": 0.0,
+    "median_turn_deg": 0.0,
+    "mean_score": 2.327,
+    "mean_app": 0.941,
+    "mean_mot": 45.0,
+    "val": 118.68
+   },
+   "longest": {
+    "length": 101,
+    "t0": 0,
+    "t1": 100,
+    "gaps": 0,
+    "max_step": 0.0,
+    "mean_step": 0.0,
+    "path_len": 0.0,
+    "max_accel": 0.0,
+    "median_turn_deg": 0.0,
+    "mean_score": 2.835,
+    "mean_app": 0.941,
+    "mean_mot": 78.7
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 129,
+   "n_mot_blobs_median": 338,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 9.61,
+    "mean_abs_dy": 0.39,
+    "max_abs_dx": 22.95,
+    "n_affine": 86,
+    "mean_cc": 0.895
+   },
+   "runtime_s": 16.28,
+   "center": 50,
+   "center_abs": 74,
+   "lo": 24,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 1,
+     "mean_score": 3.88,
+     "x": 368.0,
+     "y": 446.0,
+     "path": [
+      [
+       368,
+       446
+      ]
+     ]
+    },
+    {
+     "length": 15,
+     "mean_score": 3.175,
+     "x": 173.2,
+     "y": 58.1,
+     "path": [
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       57
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ]
+     ]
+    },
+    {
+     "length": 7,
+     "mean_score": 3.072,
+     "x": 349.8,
+     "y": 229.4,
+     "path": [
+      [
+       349,
+       229
+      ],
+      [
+       350,
+       228
+      ],
+      [
+       351,
+       228
+      ],
+      [
+       352,
+       229
+      ],
+      [
+       354,
+       230
+      ],
+      [
+       357,
+       229
+      ],
+      [
+       359,
+       228
+      ]
+     ]
+    }
+   ],
+   "name": "match_024.jpg",
+   "t_matched": 5223.56,
+   "t_center_real": 5223.56,
+   "t_manifest_s": 5223.6,
+   "t_matched_s": 5223.56,
+   "t_offset_s": -0.04,
+   "match_mae": 1.402,
+   "n_person": 14,
+   "green": 0.7052
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.39,
+    "mean_step": 0.09,
+    "path_len": 4.4,
+    "max_accel": 0.3,
+    "median_turn_deg": 94.8,
+    "mean_score": 3.954,
+    "mean_app": 0.408,
+    "mean_mot": 158.5,
+    "val": 201.62
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.39,
+    "mean_step": 0.09,
+    "path_len": 4.4,
+    "max_accel": 0.3,
+    "median_turn_deg": 94.8,
+    "mean_score": 3.954,
+    "mean_app": 0.408,
+    "mean_mot": 158.5,
+    "val": 201.62
+   },
+   "longest": {
+    "length": 71,
+    "t0": 0,
+    "t1": 70,
+    "gaps": 0,
+    "max_step": 0.39,
+    "mean_step": 0.09,
+    "path_len": 6.0,
+    "max_accel": 0.3,
+    "median_turn_deg": 61.3,
+    "mean_score": 3.629,
+    "mean_app": 0.425,
+    "mean_mot": 140.5
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 132,
+   "n_mot_blobs_median": 734,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 2.88,
+    "mean_abs_dy": 0.36,
+    "max_abs_dx": 9.91,
+    "n_affine": 81,
+    "mean_cc": 0.964
+   },
+   "runtime_s": 10.2,
+   "center": 50,
+   "center_abs": 84,
+   "lo": 34,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 51,
+     "mean_score": 3.954,
+     "x": 173.3,
+     "y": 58.3,
+     "path": [
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ],
+      [
+       173,
+       58
+      ]
+     ]
+    },
+    {
+     "length": 1,
+     "mean_score": 3.944,
+     "x": 5.2,
+     "y": 264.8,
+     "path": [
+      [
+       5,
+       264
+      ]
+     ]
+    },
+    {
+     "length": 6,
+     "mean_score": 3.884,
+     "x": 282.2,
+     "y": 520.6,
+     "path": [
+      [
+       282,
+       520
+      ],
+      [
+       274,
+       521
+      ],
+      [
+       266,
+       524
+      ],
+      [
+       259,
+       525
+      ],
+      [
+       254,
+       527
+      ],
+      [
+       249,
+       528
+      ]
+     ]
+    }
+   ],
+   "name": "match_028.jpg",
+   "t_matched": 5939.56,
+   "t_center_real": 5939.56,
+   "t_manifest_s": 5939.2,
+   "t_matched_s": 5939.56,
+   "t_offset_s": 0.36,
+   "match_mae": 1.528,
+   "n_person": 12,
+   "green": 0.646
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 6.54,
+    "mean_step": 2.34,
+    "path_len": 117.2,
+    "max_accel": 1.47,
+    "median_turn_deg": 5.2,
+    "mean_score": 2.81,
+    "mean_app": 0.935,
+    "mean_mot": 73.7,
+    "val": 141.9
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 6.54,
+    "mean_step": 2.34,
+    "path_len": 117.2,
+    "max_accel": 1.47,
+    "median_turn_deg": 5.2,
+    "mean_score": 2.81,
+    "mean_app": 0.935,
+    "mean_mot": 73.7,
+    "val": 141.9
+   },
+   "longest": {
+    "length": 101,
+    "t0": 0,
+    "t1": 100,
+    "gaps": 0,
+    "max_step": 6.54,
+    "mean_step": 1.98,
+    "path_len": 198.2,
+    "max_accel": 1.47,
+    "median_turn_deg": 5.2,
+    "mean_score": 2.488,
+    "mean_app": 0.933,
+    "mean_mot": 54.6
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 180,
+   "n_mot_blobs_median": 490,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 0.91,
+    "mean_abs_dy": 0.15,
+    "max_abs_dx": 3.45,
+    "n_affine": 79,
+    "mean_cc": 0.784
+   },
+   "runtime_s": 10.11,
+   "center": 50,
+   "center_abs": 89,
+   "lo": 39,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 30,
+     "mean_score": 3.264,
+     "x": 963.0,
+     "y": 548.5,
+     "path": [
+      [
+       963,
+       548
+      ],
+      [
+       966,
+       549
+      ],
+      [
+       970,
+       550
+      ],
+      [
+       972,
+       547
+      ],
+      [
+       977,
+       551
+      ],
+      [
+       980,
+       552
+      ],
+      [
+       984,
+       550
+      ],
+      [
+       982,
+       545
+      ],
+      [
+       973,
+       542
+      ],
+      [
+       959,
+       544
+      ],
+      [
+       951,
+       550
+      ],
+      [
+       950,
+       553
+      ],
+      [
+       950,
+       553
+      ],
+      [
+       946,
+       549
+      ],
+      [
+       933,
+       544
+      ]
+     ]
+    },
+    {
+     "length": 5,
+     "mean_score": 3.205,
+     "x": 929.9,
+     "y": 510.1,
+     "path": [
+      [
+       929,
+       510
+      ],
+      [
+       926,
+       508
+      ],
+      [
+       921,
+       507
+      ],
+      [
+       916,
+       507
+      ],
+      [
+       911,
+       507
+      ]
+     ]
+    },
+    {
+     "length": 1,
+     "mean_score": 3.039,
+     "x": 72.1,
+     "y": 322.2,
+     "path": [
+      [
+       72,
+       322
+      ]
+     ]
+    }
+   ],
+   "name": "match_032.jpg",
+   "t_matched": 6559.56,
+   "t_center_real": 6559.56,
+   "t_manifest_s": 6559.0,
+   "t_matched_s": 6559.56,
+   "t_offset_s": 0.56,
+   "match_mae": 1.662,
+   "n_person": 11,
+   "green": 0.6591
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.38,
+    "mean_step": 0.17,
+    "path_len": 8.4,
+    "max_accel": 8.38,
+    "median_turn_deg": 0.0,
+    "mean_score": 3.325,
+    "mean_app": 0.89,
+    "mean_mot": 107.0,
+    "val": 169.5
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.38,
+    "mean_step": 0.34,
+    "path_len": 16.8,
+    "max_accel": 8.38,
+    "median_turn_deg": 0.0,
+    "mean_score": 3.326,
+    "mean_app": 0.895,
+    "mean_mot": 106.9,
+    "val": 169.44
+   },
+   "longest": {
+    "length": 89,
+    "t0": 0,
+    "t1": 88,
+    "gaps": 0,
+    "max_step": 8.68,
+    "mean_step": 4.84,
+    "path_len": 425.9,
+    "max_accel": 1.89,
+    "median_turn_deg": 5.4,
+    "mean_score": 2.818,
+    "mean_app": 0.962,
+    "mean_mot": 64.8
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 155,
+   "n_mot_blobs_median": 547,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 2.54,
+    "mean_abs_dy": 0.51,
+    "max_abs_dx": 6.78,
+    "n_affine": 52,
+    "mean_cc": 0.801
+   },
+   "runtime_s": 10.97,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 49,
+     "mean_score": 3.419,
+     "x": 1115.1,
+     "y": 58.0,
+     "path": [
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       58
+      ],
+      [
+       1115,
+       57
+      ]
+     ]
+    },
+    {
+     "length": 51,
+     "mean_score": 3.326,
+     "x": 962.0,
+     "y": 102.5,
+     "path": [
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       102
+      ]
+     ]
+    },
+    {
+     "length": 51,
+     "mean_score": 3.325,
+     "x": 962.0,
+     "y": 102.5,
+     "path": [
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       102
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ],
+      [
+       962,
+       110
+      ]
+     ]
+    }
+   ],
+   "name": "match_036.jpg",
+   "t_matched": 7173.54,
+   "t_center_real": 7173.54,
+   "t_manifest_s": 7172.7,
+   "t_matched_s": 7173.54,
+   "t_offset_s": 0.84,
+   "match_mae": 1.45,
+   "n_person": 12,
+   "green": 0.6404
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.57,
+    "mean_step": 0.16,
+    "path_len": 7.9,
+    "max_accel": 0.43,
+    "median_turn_deg": 116.8,
+    "mean_score": 2.171,
+    "mean_app": 0.66,
+    "mean_mot": 6.5,
+    "val": 110.65
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.57,
+    "mean_step": 0.16,
+    "path_len": 7.9,
+    "max_accel": 0.43,
+    "median_turn_deg": 116.8,
+    "mean_score": 2.171,
+    "mean_app": 0.66,
+    "mean_mot": 6.5,
+    "val": 110.65
+   },
+   "longest": {
+    "length": 74,
+    "t0": 0,
+    "t1": 73,
+    "gaps": 0,
+    "max_step": 0.57,
+    "mean_step": 0.13,
+    "path_len": 9.5,
+    "max_accel": 0.52,
+    "median_turn_deg": 111.8,
+    "mean_score": 2.182,
+    "mean_app": 0.661,
+    "mean_mot": 6.2
+   },
+   "seeded": null,
+   "synthetic": null,
+   "n_cand_median": 40,
+   "n_cand_total": 4040,
+   "n_app_blobs_median": 197,
+   "n_mot_blobs_median": 106,
+   "motion": {
+    "n": 100,
+    "mean_abs_dx": 2.3,
+    "mean_abs_dy": 0.33,
+    "max_abs_dx": 23.26,
+    "n_affine": 26,
+    "mean_cc": 0.27
+   },
+   "runtime_s": 8.86,
+   "center": 50,
+   "center_abs": 65,
+   "lo": 15,
+   "n_frames": 101,
+   "top3": [
+    {
+     "length": 2,
+     "mean_score": 5.118,
+     "x": 768.3,
+     "y": 664.2,
+     "path": [
+      [
+       768,
+       664
+      ],
+      [
+       764,
+       662
+      ]
+     ]
+    },
+    {
+     "length": 1,
+     "mean_score": 4.049,
+     "x": 696.0,
+     "y": 483.0,
+     "path": [
+      [
+       696,
+       483
+      ]
+     ]
+    },
+    {
+     "length": 2,
+     "mean_score": 3.491,
+     "x": 1061.1,
+     "y": 642.9,
+     "path": [
+      [
+       1061,
+       642
+      ],
+      [
+       1039,
+       649
+      ]
+     ]
+    }
+   ],
+   "name": "match_040.jpg",
+   "t_matched": 7839.56,
+   "t_center_real": 7839.56,
+   "t_manifest_s": 7838.4,
+   "t_matched_s": 7839.56,
+   "t_offset_s": 1.16,
+   "match_mae": 2.171,
+   "n_person": 11,
+   "green": 0.5991
+  }
+ ],
+ "controls": {
+  "shuffle": {
+   "n_pass": 6,
+   "n_total": 10,
+   "pass_rate": 0.6,
+   "frames": [
+    {
+     "pass_": false,
+     "reason": "len 4 < 10",
+     "best": {
+      "length": 4,
+      "t0": 21,
+      "t1": 24,
+      "gaps": 0,
+      "max_step": 3.3,
+      "mean_step": 1.37,
+      "path_len": 4.1,
+      "max_accel": 2.57,
+      "median_turn_deg": 90.5,
+      "mean_score": 3.489,
+      "mean_app": 0.763,
+      "mean_mot": 70.8,
+      "val": 13.91
+     },
+     "best_longest": {
+      "length": 4,
+      "t0": 21,
+      "t1": 24,
+      "gaps": 0,
+      "max_step": 3.3,
+      "mean_step": 1.37,
+      "path_len": 4.1,
+      "max_accel": 2.57,
+      "median_turn_deg": 90.5,
+      "mean_score": 3.489,
+      "mean_app": 0.763,
+      "mean_mot": 70.8,
+      "val": 13.91
+     },
+     "longest": {
+      "length": 49,
+      "t0": 22,
+      "t1": 70,
+      "gaps": 0,
+      "max_step": 8.88,
+      "mean_step": 1.64,
+      "path_len": 78.6,
+      "max_accel": 8.88,
+      "median_turn_deg": 93.4,
+      "mean_score": 3.558,
+      "mean_app": 0.909,
+      "mean_mot": 116.4
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 131,
+     "n_mot_blobs_median": 757,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 19.76,
+      "mean_abs_dy": 5.71,
+      "max_abs_dx": 58.03,
+      "n_affine": 52,
+      "mean_cc": 0.593
+     },
+     "runtime_s": 11.82,
+     "center": 24,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 3.775,
+       "x": 902.4,
+       "y": 583.6,
+       "path": [
+        [
+         902,
+         583
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.597,
+       "x": 890.2,
+       "y": 546.1,
+       "path": [
+        [
+         890,
+         546
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.552,
+       "x": 772.1,
+       "y": 596.9,
+       "path": [
+        [
+         772,
+         596
+        ]
+       ]
+      }
+     ],
+     "name": "match_004.jpg",
+     "t_matched": 1249.56,
+     "t_center_real": 1249.56
+    },
+    {
+     "pass_": false,
+     "reason": "len 4 < 10",
+     "best": {
+      "length": 4,
+      "t0": 83,
+      "t1": 86,
+      "gaps": 0,
+      "max_step": 11.2,
+      "mean_step": 8.47,
+      "path_len": 25.4,
+      "max_accel": 3.06,
+      "median_turn_deg": 16.2,
+      "mean_score": 3.327,
+      "mean_app": 0.872,
+      "mean_mot": 120.5,
+      "val": 13.01
+     },
+     "best_longest": {
+      "length": 4,
+      "t0": 83,
+      "t1": 86,
+      "gaps": 0,
+      "max_step": 11.2,
+      "mean_step": 8.47,
+      "path_len": 25.4,
+      "max_accel": 3.06,
+      "median_turn_deg": 16.2,
+      "mean_score": 3.327,
+      "mean_app": 0.872,
+      "mean_mot": 120.5,
+      "val": 13.01
+     },
+     "longest": null,
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 137,
+     "n_mot_blobs_median": 521,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 15.9,
+      "mean_abs_dy": 5.05,
+      "max_abs_dx": 995.23,
+      "n_affine": 40,
+      "mean_cc": 0.315
+     },
+     "runtime_s": 20.03,
+     "center": 86,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 3.778,
+       "x": 332.8,
+       "y": 413.2,
+       "path": [
+        [
+         332,
+         413
+        ]
+       ]
+      },
+      {
+       "length": 3,
+       "mean_score": 3.632,
+       "x": 1059.0,
+       "y": 51.5,
+       "path": [
+        [
+         1059,
+         51
+        ],
+        [
+         1059,
+         51
+        ],
+        [
+         1059,
+         51
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.6,
+       "x": 279.5,
+       "y": 364.5,
+       "path": [
+        [
+         279,
+         364
+        ]
+       ]
+      }
+     ],
+     "name": "match_008.jpg",
+     "t_matched": 2093.56,
+     "t_center_real": 2093.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 30,
+      "t0": 60,
+      "t1": 89,
+      "gaps": 0,
+      "max_step": 0.52,
+      "mean_step": 0.14,
+      "path_len": 4.1,
+      "max_accel": 0.43,
+      "median_turn_deg": 86.4,
+      "mean_score": 3.167,
+      "mean_app": 0.582,
+      "mean_mot": 117.1,
+      "val": 94.95
+     },
+     "best_longest": {
+      "length": 30,
+      "t0": 60,
+      "t1": 89,
+      "gaps": 0,
+      "max_step": 0.52,
+      "mean_step": 0.14,
+      "path_len": 4.1,
+      "max_accel": 0.43,
+      "median_turn_deg": 86.4,
+      "mean_score": 3.167,
+      "mean_app": 0.582,
+      "mean_mot": 117.1,
+      "val": 94.95
+     },
+     "longest": {
+      "length": 41,
+      "t0": 60,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.52,
+      "mean_step": 0.15,
+      "path_len": 5.9,
+      "max_accel": 0.43,
+      "median_turn_deg": 121.5,
+      "mean_score": 3.107,
+      "mean_app": 0.59,
+      "mean_mot": 112.5
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 100,
+     "n_mot_blobs_median": 347,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 23.41,
+      "mean_abs_dy": 7.72,
+      "max_abs_dx": 145.11,
+      "n_affine": 50,
+      "mean_cc": 0.514
+     },
+     "runtime_s": 12.01,
+     "center": 89,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 4.119,
+       "x": 1119.5,
+       "y": 68.0,
+       "path": [
+        [
+         1119,
+         68
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 4.075,
+       "x": 792.6,
+       "y": 410.4,
+       "path": [
+        [
+         792,
+         410
+        ],
+        [
+         804,
+         406
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.879,
+       "x": 1153.5,
+       "y": 99.5,
+       "path": [
+        [
+         1153,
+         99
+        ]
+       ]
+      }
+     ],
+     "name": "match_012.jpg",
+     "t_matched": 2655.56,
+     "t_center_real": 2655.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 30,
+      "t0": 58,
+      "t1": 87,
+      "gaps": 0,
+      "max_step": 8.88,
+      "mean_step": 2.83,
+      "path_len": 82.1,
+      "max_accel": 8.88,
+      "median_turn_deg": 89.6,
+      "mean_score": 3.407,
+      "mean_app": 0.86,
+      "mean_mot": 112.6,
+      "val": 101.23
+     },
+     "best_longest": {
+      "length": 30,
+      "t0": 58,
+      "t1": 87,
+      "gaps": 0,
+      "max_step": 8.88,
+      "mean_step": 2.83,
+      "path_len": 82.1,
+      "max_accel": 8.88,
+      "median_turn_deg": 89.6,
+      "mean_score": 3.407,
+      "mean_app": 0.86,
+      "mean_mot": 112.6,
+      "val": 101.23
+     },
+     "longest": {
+      "length": 44,
+      "t0": 18,
+      "t1": 61,
+      "gaps": 0,
+      "max_step": 0.38,
+      "mean_step": 0.13,
+      "path_len": 5.8,
+      "max_accel": 0.31,
+      "median_turn_deg": 104.1,
+      "mean_score": 3.167,
+      "mean_app": 0.557,
+      "mean_mot": 118.5
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 164,
+     "n_mot_blobs_median": 482,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 11.29,
+      "mean_abs_dy": 6.88,
+      "max_abs_dx": 92.58,
+      "n_affine": 89,
+      "mean_cc": 0.749
+     },
+     "runtime_s": 16.59,
+     "center": 87,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 4.217,
+       "x": 886.0,
+       "y": 690.0,
+       "path": [
+        [
+         885,
+         689
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.742,
+       "x": 102.5,
+       "y": 625.6,
+       "path": [
+        [
+         102,
+         625
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.582,
+       "x": 5.0,
+       "y": 75.9,
+       "path": [
+        [
+         5,
+         75
+        ]
+       ]
+      }
+     ],
+     "name": "match_016.jpg",
+     "t_matched": 3273.54,
+     "t_center_real": 3273.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 21,
+      "t0": 30,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.21,
+      "mean_step": 0.08,
+      "path_len": 1.7,
+      "max_accel": 0.21,
+      "median_turn_deg": 92.6,
+      "mean_score": 3.686,
+      "mean_app": 0.399,
+      "mean_mot": 143.6,
+      "val": 77.39
+     },
+     "best_longest": {
+      "length": 21,
+      "t0": 30,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.21,
+      "mean_step": 0.08,
+      "path_len": 1.7,
+      "max_accel": 0.21,
+      "median_turn_deg": 92.6,
+      "mean_score": 3.686,
+      "mean_app": 0.399,
+      "mean_mot": 143.6,
+      "val": 77.39
+     },
+     "longest": {
+      "length": 63,
+      "t0": 30,
+      "t1": 92,
+      "gaps": 0,
+      "max_step": 0.39,
+      "mean_step": 0.1,
+      "path_len": 6.1,
+      "max_accel": 0.31,
+      "median_turn_deg": 119.7,
+      "mean_score": 3.51,
+      "mean_app": 0.406,
+      "mean_mot": 132.7
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 38,
+     "n_mot_blobs_median": 156,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 93.04,
+      "mean_abs_dy": 31.65,
+      "max_abs_dx": 275.69,
+      "n_affine": 26,
+      "mean_cc": 0.296
+     },
+     "runtime_s": 13.41,
+     "center": 50,
+     "center_abs": 61,
+     "lo": 11,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 4.713,
+       "x": 443.5,
+       "y": 332.3,
+       "path": [
+        [
+         443,
+         332
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 4.25,
+       "x": 521.1,
+       "y": 400.3,
+       "path": [
+        [
+         521,
+         400
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.982,
+       "x": 929.8,
+       "y": 715.6,
+       "path": [
+        [
+         929,
+         715
+        ]
+       ]
+      }
+     ],
+     "name": "match_020.jpg",
+     "t_matched": 3997.54,
+     "t_center_real": 3997.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 16,
+      "t0": 77,
+      "t1": 92,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 2.835,
+      "mean_app": 0.941,
+      "mean_mot": 78.7,
+      "val": 45.36
+     },
+     "best_longest": {
+      "length": 16,
+      "t0": 77,
+      "t1": 92,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 2.835,
+      "mean_app": 0.941,
+      "mean_mot": 78.7,
+      "val": 45.36
+     },
+     "longest": {
+      "length": 22,
+      "t0": 9,
+      "t1": 30,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 2.914,
+      "mean_app": 0.941,
+      "mean_mot": 84.0
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 129,
+     "n_mot_blobs_median": 289,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 14.59,
+      "mean_abs_dy": 4.13,
+      "max_abs_dx": 234.27,
+      "n_affine": 82,
+      "mean_cc": 0.671
+     },
+     "runtime_s": 10.75,
+     "center": 92,
+     "center_abs": 74,
+     "lo": 24,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 5,
+       "mean_score": 4.003,
+       "x": 1154.5,
+       "y": 99.5,
+       "path": [
+        [
+         1154,
+         99
+        ],
+        [
+         1154,
+         99
+        ],
+        [
+         1154,
+         99
+        ],
+        [
+         1154,
+         99
+        ],
+        [
+         1154,
+         99
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.15,
+       "x": 1142.0,
+       "y": 112.4,
+       "path": [
+        [
+         1141,
+         112
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.15,
+       "x": 1127.1,
+       "y": 113.6,
+       "path": [
+        [
+         1127,
+         113
+        ]
+       ]
+      }
+     ],
+     "name": "match_024.jpg",
+     "t_matched": 5223.56,
+     "t_center_real": 5223.56
+    },
+    {
+     "pass_": false,
+     "reason": "len 4 < 10",
+     "best": {
+      "length": 4,
+      "t0": 0,
+      "t1": 3,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.144,
+      "mean_app": 0.943,
+      "mean_mot": 98.5,
+      "val": 12.57
+     },
+     "best_longest": {
+      "length": 4,
+      "t0": 0,
+      "t1": 3,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.144,
+      "mean_app": 0.943,
+      "mean_mot": 98.5,
+      "val": 12.57
+     },
+     "longest": {
+      "length": 31,
+      "t0": 29,
+      "t1": 59,
+      "gaps": 0,
+      "max_step": 0.39,
+      "mean_step": 0.15,
+      "path_len": 4.5,
+      "max_accel": 0.3,
+      "median_turn_deg": 139.1,
+      "mean_score": 3.45,
+      "mean_app": 0.443,
+      "mean_mot": 131.6
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 132,
+     "n_mot_blobs_median": 404,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 90.66,
+      "mean_abs_dy": 7.5,
+      "max_abs_dx": 323.66,
+      "n_affine": 70,
+      "mean_cc": 0.653
+     },
+     "runtime_s": 13.54,
+     "center": 3,
+     "center_abs": 84,
+     "lo": 34,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 5.306,
+       "x": 71.0,
+       "y": 718.5,
+       "path": [
+        [
+         71,
+         718
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 4.359,
+       "x": 764.2,
+       "y": 151.7,
+       "path": [
+        [
+         764,
+         151
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 4.304,
+       "x": 5.2,
+       "y": 264.8,
+       "path": [
+        [
+         5,
+         264
+        ]
+       ]
+      }
+     ],
+     "name": "match_028.jpg",
+     "t_matched": 5939.56,
+     "t_center_real": 5939.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 14,
+      "t0": 18,
+      "t1": 31,
+      "gaps": 0,
+      "max_step": 8.75,
+      "mean_step": 1.35,
+      "path_len": 17.5,
+      "max_accel": 8.75,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.537,
+      "mean_app": 0.923,
+      "mean_mot": 110.1,
+      "val": 49.31
+     },
+     "best_longest": {
+      "length": 14,
+      "t0": 18,
+      "t1": 31,
+      "gaps": 0,
+      "max_step": 8.75,
+      "mean_step": 2.02,
+      "path_len": 26.2,
+      "max_accel": 8.75,
+      "median_turn_deg": 45.0,
+      "mean_score": 3.538,
+      "mean_app": 0.904,
+      "mean_mot": 113.3,
+      "val": 49.22
+     },
+     "longest": {
+      "length": 18,
+      "t0": 28,
+      "t1": 45,
+      "gaps": 0,
+      "max_step": 0.21,
+      "mean_step": 0.02,
+      "path_len": 0.4,
+      "max_accel": 0.21,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.27,
+      "mean_app": 0.536,
+      "mean_mot": 125.1
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 180,
+     "n_mot_blobs_median": 482,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 26.59,
+      "mean_abs_dy": 1.53,
+      "max_abs_dx": 87.85,
+      "n_affine": 74,
+      "mean_cc": 0.711
+     },
+     "runtime_s": 9.73,
+     "center": 31,
+     "center_abs": 89,
+     "lo": 39,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 3.823,
+       "x": 1014.1,
+       "y": 366.9,
+       "path": [
+        [
+         1014,
+         366
+        ]
+       ]
+      },
+      {
+       "length": 14,
+       "mean_score": 3.538,
+       "x": 962.1,
+       "y": 102.1,
+       "path": [
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ]
+       ]
+      },
+      {
+       "length": 14,
+       "mean_score": 3.537,
+       "x": 962.1,
+       "y": 102.1,
+       "path": [
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ]
+       ]
+      }
+     ],
+     "name": "match_032.jpg",
+     "t_matched": 6559.56,
+     "t_center_real": 6559.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 70,
+      "t0": 24,
+      "t1": 93,
+      "gaps": 0,
+      "max_step": 8.38,
+      "mean_step": 1.36,
+      "path_len": 93.7,
+      "max_accel": 8.38,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.597,
+      "mean_app": 0.864,
+      "mean_mot": 127.3,
+      "val": 250.63
+     },
+     "best_longest": {
+      "length": 70,
+      "t0": 24,
+      "t1": 93,
+      "gaps": 0,
+      "max_step": 8.38,
+      "mean_step": 1.36,
+      "path_len": 93.7,
+      "max_accel": 8.38,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.597,
+      "mean_app": 0.864,
+      "mean_mot": 127.3,
+      "val": 250.63
+     },
+     "longest": {
+      "length": 77,
+      "t0": 24,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 8.38,
+      "mean_step": 1.34,
+      "path_len": 102.1,
+      "max_accel": 8.38,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.582,
+      "mean_app": 0.863,
+      "mean_mot": 126.3
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 155,
+     "n_mot_blobs_median": 456,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 116.2,
+      "mean_abs_dy": 21.12,
+      "max_abs_dx": 310.52,
+      "n_affine": 60,
+      "mean_cc": 0.561
+     },
+     "runtime_s": 9.56,
+     "center": 93,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 4.382,
+       "x": 903.3,
+       "y": 52.8,
+       "path": [
+        [
+         903,
+         52
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 4.066,
+       "x": 932.5,
+       "y": 354.0,
+       "path": [
+        [
+         932,
+         354
+        ]
+       ]
+      },
+      {
+       "length": 70,
+       "mean_score": 3.597,
+       "x": 962.0,
+       "y": 102.5,
+       "path": [
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         110
+        ]
+       ]
+      }
+     ],
+     "name": "match_036.jpg",
+     "t_matched": 7173.54,
+     "t_center_real": 7173.54
+    },
+    {
+     "pass_": false,
+     "reason": "len 8 < 10",
+     "best": {
+      "length": 8,
+      "t0": 41,
+      "t1": 48,
+      "gaps": 0,
+      "max_step": 1.98,
+      "mean_step": 0.97,
+      "path_len": 6.8,
+      "max_accel": 1.77,
+      "median_turn_deg": 103.0,
+      "mean_score": 2.851,
+      "mean_app": 0.97,
+      "mean_mot": 66.4,
+      "val": 22.72
+     },
+     "best_longest": {
+      "length": 8,
+      "t0": 41,
+      "t1": 48,
+      "gaps": 0,
+      "max_step": 1.98,
+      "mean_step": 0.97,
+      "path_len": 6.8,
+      "max_accel": 1.77,
+      "median_turn_deg": 103.0,
+      "mean_score": 2.851,
+      "mean_app": 0.97,
+      "mean_mot": 66.4,
+      "val": 22.72
+     },
+     "longest": {
+      "length": 11,
+      "t0": 84,
+      "t1": 94,
+      "gaps": 0,
+      "max_step": 2.25,
+      "mean_step": 0.82,
+      "path_len": 8.2,
+      "max_accel": 1.01,
+      "median_turn_deg": 125.0,
+      "mean_score": 2.542,
+      "mean_app": 0.976,
+      "mean_mot": 43.8
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 197,
+     "n_mot_blobs_median": 405,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 3.78,
+      "mean_abs_dy": 2.12,
+      "max_abs_dx": 72.64,
+      "n_affine": 52,
+      "mean_cc": 0.533
+     },
+     "runtime_s": 10.1,
+     "center": 48,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 4.812,
+       "x": 1039.1,
+       "y": 649.9,
+       "path": [
+        [
+         1039,
+         649
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 4.633,
+       "x": 764.2,
+       "y": 662.9,
+       "path": [
+        [
+         764,
+         662
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 4.306,
+       "x": 156.9,
+       "y": 705.1,
+       "path": [
+        [
+         156,
+         705
+        ]
+       ]
+      }
+     ],
+     "name": "match_040.jpg",
+     "t_matched": 7839.56,
+     "t_center_real": 7839.56
+    }
+   ],
+   "note": "打乱帧序后重跑。若通过率不下降，说明「轨迹连续性」判据是废的。"
+  },
+  "static_center": {
+   "n_pass": 10,
+   "n_total": 10,
+   "pass_rate": 1.0,
+   "frames": [
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_004.jpg",
+     "t_matched": 1249.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_008.jpg",
+     "t_matched": 2093.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_012.jpg",
+     "t_matched": 2655.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_016.jpg",
+     "t_matched": 3273.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_020.jpg",
+     "t_matched": 3997.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_024.jpg",
+     "t_matched": 5223.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_028.jpg",
+     "t_matched": 5939.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_032.jpg",
+     "t_matched": 6559.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_036.jpg",
+     "t_matched": 7173.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.0,
+      "mean_app": 1.0,
+      "mean_mot": 0.0
+     },
+     "name": "match_040.jpg",
+     "t_matched": 7839.56
+    }
+   ],
+   "note": "每帧报画面正中的一个点，完全不做检测。它必然 10/10 —— 这条对照的作用是证明 M1 单独没有判别力，必须看图。"
+  },
+  "null": {
+   "n_pass": 0,
+   "n_total": 10,
+   "pass_rate": 0.0,
+   "frames": [
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_004.jpg",
+     "t_matched": 1249.56
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_008.jpg",
+     "t_matched": 2093.56
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_012.jpg",
+     "t_matched": 2655.56
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_016.jpg",
+     "t_matched": 3273.54
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_020.jpg",
+     "t_matched": 3997.54
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_024.jpg",
+     "t_matched": 5223.56
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_028.jpg",
+     "t_matched": 5939.56
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_032.jpg",
+     "t_matched": 6559.56
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_036.jpg",
+     "t_matched": 7173.54
+    },
+    {
+     "pass_": false,
+     "reason": "no track",
+     "best": null,
+     "name": "match_040.jpg",
+     "t_matched": 7839.56
+    }
+   ],
+   "note": "不产生候选。应为 0/10；若不是 0 说明计分有 bug。"
+  },
+  "synthetic": {
+   "n_pass": 10,
+   "n_total": 10,
+   "pass_rate": 1.0,
+   "frames": [
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 31,
+      "t0": 20,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 8.52,
+      "mean_step": 6.79,
+      "path_len": 203.7,
+      "max_accel": 3.11,
+      "median_turn_deg": 6.5,
+      "mean_score": 3.801,
+      "mean_app": 0.836,
+      "mean_mot": 126.9,
+      "val": 115.39
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.4,
+      "mean_step": 0.01,
+      "path_len": 0.4,
+      "max_accel": 0.4,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.946,
+      "mean_app": 0.935,
+      "mean_mot": 10.5,
+      "val": 99.22
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.4,
+      "mean_step": 0.0,
+      "path_len": 0.4,
+      "max_accel": 0.4,
+      "median_turn_deg": 0.0,
+      "mean_score": 2.211,
+      "mean_app": 0.931,
+      "mean_mot": 23.7
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       848,
+       378
+      ],
+      "cand_dist": 0.16,
+      "chain_len": 18,
+      "chain_max_step": 18.3,
+      "chain_mean_step": 17.59,
+      "chain_mean_score": 2.86,
+      "chain_pass": true,
+      "auto_dist": 212.37
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 132,
+     "n_mot_blobs_median": 368,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.19,
+      "mean_abs_dy": 0.2,
+      "max_abs_dx": 45.31,
+      "n_affine": 53,
+      "mean_cc": 0.556
+     },
+     "runtime_s": 6.12,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 31,
+       "mean_score": 3.801,
+       "x": 1093.7,
+       "y": 624.8,
+       "path": [
+        [
+         1093,
+         624
+        ],
+        [
+         1078,
+         620
+        ],
+        [
+         1062,
+         619
+        ],
+        [
+         1046,
+         618
+        ],
+        [
+         1031,
+         613
+        ],
+        [
+         1016,
+         612
+        ],
+        [
+         1001,
+         612
+        ],
+        [
+         987,
+         608
+        ],
+        [
+         973,
+         608
+        ],
+        [
+         959,
+         604
+        ],
+        [
+         945,
+         602
+        ],
+        [
+         932,
+         598
+        ],
+        [
+         920,
+         593
+        ],
+        [
+         908,
+         591
+        ],
+        [
+         901,
+         589
+        ],
+        [
+         902,
+         583
+        ]
+       ]
+      },
+      {
+       "length": 13,
+       "mean_score": 3.029,
+       "x": 753.5,
+       "y": 596.9,
+       "path": [
+        [
+         753,
+         596
+        ],
+        [
+         753,
+         596
+        ],
+        [
+         754,
+         595
+        ],
+        [
+         755,
+         595
+        ],
+        [
+         757,
+         594
+        ],
+        [
+         759,
+         594
+        ],
+        [
+         761,
+         594
+        ],
+        [
+         764,
+         595
+        ],
+        [
+         766,
+         595
+        ],
+        [
+         769,
+         595
+        ],
+        [
+         770,
+         595
+        ],
+        [
+         771,
+         595
+        ],
+        [
+         772,
+         596
+        ]
+       ]
+      },
+      {
+       "length": 3,
+       "mean_score": 3.006,
+       "x": 878.0,
+       "y": 554.5,
+       "path": [
+        [
+         878,
+         554
+        ],
+        [
+         879,
+         554
+        ],
+        [
+         879,
+         553
+        ]
+       ]
+      }
+     ],
+     "name": "match_004.jpg",
+     "t_matched": 1249.56,
+     "t_center_real": 1249.56
+    },
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 12,
+      "t0": 39,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 16.5,
+      "mean_step": 5.16,
+      "path_len": 56.8,
+      "max_accel": 6.61,
+      "median_turn_deg": 27.6,
+      "mean_score": 3.544,
+      "mean_app": 0.832,
+      "mean_mot": 130.8,
+      "val": 41.85
+     },
+     "best_longest": {
+      "length": 12,
+      "t0": 39,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 16.5,
+      "mean_step": 5.16,
+      "path_len": 56.8,
+      "max_accel": 6.61,
+      "median_turn_deg": 27.6,
+      "mean_score": 3.544,
+      "mean_app": 0.832,
+      "mean_mot": 130.8,
+      "val": 41.85
+     },
+     "longest": {
+      "length": 39,
+      "t0": 0,
+      "t1": 38,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.74,
+      "mean_app": 0.855,
+      "mean_mot": 135.5
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       388,
+       551
+      ],
+      "cand_dist": 0.68,
+      "chain_len": 10,
+      "chain_max_step": 10.93,
+      "chain_mean_step": 10.76,
+      "chain_mean_score": 3.474,
+      "chain_pass": true,
+      "auto_dist": 359.04
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4024,
+     "n_app_blobs_median": 138,
+     "n_mot_blobs_median": 467,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 16.25,
+      "mean_abs_dy": 2.09,
+      "max_abs_dx": 120.77,
+      "n_affine": 73,
+      "mean_cc": 0.742
+     },
+     "runtime_s": 9.38,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 2,
+       "mean_score": 4.412,
+       "x": 11.0,
+       "y": 433.0,
+       "path": [
+        [
+         11,
+         433
+        ],
+        [
+         12,
+         436
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.773,
+       "x": 1107.5,
+       "y": 108.0,
+       "path": [
+        [
+         1107,
+         108
+        ]
+       ]
+      },
+      {
+       "length": 12,
+       "mean_score": 3.544,
+       "x": 38.5,
+       "y": 336.0,
+       "path": [
+        [
+         38,
+         336
+        ],
+        [
+         50,
+         347
+        ],
+        [
+         56,
+         355
+        ],
+        [
+         60,
+         355
+        ],
+        [
+         63,
+         357
+        ],
+        [
+         65,
+         356
+        ],
+        [
+         67,
+         358
+        ],
+        [
+         69,
+         360
+        ],
+        [
+         72,
+         361
+        ],
+        [
+         75,
+         362
+        ],
+        [
+         78,
+         363
+        ],
+        [
+         83,
+         362
+        ]
+       ]
+      }
+     ],
+     "name": "match_008.jpg",
+     "t_matched": 2093.56,
+     "t_center_real": 2093.56
+    },
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.47,
+      "mean_step": 4.06,
+      "path_len": 202.8,
+      "max_accel": 1.21,
+      "median_turn_deg": 4.0,
+      "mean_score": 3.429,
+      "mean_app": 0.459,
+      "mean_mot": 103.7,
+      "val": 172.46
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.47,
+      "mean_step": 4.06,
+      "path_len": 202.8,
+      "max_accel": 1.21,
+      "median_turn_deg": 4.0,
+      "mean_score": 3.429,
+      "mean_app": 0.459,
+      "mean_mot": 103.7,
+      "val": 172.46
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 7.42,
+      "mean_step": 3.01,
+      "path_len": 301.5,
+      "max_accel": 2.06,
+      "median_turn_deg": 7.9,
+      "mean_score": 2.943,
+      "mean_app": 0.464,
+      "mean_mot": 69.6
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       651,
+       516
+      ],
+      "cand_dist": 0.12,
+      "chain_len": 12,
+      "chain_max_step": 14.95,
+      "chain_mean_step": 14.61,
+      "chain_mean_score": 3.011,
+      "chain_pass": true,
+      "auto_dist": 617.46
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 101,
+     "n_mot_blobs_median": 464,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.41,
+      "mean_abs_dy": 0.31,
+      "max_abs_dx": 7.68,
+      "n_affine": 58,
+      "mean_cc": 0.824
+     },
+     "runtime_s": 6.53,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 3,
+       "mean_score": 4.051,
+       "x": 1226.6,
+       "y": 687.4,
+       "path": [
+        [
+         1226,
+         687
+        ],
+        [
+         1217,
+         687
+        ],
+        [
+         1209,
+         690
+        ]
+       ]
+      },
+      {
+       "length": 3,
+       "mean_score": 3.628,
+       "x": 1226.6,
+       "y": 687.4,
+       "path": [
+        [
+         1226,
+         687
+        ],
+        [
+         1235,
+         688
+        ],
+        [
+         1238,
+         688
+        ]
+       ]
+      },
+      {
+       "length": 43,
+       "mean_score": 3.476,
+       "x": 1114.9,
+       "y": 58.5,
+       "path": [
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1114,
+         58
+        ],
+        [
+         1115,
+         58
+        ]
+       ]
+      }
+     ],
+     "name": "match_012.jpg",
+     "t_matched": 2655.56,
+     "t_center_real": 2655.56
+    },
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 8.49,
+      "mean_step": 2.59,
+      "path_len": 129.5,
+      "max_accel": 4.63,
+      "median_turn_deg": 26.3,
+      "mean_score": 3.18,
+      "mean_app": 0.955,
+      "mean_mot": 85.1,
+      "val": 160.65
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 11.08,
+      "mean_step": 10.65,
+      "path_len": 532.4,
+      "max_accel": 0.82,
+      "median_turn_deg": 2.3,
+      "mean_score": 3.247,
+      "mean_app": 0.796,
+      "mean_mot": 103.1,
+      "val": 159.22
+     },
+     "longest": {
+      "length": 86,
+      "t0": 0,
+      "t1": 85,
+      "gaps": 0,
+      "max_step": 8.49,
+      "mean_step": 2.25,
+      "path_len": 191.1,
+      "max_accel": 4.63,
+      "median_turn_deg": 18.2,
+      "mean_score": 3.141,
+      "mean_app": 0.937,
+      "mean_mot": 84.3
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       566,
+       639
+      ],
+      "cand_dist": 0.79,
+      "chain_len": 51,
+      "chain_max_step": 11.08,
+      "chain_mean_step": 10.65,
+      "chain_mean_score": 3.247,
+      "chain_pass": true,
+      "auto_dist": 509.62
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 165,
+     "n_mot_blobs_median": 539,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.38,
+      "mean_abs_dy": 0.44,
+      "max_abs_dx": 12.7,
+      "n_affine": 89,
+      "mean_cc": 0.974
+     },
+     "runtime_s": 6.99,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 2,
+       "mean_score": 3.529,
+       "x": 761.3,
+       "y": 381.4,
+       "path": [
+        [
+         761,
+         381
+        ],
+        [
+         762,
+         402
+        ]
+       ]
+      },
+      {
+       "length": 5,
+       "mean_score": 3.324,
+       "x": 108.3,
+       "y": 621.2,
+       "path": [
+        [
+         108,
+         621
+        ],
+        [
+         95,
+         626
+        ],
+        [
+         91,
+         628
+        ],
+        [
+         87,
+         630
+        ],
+        [
+         83,
+         631
+        ]
+       ]
+      },
+      {
+       "length": 51,
+       "mean_score": 3.247,
+       "x": 980.9,
+       "y": 364.6,
+       "path": [
+        [
+         980,
+         364
+        ],
+        [
+         939,
+         376
+        ],
+        [
+         902,
+         396
+        ],
+        [
+         870,
+         424
+        ],
+        [
+         845,
+         458
+        ],
+        [
+         823,
+         495
+        ],
+        [
+         802,
+         532
+        ],
+        [
+         778,
+         567
+        ],
+        [
+         748,
+         597
+        ],
+        [
+         712,
+         620
+        ],
+        [
+         672,
+         634
+        ],
+        [
+         630,
+         640
+        ],
+        [
+         587,
+         640
+        ]
+       ]
+      }
+     ],
+     "name": "match_016.jpg",
+     "t_matched": 3273.54,
+     "t_center_real": 3273.54
+    },
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.18,
+      "mean_step": 0.02,
+      "path_len": 1.1,
+      "max_accel": 0.18,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.922,
+      "mean_app": 0.388,
+      "mean_mot": 155.1,
+      "val": 199.99
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.18,
+      "mean_step": 0.02,
+      "path_len": 1.1,
+      "max_accel": 0.18,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.922,
+      "mean_app": 0.388,
+      "mean_mot": 155.1,
+      "val": 199.99
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.31,
+      "mean_step": 0.04,
+      "path_len": 4.5,
+      "max_accel": 0.29,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.786,
+      "mean_app": 0.403,
+      "mean_mot": 150.7
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       871,
+       299
+      ],
+      "cand_dist": 0.23,
+      "chain_len": 14,
+      "chain_max_step": 13.3,
+      "chain_mean_step": 12.36,
+      "chain_mean_score": 4.635,
+      "chain_pass": true,
+      "auto_dist": 739.24
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 39,
+     "n_mot_blobs_median": 202,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 11.19,
+      "mean_abs_dy": 1.25,
+      "max_abs_dx": 90.91,
+      "n_affine": 47,
+      "mean_cc": 0.814
+     },
+     "runtime_s": 7.4,
+     "center": 50,
+     "center_abs": 61,
+     "lo": 11,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 14,
+       "mean_score": 4.781,
+       "x": 1012.6,
+       "y": 375.7,
+       "path": [
+        [
+         1012,
+         375
+        ],
+        [
+         1002,
+         369
+        ],
+        [
+         991,
+         362
+        ],
+        [
+         981,
+         355
+        ],
+        [
+         971,
+         349
+        ],
+        [
+         960,
+         342
+        ],
+        [
+         950,
+         336
+        ],
+        [
+         939,
+         329
+        ],
+        [
+         929,
+         323
+        ],
+        [
+         918,
+         318
+        ],
+        [
+         907,
+         312
+        ],
+        [
+         895,
+         308
+        ],
+        [
+         884,
+         304
+        ],
+        [
+         872,
+         300
+        ]
+       ]
+      },
+      {
+       "length": 14,
+       "mean_score": 4.635,
+       "x": 1012.6,
+       "y": 375.7,
+       "path": [
+        [
+         1012,
+         375
+        ],
+        [
+         1002,
+         369
+        ],
+        [
+         991,
+         362
+        ],
+        [
+         981,
+         355
+        ],
+        [
+         971,
+         349
+        ],
+        [
+         960,
+         342
+        ],
+        [
+         950,
+         336
+        ],
+        [
+         939,
+         329
+        ],
+        [
+         929,
+         323
+        ],
+        [
+         918,
+         318
+        ],
+        [
+         907,
+         312
+        ],
+        [
+         895,
+         308
+        ],
+        [
+         884,
+         304
+        ],
+        [
+         871,
+         299
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 4.509,
+       "x": 468.5,
+       "y": 474.8,
+       "path": [
+        [
+         468,
+         474
+        ]
+       ]
+      }
+     ],
+     "name": "match_020.jpg",
+     "t_matched": 3997.54,
+     "t_center_real": 3997.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 2.324,
+      "mean_app": 0.941,
+      "mean_mot": 44.8,
+      "val": 118.54
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 2.324,
+      "mean_app": 0.941,
+      "mean_mot": 44.8,
+      "val": 118.54
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 2.839,
+      "mean_app": 0.941,
+      "mean_mot": 79.0
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       1057,
+       203
+      ],
+      "cand_dist": 114.41,
+      "chain_len": 1,
+      "chain_max_step": 0.0,
+      "chain_mean_step": 0.0,
+      "chain_mean_score": 2.756,
+      "chain_pass": false,
+      "auto_dist": 152.13
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 129,
+     "n_mot_blobs_median": 336,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 9.65,
+      "mean_abs_dy": 0.39,
+      "max_abs_dx": 22.95,
+      "n_affine": 87,
+      "mean_cc": 0.901
+     },
+     "runtime_s": 8.43,
+     "center": 50,
+     "center_abs": 74,
+     "lo": 24,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 3.865,
+       "x": 368.0,
+       "y": 446.0,
+       "path": [
+        [
+         368,
+         446
+        ]
+       ]
+      },
+      {
+       "length": 15,
+       "mean_score": 3.175,
+       "x": 173.2,
+       "y": 58.1,
+       "path": [
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         57
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ]
+       ]
+      },
+      {
+       "length": 7,
+       "mean_score": 3.072,
+       "x": 349.8,
+       "y": 229.4,
+       "path": [
+        [
+         349,
+         229
+        ],
+        [
+         350,
+         228
+        ],
+        [
+         351,
+         228
+        ],
+        [
+         352,
+         229
+        ],
+        [
+         354,
+         230
+        ],
+        [
+         357,
+         229
+        ],
+        [
+         359,
+         228
+        ]
+       ]
+      }
+     ],
+     "name": "match_024.jpg",
+     "t_matched": 5223.56,
+     "t_center_real": 5223.56
+    },
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.39,
+      "mean_step": 0.09,
+      "path_len": 4.4,
+      "max_accel": 0.3,
+      "median_turn_deg": 94.8,
+      "mean_score": 3.954,
+      "mean_app": 0.408,
+      "mean_mot": 158.5,
+      "val": 201.6
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.39,
+      "mean_step": 0.09,
+      "path_len": 4.4,
+      "max_accel": 0.3,
+      "median_turn_deg": 94.8,
+      "mean_score": 3.954,
+      "mean_app": 0.408,
+      "mean_mot": 158.5,
+      "val": 201.6
+     },
+     "longest": {
+      "length": 70,
+      "t0": 1,
+      "t1": 70,
+      "gaps": 0,
+      "max_step": 0.5,
+      "mean_step": 0.01,
+      "path_len": 0.5,
+      "max_accel": 0.5,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.237,
+      "mean_app": 0.357,
+      "mean_mot": 128.7
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       273,
+       561
+      ],
+      "cand_dist": 0.65,
+      "chain_len": 34,
+      "chain_max_step": 12.14,
+      "chain_mean_step": 11.82,
+      "chain_mean_score": 3.593,
+      "chain_pass": true,
+      "auto_dist": 513.23
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 133,
+     "n_mot_blobs_median": 730,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.88,
+      "mean_abs_dy": 0.36,
+      "max_abs_dx": 9.92,
+      "n_affine": 81,
+      "mean_cc": 0.963
+     },
+     "runtime_s": 6.99,
+     "center": 50,
+     "center_abs": 84,
+     "lo": 34,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 51,
+       "mean_score": 3.954,
+       "x": 173.3,
+       "y": 58.3,
+       "path": [
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ],
+        [
+         173,
+         58
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 3.929,
+       "x": 5.2,
+       "y": 264.8,
+       "path": [
+        [
+         5,
+         264
+        ]
+       ]
+      },
+      {
+       "length": 6,
+       "mean_score": 3.884,
+       "x": 282.2,
+       "y": 520.6,
+       "path": [
+        [
+         282,
+         520
+        ],
+        [
+         274,
+         521
+        ],
+        [
+         266,
+         524
+        ],
+        [
+         259,
+         525
+        ],
+        [
+         254,
+         527
+        ],
+        [
+         249,
+         528
+        ]
+       ]
+      }
+     ],
+     "name": "match_028.jpg",
+     "t_matched": 5939.56,
+     "t_center_real": 5939.56
+    },
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.54,
+      "mean_step": 2.34,
+      "path_len": 117.2,
+      "max_accel": 1.47,
+      "median_turn_deg": 5.2,
+      "mean_score": 2.81,
+      "mean_app": 0.935,
+      "mean_mot": 73.7,
+      "val": 141.9
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.54,
+      "mean_step": 2.34,
+      "path_len": 117.2,
+      "max_accel": 1.47,
+      "median_turn_deg": 5.2,
+      "mean_score": 2.81,
+      "mean_app": 0.935,
+      "mean_mot": 73.7,
+      "val": 141.9
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 6.54,
+      "mean_step": 1.98,
+      "path_len": 198.2,
+      "max_accel": 1.47,
+      "median_turn_deg": 5.2,
+      "mean_score": 2.488,
+      "mean_app": 0.933,
+      "mean_mot": 54.6
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       815,
+       298
+      ],
+      "cand_dist": 0.73,
+      "chain_len": 13,
+      "chain_max_step": 16.81,
+      "chain_mean_step": 16.31,
+      "chain_mean_score": 3.372,
+      "chain_pass": true,
+      "auto_dist": 272.17
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 181,
+     "n_mot_blobs_median": 493,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 0.91,
+      "mean_abs_dy": 0.15,
+      "max_abs_dx": 3.45,
+      "n_affine": 79,
+      "mean_cc": 0.784
+     },
+     "runtime_s": 6.65,
+     "center": 50,
+     "center_abs": 89,
+     "lo": 39,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 13,
+       "mean_score": 3.372,
+       "x": 820.5,
+       "y": 103.7,
+       "path": [
+        [
+         820,
+         103
+        ],
+        [
+         820,
+         119
+        ],
+        [
+         821,
+         136
+        ],
+        [
+         822,
+         152
+        ],
+        [
+         822,
+         168
+        ],
+        [
+         823,
+         185
+        ],
+        [
+         822,
+         201
+        ],
+        [
+         823,
+         217
+        ],
+        [
+         823,
+         233
+        ],
+        [
+         822,
+         249
+        ],
+        [
+         821,
+         266
+        ],
+        [
+         819,
+         282
+        ],
+        [
+         816,
+         298
+        ]
+       ]
+      },
+      {
+       "length": 30,
+       "mean_score": 3.264,
+       "x": 963.0,
+       "y": 548.5,
+       "path": [
+        [
+         963,
+         548
+        ],
+        [
+         966,
+         549
+        ],
+        [
+         970,
+         550
+        ],
+        [
+         972,
+         547
+        ],
+        [
+         977,
+         551
+        ],
+        [
+         980,
+         552
+        ],
+        [
+         984,
+         550
+        ],
+        [
+         982,
+         545
+        ],
+        [
+         973,
+         542
+        ],
+        [
+         959,
+         544
+        ],
+        [
+         951,
+         550
+        ],
+        [
+         950,
+         553
+        ],
+        [
+         950,
+         553
+        ],
+        [
+         946,
+         549
+        ],
+        [
+         933,
+         544
+        ]
+       ]
+      },
+      {
+       "length": 5,
+       "mean_score": 3.205,
+       "x": 929.9,
+       "y": 510.1,
+       "path": [
+        [
+         929,
+         510
+        ],
+        [
+         926,
+         508
+        ],
+        [
+         921,
+         507
+        ],
+        [
+         916,
+         507
+        ],
+        [
+         911,
+         507
+        ]
+       ]
+      }
+     ],
+     "name": "match_032.jpg",
+     "t_matched": 6559.56,
+     "t_center_real": 6559.56
+    },
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 8.38,
+      "mean_step": 0.17,
+      "path_len": 8.4,
+      "max_accel": 8.38,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.303,
+      "mean_app": 0.89,
+      "mean_mot": 105.5,
+      "val": 168.37
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 8.38,
+      "mean_step": 0.34,
+      "path_len": 16.8,
+      "max_accel": 8.38,
+      "median_turn_deg": 0.0,
+      "mean_score": 3.304,
+      "mean_app": 0.895,
+      "mean_mot": 105.4,
+      "val": 168.32
+     },
+     "longest": {
+      "length": 89,
+      "t0": 0,
+      "t1": 88,
+      "gaps": 0,
+      "max_step": 8.68,
+      "mean_step": 4.84,
+      "path_len": 425.9,
+      "max_accel": 1.89,
+      "median_turn_deg": 5.4,
+      "mean_score": 2.828,
+      "mean_app": 0.962,
+      "mean_mot": 65.5
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       816,
+       479
+      ],
+      "cand_dist": 0.54,
+      "chain_len": 12,
+      "chain_max_step": 16.49,
+      "chain_mean_step": 16.24,
+      "chain_mean_score": 3.083,
+      "chain_pass": true,
+      "auto_dist": 396.67
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 156,
+     "n_mot_blobs_median": 552,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.52,
+      "mean_abs_dy": 0.5,
+      "max_abs_dx": 6.77,
+      "n_affine": 54,
+      "mean_cc": 0.8
+     },
+     "runtime_s": 6.91,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 49,
+       "mean_score": 3.417,
+       "x": 1115.1,
+       "y": 58.0,
+       "path": [
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         58
+        ],
+        [
+         1115,
+         57
+        ]
+       ]
+      },
+      {
+       "length": 14,
+       "mean_score": 3.305,
+       "x": 1038.5,
+       "y": 602.4,
+       "path": [
+        [
+         1038,
+         602
+        ],
+        [
+         1030,
+         603
+        ],
+        [
+         1024,
+         603
+        ],
+        [
+         1021,
+         604
+        ],
+        [
+         1024,
+         606
+        ],
+        [
+         1025,
+         606
+        ],
+        [
+         1027,
+         606
+        ],
+        [
+         1029,
+         606
+        ],
+        [
+         1029,
+         605
+        ],
+        [
+         1030,
+         603
+        ],
+        [
+         1030,
+         600
+        ],
+        [
+         1028,
+         598
+        ],
+        [
+         1027,
+         597
+        ],
+        [
+         1022,
+         596
+        ]
+       ]
+      },
+      {
+       "length": 51,
+       "mean_score": 3.304,
+       "x": 962.0,
+       "y": 102.5,
+       "path": [
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         102
+        ]
+       ]
+      }
+     ],
+     "name": "match_036.jpg",
+     "t_matched": 7173.54,
+     "t_center_real": 7173.54
+    },
+    {
+     "pass_": true,
+     "reason": "synthetic ball tracked",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.57,
+      "mean_step": 0.16,
+      "path_len": 7.9,
+      "max_accel": 0.43,
+      "median_turn_deg": 116.8,
+      "mean_score": 2.171,
+      "mean_app": 0.66,
+      "mean_mot": 6.5,
+      "val": 110.65
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.57,
+      "mean_step": 0.16,
+      "path_len": 7.9,
+      "max_accel": 0.43,
+      "median_turn_deg": 116.8,
+      "mean_score": 2.171,
+      "mean_app": 0.66,
+      "mean_mot": 6.5,
+      "val": 110.65
+     },
+     "longest": {
+      "length": 74,
+      "t0": 0,
+      "t1": 73,
+      "gaps": 0,
+      "max_step": 0.57,
+      "mean_step": 0.13,
+      "path_len": 9.5,
+      "max_accel": 0.52,
+      "median_turn_deg": 111.8,
+      "mean_score": 2.182,
+      "mean_app": 0.661,
+      "mean_mot": 6.2
+     },
+     "seeded": null,
+     "synthetic": {
+      "gt": [
+       1099,
+       527
+      ],
+      "cand_dist": 0.25,
+      "chain_len": 12,
+      "chain_max_step": 11.78,
+      "chain_mean_step": 11.24,
+      "chain_mean_score": 4.503,
+      "chain_pass": true,
+      "auto_dist": 351.44
+     },
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 198,
+     "n_mot_blobs_median": 108,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.37,
+      "mean_abs_dy": 0.35,
+      "max_abs_dx": 23.29,
+      "n_affine": 25,
+      "mean_cc": 0.265
+     },
+     "runtime_s": 6.44,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 2,
+       "mean_score": 5.118,
+       "x": 768.3,
+       "y": 664.2,
+       "path": [
+        [
+         768,
+         664
+        ],
+        [
+         764,
+         662
+        ]
+       ]
+      },
+      {
+       "length": 12,
+       "mean_score": 4.656,
+       "x": 1062.2,
+       "y": 644.7,
+       "path": [
+        [
+         1062,
+         644
+        ],
+        [
+         1063,
+         633
+        ],
+        [
+         1064,
+         622
+        ],
+        [
+         1066,
+         611
+        ],
+        [
+         1069,
+         600
+        ],
+        [
+         1072,
+         589
+        ],
+        [
+         1076,
+         579
+        ],
+        [
+         1080,
+         568
+        ],
+        [
+         1084,
+         558
+        ],
+        [
+         1089,
+         548
+        ],
+        [
+         1094,
+         538
+        ],
+        [
+         1099,
+         528
+        ]
+       ]
+      },
+      {
+       "length": 12,
+       "mean_score": 4.503,
+       "x": 1062.2,
+       "y": 644.7,
+       "path": [
+        [
+         1062,
+         644
+        ],
+        [
+         1063,
+         633
+        ],
+        [
+         1064,
+         622
+        ],
+        [
+         1066,
+         611
+        ],
+        [
+         1069,
+         600
+        ],
+        [
+         1072,
+         589
+        ],
+        [
+         1076,
+         579
+        ],
+        [
+         1080,
+         568
+        ],
+        [
+         1084,
+         558
+        ],
+        [
+         1089,
+         548
+        ],
+        [
+         1094,
+         538
+        ],
+        [
+         1099,
+         527
+        ]
+       ]
+      }
+     ],
+     "name": "match_040.jpg",
+     "t_matched": 7839.56,
+     "t_center_real": 7839.56
+    }
+   ],
+   "note": "在真实帧上合成 8px 白球（平滑运动）后跑同一流程，是算法上限。"
+  },
+  "ablate_no_motion": {
+   "n_pass": 10,
+   "n_total": 10,
+   "pass_rate": 1.0,
+   "frames": [
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 43,
+      "t0": 8,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 2.94,
+      "mean_step": 0.28,
+      "path_len": 11.8,
+      "max_accel": 2.03,
+      "median_turn_deg": 86.5,
+      "mean_score": 2.368,
+      "mean_app": 0.753,
+      "mean_mot": 10.5,
+      "val": 101.67
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.4,
+      "mean_step": 0.01,
+      "path_len": 0.4,
+      "max_accel": 0.4,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.788,
+      "mean_app": 0.935,
+      "mean_mot": 10.5,
+      "val": 91.16
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.674,
+      "mean_app": 0.944,
+      "mean_mot": 28.1
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 3897,
+     "n_app_blobs_median": 131,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.2,
+      "mean_abs_dy": 0.2,
+      "max_abs_dx": 46.13,
+      "n_affine": 53,
+      "mean_cc": 0.556
+     },
+     "runtime_s": 5.47,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 43,
+       "mean_score": 2.368,
+       "x": 1277.0,
+       "y": 215.0,
+       "path": [
+        [
+         1277,
+         215
+        ],
+        [
+         1275,
+         218
+        ],
+        [
+         1275,
+         218
+        ],
+        [
+         1275,
+         218
+        ],
+        [
+         1274,
+         218
+        ],
+        [
+         1274,
+         218
+        ],
+        [
+         1273,
+         219
+        ],
+        [
+         1273,
+         219
+        ],
+        [
+         1273,
+         219
+        ],
+        [
+         1273,
+         219
+        ],
+        [
+         1273,
+         220
+        ],
+        [
+         1273,
+         221
+        ],
+        [
+         1273,
+         221
+        ],
+        [
+         1273,
+         221
+        ],
+        [
+         1273,
+         221
+        ]
+       ]
+      },
+      {
+       "length": 6,
+       "mean_score": 2.179,
+       "x": 813.6,
+       "y": 705.5,
+       "path": [
+        [
+         813,
+         705
+        ],
+        [
+         813,
+         705
+        ],
+        [
+         813,
+         705
+        ],
+        [
+         813,
+         705
+        ],
+        [
+         813,
+         705
+        ],
+        [
+         813,
+         705
+        ]
+       ]
+      },
+      {
+       "length": 5,
+       "mean_score": 2.029,
+       "x": 666.0,
+       "y": 718.5,
+       "path": [
+        [
+         666,
+         718
+        ],
+        [
+         666,
+         718
+        ],
+        [
+         666,
+         718
+        ],
+        [
+         666,
+         718
+        ],
+        [
+         666,
+         718
+        ]
+       ]
+      }
+     ],
+     "name": "match_004.jpg",
+     "t_matched": 1249.56,
+     "t_center_real": 1249.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.721,
+      "mean_app": 0.953,
+      "mean_mot": 68.7,
+      "val": 87.79
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.721,
+      "mean_app": 0.953,
+      "mean_mot": 68.7,
+      "val": 87.79
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 8.38,
+      "mean_step": 0.18,
+      "path_len": 18.3,
+      "max_accel": 8.38,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.778,
+      "mean_app": 0.888,
+      "mean_mot": 78.0
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 3431,
+     "n_app_blobs_median": 137,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 16.32,
+      "mean_abs_dy": 2.09,
+      "max_abs_dx": 120.92,
+      "n_affine": 73,
+      "mean_cc": 0.742
+     },
+     "runtime_s": 8.91,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 2,
+       "mean_score": 2.05,
+       "x": 11.0,
+       "y": 433.0,
+       "path": [
+        [
+         11,
+         433
+        ],
+        [
+         12,
+         436
+        ]
+       ]
+      },
+      {
+       "length": 12,
+       "mean_score": 1.937,
+       "x": 312.0,
+       "y": 368.7,
+       "path": [
+        [
+         312,
+         368
+        ],
+        [
+         313,
+         369
+        ],
+        [
+         315,
+         369
+        ],
+        [
+         317,
+         371
+        ],
+        [
+         318,
+         371
+        ],
+        [
+         318,
+         371
+        ],
+        [
+         319,
+         372
+        ],
+        [
+         319,
+         373
+        ],
+        [
+         320,
+         373
+        ],
+        [
+         321,
+         374
+        ],
+        [
+         323,
+         374
+        ],
+        [
+         325,
+         376
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.757,
+       "x": 782.6,
+       "y": 421.4,
+       "path": [
+        [
+         782,
+         421
+        ],
+        [
+         785,
+         421
+        ]
+       ]
+      }
+     ],
+     "name": "match_008.jpg",
+     "t_matched": 2093.56,
+     "t_center_real": 2093.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.47,
+      "mean_step": 4.06,
+      "path_len": 202.8,
+      "max_accel": 1.21,
+      "median_turn_deg": 4.0,
+      "mean_score": 1.873,
+      "mean_app": 0.459,
+      "mean_mot": 103.7,
+      "val": 93.11
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.47,
+      "mean_step": 4.06,
+      "path_len": 202.8,
+      "max_accel": 1.21,
+      "median_turn_deg": 4.0,
+      "mean_score": 1.873,
+      "mean_app": 0.459,
+      "mean_mot": 103.7,
+      "val": 93.11
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 7.42,
+      "mean_step": 3.01,
+      "path_len": 301.5,
+      "max_accel": 2.06,
+      "median_turn_deg": 7.9,
+      "mean_score": 1.898,
+      "mean_app": 0.464,
+      "mean_mot": 69.6
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4039,
+     "n_app_blobs_median": 100,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.41,
+      "mean_abs_dy": 0.31,
+      "max_abs_dx": 7.68,
+      "n_affine": 58,
+      "mean_cc": 0.825
+     },
+     "runtime_s": 5.45,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 1.928,
+       "x": 927.4,
+       "y": 464.4,
+       "path": [
+        [
+         927,
+         464
+        ]
+       ]
+      },
+      {
+       "length": 51,
+       "mean_score": 1.873,
+       "x": 995.5,
+       "y": 244.3,
+       "path": [
+        [
+         995,
+         244
+        ],
+        [
+         1008,
+         243
+        ],
+        [
+         1019,
+         242
+        ],
+        [
+         1034,
+         241
+        ],
+        [
+         1055,
+         239
+        ],
+        [
+         1076,
+         238
+        ],
+        [
+         1095,
+         237
+        ],
+        [
+         1112,
+         235
+        ],
+        [
+         1131,
+         233
+        ],
+        [
+         1146,
+         233
+        ],
+        [
+         1159,
+         231
+        ],
+        [
+         1171,
+         230
+        ],
+        [
+         1188,
+         228
+        ]
+       ]
+      },
+      {
+       "length": 3,
+       "mean_score": 1.846,
+       "x": 1226.6,
+       "y": 687.4,
+       "path": [
+        [
+         1226,
+         687
+        ],
+        [
+         1217,
+         687
+        ],
+        [
+         1209,
+         690
+        ]
+       ]
+      }
+     ],
+     "name": "match_012.jpg",
+     "t_matched": 2655.56,
+     "t_center_real": 2655.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.4,
+      "mean_step": 0.01,
+      "path_len": 0.4,
+      "max_accel": 0.4,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.887,
+      "mean_app": 0.92,
+      "mean_mot": 45.9,
+      "val": 96.23
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 8.49,
+      "mean_step": 2.59,
+      "path_len": 129.5,
+      "max_accel": 4.63,
+      "median_turn_deg": 26.3,
+      "mean_score": 1.904,
+      "mean_app": 0.955,
+      "mean_mot": 85.0,
+      "val": 95.57
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.4,
+      "mean_step": 0.01,
+      "path_len": 0.8,
+      "max_accel": 0.4,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.822,
+      "mean_app": 0.92,
+      "mean_mot": 41.9
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 164,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.38,
+      "mean_abs_dy": 0.44,
+      "max_abs_dx": 12.71,
+      "n_affine": 89,
+      "mean_cc": 0.974
+     },
+     "runtime_s": 5.94,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 5,
+       "mean_score": 2.062,
+       "x": 108.3,
+       "y": 621.2,
+       "path": [
+        [
+         108,
+         621
+        ],
+        [
+         108,
+         622
+        ],
+        [
+         108,
+         622
+        ],
+        [
+         106,
+         623
+        ],
+        [
+         102,
+         625
+        ]
+       ]
+      },
+      {
+       "length": 5,
+       "mean_score": 1.941,
+       "x": 108.3,
+       "y": 621.2,
+       "path": [
+        [
+         108,
+         621
+        ],
+        [
+         95,
+         626
+        ],
+        [
+         91,
+         628
+        ],
+        [
+         87,
+         630
+        ],
+        [
+         83,
+         631
+        ]
+       ]
+      },
+      {
+       "length": 51,
+       "mean_score": 1.904,
+       "x": 940.0,
+       "y": 470.9,
+       "path": [
+        [
+         940,
+         470
+        ],
+        [
+         962,
+         451
+        ],
+        [
+         980,
+         432
+        ],
+        [
+         993,
+         425
+        ],
+        [
+         1002,
+         412
+        ],
+        [
+         1009,
+         406
+        ],
+        [
+         1014,
+         402
+        ],
+        [
+         1015,
+         397
+        ],
+        [
+         1016,
+         394
+        ],
+        [
+         1015,
+         394
+        ],
+        [
+         1014,
+         393
+        ],
+        [
+         1014,
+         392
+        ],
+        [
+         1015,
+         392
+        ]
+       ]
+      }
+     ],
+     "name": "match_016.jpg",
+     "t_matched": 3273.54,
+     "t_center_real": 3273.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.18,
+      "mean_step": 0.02,
+      "path_len": 1.1,
+      "max_accel": 0.18,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.596,
+      "mean_app": 0.388,
+      "mean_mot": 155.0,
+      "val": 81.36
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.18,
+      "mean_step": 0.02,
+      "path_len": 1.1,
+      "max_accel": 0.18,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.596,
+      "mean_app": 0.388,
+      "mean_mot": 155.0,
+      "val": 81.36
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.31,
+      "mean_step": 0.04,
+      "path_len": 4.5,
+      "max_accel": 0.29,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.526,
+      "mean_app": 0.403,
+      "mean_mot": 150.9
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 23,
+     "n_cand_total": 2698,
+     "n_app_blobs_median": 38,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 10.72,
+      "mean_abs_dy": 1.05,
+      "max_abs_dx": 63.54,
+      "n_affine": 46,
+      "mean_cc": 0.817
+     },
+     "runtime_s": 6.7,
+     "center": 50,
+     "center_abs": 61,
+     "lo": 11,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 3,
+       "mean_score": 1.986,
+       "x": 915.9,
+       "y": 713.0,
+       "path": [
+        [
+         915,
+         713
+        ],
+        [
+         922,
+         714
+        ],
+        [
+         929,
+         715
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 1.959,
+       "x": 468.5,
+       "y": 474.8,
+       "path": [
+        [
+         468,
+         474
+        ]
+       ]
+      },
+      {
+       "length": 4,
+       "mean_score": 1.877,
+       "x": 403.3,
+       "y": 332.5,
+       "path": [
+        [
+         403,
+         332
+        ],
+        [
+         416,
+         332
+        ],
+        [
+         431,
+         332
+        ],
+        [
+         443,
+         332
+        ]
+       ]
+      }
+     ],
+     "name": "match_020.jpg",
+     "t_matched": 3997.54,
+     "t_center_real": 3997.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.652,
+      "mean_app": 0.941,
+      "mean_mot": 45.0,
+      "val": 84.25
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.652,
+      "mean_app": 0.941,
+      "mean_mot": 45.0,
+      "val": 84.25
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.654,
+      "mean_app": 0.941,
+      "mean_mot": 78.7
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 3739,
+     "n_app_blobs_median": 129,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 9.61,
+      "mean_abs_dy": 0.39,
+      "max_abs_dx": 22.95,
+      "n_affine": 86,
+      "mean_cc": 0.895
+     },
+     "runtime_s": 7.67,
+     "center": 50,
+     "center_abs": 74,
+     "lo": 24,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 2,
+       "mean_score": 1.726,
+       "x": 362.5,
+       "y": 446.0,
+       "path": [
+        [
+         362,
+         446
+        ],
+        [
+         368,
+         446
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 1.711,
+       "x": 299.1,
+       "y": 298.1,
+       "path": [
+        [
+         299,
+         298
+        ]
+       ]
+      },
+      {
+       "length": 51,
+       "mean_score": 1.652,
+       "x": 1060.0,
+       "y": 51.5,
+       "path": [
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ],
+        [
+         1060,
+         51
+        ]
+       ]
+      }
+     ],
+     "name": "match_024.jpg",
+     "t_matched": 5223.56,
+     "t_center_real": 5223.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.5,
+      "mean_step": 0.02,
+      "path_len": 1.0,
+      "max_accel": 0.5,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.709,
+      "mean_app": 0.949,
+      "mean_mot": 91.9,
+      "val": 87.14
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.5,
+      "mean_step": 0.02,
+      "path_len": 1.0,
+      "max_accel": 0.5,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.709,
+      "mean_app": 0.949,
+      "mean_mot": 91.9,
+      "val": 87.14
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.5,
+      "mean_step": 0.01,
+      "path_len": 1.0,
+      "max_accel": 0.5,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.679,
+      "mean_app": 0.944,
+      "mean_mot": 65.4
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 132,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.88,
+      "mean_abs_dy": 0.36,
+      "max_abs_dx": 9.91,
+      "n_affine": 81,
+      "mean_cc": 0.964
+     },
+     "runtime_s": 5.65,
+     "center": 50,
+     "center_abs": 84,
+     "lo": 34,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 2.456,
+       "x": 71.0,
+       "y": 718.5,
+       "path": [
+        [
+         71,
+         718
+        ]
+       ]
+      },
+      {
+       "length": 14,
+       "mean_score": 2.214,
+       "x": 249.1,
+       "y": 249.7,
+       "path": [
+        [
+         249,
+         249
+        ],
+        [
+         238,
+         248
+        ],
+        [
+         226,
+         247
+        ],
+        [
+         215,
+         245
+        ],
+        [
+         204,
+         244
+        ],
+        [
+         194,
+         243
+        ],
+        [
+         184,
+         242
+        ],
+        [
+         175,
+         241
+        ],
+        [
+         166,
+         241
+        ],
+        [
+         157,
+         240
+        ],
+        [
+         148,
+         239
+        ],
+        [
+         140,
+         238
+        ],
+        [
+         133,
+         238
+        ],
+        [
+         126,
+         237
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 2.159,
+       "x": 5.2,
+       "y": 264.8,
+       "path": [
+        [
+         5,
+         264
+        ]
+       ]
+      }
+     ],
+     "name": "match_028.jpg",
+     "t_matched": 5939.56,
+     "t_center_real": 5939.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.925,
+      "mean_app": 0.942,
+      "mean_mot": 34.8,
+      "val": 98.2
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.925,
+      "mean_app": 0.942,
+      "mean_mot": 34.8,
+      "val": 98.2
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.918,
+      "mean_app": 0.935,
+      "mean_mot": 34.7
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 180,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 0.91,
+      "mean_abs_dy": 0.15,
+      "max_abs_dx": 3.45,
+      "n_affine": 79,
+      "mean_cc": 0.784
+     },
+     "runtime_s": 5.69,
+     "center": 50,
+     "center_abs": 89,
+     "lo": 39,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 2.061,
+       "x": 182.5,
+       "y": 203.0,
+       "path": [
+        [
+         182,
+         203
+        ]
+       ]
+      },
+      {
+       "length": 51,
+       "mean_score": 1.925,
+       "x": 962.1,
+       "y": 102.1,
+       "path": [
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ]
+       ]
+      },
+      {
+       "length": 51,
+       "mean_score": 1.921,
+       "x": 962.1,
+       "y": 102.1,
+       "path": [
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ],
+        [
+         962,
+         102
+        ]
+       ]
+      }
+     ],
+     "name": "match_032.jpg",
+     "t_matched": 6559.56,
+     "t_center_real": 6559.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 8.68,
+      "mean_step": 5.54,
+      "path_len": 277.0,
+      "max_accel": 1.89,
+      "median_turn_deg": 6.2,
+      "mean_score": 1.873,
+      "mean_app": 0.973,
+      "mean_mot": 65.4,
+      "val": 92.19
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 8.68,
+      "mean_step": 5.54,
+      "path_len": 277.0,
+      "max_accel": 1.89,
+      "median_turn_deg": 6.2,
+      "mean_score": 1.873,
+      "mean_app": 0.973,
+      "mean_mot": 65.4,
+      "val": 92.19
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 8.75,
+      "mean_step": 0.17,
+      "path_len": 17.1,
+      "max_accel": 8.75,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.717,
+      "mean_app": 0.899,
+      "mean_mot": 85.1
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4040,
+     "n_app_blobs_median": 155,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.54,
+      "mean_abs_dy": 0.51,
+      "max_abs_dx": 6.78,
+      "n_affine": 52,
+      "mean_cc": 0.801
+     },
+     "runtime_s": 5.91,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 1.942,
+       "x": 95.1,
+       "y": 409.6,
+       "path": [
+        [
+         95,
+         409
+        ]
+       ]
+      },
+      {
+       "length": 51,
+       "mean_score": 1.873,
+       "x": 426.1,
+       "y": 74.0,
+       "path": [
+        [
+         426,
+         74
+        ],
+        [
+         453,
+         78
+        ],
+        [
+         486,
+         82
+        ],
+        [
+         515,
+         86
+        ],
+        [
+         539,
+         89
+        ],
+        [
+         565,
+         90
+        ],
+        [
+         593,
+         90
+        ],
+        [
+         615,
+         90
+        ],
+        [
+         635,
+         91
+        ],
+        [
+         656,
+         92
+        ],
+        [
+         672,
+         92
+        ],
+        [
+         680,
+         94
+        ],
+        [
+         691,
+         98
+        ]
+       ]
+      },
+      {
+       "length": 14,
+       "mean_score": 1.842,
+       "x": 1038.5,
+       "y": 602.4,
+       "path": [
+        [
+         1038,
+         602
+        ],
+        [
+         1030,
+         603
+        ],
+        [
+         1024,
+         603
+        ],
+        [
+         1021,
+         604
+        ],
+        [
+         1024,
+         606
+        ],
+        [
+         1025,
+         606
+        ],
+        [
+         1027,
+         606
+        ],
+        [
+         1029,
+         606
+        ],
+        [
+         1029,
+         605
+        ],
+        [
+         1030,
+         603
+        ],
+        [
+         1030,
+         600
+        ],
+        [
+         1028,
+         598
+        ],
+        [
+         1027,
+         597
+        ],
+        [
+         1022,
+         596
+        ]
+       ]
+      }
+     ],
+     "name": "match_036.jpg",
+     "t_matched": 7173.54,
+     "t_center_real": 7173.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.57,
+      "mean_step": 0.16,
+      "path_len": 7.9,
+      "max_accel": 0.43,
+      "median_turn_deg": 116.8,
+      "mean_score": 2.073,
+      "mean_app": 0.66,
+      "mean_mot": 6.5,
+      "val": 105.65
+     },
+     "best_longest": {
+      "length": 51,
+      "t0": 0,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 0.57,
+      "mean_step": 0.16,
+      "path_len": 7.9,
+      "max_accel": 0.43,
+      "median_turn_deg": 116.8,
+      "mean_score": 2.073,
+      "mean_app": 0.66,
+      "mean_mot": 6.5,
+      "val": 105.65
+     },
+     "longest": {
+      "length": 101,
+      "t0": 0,
+      "t1": 100,
+      "gaps": 0,
+      "max_step": 0.0,
+      "mean_step": 0.0,
+      "path_len": 0.0,
+      "max_accel": 0.0,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.701,
+      "mean_app": 0.95,
+      "mean_mot": 11.3
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 3893,
+     "n_app_blobs_median": 197,
+     "n_mot_blobs_median": 0,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.3,
+      "mean_abs_dy": 0.33,
+      "max_abs_dx": 23.26,
+      "n_affine": 26,
+      "mean_cc": 0.27
+     },
+     "runtime_s": 5.95,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 2.36,
+       "x": 209.5,
+       "y": 700.0,
+       "path": [
+        [
+         209,
+         700
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 2.144,
+       "x": 696.0,
+       "y": 483.0,
+       "path": [
+        [
+         696,
+         483
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 2.142,
+       "x": 1039.1,
+       "y": 649.9,
+       "path": [
+        [
+         1039,
+         649
+        ]
+       ]
+      }
+     ],
+     "name": "match_040.jpg",
+     "t_matched": 7839.56,
+     "t_center_real": 7839.56
+    }
+   ],
+   "note": "去掉运动残差项，只用外观（白+小+圆）。"
+  },
+  "ablate_no_appearance": {
+   "n_pass": 5,
+   "n_total": 10,
+   "pass_rate": 0.5,
+   "frames": [
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 14,
+      "t0": 37,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.08,
+      "mean_step": 1.94,
+      "path_len": 25.2,
+      "max_accel": 5.32,
+      "median_turn_deg": 19.0,
+      "mean_score": 1.637,
+      "mean_app": 0.0,
+      "mean_mot": 98.2,
+      "val": 22.61
+     },
+     "best_longest": {
+      "length": 14,
+      "t0": 37,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.08,
+      "mean_step": 1.94,
+      "path_len": 25.2,
+      "max_accel": 5.32,
+      "median_turn_deg": 19.0,
+      "mean_score": 1.637,
+      "mean_app": 0.0,
+      "mean_mot": 98.2,
+      "val": 22.61
+     },
+     "longest": {
+      "length": 21,
+      "t0": 8,
+      "t1": 28,
+      "gaps": 0,
+      "max_step": 9.87,
+      "mean_step": 2.83,
+      "path_len": 56.6,
+      "max_accel": 6.19,
+      "median_turn_deg": 71.5,
+      "mean_score": 1.269,
+      "mean_app": 0.0,
+      "mean_mot": 76.1
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 366,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.2,
+      "mean_abs_dy": 0.2,
+      "max_abs_dx": 46.13,
+      "n_affine": 53,
+      "mean_cc": 0.556
+     },
+     "runtime_s": 5.63,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 2.35,
+       "x": 1204.6,
+       "y": 498.3,
+       "path": [
+        [
+         1204,
+         498
+        ]
+       ]
+      },
+      {
+       "length": 5,
+       "mean_score": 2.087,
+       "x": 764.9,
+       "y": 593.5,
+       "path": [
+        [
+         764,
+         593
+        ],
+        [
+         766,
+         593
+        ],
+        [
+         768,
+         593
+        ],
+        [
+         770,
+         594
+        ],
+        [
+         772,
+         598
+        ]
+       ]
+      },
+      {
+       "length": 5,
+       "mean_score": 2.033,
+       "x": 764.9,
+       "y": 593.5,
+       "path": [
+        [
+         764,
+         593
+        ],
+        [
+         766,
+         593
+        ],
+        [
+         768,
+         593
+        ],
+        [
+         770,
+         594
+        ],
+        [
+         770,
+         592
+        ]
+       ]
+      }
+     ],
+     "name": "match_004.jpg",
+     "t_matched": 1249.56,
+     "t_center_real": 1249.56
+    },
+    {
+     "pass_": false,
+     "reason": "len 7 < 10",
+     "best": {
+      "length": 7,
+      "t0": 44,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 4.08,
+      "mean_step": 2.82,
+      "path_len": 16.9,
+      "max_accel": 1.23,
+      "median_turn_deg": 8.2,
+      "mean_score": 1.652,
+      "mean_app": 0.0,
+      "mean_mot": 99.1,
+      "val": 11.36
+     },
+     "best_longest": {
+      "length": 7,
+      "t0": 44,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 4.08,
+      "mean_step": 2.82,
+      "path_len": 16.9,
+      "max_accel": 1.23,
+      "median_turn_deg": 8.2,
+      "mean_score": 1.652,
+      "mean_app": 0.0,
+      "mean_mot": 99.1,
+      "val": 11.36
+     },
+     "longest": {
+      "length": 13,
+      "t0": 72,
+      "t1": 84,
+      "gaps": 0,
+      "max_step": 3.39,
+      "mean_step": 2.18,
+      "path_len": 26.2,
+      "max_accel": 1.61,
+      "median_turn_deg": 11.7,
+      "mean_score": 1.576,
+      "mean_app": 0.0,
+      "mean_mot": 94.5
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 470,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 16.32,
+      "mean_abs_dy": 2.09,
+      "max_abs_dx": 120.92,
+      "n_affine": 73,
+      "mean_cc": 0.742
+     },
+     "runtime_s": 9.05,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 2,
+       "mean_score": 1.833,
+       "x": 567.8,
+       "y": 365.8,
+       "path": [
+        [
+         567,
+         365
+        ],
+        [
+         547,
+         363
+        ]
+       ]
+      },
+      {
+       "length": 7,
+       "mean_score": 1.652,
+       "x": 118.1,
+       "y": 318.6,
+       "path": [
+        [
+         118,
+         318
+        ],
+        [
+         120,
+         319
+        ],
+        [
+         122,
+         320
+        ],
+        [
+         124,
+         321
+        ],
+        [
+         126,
+         321
+        ],
+        [
+         130,
+         322
+        ],
+        [
+         134,
+         323
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.616,
+       "x": 275.2,
+       "y": 363.6,
+       "path": [
+        [
+         275,
+         363
+        ],
+        [
+         278,
+         363
+        ]
+       ]
+      }
+     ],
+     "name": "match_008.jpg",
+     "t_matched": 2093.56,
+     "t_center_real": 2093.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 49,
+      "t0": 2,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.01,
+      "mean_step": 3.81,
+      "path_len": 182.7,
+      "max_accel": 1.39,
+      "median_turn_deg": 7.1,
+      "mean_score": 1.417,
+      "mean_app": 0.0,
+      "mean_mot": 85.0,
+      "val": 67.25
+     },
+     "best_longest": {
+      "length": 49,
+      "t0": 2,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 6.01,
+      "mean_step": 3.81,
+      "path_len": 182.7,
+      "max_accel": 1.39,
+      "median_turn_deg": 7.1,
+      "mean_score": 1.417,
+      "mean_app": 0.0,
+      "mean_mot": 85.0,
+      "val": 67.25
+     },
+     "longest": {
+      "length": 53,
+      "t0": 2,
+      "t1": 54,
+      "gaps": 0,
+      "max_step": 6.01,
+      "mean_step": 3.68,
+      "path_len": 191.2,
+      "max_accel": 1.8,
+      "median_turn_deg": 7.1,
+      "mean_score": 1.409,
+      "mean_app": 0.0,
+      "mean_mot": 84.6
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 461,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.41,
+      "mean_abs_dy": 0.31,
+      "max_abs_dx": 7.68,
+      "n_affine": 58,
+      "mean_cc": 0.825
+     },
+     "runtime_s": 5.97,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 17,
+       "mean_score": 1.579,
+       "x": 963.1,
+       "y": 110.3,
+       "path": [
+        [
+         963,
+         110
+        ],
+        [
+         963,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         965,
+         110
+        ],
+        [
+         965,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         962,
+         110
+        ],
+        [
+         963,
+         110
+        ],
+        [
+         963,
+         110
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.55,
+       "x": 915.7,
+       "y": 511.1,
+       "path": [
+        [
+         915,
+         511
+        ],
+        [
+         936,
+         501
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.525,
+       "x": 269.7,
+       "y": 590.5,
+       "path": [
+        [
+         269,
+         590
+        ],
+        [
+         269,
+         590
+        ]
+       ]
+      }
+     ],
+     "name": "match_012.jpg",
+     "t_matched": 2655.56,
+     "t_center_real": 2655.56
+    },
+    {
+     "pass_": false,
+     "reason": "len 7 < 10",
+     "best": {
+      "length": 7,
+      "t0": 44,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 4.67,
+      "mean_step": 4.01,
+      "path_len": 24.1,
+      "max_accel": 0.88,
+      "median_turn_deg": 7.9,
+      "mean_score": 1.99,
+      "mean_app": 0.0,
+      "mean_mot": 119.4,
+      "val": 13.64
+     },
+     "best_longest": {
+      "length": 8,
+      "t0": 43,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 3.77,
+      "mean_step": 3.32,
+      "path_len": 23.2,
+      "max_accel": 0.85,
+      "median_turn_deg": 6.1,
+      "mean_score": 1.275,
+      "mean_app": 0.0,
+      "mean_mot": 76.5,
+      "val": 9.92
+     },
+     "longest": {
+      "length": 30,
+      "t0": 11,
+      "t1": 40,
+      "gaps": 0,
+      "max_step": 3.73,
+      "mean_step": 3.06,
+      "path_len": 88.6,
+      "max_accel": 1.14,
+      "median_turn_deg": 7.8,
+      "mean_score": 1.366,
+      "mean_app": 0.0,
+      "mean_mot": 81.9
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 531,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 1.38,
+      "mean_abs_dy": 0.44,
+      "max_abs_dx": 12.71,
+      "n_affine": 89,
+      "mean_cc": 0.974
+     },
+     "runtime_s": 7.65,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 7,
+       "mean_score": 1.99,
+       "x": 28.8,
+       "y": 69.9,
+       "path": [
+        [
+         28,
+         69
+        ],
+        [
+         25,
+         71
+        ],
+        [
+         22,
+         72
+        ],
+        [
+         18,
+         73
+        ],
+        [
+         13,
+         74
+        ],
+        [
+         9,
+         74
+        ],
+        [
+         5,
+         74
+        ]
+       ]
+      },
+      {
+       "length": 4,
+       "mean_score": 1.925,
+       "x": 95.8,
+       "y": 627.3,
+       "path": [
+        [
+         95,
+         627
+        ],
+        [
+         91,
+         629
+        ],
+        [
+         88,
+         630
+        ],
+        [
+         84,
+         632
+        ]
+       ]
+      },
+      {
+       "length": 3,
+       "mean_score": 1.861,
+       "x": 178.5,
+       "y": 36.5,
+       "path": [
+        [
+         178,
+         36
+        ],
+        [
+         178,
+         36
+        ],
+        [
+         178,
+         36
+        ]
+       ]
+      }
+     ],
+     "name": "match_016.jpg",
+     "t_matched": 3273.54,
+     "t_center_real": 3273.54
+    },
+    {
+     "pass_": false,
+     "reason": "len 7 < 10",
+     "best": {
+      "length": 7,
+      "t0": 44,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 16.66,
+      "mean_step": 12.32,
+      "path_len": 73.9,
+      "max_accel": 4.92,
+      "median_turn_deg": 8.2,
+      "mean_score": 0.95,
+      "mean_app": 0.0,
+      "mean_mot": 57.0,
+      "val": 5.76
+     },
+     "best_longest": {
+      "length": 7,
+      "t0": 44,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 16.66,
+      "mean_step": 12.32,
+      "path_len": 73.9,
+      "max_accel": 4.92,
+      "median_turn_deg": 8.2,
+      "mean_score": 0.95,
+      "mean_app": 0.0,
+      "mean_mot": 57.0,
+      "val": 5.76
+     },
+     "longest": {
+      "length": 23,
+      "t0": 67,
+      "t1": 89,
+      "gaps": 0,
+      "max_step": 14.46,
+      "mean_step": 6.01,
+      "path_len": 132.3,
+      "max_accel": 9.57,
+      "median_turn_deg": 21.8,
+      "mean_score": 1.544,
+      "mean_app": 0.0,
+      "mean_mot": 92.7
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 204,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 10.72,
+      "mean_abs_dy": 1.05,
+      "max_abs_dx": 63.54,
+      "n_affine": 46,
+      "mean_cc": 0.817
+     },
+     "runtime_s": 8.76,
+     "center": 50,
+     "center_abs": 61,
+     "lo": 11,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 2.117,
+       "x": 217.5,
+       "y": 59.5,
+       "path": [
+        [
+         217,
+         59
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 1.517,
+       "x": 141.6,
+       "y": 419.6,
+       "path": [
+        [
+         141,
+         419
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.483,
+       "x": 491.8,
+       "y": 515.2,
+       "path": [
+        [
+         491,
+         515
+        ],
+        [
+         509,
+         513
+        ]
+       ]
+      }
+     ],
+     "name": "match_020.jpg",
+     "t_matched": 3997.54,
+     "t_center_real": 3997.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 46,
+      "t0": 5,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 5.4,
+      "mean_step": 3.64,
+      "path_len": 164.0,
+      "max_accel": 2.11,
+      "median_turn_deg": 5.3,
+      "mean_score": 1.293,
+      "mean_app": 0.0,
+      "mean_mot": 77.6,
+      "val": 57.51
+     },
+     "best_longest": {
+      "length": 46,
+      "t0": 5,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 5.4,
+      "mean_step": 3.64,
+      "path_len": 164.0,
+      "max_accel": 2.11,
+      "median_turn_deg": 5.3,
+      "mean_score": 1.293,
+      "mean_app": 0.0,
+      "mean_mot": 77.6,
+      "val": 57.51
+     },
+     "longest": {
+      "length": 49,
+      "t0": 5,
+      "t1": 53,
+      "gaps": 0,
+      "max_step": 5.4,
+      "mean_step": 3.66,
+      "path_len": 175.8,
+      "max_accel": 2.11,
+      "median_turn_deg": 5.5,
+      "mean_score": 1.289,
+      "mean_app": 0.0,
+      "mean_mot": 77.3
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 338,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 9.61,
+      "mean_abs_dy": 0.39,
+      "max_abs_dx": 22.95,
+      "n_affine": 86,
+      "mean_cc": 0.895
+     },
+     "runtime_s": 9.64,
+     "center": 50,
+     "center_abs": 74,
+     "lo": 24,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 4,
+       "mean_score": 1.946,
+       "x": 136.1,
+       "y": 33.0,
+       "path": [
+        [
+         136,
+         33
+        ],
+        [
+         136,
+         33
+        ],
+        [
+         136,
+         33
+        ],
+        [
+         136,
+         33
+        ]
+       ]
+      },
+      {
+       "length": 23,
+       "mean_score": 1.533,
+       "x": 935.5,
+       "y": 100.5,
+       "path": [
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ],
+        [
+         932,
+         101
+        ]
+       ]
+      },
+      {
+       "length": 23,
+       "mean_score": 1.533,
+       "x": 935.5,
+       "y": 100.5,
+       "path": [
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ],
+        [
+         935,
+         100
+        ]
+       ]
+      }
+     ],
+     "name": "match_024.jpg",
+     "t_matched": 5223.56,
+     "t_center_real": 5223.56
+    },
+    {
+     "pass_": false,
+     "reason": "len 7 < 10",
+     "best": {
+      "length": 7,
+      "t0": 44,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 7.03,
+      "mean_step": 5.67,
+      "path_len": 34.0,
+      "max_accel": 3.57,
+      "median_turn_deg": 6.2,
+      "mean_score": 1.7,
+      "mean_app": 0.0,
+      "mean_mot": 102.0,
+      "val": 11.49
+     },
+     "best_longest": {
+      "length": 8,
+      "t0": 43,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 8.11,
+      "mean_step": 7.25,
+      "path_len": 50.8,
+      "max_accel": 0.88,
+      "median_turn_deg": 3.2,
+      "mean_score": 1.273,
+      "mean_app": 0.0,
+      "mean_mot": 76.4,
+      "val": 9.57
+     },
+     "longest": {
+      "length": 33,
+      "t0": 51,
+      "t1": 83,
+      "gaps": 0,
+      "max_step": 5.75,
+      "mean_step": 2.44,
+      "path_len": 77.9,
+      "max_accel": 2.89,
+      "median_turn_deg": 11.6,
+      "mean_score": 1.935,
+      "mean_app": 0.0,
+      "mean_mot": 116.1
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 734,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.88,
+      "mean_abs_dy": 0.36,
+      "max_abs_dx": 9.91,
+      "n_affine": 81,
+      "mean_cc": 0.964
+     },
+     "runtime_s": 7.66,
+     "center": 50,
+     "center_abs": 84,
+     "lo": 34,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 2,
+       "mean_score": 2.4,
+       "x": 705.7,
+       "y": 149.2,
+       "path": [
+        [
+         705,
+         149
+        ],
+        [
+         700,
+         147
+        ]
+       ]
+      },
+      {
+       "length": 1,
+       "mean_score": 2.383,
+       "x": 1193.8,
+       "y": 170.6,
+       "path": [
+        [
+         1193,
+         170
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 2.25,
+       "x": 1089.6,
+       "y": 67.9,
+       "path": [
+        [
+         1089,
+         67
+        ],
+        [
+         1089,
+         67
+        ]
+       ]
+      }
+     ],
+     "name": "match_028.jpg",
+     "t_matched": 5939.56,
+     "t_center_real": 5939.56
+    },
+    {
+     "pass_": false,
+     "reason": "len 7 < 10",
+     "best": {
+      "length": 7,
+      "t0": 44,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 3.72,
+      "mean_step": 1.89,
+      "path_len": 11.4,
+      "max_accel": 2.23,
+      "median_turn_deg": 117.0,
+      "mean_score": 1.145,
+      "mean_app": 0.0,
+      "mean_mot": 68.7,
+      "val": 7.88
+     },
+     "best_longest": {
+      "length": 7,
+      "t0": 44,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 3.72,
+      "mean_step": 1.89,
+      "path_len": 11.4,
+      "max_accel": 2.23,
+      "median_turn_deg": 117.0,
+      "mean_score": 1.145,
+      "mean_app": 0.0,
+      "mean_mot": 68.7,
+      "val": 7.88
+     },
+     "longest": {
+      "length": 34,
+      "t0": 51,
+      "t1": 84,
+      "gaps": 0,
+      "max_step": 0.39,
+      "mean_step": 0.07,
+      "path_len": 2.3,
+      "max_accel": 0.39,
+      "median_turn_deg": 0.0,
+      "mean_score": 1.544,
+      "mean_app": 0.0,
+      "mean_mot": 92.6
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 490,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 0.91,
+      "mean_abs_dy": 0.15,
+      "max_abs_dx": 3.45,
+      "n_affine": 79,
+      "mean_cc": 0.784
+     },
+     "runtime_s": 7.1,
+     "center": 50,
+     "center_abs": 89,
+     "lo": 39,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 2,
+       "mean_score": 1.883,
+       "x": 399.5,
+       "y": 413.8,
+       "path": [
+        [
+         399,
+         413
+        ],
+        [
+         396,
+         414
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.675,
+       "x": 908.7,
+       "y": 525.4,
+       "path": [
+        [
+         908,
+         525
+        ],
+        [
+         911,
+         549
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.642,
+       "x": 908.7,
+       "y": 525.4,
+       "path": [
+        [
+         908,
+         525
+        ],
+        [
+         904,
+         528
+        ]
+       ]
+      }
+     ],
+     "name": "match_032.jpg",
+     "t_matched": 6559.56,
+     "t_center_real": 6559.56
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 21,
+      "t0": 30,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 3.42,
+      "mean_step": 1.81,
+      "path_len": 36.1,
+      "max_accel": 1.41,
+      "median_turn_deg": 11.9,
+      "mean_score": 1.439,
+      "mean_app": 0.0,
+      "mean_mot": 86.3,
+      "val": 29.78
+     },
+     "best_longest": {
+      "length": 21,
+      "t0": 30,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 3.42,
+      "mean_step": 1.81,
+      "path_len": 36.1,
+      "max_accel": 1.41,
+      "median_turn_deg": 11.9,
+      "mean_score": 1.439,
+      "mean_app": 0.0,
+      "mean_mot": 86.3,
+      "val": 29.78
+     },
+     "longest": {
+      "length": 23,
+      "t0": 30,
+      "t1": 52,
+      "gaps": 0,
+      "max_step": 4.89,
+      "mean_step": 1.91,
+      "path_len": 42.1,
+      "max_accel": 3.79,
+      "median_turn_deg": 12.1,
+      "mean_score": 1.435,
+      "mean_app": 0.0,
+      "mean_mot": 86.1
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 547,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.54,
+      "mean_abs_dy": 0.51,
+      "max_abs_dx": 6.78,
+      "n_affine": 52,
+      "mean_cc": 0.801
+     },
+     "runtime_s": 6.62,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 2.25,
+       "x": 244.6,
+       "y": 354.9,
+       "path": [
+        [
+         244,
+         354
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.958,
+       "x": 481.1,
+       "y": 224.4,
+       "path": [
+        [
+         481,
+         224
+        ],
+        [
+         474,
+         230
+        ]
+       ]
+      },
+      {
+       "length": 4,
+       "mean_score": 1.817,
+       "x": 108.8,
+       "y": 400.1,
+       "path": [
+        [
+         108,
+         400
+        ],
+        [
+         107,
+         400
+        ],
+        [
+         106,
+         399
+        ],
+        [
+         102,
+         400
+        ]
+       ]
+      }
+     ],
+     "name": "match_036.jpg",
+     "t_matched": 7173.54,
+     "t_center_real": 7173.54
+    },
+    {
+     "pass_": true,
+     "reason": "ok",
+     "best": {
+      "length": 30,
+      "t0": 21,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 2.74,
+      "mean_step": 1.24,
+      "path_len": 36.0,
+      "max_accel": 2.15,
+      "median_turn_deg": 19.5,
+      "mean_score": 1.483,
+      "mean_app": 0.0,
+      "mean_mot": 89.0,
+      "val": 44.05
+     },
+     "best_longest": {
+      "length": 30,
+      "t0": 21,
+      "t1": 50,
+      "gaps": 0,
+      "max_step": 2.74,
+      "mean_step": 1.24,
+      "path_len": 36.0,
+      "max_accel": 2.15,
+      "median_turn_deg": 19.5,
+      "mean_score": 1.483,
+      "mean_app": 0.0,
+      "mean_mot": 89.0,
+      "val": 44.05
+     },
+     "longest": {
+      "length": 39,
+      "t0": 21,
+      "t1": 59,
+      "gaps": 0,
+      "max_step": 13.24,
+      "mean_step": 2.13,
+      "path_len": 80.9,
+      "max_accel": 6.43,
+      "median_turn_deg": 22.3,
+      "mean_score": 1.455,
+      "mean_app": 0.0,
+      "mean_mot": 87.3
+     },
+     "seeded": null,
+     "synthetic": null,
+     "n_cand_median": 40,
+     "n_cand_total": 4000,
+     "n_app_blobs_median": 0,
+     "n_mot_blobs_median": 106,
+     "motion": {
+      "n": 100,
+      "mean_abs_dx": 2.3,
+      "mean_abs_dy": 0.33,
+      "max_abs_dx": 23.26,
+      "n_affine": 26,
+      "mean_cc": 0.27
+     },
+     "runtime_s": 6.12,
+     "center": 50,
+     "center_abs": 65,
+     "lo": 15,
+     "n_frames": 101,
+     "top3": [
+      {
+       "length": 1,
+       "mean_score": 1.883,
+       "x": 35.3,
+       "y": 382.0,
+       "path": [
+        [
+         35,
+         381
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.792,
+       "x": 174.6,
+       "y": 702.8,
+       "path": [
+        [
+         174,
+         702
+        ],
+        [
+         191,
+         705
+        ]
+       ]
+      },
+      {
+       "length": 2,
+       "mean_score": 1.608,
+       "x": 1023.6,
+       "y": 570.0,
+       "path": [
+        [
+         1023,
+         570
+        ],
+        [
+         1017,
+         578
+        ]
+       ]
+      }
+     ],
+     "name": "match_040.jpg",
+     "t_matched": 7839.56,
+     "t_center_real": 7839.56
+    }
+   ],
+   "note": "去掉外观项，只用运动残差。"
+  }
+ },
+ "verdict": "自动选出的最优轨迹有 5/10 帧是**静止**高亮块（记分牌/广告牌/看台，mean_step<1px/帧），打乱帧序后仍有 60% 通过 ⇒ 判据只证明「存在一条平滑链」，不证明「链是球」。合成 8px 球 9/10 能进候选、9/10 能串成合规轨迹，但自动排序只挑中 0/10 ⇒ 机制不坏，坏在「哪个候选是球」上：这条路在现有画面下不足以单独定位球。",
+ "verdict_class": "fake_green",
+ "diagnostics": {
+  "n_cand_median_per_frame": 40,
+  "n_app_blobs_median": 134,
+  "n_mot_blobs_median": 465,
+  "winner_len_median": 51,
+  "winner_static_frames": 5,
+  "winner_moving_frames": 5,
+  "winner_static_names": [
+   "match_020.jpg",
+   "match_024.jpg",
+   "match_028.jpg",
+   "match_036.jpg",
+   "match_040.jpg"
+  ],
+  "pick_rule_len_static_frames": 6,
+  "winner_mean_score_median": 3.38,
+  "winner_mot_median": 105.3,
+  "motion_abs_dx_mean": 4.93,
+  "motion_abs_dx_max": 120.92,
+  "n_affine_total": 643,
+  "synthetic": {
+   "n": 10,
+   "n_cand_hit": 9,
+   "n_chain_pass": 9,
+   "n_auto_pick": 0,
+   "median_cand_dist": 0.59,
+   "median_auto_dist": 377.86
+  }
+ },
+ "human_review": {
+  "note": "human_review 是作者把 data/results/viz/ball_cv/*.png 逐张看过之后的判定，不是自动判据。自动判据（pass）只看长度/步长/加速度，它分不清球和记分牌——这正是本次实验的主要发现，所以必须把「人眼看到框在哪」单独记下来。",
+  "summary": "10/10 的自动最优轨迹都落在场景上（记分牌 2 帧、广告牌 5 帧、球员白鞋/手套 3 帧），0/10 落在球上。判据全部 PASS，但一条都没框住球：M1 只约束了「存在平滑链」，没有约束「链上的东西是球」。",
+  "per_frame": {
+   "match_004.jpg": "记分牌上 05:45 的冒号。真球在 (902,584)、直径约 8px，确实是候选之一，但自动选出的最优轨迹是静止记分牌。",
+   "match_008.jpg": "远端红队球员脚踝处的白鞋/白袜。真球被 3 号白队球员双手抱在胸前（约 (545,372)，直径约 25px），超出 MAX_WH=16/AREA_MAX=200 的尺寸窗口，根本没进候选。",
+   "match_012.jpg": "广告牌与挡板交界处的白块（轨迹沿广告牌水平拉了一条虚线）。",
+   "match_016.jpg": "门将右侧的白块（手套/护腿），轨迹沿门将身上斜着上来。",
+   "match_020.jpg": "广告牌中文字内部的白色空隙（8x 图里是「德」字的笔画间）。",
+   "match_024.jpg": "红色广告牌上的白块（8x 图里是「河」字旁边）。",
+   "match_028.jpg": "白色标牌文字之间的暗块。",
+   "match_032.jpg": "广告牌 C1L 标志上的白块。",
+   "match_036.jpg": "记分牌 14:47 的数字。",
+   "match_040.jpg": "白色标牌文字间的白块。"
+  }
+ },
+ "notes": [
+  "MANIFEST 的 t_approx_s 有系统性漂移，实测 offset 从 -1.84 s (t=1251) 线性走到 +0.84 s (t=7173)，斜率约 +0.45 ms/s，等价于整段视频真实帧率约 25.011 而不是 25.000。所以每帧都必须用画面匹配重定位，不能直接信 t_approx_s。",
+  "重定位后用 6.4 位小数比对的 MAE 是 1.28~1.93 灰阶，说明匹配可靠（最坏帧 MAE>90）。",
+  "片段第一次抽帧可能把 ±2 s 窗口切在片段边缘（因为漂移），所以定位完会再以实测帧为中心抽第二次，否则前后帧数不对称。"
+ ]
+}

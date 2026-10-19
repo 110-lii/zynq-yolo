@@ -1,0 +1,90 @@
+# src/ —— 设计源码（RTL / HLS / PS 侧软件）
+
+> 上级：[`../README.md`](../README.md)
+> 唯一事实源：[`../docs/repo_spec.md`](../docs/repo_spec.md) §2.1 / §2.2
+
+| | |
+|---|---|
+| 本目录装什么 | 本作品全部**设计真源**：手写 Verilog、Vitis HLS 加速器 C/C++、PS 侧 Python（PYNQ 驱动与 host 应用） |
+| 谁产生 | 手写 |
+| 进 git | 是（设计真源，只能在这里改设计） |
+
+## 内容
+
+### 子树（与磁盘实际结构一致）
+
+```text
+src/
+├── rtl/                        # 手写 Verilog，会被综合进最终作品
+│   ├── common/                 # 时钟、复位、CDC、FIFO 等与题目无关的基础设施
+│   ├── video/                  # 视频采集与预处理：DVP 捕获、SCCB 配置、格式转换、缩放
+│   ├── accel/                  # 加速器数据通路：DMA 搬运、流控、层间接口
+│   ├── io/                     # 面向外设的接口：AXI-Lite 寄存器、UART、以太网、LCD
+│   └── ip/                     # 需要保留的 IP 配置引脚/约束（.xci 只读，勿手改）
+├── hls/
+│   └── accel/
+│       ├── src/                # HLS 顶层与算子实现（.cpp）
+│       ├── include/            # HLS 头文件与定点类型定义（.h / .hpp）
+│       ├── tb/                 # HLS C 仿真 testbench
+│       └── scripts/            # csynth.tcl / cosim.tcl / export.tcl 等 HLS 构建脚本
+└── ps/
+    ├── pynq_driver/            # PYNQ Overlay 封装类、寄存器映射、DMA 搬运与缓存一致性处理
+    └── host/                   # 上位机侧脚本（推流、评测、可视化）
+```
+
+### 目录 ↔ 职责 ↔ 前缀 一一对应（§2.1 / §2.2）
+
+RTL 模块名以**子系统前缀**开头，前缀与目录一一对应，便于按名索骥：
+
+| 目录 | 职责 | 模块前缀 |
+|---|---|---|
+| `rtl/common/` | 时钟 / 复位 / CDC / FIFO | `inf_` |
+| `rtl/video/` | 视频采集与预处理 | `vid_` |
+| `rtl/accel/` | 加速器数据通路 | `acc_` |
+| `rtl/io/` | 外设接口（AXI-Lite / 以太网 / LCD） | `io_` |
+| `hls/accel/` | HLS 导出的 IP 顶层命名 | `hls_` |
+| `rtl/ip/` | IP 配置引脚/约束（`.xci`） | 不适用（IP 自带命名） |
+| `ps/pynq_driver/`、`ps/host/` | PS 侧 Python | 不适用（Python 命名） |
+
+> ⚠️ **当前磁盘事实**：`src/` 下全部子目录（`rtl/{common,video,accel,io,ip}`、`hls/accel/{src,include,tb,scripts}`、`ps/{pynq_driver,host}`）
+> **均已存在但为空**，仓库内尚**没有任何 `.v` / `.cpp` / `.py` 设计文件**。下文出现的具体模块文件名（如 `inf_reset_sync.v`）只是**命名示例**，**不是磁盘上已存在的文件**。
+>
+> 例（示例，非现有文件）：`src/rtl/common/inf_reset_sync.v` 必须在 `rtl/common/`；`src/rtl/video/vid_dvp_capture.v` 必须在 `rtl/video/`。
+> **跨目录放错 = 违反 §2.2**，`tools/check_repo.py`（**TODO：尚未创建**）应能检出。
+
+## 规则
+
+- **只在本目录改设计**（§4）：任何设计变更必须落到 `src/`，再由脚本重建产物。
+- **命名硬约束**（§1）：目录名与文件名只用 `a-z 0-9 _ - .`；禁止中文、空格、括号、全角字符。**文件正文可用中文**。
+- 目录名一律小写，`snake_case` 用下划线，不用驼峰。
+- RTL 模块名必须带子系统前缀（`inf_` / `vid_` / `acc_` / `io_`），且前缀与所在目录一致。
+- 对应 testbench **不放这里**：`x.v` 的 testbench 命名为 `x_tb.v`，放 `sim/`（见 [`../sim/README.md`](../sim/README.md)）。
+- `src/rtl/ip/*.xci` 为 Vivado 生成配置，**只读、勿手改**。
+- 禁止把 `build/` 产物、`.bit`、`.dcp`、`__pycache__/`、`.venv/` 放进本目录（见根 `.gitignore`）。
+- **待裁定项**：核心加速器实现方式（HLS / RTL / 混合）、**核心算法的具体形态**（含是否采用学习模型）与输入规格、数据集来源与许可、软硬件划分边界与 AXI 接口契约具体数值、与旧项目资产的具体复用范围 —— 全部写上 `<待用户裁定：见 docs/repo_spec.md §7>`，**不得擅自填入**。★ 目录名 `accel/`、`hls/` 是骨架预留，**不代表加速器或模型方案已定**。
+
+## 怎么用
+
+```powershell
+# 1. 查看本目录结构（应与上面子树一致）
+Get-ChildItem -Recurse -Directory D:\zynq-yolo\src
+
+# 2. 新增一个 RTL 模块（先确定前缀，再放到对应子目录）
+#    例：新建复位同步器 -> src/rtl/common/inf_reset_sync.v
+#    例：新建 DVP 采集   -> src/rtl/video/vid_dvp_capture.v
+#    对应 tb 放 sim/tb/ 下同名镜像路径：sim/tb/common/inf_reset_sync_tb.v
+
+# 3. 新增一个 HLS 算子
+#    src/hls/accel/src/*.cpp + src/hls/accel/include/*.h + src/hls/accel/tb/*.cpp
+#    构建脚本 src/hls/accel/scripts/csynth.tcl（判据见 docs/repo_spec.md §5）
+
+# 4. 设计定稿后由 build/scripts/ 的脚本综合实现（见 ../build/README.md）
+```
+
+> **本机环境事实**（写报告必须引用，出处见 §6 表；细节以 [`../docs/repo_spec.md`](../docs/repo_spec.md) 为准）：
+> 器件 `xc7z020clg400-2`；本机工具链仅 Vivado / Vitis / Vitis_HLS **2020.2**（指南推荐 2026.1 或 2025.2，用 2020.2 须在报告中说明并保证脚本可复现）；
+> 资源上限 53 200 LUT6 / 106 400 FF / **220 DSP48** / 4.9 Mb BRAM；**无 MIPI D-PHY、无 HDMI 输入、无 GTX/GTH**；
+> 旧项目结论**中文一手原文**（`D:\FPGA\oi\CLAUDE.md:206`，逐字含表格管道符）`| DSP 仅 220 个 | 不做大算力 CNN |`。
+> ⚠️ 英文形式「DSP only 220 — 不做大算力 CNN」是**转述**，不是一手原文，报告里请用中文原文。
+
+> **待裁定的加速器/算法形态细节** `<待用户裁定：见 docs/repo_spec.md §7>`。

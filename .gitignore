@@ -1,0 +1,100 @@
+# ============================================================================
+# .gitignore —— 仓库级忽略规则
+# 依据：docs/repo_spec.md §1.6（禁入文件）、§4（真源 vs 产物：能由脚本重建的
+#       就是产物，不进 git 或只留基线）。
+# 每个块都写明「为什么忽略」；凡是评审需要的证据（串口日志、实拍图、实测数字）
+# 必须落盘且**不在**本文件里被排除。
+# ============================================================================
+
+# --- Vivado / Vitis 运行期垃圾：每次启动都重新生成，纯噪声 ---------------------
+*.jou
+*.log
+*.str
+.Xil/
+webtalk*
+vivado*.log
+vivado*.jou
+vivado*.str
+
+# --- Vivado 综合/实现中间产物：一条命令即可重建（判据看日志令牌 DONE_OK） ----
+*.dcp
+*.ltx
+*.runs/
+*.cache/
+*.hw/
+*.gen/
+*.ip_user_files/
+NA/
+*.sysdef
+*.wdb
+*.pb
+*.pdi
+
+# --- HLS 产物：由 csynth.tcl / cosim.tcl 重新生成，只保留源码与脚本 -----------
+*.apcc
+solution*/
+*.tar.gz
+
+# --- Python：解释器缓存与虚拟环境，与机器强绑定，绝不入库 ---------------------
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# --- 编辑器 / 操作系统：个人环境残留 ------------------------------------------
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- 大文件：不入 git（data/ 的大样本用下载脚本或 Git LFS 替代，见 data/README.md）
+#     注意：*.bit 与 *.hwh 是交付件，**故意不在此列**。
+*.mp4
+*.avi
+*.bin
+*.img
+*.zip
+*.raw
+*.yuv
+
+# --- 外部文献与资料抽取中间产物：第三方版权，只作查证不作提交 -----------------
+#     ref/ 下是指南 PDF、板卡原理图与数据手册（约 177 MB，且是第三方版权物）；.research/ 是 PDF 抽取出的纯文本。
+#     ★ 但 ref/ 里**我们自己写的 4 个文本文件必须入库**：根 README、docs/repo_spec.md、
+#       ai/coordination/DECISIONS.md 等 25 条链接指向它们 —— 全排除会让 clone 后满屏死链，
+#       直接扣「文档质量与可复现性」的分。故先排除整个 ref/，再按文件白名单放回。
+#     ★ 注意 git 语义：父目录一旦被排除，其下内容无法用 `!` 重新包含 ⇒ 必须显式放回。
+ref/*
+!ref/README.md
+!ref/hardware.md
+!ref/pitfalls_from_oi.md
+!ref/MANIFEST.csv
+#     ref/ 下的子目录（guide/ board/ mt9v034/ ov5640_camera_module/ rgb_lcd_module/）保持整体排除：
+#     那是第三方 PDF/原理图，体积大且有版权，靠 ref/MANIFEST.csv + ref/README.md 记录来源与校验值。
+ref/*/
+.research/
+
+# --- 构建报告：只保留「最新 + baseline*」，其余（每轮重建的 rpt）不入 git ------
+#     baseline* 是写进设计报告的关键数字出处，必须留。
+#     ★ 注意 git 语义：父目录一旦被排除，其下内容无法用 `!` 重新包含；
+#       所以要先把 5 个子目录本身放回来（`build/reports/*/`），再排除其内容，
+#       最后按「.gitkeep → baseline」的顺序逐条放回。顺序错了 baseline 会被吃掉。
+build/reports/*
+!build/reports/README.md
+!build/reports/*/
+build/reports/*/*
+!build/reports/*/.gitkeep
+!build/reports/baseline*/**
+build/reports/baseline*/*/*
+!build/reports/baseline*/*/**
+
+# --- 板级日志：默认不入 git；但 .md 形式的实测记录（串口摘录、肉眼观察）必须留 -
+#     因为这类证据「不能由脚本重建」，丢了就不可复现（见 docs/repo_spec.md §4）。
+board/logs/*
+!board/logs/*.md
+!board/logs/.gitkeep

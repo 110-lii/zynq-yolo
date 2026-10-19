@@ -76,6 +76,22 @@ def write_text_lf(path: Path, text: str) -> int:
 # ⚠️ 两个导出脚本产出的分片，这两处格式必须保持一致 —— 否则重建会对某一源失效。
 # ⚠️ 围栏长度是**可变的**（导出器按正文里的反引号连串自动加长，防正文自带 ``` 提前闭合），
 #    故用 `(`{3,})` + 反向引用配对；写死三反引号会**静默漏掉**那些加了长围栏的提示词。
+#
+# ★ 密钥脱敏规则 —— **必须与 export_transcript_dsh.py 里的 `_SECRET_PATTERNS` 逐条一致**。
+#   两处都定义是为了不产生「汇总模块 import 导出模块」的反向依赖；但它们**必须同源同序**，
+#   否则「分片已脱敏、汇总没脱敏」会造成 `_prompts_all.md` 仍含明文密钥。
+#   （2026-10-19 起因：用户粘贴的 GitHub PAT 被逐字写进 ai/raw/，GitHub push protection
+#    以 "repository rule violations" 拒绝推送 ⇒ 脱敏是**安全要求**，不是洁癖。）
+_SECRET_PATTERNS = [
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"), "GITHUB_TOKEN"),
+    (re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"), "GITHUB_PAT"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "AWS_ACCESS_KEY"),
+    (re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"), "API_KEY_SK"),
+    (re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"), "SLACK_TOKEN"),
+    (re.compile(r"\bAIza[0-9A-Za-z_\-]{30,}\b"), "GOOGLE_API_KEY"),
+    (re.compile(r"-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----"), "PRIVATE_KEY_HEADER"),
+]
+
 _PROMPT_RE = re.compile(
     r"^## 轮次 (\d+) — 👤 用户\s*\n\s*<sub>(.*?)</sub>\s*\n\s*(`{3,})text\n(.*?)\n\3[ \t]*$",
     re.MULTILINE | re.DOTALL,
@@ -169,7 +185,16 @@ def rebuild_prompts_from_raw(raw_dir: Path) -> Tuple[str, int, int]:
                 L.append(body)
                 L.append(fence)
                 L.append("")
-    return "\n".join(L), n_total, len(by_date)
+    # ★ 脱敏：本文件是**汇总层**，与分片必须口径一致。
+    #   分片已在导出端脱敏；这里再兜一次，防止「分片是旧的、汇总却重算了」这类时序漏洞。
+    #   （`redact_secrets` 定义在 export_transcript_dsh.py；此处按同规则内联，避免反向依赖。）
+    md = "\n".join(L)
+    for _pat, _kind in _SECRET_PATTERNS:
+        def _sub(m):
+            s = m.group(0)
+            return "<REDACTED:%s %s…%s>" % (_kind, s[:4], s[-4:] if len(s) > 8 else "")
+        md = _pat.sub(_sub, md)
+    return md, n_total, len(by_date)
 
 
 # ---------------------------------------------------------------------------

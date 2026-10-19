@@ -275,6 +275,43 @@ def inbound_from_md(md_path: Path) -> List[Tuple[int, str, str]]:
     return rows
 
 
+# ---------------------------------------------------------------------------
+# ★ 与导出端同源的密钥脱敏规则（2026-10-19 新增）
+#
+# 为什么校验器也要脱敏：`ai/raw/` 是导出器**脱敏后**的产物，而本校验器比对的另一端是
+# **未脱敏的会话原文**。若只脱敏一侧，任何含密钥的那条必然判为「不一致」——
+# 于是「逐字」与「安全」互相打架。正确口径是：
+#     **比对的等价类 = 原文经同一套脱敏规则处理后的结果**
+# 即：`redact(原文) == 分片正文`。这样既守住了安全（产物无明文密钥），
+# 又让「逐字」这句话**仍然是一条可失败、可重跑的判据**（脱敏规则单一且确定 ⇒ 不会掩盖真实差异）。
+#
+# ⚠️ 规则必须与 `export_transcript_dsh.py` / `prompts_index.py` 里的 `_SECRET_PATTERNS`
+#    **逐条一致**；三处不同源，就会出现「导出脱敏了、校验还原不回来」的假 FAIL。
+# ---------------------------------------------------------------------------
+_SECRET_PATTERNS = [
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"), "GITHUB_TOKEN"),
+    (re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"), "GITHUB_PAT"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "AWS_ACCESS_KEY"),
+    (re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"), "API_KEY_SK"),
+    (re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"), "SLACK_TOKEN"),
+    (re.compile(r"\bAIza[0-9A-Za-z_\-]{30,}\b"), "GOOGLE_API_KEY"),
+    (re.compile(r"-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----"), "PRIVATE_KEY_HEADER"),
+]
+
+
+def redact_secrets(text: str) -> str:
+    """与导出端**同规则**的脱敏；只用于把「原文」拉到与「分片」同一等价类再比。"""
+    if not text:
+        return text
+    out = text
+    for pat, kind in _SECRET_PATTERNS:
+        def _sub(m: "re.Match[str]") -> str:
+            s = m.group(0)
+            return "<REDACTED:%s %s…%s>" % (kind, s[:4], s[-4:] if len(s) > 8 else "")
+        out = pat.sub(_sub, out)
+    return out
+
+
 def _first_diff(a: str, b: str, width: int = 60) -> str:
     n = min(len(a), len(b))
     i = next((k for k in range(n) if a[k] != b[k]), n)
@@ -356,6 +393,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 index[re.sub(r"^session-", "", sd.name)[:8].lower()] = f
 
     n_ok = n_bad = n_skip = 0
+    redacted_n = 0
     checked = 0
     per_kind: Dict[str, int] = {}
     tmpdir = Path(tempfile.mkdtemp(prefix="dsh_verify_"))
@@ -393,7 +431,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             for (k_src, body_src), (no_md, k_md, body_md) in zip(src_rows, md_rows):
                 checked += 1
                 per_kind[k_md] = per_kind.get(k_md, 0) + 1
-                same = (body_src == body_md) and (k_src == k_md)
+                # ★ 把「原文」先拉进与「分片」同一等价类（脱敏），再比。
+                #   等价关系：redact(原文) == 分片正文。脱敏规则单一确定 ⇒ 不会掩盖真实差异。
+                body_src_cmp = redact_secrets(body_src)
+                same = (body_src_cmp == body_md) and (k_src == k_md)
+                if same and body_src_cmp != body_src:
+                    redacted_n += 1
                 tag = "OK  " if same else "FAIL"
                 print("   %s %s·轮次 %d：%d 字符 vs %d 字符 —— %s"
                       % (tag, KIND_LABEL.get(k_md, k_md), no_md, len(body_src), len(body_md),
@@ -406,13 +449,16 @@ def main(argv: Optional[List[str]] = None) -> int:
                 else:
                     n_bad += 1
                     print("        类别：原文 `%s` vs 分片 `%s`" % (k_src, k_md))
-                    print("        " + _first_diff(body_src, body_md))
+                    print("        " + _first_diff(body_src_cmp, body_md))
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)  # 中间文件用完即删（与导出器同规则）
 
     print("")
     print("分类计数：%s" % ("、".join("%s %d" % (KIND_LABEL[k], v)
                                     for k, v in sorted(per_kind.items())) or "（无）"))
+    if redacted_n:
+        print("已脱敏后比对：%d 条（原文含密钥字面量，导出端已按同一规则替换为 <REDACTED:…>；"
+              "等价关系是「redact(原文) == 分片正文」，不是「原文 == 分片正文」）" % redacted_n)
     print("SUMMARY: %d 条入站发言逐字节相等 / %d 条不一致 / %d 个分片跳过（共核对 %d 条）"
           % (n_ok, n_bad, n_skip, checked))
     if n_bad:

@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-19T21:17:09",
+ "generated": "2026-10-19T22:00:00",
  "params": {
   "hsv_lo": [
    30,
@@ -26,6 +26,8 @@
   "touch_sep_min": 22.0,
   "touch_xspan_min": 0.45,
   "grass_between_min": 0.45,
+  "env_tol_px": 16.0,
+  "env_bonus": 2.0,
   "max_a": 8,
   "max_pairs": 4,
   "trans_ang_min": 18.0,
@@ -43,289 +45,256 @@
   "min_line_px": 14.0,
   "cheap_step": 9.0
  },
- "criterion": "T1 pass requires: (1) touchline pair supported; (2) the 4-line homography decomposes as K[r1 r2 t] with a single focal length -- |f_a-f_b|/f <= self_rel_max is the measured touchline-vs-goal-line orthogonality residual, and it was NOT used in the fit; (3) camera height 5-60 m; (4) HOLDOUT lines (halfway / penalty box / goal area) supported; (5) reprojection RMS <= rms_max. T2 additionally requires the holdout ARCS (circle/penalty arc).",
+ "criterion": "T1 pass requires: (1) touchline pair supported; (2) the 4-line homography decomposes as K[r1 r2 t] with a single focal length -- |f_a-f_b|/f <= self_rel_max is the measured touchline-vs-goal-line orthogonality residual, and it was NOT used in the fit; (3) camera height 5-60 m; (4) HOLDOUT lines (halfway / penalty box / goal area) supported; (5) reprojection RMS <= rms_max. T2 additionally requires the holdout ARCS (circle/penalty arc). NOTE frames[] / control_*_frames[] / conclusion.test_frames[] are compact rows: [name, passed, touch_cov, select_cov, fail_reason].",
  "frames": [
   {
    "frame": "match_004.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "touchline_unsupported(0.542)",
-   "asg": "5.5/52.5",
-   "f": 113.8,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": 0.3709,
-   "cam_h": -2.36,
-   "touch": 0.542,
-   "sel": 0.632,
-   "arc": 0.611,
-   "circle": null,
-   "goal": 0.455,
-   "rms": 11.96,
+   "reason": "touchline_unsupported(0.254)",
+   "asg": "5.5/16.5(sw)",
+   "f": 1055.3,
+   "self_rel": 0.653,
+   "cam_h": 44.81,
+   "touch": 0.254,
+   "sel": 0.268,
+   "arc": 0.033,
+   "circle": 0.065,
+   "goal": 0.05,
+   "rms": 16.35,
    "n_seg": 17,
    "n_b": 6,
    "n_hyp": 2520,
+   "n_phys": 66,
+   "n_pairs": 4,
+   "env_ok": true,
+   "env_d": [
+    null,
+    null
+   ],
    "grass": 0.621,
-   "goal_det": null,
-   "ms": 2071.3
+   "goal_det": false,
+   "ms": 264.8
   },
   {
    "frame": "match_008.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "touchline_unsupported(0.514)",
-   "asg": "0/88.5",
-   "f": null,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": null,
-   "cam_h": null,
-   "touch": 0.514,
-   "sel": 0.285,
-   "arc": null,
-   "circle": null,
-   "goal": 0.444,
-   "rms": 57.11,
+   "reason": "no_plausible_camera(0 of 378)",
    "n_seg": 9,
    "n_b": 3,
    "n_hyp": 378,
+   "n_phys": 0,
+   "n_pairs": 3,
+   "env_ok": false,
+   "env_d": [
+    35.0,
+    1.0
+   ],
    "grass": 0.463,
-   "goal_det": {
-    "x1": 505.5,
-    "x2": 524.5,
-    "y": 40.0,
-    "h": 23.0,
-    "span": 19.0,
-    "bar": 0.37
-   },
-   "ms": 245.6
+   "goal_det": true,
+   "ms": 43.1
   },
   {
    "frame": "match_012.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "touchline_unsupported(0.351)",
-   "asg": "5.5/52.5",
-   "f": 334.4,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": 0.2202,
-   "cam_h": 13.3,
-   "touch": 0.351,
-   "sel": 0.347,
-   "arc": 0.033,
-   "circle": 0.1,
+   "reason": "touchline_unsupported(0.325)",
+   "asg": "16.5/52.5",
+   "f": 444.0,
+   "self_rel": 0.426,
+   "cam_h": 8.98,
+   "touch": 0.325,
+   "sel": 0.545,
+   "arc": 0.289,
+   "circle": 0.078,
    "goal": 0.0,
-   "rms": 15.64,
+   "rms": 18.96,
    "n_seg": 10,
    "n_b": 6,
    "n_hyp": 2100,
+   "n_phys": 4,
+   "n_pairs": 4,
+   "env_ok": false,
+   "env_d": [
+    163.5,
+    1.9
+   ],
    "grass": 0.673,
-   "goal_det": null,
-   "ms": 1456.7
+   "goal_det": true,
+   "ms": 177.9
   },
   {
    "frame": "match_016.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "touchline_unsupported(0.36)",
-   "asg": "16.5/105",
-   "f": null,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": null,
-   "cam_h": null,
-   "touch": 0.36,
-   "sel": 0.391,
-   "arc": 0.083,
-   "circle": 0.0,
-   "goal": 0.6,
-   "rms": 4.21,
+   "reason": "touchline_unsupported(0.548)",
+   "asg": "0/16.5",
+   "f": 1015.9,
+   "self_rel": 0.475,
+   "cam_h": 7.21,
+   "touch": 0.548,
+   "sel": 0.411,
+   "arc": 0.28,
+   "circle": 0.061,
+   "goal": 0.444,
+   "rms": 5.45,
    "n_seg": 14,
    "n_b": 2,
    "n_hyp": 168,
+   "n_phys": 22,
+   "n_pairs": 4,
+   "env_ok": false,
+   "env_d": [
+    236.6,
+    2.6
+   ],
    "grass": 0.844,
-   "goal_det": {
-    "x1": 213.5,
-    "x2": 154.5,
-    "y": 0.0,
-    "h": 36.0,
-    "span": 59.0,
-    "bar": 0.92
-   },
-   "ms": 149.1
+   "goal_det": true,
+   "ms": 44.5
   },
   {
    "frame": "match_020.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "not_orthogonal(rel=None)",
-   "asg": "52.5/105",
-   "f": null,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": null,
-   "cam_h": null,
-   "touch": 0.714,
-   "sel": 0.733,
-   "arc": 0.917,
-   "circle": 0.833,
-   "goal": 0.57,
-   "rms": 9.67,
+   "reason": "touchline_unsupported(0.385)",
+   "asg": "88.5/94",
+   "f": 947.9,
+   "self_rel": 0.957,
+   "cam_h": 42.86,
+   "touch": 0.385,
+   "sel": 0.623,
+   "arc": 0.118,
+   "goal": 0.0,
+   "rms": 52.56,
    "n_seg": 23,
    "n_b": 6,
    "n_hyp": 1260,
+   "n_phys": 2,
+   "n_pairs": 2,
+   "env_ok": false,
+   "env_d": [
+    33.4,
+    71.0
+   ],
    "grass": 0.367,
-   "goal_det": null,
-   "ms": 925.3
+   "goal_det": false,
+   "ms": 115.3
   },
   {
    "frame": "match_024.jpg",
    "passed": false,
    "passed_arc": false,
    "reason": "no_touchline_pair",
-   "asg": null,
-   "f": null,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": null,
-   "cam_h": null,
-   "touch": null,
-   "sel": null,
-   "arc": null,
-   "circle": null,
-   "goal": null,
-   "rms": null,
    "n_seg": 11,
    "n_b": 0,
    "n_hyp": 0,
    "grass": 0.716,
-   "goal_det": {
-    "x1": 188.5,
-    "x2": 119.5,
-    "y": 85.0,
-    "h": 35.0,
-    "span": 69.0,
-    "bar": 0.46
-   },
-   "ms": 11.9
+   "goal_det": true,
+   "ms": 11.2
   },
   {
    "frame": "match_028.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "not_orthogonal(rel=0.9978)",
-   "asg": "0/5.5",
-   "f": 5812.7,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": 0.9978,
-   "cam_h": null,
-   "touch": 0.646,
-   "sel": 0.551,
-   "arc": 0.829,
-   "circle": 1.0,
-   "goal": 0.567,
-   "rms": 9.84,
+   "reason": "touchline_unsupported(0.237)",
+   "asg": "16.5/94",
+   "f": 489.8,
+   "self_rel": 0.368,
+   "cam_h": 7.46,
+   "touch": 0.237,
+   "sel": 0.235,
+   "goal": 0.25,
+   "rms": 15.88,
    "n_seg": 27,
    "n_b": 6,
    "n_hyp": 1344,
+   "n_phys": 26,
+   "n_pairs": 4,
+   "env_ok": false,
+   "env_d": [
+    16.5,
+    122.1
+   ],
    "grass": 0.837,
-   "goal_det": {
-    "x1": 50.0,
-    "x2": 110.5,
-    "y": 95.0,
-    "h": 44.0,
-    "span": 60.5,
-    "bar": 0.39
-   },
-   "ms": 855.2
+   "goal_det": true,
+   "ms": 128.8
   },
   {
    "frame": "match_032.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "not_orthogonal(rel=None)",
-   "asg": "0/94",
-   "f": null,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": null,
-   "cam_h": null,
-   "touch": 0.75,
-   "sel": 0.52,
-   "arc": 1.0,
-   "circle": 1.0,
-   "goal": 1.0,
-   "rms": 5.19,
+   "reason": "touchline_unsupported(0.295)",
+   "asg": "88.5/105(sw)",
+   "f": 970.3,
+   "self_rel": 0.129,
+   "cam_h": 5.54,
+   "touch": 0.295,
+   "sel": 0.707,
+   "arc": 0.182,
+   "goal": 0.204,
+   "rms": 26.36,
    "n_seg": 8,
    "n_b": 4,
    "n_hyp": 1008,
+   "n_phys": 7,
+   "n_pairs": 4,
+   "env_ok": true,
+   "env_d": [
+    8.5,
+    0.4
+   ],
    "grass": 0.667,
-   "goal_det": null,
-   "ms": 600.9
+   "goal_det": false,
+   "ms": 87.9
   },
   {
    "frame": "match_036.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "touchline_unsupported(0.25)",
-   "asg": "94/105",
-   "f": null,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": null,
-   "cam_h": null,
-   "touch": 0.25,
-   "sel": 0.213,
-   "arc": 0.0,
-   "circle": 0.0,
-   "goal": 0.713,
-   "rms": 12.7,
+   "reason": "no_plausible_camera(0 of 168)",
    "n_seg": 5,
-   "n_b": 3,
-   "n_hyp": 126,
+   "n_b": 2,
+   "n_hyp": 168,
+   "n_phys": 0,
+   "n_pairs": 4,
+   "env_ok": true,
+   "env_d": [
+    0.0,
+    0.0
+   ],
    "grass": 0.651,
-   "goal_det": {
-    "x1": 506.0,
-    "x2": 540.5,
-    "y": 41.0,
-    "h": 43.0,
-    "span": 34.5,
-    "bar": 0.68
-   },
-   "ms": 118.6
+   "goal_det": true,
+   "ms": 27.1
   },
   {
    "frame": "match_040.jpg",
    "passed": false,
    "passed_arc": false,
-   "reason": "not_orthogonal(rel=None)",
-   "asg": "0/94",
-   "f": null,
-   "f_a": null,
-   "f_b": null,
-   "self_rel": null,
-   "cam_h": null,
-   "touch": 0.66,
-   "sel": 0.486,
-   "arc": 0.478,
-   "circle": 0.167,
-   "goal": 0.532,
-   "rms": 10.28,
+   "reason": "touchline_unsupported(0.447)",
+   "asg": "5.5/52.5(sw)",
+   "f": 463.6,
+   "self_rel": 0.518,
+   "cam_h": 19.3,
+   "touch": 0.447,
+   "sel": 0.255,
+   "arc": 0.157,
+   "circle": 0.0,
+   "goal": 0.185,
+   "rms": 15.35,
    "n_seg": 13,
    "n_b": 6,
    "n_hyp": 2100,
+   "n_phys": 23,
+   "n_pairs": 4,
+   "env_ok": true,
+   "env_d": [
+    4.9,
+    2.5
+   ],
    "grass": 0.582,
-   "goal_det": {
-    "x1": 376.0,
-    "x2": 309.5,
-    "y": 82.0,
-    "h": 53.0,
-    "span": 66.5,
-    "bar": 0.76
-   },
-   "ms": 1266.1
+   "goal_det": true,
+   "ms": 188.2
   }
  ],
  "summary": {
@@ -334,11 +303,762 @@
   "rate": 0.0,
   "n_pass_arc": 0,
   "reasons": {
-   "touchline_unsupported": 5,
-   "not_orthogonal": 4,
+   "touchline_unsupported": 7,
+   "no_plausible_camera": 2,
    "no_touchline_pair": 1
   },
-  "f_median": 334.4
+  "f_median": 947.9
+ },
+ "control_upper": {
+  "n": 10,
+  "n_pass": 0,
+  "rate": 0.0,
+  "n_pass_arc": 0,
+  "reasons": {
+   "too_few_segments": 3,
+   "no_plausible_camera": 3,
+   "no_transverse_lines": 4
+  },
+  "f_median": null
+ },
+ "control_flip": {
+  "n": 10,
+  "n_pass": 0,
+  "rate": 0.0,
+  "n_pass_arc": 0,
+  "reasons": {
+   "touchline_unsupported": 5,
+   "no_plausible_camera": 2,
+   "not_orthogonal": 2,
+   "too_few_segments": 1
+  },
+  "f_median": 590.5
+ },
+ "control_upper_frames": [
+  [
+   "match_004.jpg",
+   0,
+   null,
+   null,
+   "too_few_segments"
+  ],
+  [
+   "match_008.jpg",
+   0,
+   null,
+   null,
+   "too_few_segments"
+  ],
+  [
+   "match_012.jpg",
+   0,
+   null,
+   null,
+   "no_plausible_camera"
+  ],
+  [
+   "match_016.jpg",
+   0,
+   null,
+   null,
+   "no_transverse_lines"
+  ],
+  [
+   "match_020.jpg",
+   0,
+   null,
+   null,
+   "no_transverse_lines"
+  ],
+  [
+   "match_024.jpg",
+   0,
+   null,
+   null,
+   "no_transverse_lines"
+  ],
+  [
+   "match_028.jpg",
+   0,
+   null,
+   null,
+   "no_plausible_camera"
+  ],
+  [
+   "match_032.jpg",
+   0,
+   null,
+   null,
+   "no_plausible_camera"
+  ],
+  [
+   "match_036.jpg",
+   0,
+   null,
+   null,
+   "too_few_segments"
+  ],
+  [
+   "match_040.jpg",
+   0,
+   null,
+   null,
+   "no_transverse_lines"
+  ]
+ ],
+ "control_flip_frames": [
+  [
+   "match_004.jpg",
+   0,
+   0.105,
+   0.157,
+   "touchline_unsupported"
+  ],
+  [
+   "match_008.jpg",
+   0,
+   null,
+   null,
+   "no_plausible_camera"
+  ],
+  [
+   "match_012.jpg",
+   0,
+   null,
+   null,
+   "no_plausible_camera"
+  ],
+  [
+   "match_016.jpg",
+   0,
+   0.566,
+   0.287,
+   "not_orthogonal"
+  ],
+  [
+   "match_020.jpg",
+   0,
+   0.5,
+   0.536,
+   "touchline_unsupported"
+  ],
+  [
+   "match_024.jpg",
+   0,
+   0.05,
+   0.738,
+   "touchline_unsupported"
+  ],
+  [
+   "match_028.jpg",
+   0,
+   0.739,
+   0.625,
+   "not_orthogonal"
+  ],
+  [
+   "match_032.jpg",
+   0,
+   0.263,
+   0.714,
+   "touchline_unsupported"
+  ],
+  [
+   "match_036.jpg",
+   0,
+   null,
+   null,
+   "too_few_segments"
+  ],
+  [
+   "match_040.jpg",
+   0,
+   0.48,
+   0.329,
+   "touchline_unsupported"
+  ]
+ ],
+ "sensitivity": [
+  [
+   "base",
+   "0/10",
+   {
+    "touchline_unsupported": 7,
+    "no_plausible_camera": 2,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ],
+  [
+   "tophat_min=7",
+   "0/10",
+   {
+    "touchline_unsupported": 5,
+    "no_plausible_camera": 5
+   },
+   416.7
+  ],
+  [
+   "tophat_min=14",
+   "0/10",
+   {
+    "not_orthogonal": 1,
+    "no_plausible_camera": 2,
+    "touchline_unsupported": 4,
+    "no_transverse_lines": 1,
+    "no_touchline_pair": 2
+   },
+   573.0
+  ],
+  [
+   "sat_max=90",
+   "0/10",
+   {
+    "touchline_unsupported": 4,
+    "no_plausible_camera": 4,
+    "no_transverse_lines": 1,
+    "no_touchline_pair": 1
+   },
+   739.0
+  ],
+  [
+   "sat_max=130",
+   "0/10",
+   {
+    "no_plausible_camera": 4,
+    "touchline_unsupported": 4,
+    "no_touchline_pair": 1,
+    "holdout_lines_unsupported": 1
+   },
+   518.7
+  ],
+  [
+   "seg_support=0.45",
+   "0/10",
+   {
+    "touchline_unsupported": 4,
+    "no_plausible_camera": 4,
+    "not_orthogonal": 1,
+    "no_touchline_pair": 1
+   },
+   444.0
+  ],
+  [
+   "seg_support=0.70",
+   "0/10",
+   {
+    "no_plausible_camera": 4,
+    "touchline_unsupported": 4,
+    "no_transverse_lines": 1,
+    "too_few_segments": 1
+   },
+   668.0
+  ],
+  [
+   "grass_between_min=0.30",
+   "0/10",
+   {
+    "touchline_unsupported": 7,
+    "no_plausible_camera": 2,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ],
+  [
+   "grass_between_min=0.60",
+   "0/10",
+   {
+    "touchline_unsupported": 7,
+    "no_plausible_camera": 2,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ],
+  [
+   "trans_ang_min=12",
+   "0/10",
+   {
+    "touchline_unsupported": 7,
+    "no_plausible_camera": 2,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ],
+  [
+   "trans_ang_min=24",
+   "0/10",
+   {
+    "touchline_unsupported": 5,
+    "no_plausible_camera": 4,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ],
+  [
+   "self_rel_max=0.10",
+   "0/10",
+   {
+    "touchline_unsupported": 7,
+    "no_plausible_camera": 2,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ],
+  [
+   "self_rel_max=0.22",
+   "0/10",
+   {
+    "touchline_unsupported": 7,
+    "no_plausible_camera": 2,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ],
+  [
+   "select_cov_min=0.20",
+   "0/10",
+   {
+    "touchline_unsupported": 7,
+    "no_plausible_camera": 2,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ],
+  [
+   "select_cov_min=0.40",
+   "0/10",
+   {
+    "touchline_unsupported": 7,
+    "no_plausible_camera": 2,
+    "no_touchline_pair": 1
+   },
+   947.9
+  ]
+ ],
+ "diag_calibration": {
+  "cols": [
+   "frame",
+   "mask",
+   "env",
+   "near",
+   "far",
+   "near4",
+   "far4"
+  ],
+  "rows": [
+   [
+    "match_004.jpg",
+    0.044,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "match_008.jpg",
+    0.022,
+    0.912,
+    0.0,
+    0.52,
+    0.0,
+    0.646
+   ],
+   [
+    "match_012.jpg",
+    0.024,
+    0.844,
+    0.0,
+    0.417,
+    0.0,
+    0.512
+   ],
+   [
+    "match_016.jpg",
+    0.043,
+    0.784,
+    0.244,
+    0.22,
+    0.307,
+    0.354
+   ],
+   [
+    "match_020.jpg",
+    0.024,
+    0.757,
+    0.087,
+    0.402,
+    0.094,
+    0.543
+   ],
+   [
+    "match_024.jpg",
+    0.016,
+    1.0,
+    0.016,
+    0.669,
+    0.016,
+    0.906
+   ],
+   [
+    "match_028.jpg",
+    0.051,
+    0.55,
+    0.545,
+    0.205,
+    0.9,
+    0.27
+   ],
+   [
+    "match_032.jpg",
+    0.018,
+    0.851,
+    0.079,
+    0.551,
+    0.126,
+    0.654
+   ],
+   [
+    "match_036.jpg",
+    0.015,
+    1.0,
+    0.031,
+    0.764,
+    0.031,
+    0.803
+   ],
+   [
+    "match_040.jpg",
+    0.035,
+    0.588,
+    0.214,
+    0.656,
+    0.495,
+    0.74
+   ]
+  ]
+ },
+ "diag_stroke": {
+  "cols": [
+   "frame",
+   "px_per_m",
+   "circle_diam_px",
+   "arc_radius_px",
+   "line_width_px"
+  ],
+  "rows": [
+   [
+    "match_008.jpg",
+    2.49,
+    45.6,
+    22.8,
+    0.3
+   ],
+   [
+    "match_012.jpg",
+    3.72,
+    68.2,
+    34.1,
+    0.45
+   ],
+   [
+    "match_016.jpg",
+    4.41,
+    80.7,
+    40.4,
+    0.53
+   ],
+   [
+    "match_020.jpg",
+    1.98,
+    36.2,
+    18.1,
+    0.24
+   ],
+   [
+    "match_024.jpg",
+    3.78,
+    69.1,
+    34.6,
+    0.45
+   ],
+   [
+    "match_028.jpg",
+    4.84,
+    88.5,
+    44.3,
+    0.58
+   ],
+   [
+    "match_032.jpg",
+    3.66,
+    66.9,
+    33.5,
+    0.44
+   ],
+   [
+    "match_036.jpg",
+    3.43,
+    62.8,
+    31.4,
+    0.41
+   ],
+   [
+    "match_040.jpg",
+    3.13,
+    57.3,
+    28.7,
+    0.38
+   ]
+  ]
+ },
+ "diag_oracle": [
+  {
+   "frame": "match_004.jpg",
+   "n_seg": 12,
+   "tried": 98784,
+   "plausible": 725,
+   "n_geometric": 39,
+   "best_rel": 0.01444
+  },
+  {
+   "frame": "match_008.jpg",
+   "n_seg": 9,
+   "tried": 26460,
+   "plausible": 0,
+   "n_geometric": 0,
+   "best_rel": null
+  },
+  {
+   "frame": "match_012.jpg",
+   "n_seg": 10,
+   "tried": 50568,
+   "plausible": 338,
+   "n_geometric": 81,
+   "best_rel": 0.00083
+  }
+ ],
+ "diag_resolution": {
+  "cols": [
+   "frame",
+   "hd",
+   "hd_t",
+   "hd_s",
+   "sd",
+   "sd_t",
+   "sd_s"
+  ],
+  "rows": [
+   [
+    "match_004.jpg",
+    0.0,
+    null,
+    null,
+    0.0,
+    null,
+    null
+   ],
+   [
+    "match_008.jpg",
+    0.0,
+    null,
+    null,
+    0.0,
+    0.0,
+    0.086
+   ],
+   [
+    "match_012.jpg",
+    0.0,
+    null,
+    null,
+    0.0,
+    0.038,
+    0.156
+   ],
+   [
+    "match_016.jpg",
+    0.0,
+    0.164,
+    0.5,
+    0.0,
+    0.394,
+    0.424
+   ],
+   [
+    "match_020.jpg",
+    0.0,
+    0.133,
+    0.053,
+    0.0,
+    0.212,
+    0.275
+   ],
+   [
+    "match_024.jpg",
+    0.0,
+    0.188,
+    0.357,
+    0.0,
+    null,
+    null
+   ],
+   [
+    "match_028.jpg",
+    0.0,
+    0.167,
+    0.243,
+    0.0,
+    0.2,
+    0.365
+   ],
+   [
+    "match_032.jpg",
+    0.0,
+    0.323,
+    0.426,
+    0.0,
+    null,
+    null
+   ],
+   [
+    "match_036.jpg",
+    0.0,
+    0.184,
+    0.439,
+    0.0,
+    null,
+    null
+   ],
+   [
+    "match_040.jpg",
+    0.0,
+    0.718,
+    0.434,
+    0.0,
+    0.667,
+    1.0
+   ]
+  ]
+ },
+ "diag_goal": {
+  "n_detected": 7,
+  "n_checked": 7,
+  "n_true": 2,
+  "precision": 0.286,
+  "note": "盲检规则=两竖直白柱+柱间横梁; truth 由 3x 放大人工看图标注。fill_mid/post_below/h_span 均在真/假之间有重叠, 见 frames。",
+  "cols": [
+   "frame",
+   "posts",
+   "det",
+   "truth",
+   "fill",
+   "post",
+   "hs",
+   "ground"
+  ],
+  "rows": [
+   [
+    "match_004.jpg",
+    12.0,
+    false,
+    false,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "match_008.jpg",
+    12.0,
+    true,
+    false,
+    0.6,
+    0.75,
+    1.278,
+    false
+   ],
+   [
+    "match_012.jpg",
+    12.0,
+    true,
+    false,
+    0.645,
+    0.848,
+    0.358,
+    false
+   ],
+   [
+    "match_016.jpg",
+    12.0,
+    true,
+    false,
+    0.951,
+    0.876,
+    0.61,
+    false
+   ],
+   [
+    "match_020.jpg",
+    12.0,
+    false,
+    false,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "match_024.jpg",
+    12.0,
+    true,
+    false,
+    0.825,
+    0.952,
+    0.507,
+    true
+   ],
+   [
+    "match_028.jpg",
+    12.0,
+    true,
+    true,
+    0.448,
+    0.525,
+    0.727,
+    true
+   ],
+   [
+    "match_032.jpg",
+    12.0,
+    false,
+    false,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "match_036.jpg",
+    12.0,
+    true,
+    false,
+    0.072,
+    0.305,
+    0.521,
+    true
+   ],
+   [
+    "match_040.jpg",
+    12.0,
+    true,
+    true,
+    0.612,
+    0.523,
+    0.797,
+    true
+   ]
+  ]
  },
  "conclusion": {
   "pass_all": 0,
@@ -349,302 +1069,103 @@
   "n_test": 10,
   "pass_arc_test": 0,
   "test_frames": [
-   {
-    "frame": "match_004.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "touchline_unsupported(0.542)",
-    "asg": "5.5/52.5",
-    "f": 113.8,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": 0.3709,
-    "cam_h": -2.36,
-    "touch": 0.542,
-    "sel": 0.632,
-    "arc": 0.611,
-    "circle": null,
-    "goal": 0.455,
-    "rms": 11.96,
-    "n_seg": 17,
-    "n_b": 6,
-    "n_hyp": 2520,
-    "grass": 0.621,
-    "goal_det": null,
-    "ms": 2071.3
-   },
-   {
-    "frame": "match_008.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "touchline_unsupported(0.514)",
-    "asg": "0/88.5",
-    "f": null,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": null,
-    "cam_h": null,
-    "touch": 0.514,
-    "sel": 0.285,
-    "arc": null,
-    "circle": null,
-    "goal": 0.444,
-    "rms": 57.11,
-    "n_seg": 9,
-    "n_b": 3,
-    "n_hyp": 378,
-    "grass": 0.463,
-    "goal_det": {
-     "x1": 505.5,
-     "x2": 524.5,
-     "y": 40.0,
-     "h": 23.0,
-     "span": 19.0,
-     "bar": 0.37
-    },
-    "ms": 245.6
-   },
-   {
-    "frame": "match_012.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "touchline_unsupported(0.351)",
-    "asg": "5.5/52.5",
-    "f": 334.4,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": 0.2202,
-    "cam_h": 13.3,
-    "touch": 0.351,
-    "sel": 0.347,
-    "arc": 0.033,
-    "circle": 0.1,
-    "goal": 0.0,
-    "rms": 15.64,
-    "n_seg": 10,
-    "n_b": 6,
-    "n_hyp": 2100,
-    "grass": 0.673,
-    "goal_det": null,
-    "ms": 1456.7
-   },
-   {
-    "frame": "match_016.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "touchline_unsupported(0.36)",
-    "asg": "16.5/105",
-    "f": null,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": null,
-    "cam_h": null,
-    "touch": 0.36,
-    "sel": 0.391,
-    "arc": 0.083,
-    "circle": 0.0,
-    "goal": 0.6,
-    "rms": 4.21,
-    "n_seg": 14,
-    "n_b": 2,
-    "n_hyp": 168,
-    "grass": 0.844,
-    "goal_det": {
-     "x1": 213.5,
-     "x2": 154.5,
-     "y": 0.0,
-     "h": 36.0,
-     "span": 59.0,
-     "bar": 0.92
-    },
-    "ms": 149.1
-   },
-   {
-    "frame": "match_020.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "not_orthogonal(rel=None)",
-    "asg": "52.5/105",
-    "f": null,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": null,
-    "cam_h": null,
-    "touch": 0.714,
-    "sel": 0.733,
-    "arc": 0.917,
-    "circle": 0.833,
-    "goal": 0.57,
-    "rms": 9.67,
-    "n_seg": 23,
-    "n_b": 6,
-    "n_hyp": 1260,
-    "grass": 0.367,
-    "goal_det": null,
-    "ms": 925.3
-   },
-   {
-    "frame": "match_024.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "no_touchline_pair",
-    "asg": null,
-    "f": null,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": null,
-    "cam_h": null,
-    "touch": null,
-    "sel": null,
-    "arc": null,
-    "circle": null,
-    "goal": null,
-    "rms": null,
-    "n_seg": 11,
-    "n_b": 0,
-    "n_hyp": 0,
-    "grass": 0.716,
-    "goal_det": {
-     "x1": 188.5,
-     "x2": 119.5,
-     "y": 85.0,
-     "h": 35.0,
-     "span": 69.0,
-     "bar": 0.46
-    },
-    "ms": 11.9
-   },
-   {
-    "frame": "match_028.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "not_orthogonal(rel=0.9978)",
-    "asg": "0/5.5",
-    "f": 5812.7,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": 0.9978,
-    "cam_h": null,
-    "touch": 0.646,
-    "sel": 0.551,
-    "arc": 0.829,
-    "circle": 1.0,
-    "goal": 0.567,
-    "rms": 9.84,
-    "n_seg": 27,
-    "n_b": 6,
-    "n_hyp": 1344,
-    "grass": 0.837,
-    "goal_det": {
-     "x1": 50.0,
-     "x2": 110.5,
-     "y": 95.0,
-     "h": 44.0,
-     "span": 60.5,
-     "bar": 0.39
-    },
-    "ms": 855.2
-   },
-   {
-    "frame": "match_032.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "not_orthogonal(rel=None)",
-    "asg": "0/94",
-    "f": null,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": null,
-    "cam_h": null,
-    "touch": 0.75,
-    "sel": 0.52,
-    "arc": 1.0,
-    "circle": 1.0,
-    "goal": 1.0,
-    "rms": 5.19,
-    "n_seg": 8,
-    "n_b": 4,
-    "n_hyp": 1008,
-    "grass": 0.667,
-    "goal_det": null,
-    "ms": 600.9
-   },
-   {
-    "frame": "match_036.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "touchline_unsupported(0.25)",
-    "asg": "94/105",
-    "f": null,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": null,
-    "cam_h": null,
-    "touch": 0.25,
-    "sel": 0.213,
-    "arc": 0.0,
-    "circle": 0.0,
-    "goal": 0.713,
-    "rms": 12.7,
-    "n_seg": 5,
-    "n_b": 3,
-    "n_hyp": 126,
-    "grass": 0.651,
-    "goal_det": {
-     "x1": 506.0,
-     "x2": 540.5,
-     "y": 41.0,
-     "h": 43.0,
-     "span": 34.5,
-     "bar": 0.68
-    },
-    "ms": 118.6
-   },
-   {
-    "frame": "match_040.jpg",
-    "passed": false,
-    "passed_arc": false,
-    "reason": "not_orthogonal(rel=None)",
-    "asg": "0/94",
-    "f": null,
-    "f_a": null,
-    "f_b": null,
-    "self_rel": null,
-    "cam_h": null,
-    "touch": 0.66,
-    "sel": 0.486,
-    "arc": 0.478,
-    "circle": 0.167,
-    "goal": 0.532,
-    "rms": 10.28,
-    "n_seg": 13,
-    "n_b": 6,
-    "n_hyp": 2100,
-    "grass": 0.582,
-    "goal_det": {
-     "x1": 376.0,
-     "x2": 309.5,
-     "y": 82.0,
-     "h": 53.0,
-     "span": 66.5,
-     "bar": 0.76
-    },
-    "ms": 1266.1
-   }
+   [
+    "match_004.jpg",
+    0,
+    0.254,
+    0.268,
+    "touchline_unsupported"
+   ],
+   [
+    "match_008.jpg",
+    0,
+    null,
+    null,
+    "no_plausible_camera"
+   ],
+   [
+    "match_012.jpg",
+    0,
+    0.325,
+    0.545,
+    "touchline_unsupported"
+   ],
+   [
+    "match_016.jpg",
+    0,
+    0.548,
+    0.411,
+    "touchline_unsupported"
+   ],
+   [
+    "match_020.jpg",
+    0,
+    0.385,
+    0.623,
+    "touchline_unsupported"
+   ],
+   [
+    "match_024.jpg",
+    0,
+    null,
+    null,
+    "no_touchline_pair"
+   ],
+   [
+    "match_028.jpg",
+    0,
+    0.237,
+    0.235,
+    "touchline_unsupported"
+   ],
+   [
+    "match_032.jpg",
+    0,
+    0.295,
+    0.707,
+    "touchline_unsupported"
+   ],
+   [
+    "match_036.jpg",
+    0,
+    null,
+    null,
+    "no_plausible_camera"
+   ],
+   [
+    "match_040.jpg",
+    0,
+    0.447,
+    0.255,
+    "touchline_unsupported"
+   ]
   ],
-  "goal_detected": 6,
-  "goal_test": 6,
-  "circle_frames": 5,
-  "mean_ms": 770.1,
-  "p95_ms": 1794.8,
+  "goal_detected": 7,
+  "goal_test": 7,
+  "circle_frames": 2,
+  "mean_ms": 108.9,
+  "p95_ms": 230.4,
   "stage_ms": {
-   "grass_ms": 7.7,
-   "white_ms": 4.11,
-   "hough_ms": 9.23,
-   "pair_ms": 2.35,
-   "fit_ms": 743.42,
-   "refine_ms": 1.29,
-   "score_ms": 1.98
+   "grass_ms": 4.33,
+   "white_ms": 2.56,
+   "hough_ms": 5.56,
+   "pair_ms": 1.73,
+   "fit_ms": 88.42,
+   "refine_ms": 0.77,
+   "score_ms": 1.08
+  },
+  "verdict": {
+   "verdict": "不可行（端到端）",
+   "pass_test": "0/10",
+   "criterion_sound": true,
+   "criterion_evidence": "oracle 暴力枚举能在 2/3 帧里找到 rel<=self_rel_max 的四线自洽解（最多 81 个），但看图这些解落在广告牌/记分牌上，被 holdout 覆盖率否掉 -> 正交残差单独无判别力，覆盖率闸门才是判别力来源",
+   "threshold_artifact": "否（15 组参数扫描全部 0/10）",
+   "root_cause": "亚像素画线：px/m 与 12cm 线宽换算得到 0.24-0.58 px；真实边线上白线覆盖率 0.00-0.76，而判据要求两条边线同时 >=0.55",
+   "resolution_not_the_fix": "1280x720 原生帧与 640x360 降采样对照同为 0 通过",
+   "goal": "盲检 7 个门框候选，人工看图核实 2 个真（precision 0.29）；fill_mid/post_below 在真假之间有重叠，没有一条干净的单特征阈值",
+   "needed": "要让它可用，需要以下任一条件：(a) 机位更近/更长焦，使画线宽 >=1.5 px；(b) 用半自动初始化，人工点 4 个角点后只做跟踪；(c) 换成草地纹理/割草条纹方向做几何约束，不再依赖白线像素。",
+   "arcs": "中圈/罚球弧：本批帧里中圈直径只有 36-88 px、弧半径 18-44 px，而画线只有 0.24-0.58 px 宽 -> 弧在二值图上不是连通点集，HoughCircles/fitEllipse 没有可拟合的支撑；因此**没有独立跑圆弧检测器**，中圈的证据来自拟合出的单应把地面圆投影到白线掩膜上的覆盖率。实测 arc 覆盖率 0.03-0.29，有 2 帧单看弧覆盖率过了 0.25，但 T2 要求 T1 先通过，T1 是 0 帧 -> 圆/弧二级判据实际 0/10。",
+   "compute": "前端像素算子 11 ms（grass 6.3 + white 4.5），Hough 10 ms，唯一大头是 CPU 上的假设枚举 fit 88 ms；PL 上没有对应加速，必须改成单假设跟踪或直接用人给的初值"
   }
  }
 }

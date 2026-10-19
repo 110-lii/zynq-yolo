@@ -143,6 +143,19 @@ def cmd_extract(args):
         return 1
     OUT.mkdir(parents=True, exist_ok=True)
     pre, post = float(args.pre), float(args.post)
+    # ★ 必须先把已有的人工裁定读进来再重写 —— MANIFEST 里 decision/confidence/notes
+    #   是**人给的原始数据，不可再生**。第一版直接整表重写，重跑一次就把 12 条裁定
+    #   全抹了（差点真丢）。现在按 incident_id 逐条带过来。
+    man = OUT / "MANIFEST.csv"
+    old = {}
+    if man.exists():
+        with open(man, encoding="utf-8", newline="") as f:
+            for r in csv.DictReader(f):
+                if any((r.get(k) or "").strip()
+                       for k in ("decision", "notes", "judged")):
+                    old[r["incident_id"]] = r
+        if old:
+            print("  已有 %d 条人工裁定，将按 incident_id 带过来" % len(old))
     rows = []
     for i, d in enumerate(plan, 1):
         iid = "inc_%02d" % i
@@ -159,26 +172,36 @@ def cmd_extract(args):
             print("  跳过 %s：ffmpeg rc=%d" % (iid, rc))
             continue
         stills = {}
-        for tag, off in (("before", -1.0), ("at", 0.0), ("after", 1.0)):
+        # 静帧按**窗口相对位置**取，不是围着 burst 中心取 ±1 s：
+        # 事件本体常发生在回放爆发之前，围着中心取三张等于三张几乎同一画面。
+        for tag, frac in (("before", 0.40), ("at", 0.70), ("after", 0.95)):
             p = OUT / ("%s_%s.jpg" % (iid, tag))
-            run([str(FFMPEG), "-hide_banner", "-y", "-ss", "%.2f" % max(0.0, tc + off),
+            run([str(FFMPEG), "-hide_banner", "-y",
+                 "-ss", "%.2f" % (start + frac * dur),
                  "-i", str(VIDEO), "-frames:v", "1", "-vf", "scale=1280:-2",
                  "-q:v", "3", str(p)])
             stills[tag] = p.name if p.exists() else ""
-        rows.append({
+        rec = {
             "incident_id": iid, "t_center_s": "%.1f" % tc,
             "window_start_s": "%.1f" % start, "window_end_s": "%.1f" % (start + dur),
             "n_cuts": d["n"], "clip_file": clip.name,
             "still_before": stills["before"], "still_at": stills["at"],
             "still_after": stills["after"],
             "decision": "", "confidence": "", "notes": "",
-        })
-        print("  %s  t=%.1f s  片长 %.0f s  -> %s" % (iid, tc, dur, clip.name))
-    man = OUT / "MANIFEST.csv"
+            "judged": "", "judged_by": "",
+        }
+        if iid in old:                      # 带过人工裁定，绝不覆盖
+            for k in ("decision", "confidence", "notes", "judged", "judged_by"):
+                rec[k] = old[iid].get(k) or ""
+        rows.append(rec)
+        print("  %s  t=%.1f s  片长 %.0f s  -> %s%s"
+              % (iid, tc, dur, clip.name,
+                 "  [已带过裁定] " + rec["decision"] if rec["decision"] else ""))
     with open(man, "w", encoding="utf-8", newline="\n") as f:
         # ★ `csv` 模块默认 lineterminator="\r\n"，与 .gitattributes 的 eol=lf 冲突
         #   （本仓库已因同类原因踩过 3 次）。必须显式改成 "\n"。
-        w = csv.DictWriter(f, fieldnames=COLS, lineterminator="\n")
+        w = csv.DictWriter(f, fieldnames=COLS + ["judged", "judged_by"],
+                           lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     print("")
@@ -199,8 +222,10 @@ def main(argv=None):
     ap.add_argument("--top", type=int, default=12)
     ap.add_argument("--skip-before", type=float, default=90.0,
                     help="跳过片头（实测第 0.8 s 处有 82 次切换 = 字幕动画，不是事件）")
-    ap.add_argument("--pre", type=float, default=14.0)
-    ap.add_argument("--post", type=float, default=6.0)
+    ap.add_argument("--pre", type=float, default=25.0,
+                    help="片段从 burst 中心往前取多少秒。回放爆发在事件**之后**，"
+                         "所以主体在前侧；第一版 14/6 让 2/12 条判成「看不清」")
+    ap.add_argument("--post", type=float, default=5.0)
     args = ap.parse_args(argv)
     if args.scan:
         return cmd_scan(args)

@@ -1,13 +1,13 @@
-incident_id,t_center_s,window_start_s,window_end_s,n_cuts,clip_file,still_before,still_at,still_after,decision,confidence,notes
-inc_01,1154.9,1140.9,1160.9,12,inc_01_t01154.9.mp4,inc_01_before.jpg,inc_01_at.jpg,inc_01_after.jpg,,,
-inc_02,1370.6,1356.6,1376.6,14,inc_02_t01370.6.mp4,inc_02_before.jpg,inc_02_at.jpg,inc_02_after.jpg,,,
-inc_03,1508.3,1494.3,1514.3,12,inc_03_t01508.3.mp4,inc_03_before.jpg,inc_03_at.jpg,inc_03_after.jpg,,,
-inc_04,1697.4,1683.4,1703.4,13,inc_04_t01697.4.mp4,inc_04_before.jpg,inc_04_at.jpg,inc_04_after.jpg,,,
-inc_05,1796.1,1782.1,1802.1,14,inc_05_t01796.1.mp4,inc_05_before.jpg,inc_05_at.jpg,inc_05_after.jpg,,,
-inc_06,1901.6,1887.6,1907.6,15,inc_06_t01901.6.mp4,inc_06_before.jpg,inc_06_at.jpg,inc_06_after.jpg,,,
-inc_07,2037.9,2023.9,2043.9,14,inc_07_t02037.9.mp4,inc_07_before.jpg,inc_07_at.jpg,inc_07_after.jpg,,,
-inc_08,2395.4,2381.4,2401.4,15,inc_08_t02395.4.mp4,inc_08_before.jpg,inc_08_at.jpg,inc_08_after.jpg,,,
-inc_09,3237.3,3223.3,3243.3,14,inc_09_t03237.3.mp4,inc_09_before.jpg,inc_09_at.jpg,inc_09_after.jpg,,,
-inc_10,5249.2,5235.2,5255.2,27,inc_10_t05249.2.mp4,inc_10_before.jpg,inc_10_at.jpg,inc_10_after.jpg,,,
-inc_11,6345.4,6331.4,6351.4,13,inc_11_t06345.4.mp4,inc_11_before.jpg,inc_11_at.jpg,inc_11_after.jpg,,,
-inc_12,6867.9,6853.9,6873.9,19,inc_12_t06867.9.mp4,inc_12_before.jpg,inc_12_at.jpg,inc_12_after.jpg,,,
+incident_id,t_center_s,window_start_s,window_end_s,n_cuts,clip_file,still_before,still_at,still_after,decision,confidence,notes,judged,judged_by
+inc_01,1154.9,1129.9,1159.9,12,inc_01_t01154.9.mp4,inc_01_before.jpg,inc_01_at.jpg,inc_01_after.jpg,犯规,0.7,红色7号上前争抢，被白色挂到小腿倒地,2026-10-19 21:45:03+0800,user
+inc_02,1370.6,1345.6,1375.6,14,inc_02_t01370.6.mp4,inc_02_before.jpg,inc_02_at.jpg,inc_02_after.jpg,犯规,0.4,距离太远，有遮挡，无法具体判断，但是裁判吹罚白色球员犯规,2026-10-19 21:45:03+0800,user
+inc_03,1508.3,1483.3,1513.3,12,inc_03_t01508.3.mp4,inc_03_before.jpg,inc_03_at.jpg,inc_03_after.jpg,无事件,0.6,白色球员在争抢头球时受伤，一段时间之后白方主动把球踢出边线,2026-10-19 21:45:03+0800,user
+inc_04,1697.4,1672.4,1702.4,13,inc_04_t01697.4.mp4,inc_04_before.jpg,inc_04_at.jpg,inc_04_after.jpg,犯规,0.8,红方球员带球启动，被白方球员背后放倒，白方犯规,2026-10-19 21:45:03+0800,user
+inc_05,1796.1,1771.1,1801.1,14,inc_05_t01796.1.mp4,inc_05_before.jpg,inc_05_at.jpg,inc_05_after.jpg,红黄牌,0.9,双方争抢头球，红方手部有犯规动作，撞击到白方脸部，红方犯规，危险动作，黄牌,2026-10-19 21:45:03+0800,user
+inc_06,1901.6,1876.6,1906.6,15,inc_06_t01901.6.mp4,inc_06_before.jpg,inc_06_at.jpg,inc_06_after.jpg,出界,1.0,红方把球踢出边界解围，白方准备发界外球,2026-10-19 21:45:03+0800,user
+inc_07,2037.9,2012.9,2042.9,14,inc_07_t02037.9.mp4,inc_07_before.jpg,inc_07_at.jpg,inc_07_after.jpg,出界,1.0,白方传中，足球击中红方头部后飞出底线，无犯规,2026-10-19 21:45:03+0800,user
+inc_08,2395.4,2370.4,2400.4,15,inc_08_t02395.4.mp4,inc_08_before.jpg,inc_08_at.jpg,inc_08_after.jpg,犯规,0.8,双方互相争抢，裁判最后判罚红方犯规,2026-10-19 21:45:03+0800,user
+inc_09,3237.3,3212.3,3242.3,14,inc_09_t03237.3.mp4,inc_09_before.jpg,inc_09_at.jpg,inc_09_after.jpg,犯规,0.8,红方带球突破，遭白方贴身防守，红方犯规致使白方倒地，边裁举旗判罚红方犯规,2026-10-19 21:45:03+0800,user
+inc_10,5249.2,5224.2,5254.2,27,inc_10_t05249.2.mp4,inc_10_before.jpg,inc_10_at.jpg,inc_10_after.jpg,看不清,,该片段只有红方倒地受伤的场景，没办法看出事情经过,2026-10-19 21:45:03+0800,user
+inc_11,6345.4,6320.4,6350.4,13,inc_11_t06345.4.mp4,inc_11_before.jpg,inc_11_at.jpg,inc_11_after.jpg,看不清,,白方前场传球，疑似越位，边裁没有给出具体判罚，但是在传球前红方犯规，主裁判示意进攻有利，之后球被断下,2026-10-19 21:45:03+0800,user
+inc_12,6867.9,6842.9,6872.9,19,inc_12_t06867.9.mp4,inc_12_before.jpg,inc_12_at.jpg,inc_12_after.jpg,出界,1.0,白方禁区外围远射稍稍偏离球门后反弹回球场,2026-10-19 21:45:03+0800,user

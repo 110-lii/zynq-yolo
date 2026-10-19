@@ -1,18 +1,44 @@
 {
-  "generated_at": "2026-10-19T19:24:01+0800",
+  "generated_at": "2026-10-19T21:06:13+0800",
   "tool": "Vitis HLS 2020.2",
   "part": "xc7z020clg400-2",
   "clock_ns": 10.0,
   "source": "src/hls/accel/src/conv_engine.cpp",
   "note": "实现参数扫描；几何为运行期参数，故不含 C_IN/C_OUT/H/W",
   "results": {
-    "p8_4_40": {
+    "p8_4_40_a1": {
+      "status": "NOLOG",
+      "tag": "p8_4_40_a1"
+    },
+    "p8_1_40_a1": {
       "status": "OK",
-      "tag": "p8_4_40",
-      "dsp": "169",
+      "tag": "p8_1_40_a1",
+      "dsp": "129",
+      "bram18": "10",
+      "lut": "{",
+      "ff": "57471",
+      "ii": "{",
+      "lat": "{",
+      "fmax_mhz": "-"
+    },
+    "p8_2_20_a1": {
+      "status": "OK",
+      "tag": "p8_2_20_a1",
+      "dsp": "145",
+      "bram18": "10",
+      "lut": "{",
+      "ff": "63640",
+      "ii": "{",
+      "lat": "{",
+      "fmax_mhz": "-"
+    },
+    "p8_1_40_a0": {
+      "status": "OK",
+      "tag": "p8_1_40_a0",
+      "dsp": "129",
       "bram18": "26",
       "lut": "{",
-      "ff": "59489",
+      "ff": "36476",
       "ii": "{",
       "lat": "{",
       "fmax_mhz": "-"

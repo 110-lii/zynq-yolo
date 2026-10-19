@@ -1,0 +1,65 @@
+{
+  "tag": "video30",
+  "model": "yolov8n_320.onnx",
+  "iou": 0.45,
+  "frames": 10,
+  "ref_default_conf": 0.25,
+  "curve": [
+    {
+      "conf": 0.05,
+      "ref_boxes": 185,
+      "int8_boxes": 186
+    },
+    {
+      "conf": 0.1,
+      "ref_boxes": 158,
+      "int8_boxes": 161
+    },
+    {
+      "conf": 0.15,
+      "ref_boxes": 141,
+      "int8_boxes": 143
+    },
+    {
+      "conf": 0.2,
+      "ref_boxes": 129,
+      "int8_boxes": 130
+    },
+    {
+      "conf": 0.25,
+      "ref_boxes": 114,
+      "int8_boxes": 116
+    },
+    {
+      "conf": 0.3,
+      "ref_boxes": 97,
+      "int8_boxes": 99
+    },
+    {
+      "conf": 0.35,
+      "ref_boxes": 84,
+      "int8_boxes": 86
+    },
+    {
+      "conf": 0.4,
+      "ref_boxes": 69,
+      "int8_boxes": 71
+    },
+    {
+      "conf": 0.5,
+      "ref_boxes": 39,
+      "int8_boxes": 12
+    }
+  ],
+  "ref_at_default": 114,
+  "int8_equivalent_conf": 0.25,
+  "int8_equivalent_boxes": 116,
+  "score_delta": {
+    "n": 180,
+    "mean": -0.010653196937508054,
+    "median": -0.0073525868356227875,
+    "p10": -0.06258215308189391,
+    "p90": 0.04281155467033385,
+    "min": -0.20474612712860107
+  }
+}

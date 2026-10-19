@@ -152,25 +152,25 @@
      "family": {
       "n_tracks": 82,
       "n_pairs": 845,
-      "strict": 0.2804878048780488,
-      "strict_short": 0.3269230769230769,
+      "strict": 0.28,
+      "strict_short": 0.327,
       "n_tracks_short": 52,
-      "consec": 0.7325443786982249,
+      "consec": 0.733,
       "len_median": 8.0,
       "len_max": 43,
-      "shuffle_consec": 0.27688757396449704,
-      "shuffle_strict_short": 0.004807692307692308
+      "shuffle_consec": 0.277,
+      "shuffle_strict_short": 0.005
      },
      "proto": {
       "n_tracks": 82,
       "n_pairs": 845,
-      "strict": 0.2804878048780488,
-      "strict_short": 0.3269230769230769,
+      "strict": 0.28,
+      "strict_short": 0.327,
       "n_tracks_short": 52,
-      "consec": 0.7325443786982249,
+      "consec": 0.733,
       "len_median": 8.0,
       "len_max": 43,
-      "shuffle_consec": 0.27727810650887574
+      "shuffle_consec": 0.277
      }
     },
     "claims_team": {
@@ -178,25 +178,25 @@
      "family": {
       "n_tracks": 58,
       "n_pairs": 679,
-      "strict": 0.2413793103448276,
-      "strict_short": 0.25806451612903225,
+      "strict": 0.241,
+      "strict_short": 0.258,
       "n_tracks_short": 31,
-      "consec": 0.7525773195876289,
+      "consec": 0.753,
       "len_median": 10.0,
       "len_max": 43,
-      "shuffle_consec": 0.27969808541973484,
-      "shuffle_strict_short": 0.0033870967741935483
+      "shuffle_consec": 0.28,
+      "shuffle_strict_short": 0.003
      },
      "proto": {
       "n_tracks": 58,
       "n_pairs": 679,
-      "strict": 0.2413793103448276,
-      "strict_short": 0.25806451612903225,
+      "strict": 0.241,
+      "strict_short": 0.258,
       "n_tracks_short": 31,
-      "consec": 0.7525773195876289,
+      "consec": 0.753,
       "len_median": 10.0,
       "len_max": 43,
-      "shuffle_consec": 0.278961708394698
+      "shuffle_consec": 0.279
      }
     },
     "claims_context": {
@@ -205,24 +205,24 @@
       "n_tracks": 24,
       "n_pairs": 166,
       "strict": 0.375,
-      "strict_short": 0.42857142857142855,
+      "strict_short": 0.429,
       "n_tracks_short": 21,
-      "consec": 0.6506024096385542,
+      "consec": 0.651,
       "len_median": 6.5,
       "len_max": 22,
-      "shuffle_consec": 0.2689156626506024,
-      "shuffle_strict_short": 0.004047619047619047
+      "shuffle_consec": 0.269,
+      "shuffle_strict_short": 0.004
      },
      "proto": {
       "n_tracks": 24,
       "n_pairs": 166,
       "strict": 0.375,
-      "strict_short": 0.42857142857142855,
+      "strict_short": 0.429,
       "n_tracks_short": 21,
-      "consec": 0.6506024096385542,
+      "consec": 0.651,
       "len_median": 6.5,
       "len_max": 22,
-      "shuffle_consec": 0.2740060240963855
+      "shuffle_consec": 0.274
      }
     },
     "ring_control": {
@@ -230,14 +230,14 @@
      "family": {
       "n_tracks": 74,
       "n_pairs": 725,
-      "strict": 0.9864864864864865,
-      "strict_short": 0.9791666666666666,
+      "strict": 0.986,
+      "strict_short": 0.979,
       "n_tracks_short": 48,
-      "consec": 0.9958620689655172,
+      "consec": 0.996,
       "len_median": 8.0,
       "len_max": 37,
-      "shuffle_consec": 0.8931025011614605,
-      "shuffle_strict_short": 0.7068609540847625
+      "shuffle_consec": 0.893,
+      "shuffle_strict_short": 0.707
      }
     },
     "by_size": [
@@ -246,8 +246,8 @@
       "h_hi": 32,
       "n_tracks": 2,
       "n_pairs": 11,
-      "consec": 0.8181818181818182,
-      "shuffle_consec": 0.5754545454545454,
+      "consec": 0.818,
+      "shuffle_consec": 0.575,
       "strict": 0.5,
       "strict_short": 0.5
      },
@@ -256,28 +256,28 @@
       "h_hi": 56,
       "n_tracks": 11,
       "n_pairs": 58,
-      "consec": 0.7931034482758621,
-      "shuffle_consec": 0.4673275862068965,
-      "strict": 0.45454545454545453,
-      "strict_short": 0.45454545454545453
+      "consec": 0.793,
+      "shuffle_consec": 0.467,
+      "strict": 0.455,
+      "strict_short": 0.455
      },
      {
       "h_lo": 56,
       "h_hi": 96,
       "n_tracks": 67,
       "n_pairs": 755,
-      "consec": 0.7205298013245033,
-      "shuffle_consec": 0.35053642384105954,
-      "strict": 0.23880597014925373,
-      "strict_short": 0.2631578947368421
+      "consec": 0.721,
+      "shuffle_consec": 0.351,
+      "strict": 0.239,
+      "strict_short": 0.263
      },
      {
       "h_lo": 96,
       "h_hi": 400,
       "n_tracks": 2,
       "n_pairs": 21,
-      "consec": 0.9523809523809523,
-      "shuffle_consec": 0.7614285714285713,
+      "consec": 0.952,
+      "shuffle_consec": 0.761,
       "strict": 0.5,
       "strict_short": 1.0
      }
@@ -298,6 +298,11 @@
     "torso_jersey_rate": 0.739,
     "ring_jersey_rate": 0.31,
     "mean_p_team": 0.304,
+    "mean_p_adj": 0.266,
+    "p_team_ge_0.5": 65,
+    "p_adj_ge_0.3": 92,
+    "p_adj_ge_0.3_rate": 0.453,
+    "ring_missing": 17,
     "by_size": [
      {
       "h_lo": 0,
@@ -337,40 +342,443 @@
      }
     ]
    },
+   "per_frame": {
+    "keys": [
+     "n",
+     "n_conf_ge_025",
+     "n_low",
+     "n_team",
+     "n_context"
+    ],
+    "rows": [
+     [
+      21,
+      21,
+      0,
+      12,
+      4
+     ],
+     [
+      21,
+      20,
+      1,
+      15,
+      3
+     ],
+     [
+      23,
+      19,
+      4,
+      16,
+      3
+     ],
+     [
+      19,
+      18,
+      1,
+      15,
+      1
+     ],
+     [
+      20,
+      18,
+      2,
+      17,
+      1
+     ],
+     [
+      21,
+      17,
+      4,
+      16,
+      2
+     ],
+     [
+      19,
+      17,
+      2,
+      13,
+      1
+     ],
+     [
+      18,
+      16,
+      2,
+      15,
+      1
+     ],
+     [
+      20,
+      17,
+      3,
+      14,
+      2
+     ],
+     [
+      18,
+      17,
+      1,
+      15,
+      0
+     ],
+     [
+      19,
+      17,
+      2,
+      14,
+      0
+     ],
+     [
+      18,
+      16,
+      2,
+      13,
+      1
+     ],
+     [
+      19,
+      17,
+      2,
+      14,
+      2
+     ],
+     [
+      19,
+      17,
+      2,
+      14,
+      1
+     ],
+     [
+      20,
+      19,
+      1,
+      14,
+      2
+     ],
+     [
+      18,
+      17,
+      1,
+      13,
+      0
+     ],
+     [
+      19,
+      18,
+      1,
+      13,
+      3
+     ],
+     [
+      20,
+      18,
+      2,
+      13,
+      1
+     ],
+     [
+      23,
+      16,
+      7,
+      11,
+      4
+     ],
+     [
+      23,
+      17,
+      6,
+      11,
+      2
+     ],
+     [
+      23,
+      16,
+      7,
+      14,
+      1
+     ],
+     [
+      24,
+      15,
+      9,
+      11,
+      3
+     ],
+     [
+      17,
+      14,
+      3,
+      10,
+      2
+     ],
+     [
+      17,
+      16,
+      1,
+      11,
+      2
+     ],
+     [
+      24,
+      19,
+      5,
+      12,
+      7
+     ],
+     [
+      19,
+      16,
+      3,
+      12,
+      3
+     ],
+     [
+      21,
+      17,
+      4,
+      15,
+      1
+     ],
+     [
+      23,
+      17,
+      6,
+      14,
+      2
+     ],
+     [
+      23,
+      18,
+      5,
+      11,
+      6
+     ],
+     [
+      19,
+      15,
+      4,
+      14,
+      3
+     ],
+     [
+      21,
+      19,
+      2,
+      10,
+      6
+     ],
+     [
+      22,
+      18,
+      4,
+      15,
+      3
+     ],
+     [
+      21,
+      18,
+      3,
+      15,
+      1
+     ],
+     [
+      22,
+      19,
+      3,
+      15,
+      7
+     ],
+     [
+      23,
+      18,
+      5,
+      20,
+      2
+     ],
+     [
+      24,
+      17,
+      7,
+      16,
+      5
+     ],
+     [
+      20,
+      18,
+      2,
+      14,
+      2
+     ],
+     [
+      25,
+      16,
+      9,
+      12,
+      8
+     ],
+     [
+      22,
+      18,
+      4,
+      14,
+      4
+     ],
+     [
+      21,
+      19,
+      2,
+      14,
+      4
+     ],
+     [
+      20,
+      17,
+      3,
+      12,
+      4
+     ],
+     [
+      25,
+      17,
+      8,
+      15,
+      4
+     ],
+     [
+      21,
+      20,
+      1,
+      13,
+      3
+     ],
+     [
+      19,
+      18,
+      1,
+      12,
+      4
+     ],
+     [
+      22,
+      19,
+      3,
+      15,
+      3
+     ],
+     [
+      26,
+      18,
+      8,
+      16,
+      4
+     ],
+     [
+      22,
+      16,
+      6,
+      15,
+      2
+     ],
+     [
+      22,
+      18,
+      4,
+      16,
+      1
+     ],
+     [
+      28,
+      18,
+      10,
+      12,
+      9
+     ],
+     [
+      22,
+      19,
+      3,
+      13,
+      6
+     ],
+     [
+      20,
+      18,
+      2,
+      13,
+      2
+     ],
+     [
+      22,
+      17,
+      5,
+      12,
+      4
+     ],
+     [
+      22,
+      19,
+      3,
+      11,
+      6
+     ],
+     [
+      20,
+      19,
+      1,
+      13,
+      3
+     ],
+     [
+      21,
+      19,
+      2,
+      12,
+      4
+     ],
+     [
+      19,
+      17,
+      2,
+      10,
+      6
+     ],
+     [
+      20,
+      19,
+      1,
+      12,
+      2
+     ],
+     [
+      21,
+      18,
+      3,
+      15,
+      2
+     ],
+     [
+      19,
+      19,
+      0,
+      11,
+      1
+     ],
+     [
+      17,
+      14,
+      3,
+      9,
+      2
+     ]
+    ]
+   },
    "rerank_top": [
-    {
-     "score": 0.07,
-     "p_team": 0.937,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 79.9,
-     "box": [
-      876.4,
-      313.5,
-      894.5,
-      393.4
-     ],
-     "fi": 34
-    },
-    {
-     "score": 0.051,
-     "p_team": 0.908,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 24.5,
-     "box": [
-      1136.7,
-      258.8,
-      1156.4,
-      283.4
-     ],
-     "fi": 28
-    },
     {
      "score": 0.061,
      "p_team": 0.907,
+     "q_team_ring": 0.0,
+     "p_adj": 0.907,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "CYAN",
@@ -386,6 +794,8 @@
     {
      "score": 0.097,
      "p_team": 0.882,
+     "q_team_ring": 0.0,
+     "p_adj": 0.882,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -401,6 +811,8 @@
     {
      "score": 0.099,
      "p_team": 0.881,
+     "q_team_ring": 0.0,
+     "p_adj": 0.881,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -416,6 +828,8 @@
     {
      "score": 0.207,
      "p_team": 0.878,
+     "q_team_ring": 0.0,
+     "p_adj": 0.878,
      "fam": "WHITE",
      "team": true,
      "ring_fam": null,
@@ -431,6 +845,8 @@
     {
      "score": 0.167,
      "p_team": 0.877,
+     "q_team_ring": 0.0,
+     "p_adj": 0.877,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -446,6 +862,8 @@
     {
      "score": 0.097,
      "p_team": 0.846,
+     "q_team_ring": 0.0,
+     "p_adj": 0.846,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -461,6 +879,8 @@
     {
      "score": 0.102,
      "p_team": 0.837,
+     "q_team_ring": 0.0,
+     "p_adj": 0.837,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -474,38 +894,27 @@
      "fi": 46
     },
     {
-     "score": 0.051,
-     "p_team": 0.833,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 30.6,
-     "box": [
-      1110.9,
-      259.2,
-      1141.9,
-      289.8
-     ],
-     "fi": 26
-    },
-    {
-     "score": 0.247,
-     "p_team": 0.81,
+     "score": 0.07,
+     "p_team": 0.937,
+     "q_team_ring": 0.118,
+     "p_adj": 0.819,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
-     "h": 108.9,
+     "h": 79.9,
      "box": [
-      907.2,
-      311.3,
-      929.6,
-      420.3
+      876.4,
+      313.5,
+      894.5,
+      393.4
      ],
-     "fi": 36
+     "fi": 34
     },
     {
      "score": 0.221,
      "p_team": 0.81,
+     "q_team_ring": 0.0,
+     "p_adj": 0.81,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -521,6 +930,8 @@
     {
      "score": 0.224,
      "p_team": 0.81,
+     "q_team_ring": 0.0,
+     "p_adj": 0.81,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -534,23 +945,10 @@
      "fi": 55
     },
     {
-     "score": 0.062,
-     "p_team": 0.808,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 30.3,
-     "box": [
-      1128.0,
-      260.1,
-      1159.1,
-      290.4
-     ],
-     "fi": 27
-    },
-    {
      "score": 0.237,
      "p_team": 0.808,
+     "q_team_ring": 0.0,
+     "p_adj": 0.808,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -566,6 +964,8 @@
     {
      "score": 0.059,
      "p_team": 0.806,
+     "q_team_ring": 0.0,
+     "p_adj": 0.806,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -577,141 +977,112 @@
       312.0
      ],
      "fi": 5
-    },
+    }
+   ],
+   "rerank_top_pure_colour": [
     {
-     "score": 0.152,
-     "p_team": 0.771,
+     "score": 0.07,
+     "p_team": 0.937,
+     "q_team_ring": 0.118,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 37.1,
+     "h": 79.9,
      "box": [
-      483.3,
-      277.2,
-      507.9,
-      314.3
-     ],
-     "fi": 19
+      876.4,
+      313.5,
+      894.5,
+      393.4
+     ]
     },
     {
-     "score": 0.109,
-     "p_team": 0.76,
+     "score": 0.051,
+     "p_team": 0.908,
+     "q_team_ring": 0.45,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 63.9,
+     "h": 24.5,
      "box": [
-      1074.1,
-      304.3,
-      1098.6,
-      368.3
-     ],
-     "fi": 47
+      1136.7,
+      258.8,
+      1156.4,
+      283.4
+     ]
     },
     {
-     "score": 0.113,
-     "p_team": 0.76,
+     "score": 0.061,
+     "p_team": 0.907,
+     "q_team_ring": 0.0,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 47.6,
+     "h": 26.9,
      "box": [
-      589.3,
-      192.9,
-      613.9,
-      240.5
-     ],
-     "fi": 57
+      1099.5,
+      258.2,
+      1121.7,
+      285.1
+     ]
     },
     {
-     "score": 0.146,
-     "p_team": 0.75,
+     "score": 0.097,
+     "p_team": 0.882,
+     "q_team_ring": 0.0,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 80.3,
+     "h": 40.4,
      "box": [
-      895.2,
-      311.5,
-      921.1,
-      391.8
-     ],
-     "fi": 35
+      447.0,
+      482.7,
+      483.2,
+      523.1
+     ]
     },
     {
-     "score": 0.131,
-     "p_team": 0.738,
+     "score": 0.099,
+     "p_team": 0.881,
+     "q_team_ring": 0.0,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": null,
-     "h": 39.8,
+     "h": 48.1,
      "box": [
-      651.3,
-      269.1,
-      675.0,
-      308.9
-     ],
-     "fi": 46
+      1158.4,
+      280.3,
+      1181.2,
+      328.5
+     ]
     },
     {
-     "score": 0.221,
-     "p_team": 0.709,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": null,
-     "h": 44.7,
-     "box": [
-      219.7,
-      422.0,
-      247.1,
-      466.7
-     ],
-     "fi": 48
-    },
-    {
-     "score": 0.171,
-     "p_team": 0.702,
+     "score": 0.207,
+     "p_team": 0.878,
+     "q_team_ring": 0.0,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 71.3,
+     "h": 36.6,
      "box": [
-      579.2,
-      352.2,
-      600.9,
-      423.5
-     ],
-     "fi": 24
+      691.5,
+      280.8,
+      710.8,
+      317.4
+     ]
     },
     {
-     "score": 0.235,
-     "p_team": 0.685,
+     "score": 0.167,
+     "p_team": 0.877,
+     "q_team_ring": 0.0,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 66.0,
+     "h": 72.8,
      "box": [
-      784.6,
-      351.8,
-      808.3,
-      417.7
-     ],
-     "fi": 29
+      728.8,
+      305.0,
+      750.3,
+      377.8
+     ]
     },
     {
-     "score": 0.136,
-     "p_team": 0.675,
+     "score": 0.097,
+     "p_team": 0.846,
+     "q_team_ring": 0.0,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 66.3,
+     "h": 49.7,
      "box": [
-      1088.5,
-      315.9,
-      1114.7,
-      382.3
-     ],
-     "fi": 45
+      790.9,
+      270.6,
+      810.4,
+      320.2
+     ]
     }
    ]
   },
@@ -838,24 +1209,24 @@
       "n_tracks": 50,
       "n_pairs": 441,
       "strict": 0.28,
-      "strict_short": 0.30303030303030304,
+      "strict_short": 0.303,
       "n_tracks_short": 33,
-      "consec": 0.7891156462585034,
+      "consec": 0.789,
       "len_median": 8.0,
       "len_max": 25,
-      "shuffle_consec": 0.3350566893424036,
-      "shuffle_strict_short": 0.005757575757575758
+      "shuffle_consec": 0.335,
+      "shuffle_strict_short": 0.006
      },
      "proto": {
       "n_tracks": 50,
       "n_pairs": 441,
       "strict": 0.22,
-      "strict_short": 0.21212121212121213,
+      "strict_short": 0.212,
       "n_tracks_short": 33,
-      "consec": 0.7596371882086168,
+      "consec": 0.76,
       "len_median": 8.0,
       "len_max": 25,
-      "shuffle_consec": 0.3001133786848073
+      "shuffle_consec": 0.3
      }
     },
     "claims_team": {
@@ -864,24 +1235,24 @@
       "n_tracks": 40,
       "n_pairs": 359,
       "strict": 0.3,
-      "strict_short": 0.3333333333333333,
+      "strict_short": 0.333,
       "n_tracks_short": 27,
-      "consec": 0.8022284122562674,
+      "consec": 0.802,
       "len_median": 8.0,
       "len_max": 25,
-      "shuffle_consec": 0.33930362116991647,
+      "shuffle_consec": 0.339,
       "shuffle_strict_short": 0.005
      },
      "proto": {
       "n_tracks": 40,
       "n_pairs": 359,
       "strict": 0.225,
-      "strict_short": 0.2222222222222222,
+      "strict_short": 0.222,
       "n_tracks_short": 27,
-      "consec": 0.766016713091922,
+      "consec": 0.766,
       "len_median": 8.0,
       "len_max": 25,
-      "shuffle_consec": 0.3049860724233983
+      "shuffle_consec": 0.305
      }
     },
     "claims_context": {
@@ -890,24 +1261,24 @@
       "n_tracks": 10,
       "n_pairs": 82,
       "strict": 0.2,
-      "strict_short": 0.16666666666666666,
+      "strict_short": 0.167,
       "n_tracks_short": 6,
-      "consec": 0.7317073170731707,
+      "consec": 0.732,
       "len_median": 8.0,
       "len_max": 15,
-      "shuffle_consec": 0.31609756097560976,
-      "shuffle_strict_short": 0.005833333333333333
+      "shuffle_consec": 0.316,
+      "shuffle_strict_short": 0.006
      },
      "proto": {
       "n_tracks": 10,
       "n_pairs": 82,
       "strict": 0.2,
-      "strict_short": 0.16666666666666666,
+      "strict_short": 0.167,
       "n_tracks_short": 6,
-      "consec": 0.7317073170731707,
+      "consec": 0.732,
       "len_median": 8.0,
       "len_max": 15,
-      "shuffle_consec": 0.2899390243902439
+      "shuffle_consec": 0.29
      }
     },
     "ring_control": {
@@ -915,14 +1286,14 @@
      "family": {
       "n_tracks": 42,
       "n_pairs": 358,
-      "strict": 0.8333333333333334,
-      "strict_short": 0.8333333333333334,
+      "strict": 0.833,
+      "strict_short": 0.833,
       "n_tracks_short": 30,
-      "consec": 0.9553072625698324,
+      "consec": 0.955,
       "len_median": 8.0,
       "len_max": 25,
-      "shuffle_consec": 0.6587446113918037,
-      "shuffle_strict_short": 0.2278882562913273
+      "shuffle_consec": 0.659,
+      "shuffle_strict_short": 0.228
      }
     },
     "by_size": [
@@ -932,7 +1303,7 @@
       "n_tracks": 2,
       "n_pairs": 12,
       "consec": 1.0,
-      "shuffle_consec": 0.4958333333333333,
+      "shuffle_consec": 0.496,
       "strict": 1.0,
       "strict_short": 1.0
      },
@@ -942,7 +1313,7 @@
       "n_tracks": 6,
       "n_pairs": 40,
       "consec": 0.825,
-      "shuffle_consec": 0.37987499999999996,
+      "shuffle_consec": 0.38,
       "strict": 0.5,
       "strict_short": 0.6
      },
@@ -951,10 +1322,10 @@
       "h_hi": 96,
       "n_tracks": 38,
       "n_pairs": 354,
-      "consec": 0.7768361581920904,
-      "shuffle_consec": 0.3501553672316384,
-      "strict": 0.23684210526315788,
-      "strict_short": 0.21739130434782608
+      "consec": 0.777,
+      "shuffle_consec": 0.35,
+      "strict": 0.237,
+      "strict_short": 0.217
      },
      {
       "h_lo": 96,
@@ -983,6 +1354,11 @@
     "torso_jersey_rate": 0.598,
     "ring_jersey_rate": 0.213,
     "mean_p_team": 0.575,
+    "mean_p_adj": 0.332,
+    "p_team_ge_0.5": 146,
+    "p_adj_ge_0.3": 157,
+    "p_adj_ge_0.3_rate": 0.643,
+    "ring_missing": 21,
     "by_size": [
      {
       "h_lo": 0,
@@ -1022,70 +1398,443 @@
      }
     ]
    },
+   "per_frame": {
+    "keys": [
+     "n",
+     "n_conf_ge_025",
+     "n_low",
+     "n_team",
+     "n_context"
+    ],
+    "rows": [
+     [
+      20,
+      15,
+      5,
+      15,
+      5
+     ],
+     [
+      19,
+      17,
+      2,
+      16,
+      3
+     ],
+     [
+      23,
+      20,
+      3,
+      15,
+      8
+     ],
+     [
+      27,
+      20,
+      7,
+      21,
+      6
+     ],
+     [
+      23,
+      16,
+      7,
+      18,
+      5
+     ],
+     [
+      24,
+      19,
+      5,
+      19,
+      5
+     ],
+     [
+      22,
+      19,
+      3,
+      19,
+      3
+     ],
+     [
+      25,
+      17,
+      8,
+      20,
+      5
+     ],
+     [
+      30,
+      19,
+      11,
+      20,
+      10
+     ],
+     [
+      24,
+      17,
+      7,
+      16,
+      8
+     ],
+     [
+      26,
+      17,
+      9,
+      19,
+      7
+     ],
+     [
+      23,
+      15,
+      8,
+      14,
+      9
+     ],
+     [
+      20,
+      15,
+      5,
+      15,
+      5
+     ],
+     [
+      24,
+      15,
+      9,
+      16,
+      8
+     ],
+     [
+      20,
+      18,
+      2,
+      16,
+      4
+     ],
+     [
+      19,
+      15,
+      4,
+      14,
+      5
+     ],
+     [
+      22,
+      14,
+      8,
+      16,
+      6
+     ],
+     [
+      19,
+      17,
+      2,
+      15,
+      4
+     ],
+     [
+      18,
+      15,
+      3,
+      13,
+      5
+     ],
+     [
+      17,
+      15,
+      2,
+      12,
+      5
+     ],
+     [
+      20,
+      15,
+      5,
+      16,
+      4
+     ],
+     [
+      21,
+      14,
+      7,
+      13,
+      8
+     ],
+     [
+      23,
+      13,
+      10,
+      15,
+      8
+     ],
+     [
+      19,
+      13,
+      6,
+      12,
+      7
+     ],
+     [
+      21,
+      13,
+      8,
+      14,
+      7
+     ],
+     [
+      17,
+      11,
+      6,
+      12,
+      5
+     ],
+     [
+      16,
+      13,
+      3,
+      10,
+      6
+     ],
+     [
+      14,
+      9,
+      5,
+      10,
+      4
+     ],
+     [
+      15,
+      9,
+      6,
+      12,
+      3
+     ],
+     [
+      13,
+      9,
+      4,
+      11,
+      2
+     ],
+     [
+      17,
+      10,
+      7,
+      15,
+      2
+     ],
+     [
+      15,
+      9,
+      6,
+      11,
+      4
+     ],
+     [
+      21,
+      11,
+      10,
+      15,
+      6
+     ],
+     [
+      18,
+      10,
+      8,
+      15,
+      3
+     ],
+     [
+      23,
+      10,
+      13,
+      17,
+      6
+     ],
+     [
+      18,
+      11,
+      7,
+      13,
+      5
+     ],
+     [
+      21,
+      12,
+      9,
+      15,
+      6
+     ],
+     [
+      17,
+      12,
+      5,
+      13,
+      4
+     ],
+     [
+      2,
+      2,
+      0,
+      2,
+      0
+     ],
+     [
+      2,
+      2,
+      0,
+      2,
+      0
+     ],
+     [
+      2,
+      2,
+      0,
+      2,
+      0
+     ],
+     [
+      3,
+      2,
+      1,
+      2,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      2,
+      2,
+      0,
+      1,
+      1
+     ],
+     [
+      3,
+      2,
+      1,
+      1,
+      2
+     ],
+     [
+      5,
+      2,
+      3,
+      4,
+      1
+     ],
+     [
+      2,
+      2,
+      0,
+      2,
+      0
+     ],
+     [
+      2,
+      2,
+      0,
+      1,
+      1
+     ],
+     [
+      2,
+      2,
+      0,
+      2,
+      0
+     ],
+     [
+      2,
+      2,
+      0,
+      2,
+      0
+     ],
+     [
+      2,
+      2,
+      0,
+      2,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      4,
+      2,
+      2,
+      3,
+      1
+     ],
+     [
+      2,
+      1,
+      1,
+      2,
+      0
+     ],
+     [
+      2,
+      2,
+      0,
+      2,
+      0
+     ],
+     [
+      2,
+      1,
+      1,
+      2,
+      0
+     ]
+    ]
+   },
    "rerank_top": [
-    {
-     "score": 0.066,
-     "p_team": 1.0,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 25.2,
-     "box": [
-      528.8,
-      228.7,
-      543.4,
-      253.9
-     ],
-     "fi": 0
-    },
-    {
-     "score": 0.079,
-     "p_team": 1.0,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 20.2,
-     "box": [
-      544.4,
-      263.6,
-      559.0,
-      283.8
-     ],
-     "fi": 24
-    },
-    {
-     "score": 0.162,
-     "p_team": 1.0,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "CYAN",
-     "h": 50.6,
-     "box": [
-      516.2,
-      283.8,
-      533.2,
-      334.4
-     ],
-     "fi": 29
-    },
-    {
-     "score": 0.053,
-     "p_team": 1.0,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 24.6,
-     "box": [
-      851.4,
-      287.7,
-      865.2,
-      312.2
-     ],
-     "fi": 29
-    },
     {
      "score": 0.139,
      "p_team": 1.0,
+     "q_team_ring": 0.007,
+     "p_adj": 0.993,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "CYAN",
@@ -1099,128 +1848,10 @@
      "fi": 47
     },
     {
-     "score": 0.078,
-     "p_team": 0.994,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "RED",
-     "h": 500.9,
-     "box": [
-      3.2,
-      205.6,
-      671.7,
-      706.5
-     ],
-     "fi": 56
-    },
-    {
-     "score": 0.171,
-     "p_team": 0.992,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 46.3,
-     "box": [
-      491.5,
-      291.2,
-      512.6,
-      337.4
-     ],
-     "fi": 28
-    },
-    {
-     "score": 0.058,
-     "p_team": 0.991,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "CYAN",
-     "h": 22.0,
-     "box": [
-      1068.8,
-      255.3,
-      1087.8,
-      277.3
-     ],
-     "fi": 20
-    },
-    {
-     "score": 0.187,
-     "p_team": 0.986,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 43.2,
-     "box": [
-      495.8,
-      265.5,
-      521.0,
-      308.6
-     ],
-     "fi": 25
-    },
-    {
-     "score": 0.191,
-     "p_team": 0.984,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 47.1,
-     "box": [
-      1145.4,
-      279.0,
-      1165.8,
-      326.1
-     ],
-     "fi": 25
-    },
-    {
-     "score": 0.13,
-     "p_team": 0.983,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 41.0,
-     "box": [
-      779.8,
-      298.3,
-      795.2,
-      339.4
-     ],
-     "fi": 28
-    },
-    {
-     "score": 0.059,
-     "p_team": 0.982,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 26.2,
-     "box": [
-      745.9,
-      231.8,
-      762.5,
-      257.9
-     ],
-     "fi": 3
-    },
-    {
-     "score": 0.112,
-     "p_team": 0.981,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 49.1,
-     "box": [
-      492.8,
-      262.6,
-      522.0,
-      311.8
-     ],
-     "fi": 22
-    },
-    {
      "score": 0.227,
      "p_team": 0.977,
+     "q_team_ring": 0.0,
+     "p_adj": 0.977,
      "fam": "WHITE",
      "team": true,
      "ring_fam": null,
@@ -1234,38 +1865,10 @@
      "fi": 3
     },
     {
-     "score": 0.056,
-     "p_team": 0.971,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 32.7,
-     "box": [
-      1086.1,
-      288.5,
-      1111.6,
-      321.2
-     ],
-     "fi": 24
-    },
-    {
-     "score": 0.248,
-     "p_team": 0.97,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "CYAN",
-     "h": 49.3,
-     "box": [
-      485.3,
-      279.7,
-      504.4,
-      329.0
-     ],
-     "fi": 31
-    },
-    {
      "score": 0.228,
      "p_team": 0.967,
+     "q_team_ring": 0.0,
+     "p_adj": 0.967,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -1279,38 +1882,10 @@
      "fi": 15
     },
     {
-     "score": 0.163,
-     "p_team": 0.964,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "CYAN",
-     "h": 33.8,
-     "box": [
-      538.4,
-      254.9,
-      558.6,
-      288.7
-     ],
-     "fi": 21
-    },
-    {
-     "score": 0.208,
-     "p_team": 0.963,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 47.0,
-     "box": [
-      724.7,
-      286.1,
-      740.2,
-      333.1
-     ],
-     "fi": 27
-    },
-    {
      "score": 0.14,
      "p_team": 0.963,
+     "q_team_ring": 0.0,
+     "p_adj": 0.963,
      "fam": "WHITE",
      "team": true,
      "ring_fam": null,
@@ -1326,6 +1901,8 @@
     {
      "score": 0.14,
      "p_team": 0.957,
+     "q_team_ring": 0.0,
+     "p_adj": 0.957,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1340,63 +1917,228 @@
     },
     {
      "score": 0.059,
-     "p_team": 0.956,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 23.1,
-     "box": [
-      834.2,
-      238.0,
-      849.7,
-      261.1
-     ],
-     "fi": 7
-    },
-    {
-     "score": 0.083,
-     "p_team": 0.955,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "WHITE",
-     "h": 27.4,
-     "box": [
-      797.6,
-      232.6,
-      813.5,
-      260.0
-     ],
-     "fi": 4
-    },
-    {
-     "score": 0.052,
-     "p_team": 0.955,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "CYAN",
-     "h": 22.8,
-     "box": [
-      592.8,
-      298.3,
-      608.9,
-      321.0
-     ],
-     "fi": 28
-    },
-    {
-     "score": 0.229,
-     "p_team": 0.95,
+     "p_team": 0.906,
+     "q_team_ring": 0.0,
+     "p_adj": 0.906,
      "fam": "RED",
      "team": true,
-     "ring_fam": "WHITE",
-     "h": 50.8,
+     "ring_fam": "GREEN",
+     "h": 72.1,
      "box": [
-      487.7,
-      264.0,
-      520.5,
-      314.9
+      874.4,
+      499.7,
+      897.7,
+      571.9
      ],
-     "fi": 23
+     "fi": 36
+    },
+    {
+     "score": 0.239,
+     "p_team": 0.887,
+     "q_team_ring": 0.0,
+     "p_adj": 0.887,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 52.0,
+     "box": [
+      593.6,
+      315.5,
+      614.3,
+      367.5
+     ],
+     "fi": 32
+    },
+    {
+     "score": 0.071,
+     "p_team": 0.873,
+     "q_team_ring": 0.0,
+     "p_adj": 0.873,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": null,
+     "h": 615.0,
+     "box": [
+      1.0,
+      91.4,
+      532.9,
+      706.4
+     ],
+     "fi": 59
+    },
+    {
+     "score": 0.063,
+     "p_team": 0.867,
+     "q_team_ring": 0.0,
+     "p_adj": 0.867,
+     "fam": "WHITE",
+     "team": true,
+     "ring_fam": null,
+     "h": 42.3,
+     "box": [
+      1039.2,
+      255.8,
+      1062.7,
+      298.0
+     ],
+     "fi": 20
+    },
+    {
+     "score": 0.054,
+     "p_team": 0.861,
+     "q_team_ring": 0.0,
+     "p_adj": 0.861,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": null,
+     "h": 641.2,
+     "box": [
+      0.8,
+      58.1,
+      464.3,
+      699.3
+     ],
+     "fi": 57
+    },
+    {
+     "score": 0.057,
+     "p_team": 0.842,
+     "q_team_ring": 0.0,
+     "p_adj": 0.842,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "GREEN",
+     "h": 66.5,
+     "box": [
+      359.8,
+      327.7,
+      383.7,
+      394.2
+     ],
+     "fi": 18
+    },
+    {
+     "score": 0.248,
+     "p_team": 0.97,
+     "q_team_ring": 0.129,
+     "p_adj": 0.841,
+     "fam": "RED",
+     "team": true,
+     "ring_fam": "CYAN",
+     "h": 49.3,
+     "box": [
+      485.3,
+      279.7,
+      504.4,
+      329.0
+     ],
+     "fi": 31
+    }
+   ],
+   "rerank_top_pure_colour": [
+    {
+     "score": 0.066,
+     "p_team": 1.0,
+     "q_team_ring": 0.613,
+     "fam": "WHITE",
+     "h": 25.2,
+     "box": [
+      528.8,
+      228.7,
+      543.4,
+      253.9
+     ]
+    },
+    {
+     "score": 0.079,
+     "p_team": 1.0,
+     "q_team_ring": 1.0,
+     "fam": "WHITE",
+     "h": 20.2,
+     "box": [
+      544.4,
+      263.6,
+      559.0,
+      283.8
+     ]
+    },
+    {
+     "score": 0.162,
+     "p_team": 1.0,
+     "q_team_ring": 0.562,
+     "fam": "RED",
+     "h": 50.6,
+     "box": [
+      516.2,
+      283.8,
+      533.2,
+      334.4
+     ]
+    },
+    {
+     "score": 0.053,
+     "p_team": 1.0,
+     "q_team_ring": 0.619,
+     "fam": "WHITE",
+     "h": 24.6,
+     "box": [
+      851.4,
+      287.7,
+      865.2,
+      312.2
+     ]
+    },
+    {
+     "score": 0.139,
+     "p_team": 1.0,
+     "q_team_ring": 0.007,
+     "fam": "WHITE",
+     "h": 109.7,
+     "box": [
+      183.3,
+      62.0,
+      281.6,
+      171.7
+     ]
+    },
+    {
+     "score": 0.078,
+     "p_team": 0.994,
+     "q_team_ring": 1.0,
+     "fam": "RED",
+     "h": 500.9,
+     "box": [
+      3.2,
+      205.6,
+      671.7,
+      706.5
+     ]
+    },
+    {
+     "score": 0.171,
+     "p_team": 0.992,
+     "q_team_ring": 0.561,
+     "fam": "RED",
+     "h": 46.3,
+     "box": [
+      491.5,
+      291.2,
+      512.6,
+      337.4
+     ]
+    },
+    {
+     "score": 0.058,
+     "p_team": 0.991,
+     "q_team_ring": 0.296,
+     "fam": "WHITE",
+     "h": 22.0,
+     "box": [
+      1068.8,
+      255.3,
+      1087.8,
+      277.3
+     ]
     }
    ]
   },
@@ -1522,25 +2264,25 @@
      "family": {
       "n_tracks": 60,
       "n_pairs": 806,
-      "strict": 0.21666666666666667,
-      "strict_short": 0.3103448275862069,
+      "strict": 0.217,
+      "strict_short": 0.31,
       "n_tracks_short": 29,
-      "consec": 0.7816377171215881,
+      "consec": 0.782,
       "len_median": 11.0,
       "len_max": 44,
-      "shuffle_consec": 0.32596774193548383,
-      "shuffle_strict_short": 0.00603448275862069
+      "shuffle_consec": 0.326,
+      "shuffle_strict_short": 0.006
      },
      "proto": {
       "n_tracks": 60,
       "n_pairs": 806,
-      "strict": 0.21666666666666667,
-      "strict_short": 0.3103448275862069,
+      "strict": 0.217,
+      "strict_short": 0.31,
       "n_tracks_short": 29,
-      "consec": 0.739454094292804,
+      "consec": 0.739,
       "len_median": 11.0,
       "len_max": 44,
-      "shuffle_consec": 0.2931885856079404
+      "shuffle_consec": 0.293
      }
     },
     "claims_team": {
@@ -1548,25 +2290,25 @@
      "family": {
       "n_tracks": 47,
       "n_pairs": 697,
-      "strict": 0.2127659574468085,
-      "strict_short": 0.38095238095238093,
+      "strict": 0.213,
+      "strict_short": 0.381,
       "n_tracks_short": 21,
-      "consec": 0.7776183644189383,
+      "consec": 0.778,
       "len_median": 14.0,
       "len_max": 44,
-      "shuffle_consec": 0.32522955523672875,
-      "shuffle_strict_short": 0.004999999999999999
+      "shuffle_consec": 0.325,
+      "shuffle_strict_short": 0.005
      },
      "proto": {
       "n_tracks": 47,
       "n_pairs": 697,
-      "strict": 0.2127659574468085,
-      "strict_short": 0.38095238095238093,
+      "strict": 0.213,
+      "strict_short": 0.381,
       "n_tracks_short": 21,
-      "consec": 0.7288378766140603,
+      "consec": 0.729,
       "len_median": 14.0,
       "len_max": 44,
-      "shuffle_consec": 0.29109038737446197
+      "shuffle_consec": 0.291
      }
     },
     "claims_context": {
@@ -1574,25 +2316,25 @@
      "family": {
       "n_tracks": 13,
       "n_pairs": 109,
-      "strict": 0.23076923076923078,
+      "strict": 0.231,
       "strict_short": 0.125,
       "n_tracks_short": 8,
-      "consec": 0.8073394495412844,
+      "consec": 0.807,
       "len_median": 8.0,
       "len_max": 20,
-      "shuffle_consec": 0.3238990825688073,
-      "shuffle_strict_short": 0.01125
+      "shuffle_consec": 0.324,
+      "shuffle_strict_short": 0.011
      },
      "proto": {
       "n_tracks": 13,
       "n_pairs": 109,
-      "strict": 0.23076923076923078,
+      "strict": 0.231,
       "strict_short": 0.125,
       "n_tracks_short": 8,
-      "consec": 0.8073394495412844,
+      "consec": 0.807,
       "len_median": 8.0,
       "len_max": 20,
-      "shuffle_consec": 0.29674311926605507
+      "shuffle_consec": 0.297
      }
     },
     "ring_control": {
@@ -1600,14 +2342,14 @@
      "family": {
       "n_tracks": 44,
       "n_pairs": 534,
-      "strict": 0.9090909090909091,
-      "strict_short": 0.9090909090909091,
+      "strict": 0.909,
+      "strict_short": 0.909,
       "n_tracks_short": 22,
-      "consec": 0.9868913857677902,
+      "consec": 0.987,
       "len_median": 10.0,
       "len_max": 40,
-      "shuffle_consec": 0.9361678272452348,
-      "shuffle_strict_short": 0.7751865538254689
+      "shuffle_consec": 0.936,
+      "shuffle_strict_short": 0.775
      }
     },
     "by_size": [
@@ -1627,29 +2369,29 @@
       "n_tracks": 4,
       "n_pairs": 30,
       "consec": 0.9,
-      "shuffle_consec": 0.4925,
+      "shuffle_consec": 0.492,
       "strict": 0.5,
-      "strict_short": 0.3333333333333333
+      "strict_short": 0.333
      },
      {
       "h_lo": 56,
       "h_hi": 96,
       "n_tracks": 47,
       "n_pairs": 705,
-      "consec": 0.7716312056737589,
-      "shuffle_consec": 0.3511702127659575,
-      "strict": 0.2127659574468085,
-      "strict_short": 0.3684210526315789
+      "consec": 0.772,
+      "shuffle_consec": 0.351,
+      "strict": 0.213,
+      "strict_short": 0.368
      },
      {
       "h_lo": 96,
       "h_hi": 400,
       "n_tracks": 8,
       "n_pairs": 64,
-      "consec": 0.828125,
-      "shuffle_consec": 0.44390625,
+      "consec": 0.828,
+      "shuffle_consec": 0.444,
       "strict": 0.125,
-      "strict_short": 0.16666666666666666
+      "strict_short": 0.167
      }
     ]
    },
@@ -1668,6 +2410,11 @@
     "torso_jersey_rate": 0.529,
     "ring_jersey_rate": 0.019,
     "mean_p_team": 0.499,
+    "mean_p_adj": 0.461,
+    "p_team_ge_0.5": 115,
+    "p_adj_ge_0.3": 140,
+    "p_adj_ge_0.3_rate": 0.673,
+    "ring_missing": 37,
     "by_size": [
      {
       "h_lo": 0,
@@ -1707,40 +2454,443 @@
      }
     ]
    },
+   "per_frame": {
+    "keys": [
+     "n",
+     "n_conf_ge_025",
+     "n_low",
+     "n_team",
+     "n_context"
+    ],
+    "rows": [
+     [
+      20,
+      18,
+      2,
+      13,
+      7
+     ],
+     [
+      19,
+      18,
+      1,
+      12,
+      7
+     ],
+     [
+      9,
+      5,
+      4,
+      5,
+      4
+     ],
+     [
+      14,
+      7,
+      7,
+      6,
+      8
+     ],
+     [
+      11,
+      7,
+      4,
+      5,
+      6
+     ],
+     [
+      11,
+      7,
+      4,
+      9,
+      2
+     ],
+     [
+      13,
+      9,
+      4,
+      9,
+      4
+     ],
+     [
+      15,
+      10,
+      5,
+      10,
+      5
+     ],
+     [
+      14,
+      10,
+      4,
+      11,
+      3
+     ],
+     [
+      15,
+      9,
+      6,
+      12,
+      3
+     ],
+     [
+      22,
+      18,
+      4,
+      15,
+      7
+     ],
+     [
+      18,
+      17,
+      1,
+      10,
+      8
+     ],
+     [
+      24,
+      17,
+      7,
+      13,
+      11
+     ],
+     [
+      19,
+      17,
+      2,
+      12,
+      7
+     ],
+     [
+      19,
+      17,
+      2,
+      14,
+      5
+     ],
+     [
+      23,
+      17,
+      6,
+      15,
+      8
+     ],
+     [
+      21,
+      18,
+      3,
+      15,
+      6
+     ],
+     [
+      24,
+      17,
+      7,
+      15,
+      9
+     ],
+     [
+      20,
+      17,
+      3,
+      14,
+      6
+     ],
+     [
+      25,
+      18,
+      7,
+      17,
+      8
+     ],
+     [
+      22,
+      17,
+      5,
+      16,
+      6
+     ],
+     [
+      25,
+      19,
+      6,
+      15,
+      10
+     ],
+     [
+      21,
+      19,
+      2,
+      17,
+      4
+     ],
+     [
+      23,
+      19,
+      4,
+      16,
+      7
+     ],
+     [
+      21,
+      19,
+      2,
+      14,
+      7
+     ],
+     [
+      23,
+      18,
+      5,
+      13,
+      10
+     ],
+     [
+      22,
+      19,
+      3,
+      14,
+      8
+     ],
+     [
+      23,
+      17,
+      6,
+      16,
+      7
+     ],
+     [
+      25,
+      18,
+      7,
+      17,
+      8
+     ],
+     [
+      23,
+      20,
+      3,
+      16,
+      7
+     ],
+     [
+      21,
+      19,
+      2,
+      10,
+      11
+     ],
+     [
+      21,
+      19,
+      2,
+      14,
+      7
+     ],
+     [
+      22,
+      19,
+      3,
+      10,
+      12
+     ],
+     [
+      22,
+      16,
+      6,
+      14,
+      8
+     ],
+     [
+      20,
+      17,
+      3,
+      15,
+      5
+     ],
+     [
+      20,
+      18,
+      2,
+      14,
+      6
+     ],
+     [
+      20,
+      17,
+      3,
+      16,
+      4
+     ],
+     [
+      18,
+      17,
+      1,
+      16,
+      2
+     ],
+     [
+      17,
+      16,
+      1,
+      15,
+      2
+     ],
+     [
+      20,
+      15,
+      5,
+      17,
+      3
+     ],
+     [
+      20,
+      18,
+      2,
+      15,
+      5
+     ],
+     [
+      18,
+      17,
+      1,
+      16,
+      2
+     ],
+     [
+      19,
+      19,
+      0,
+      16,
+      3
+     ],
+     [
+      19,
+      18,
+      1,
+      15,
+      4
+     ],
+     [
+      19,
+      18,
+      1,
+      15,
+      4
+     ],
+     [
+      20,
+      16,
+      4,
+      17,
+      3
+     ],
+     [
+      20,
+      17,
+      3,
+      16,
+      4
+     ],
+     [
+      20,
+      15,
+      5,
+      15,
+      5
+     ],
+     [
+      19,
+      15,
+      4,
+      14,
+      5
+     ],
+     [
+      18,
+      15,
+      3,
+      14,
+      4
+     ],
+     [
+      17,
+      15,
+      2,
+      14,
+      3
+     ],
+     [
+      17,
+      14,
+      3,
+      12,
+      5
+     ],
+     [
+      16,
+      14,
+      2,
+      12,
+      4
+     ],
+     [
+      16,
+      15,
+      1,
+      11,
+      5
+     ],
+     [
+      23,
+      15,
+      8,
+      17,
+      6
+     ],
+     [
+      21,
+      18,
+      3,
+      17,
+      4
+     ],
+     [
+      21,
+      19,
+      2,
+      19,
+      2
+     ],
+     [
+      23,
+      19,
+      4,
+      17,
+      6
+     ],
+     [
+      21,
+      19,
+      2,
+      15,
+      6
+     ],
+     [
+      19,
+      16,
+      3,
+      13,
+      6
+     ]
+    ]
+   },
    "rerank_top": [
-    {
-     "score": 0.181,
-     "p_team": 1.0,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 48.9,
-     "box": [
-      355.3,
-      160.7,
-      369.9,
-      209.5
-     ],
-     "fi": 52
-    },
-    {
-     "score": 0.246,
-     "p_team": 0.977,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 50.0,
-     "box": [
-      376.0,
-      166.7,
-      394.1,
-      216.7
-     ],
-     "fi": 49
-    },
     {
      "score": 0.131,
      "p_team": 0.963,
+     "q_team_ring": 0.0,
+     "p_adj": 0.963,
      "fam": "WHITE",
      "team": true,
      "ring_fam": null,
@@ -1756,6 +2906,8 @@
     {
      "score": 0.232,
      "p_team": 0.946,
+     "q_team_ring": 0.0,
+     "p_adj": 0.946,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1771,6 +2923,8 @@
     {
      "score": 0.162,
      "p_team": 0.941,
+     "q_team_ring": 0.0,
+     "p_adj": 0.941,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1786,6 +2940,8 @@
     {
      "score": 0.117,
      "p_team": 0.937,
+     "q_team_ring": 0.0,
+     "p_adj": 0.937,
      "fam": "RED",
      "team": true,
      "ring_fam": null,
@@ -1801,6 +2957,8 @@
     {
      "score": 0.069,
      "p_team": 0.931,
+     "q_team_ring": 0.0,
+     "p_adj": 0.931,
      "fam": "WHITE",
      "team": true,
      "ring_fam": "GREEN",
@@ -1816,6 +2974,8 @@
     {
      "score": 0.105,
      "p_team": 0.928,
+     "q_team_ring": 0.0,
+     "p_adj": 0.928,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1831,6 +2991,8 @@
     {
      "score": 0.226,
      "p_team": 0.927,
+     "q_team_ring": 0.0,
+     "p_adj": 0.927,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1846,6 +3008,8 @@
     {
      "score": 0.161,
      "p_team": 0.926,
+     "q_team_ring": 0.0,
+     "p_adj": 0.926,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1861,6 +3025,8 @@
     {
      "score": 0.193,
      "p_team": 0.925,
+     "q_team_ring": 0.0,
+     "p_adj": 0.925,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1876,6 +3042,8 @@
     {
      "score": 0.128,
      "p_team": 0.92,
+     "q_team_ring": 0.0,
+     "p_adj": 0.92,
      "fam": "WHITE",
      "team": true,
      "ring_fam": null,
@@ -1891,6 +3059,8 @@
     {
      "score": 0.142,
      "p_team": 0.905,
+     "q_team_ring": 0.0,
+     "p_adj": 0.905,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1904,23 +3074,10 @@
      "fi": 25
     },
     {
-     "score": 0.071,
-     "p_team": 0.899,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "BLUE",
-     "h": 176.9,
-     "box": [
-      580.8,
-      275.0,
-      696.4,
-      451.8
-     ],
-     "fi": 9
-    },
-    {
      "score": 0.134,
      "p_team": 0.896,
+     "q_team_ring": 0.0,
+     "p_adj": 0.896,
      "fam": "RED",
      "team": true,
      "ring_fam": "GREEN",
@@ -1932,156 +3089,112 @@
       292.2
      ],
      "fi": 59
-    },
+    }
+   ],
+   "rerank_top_pure_colour": [
     {
-     "score": 0.054,
-     "p_team": 0.893,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": null,
-     "h": 118.1,
-     "box": [
-      1227.8,
-      235.4,
-      1279.6,
-      353.5
-     ],
-     "fi": 5
-    },
-    {
-     "score": 0.219,
-     "p_team": 0.885,
+     "score": 0.181,
+     "p_team": 1.0,
+     "q_team_ring": 0.12,
      "fam": "RED",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 51.2,
+     "h": 48.9,
      "box": [
-      621.5,
-      189.3,
-      640.7,
-      240.5
-     ],
-     "fi": 41
+      355.3,
+      160.7,
+      369.9,
+      209.5
+     ]
     },
     {
-     "score": 0.059,
-     "p_team": 0.882,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 76.9,
-     "box": [
-      701.1,
-      257.0,
-      731.8,
-      333.8
-     ],
-     "fi": 15
-    },
-    {
-     "score": 0.241,
-     "p_team": 0.878,
+     "score": 0.246,
+     "p_team": 0.977,
+     "q_team_ring": 0.359,
      "fam": "RED",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 45.9,
+     "h": 50.0,
      "box": [
-      354.6,
-      158.8,
-      370.6,
-      204.7
-     ],
-     "fi": 51
-    },
-    {
-     "score": 0.185,
-     "p_team": 0.877,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 47.3,
-     "box": [
-      427.0,
+      376.0,
       166.7,
-      441.6,
-      214.0
-     ],
-     "fi": 54
+      394.1,
+      216.7
+     ]
     },
     {
-     "score": 0.109,
-     "p_team": 0.875,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": null,
-     "h": 132.0,
-     "box": [
-      1155.7,
-      264.8,
-      1198.8,
-      396.9
-     ],
-     "fi": 6
-    },
-    {
-     "score": 0.211,
-     "p_team": 0.862,
-     "fam": "RED",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 38.6,
-     "box": [
-      549.6,
-      293.5,
-      574.6,
-      332.1
-     ],
-     "fi": 23
-    },
-    {
-     "score": 0.185,
-     "p_team": 0.86,
+     "score": 0.131,
+     "p_team": 0.963,
+     "q_team_ring": 0.0,
      "fam": "WHITE",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 51.9,
+     "h": 157.2,
      "box": [
-      645.5,
-      256.9,
-      661.8,
-      308.7
-     ],
-     "fi": 20
+      1254.5,
+      267.4,
+      1279.5,
+      424.6
+     ]
     },
     {
-     "score": 0.227,
-     "p_team": 0.859,
+     "score": 0.232,
+     "p_team": 0.946,
+     "q_team_ring": 0.0,
      "fam": "RED",
-     "team": true,
-     "ring_fam": "GREEN",
-     "h": 56.9,
+     "h": 48.9,
      "box": [
-      626.3,
-      249.7,
-      653.7,
-      306.6
-     ],
-     "fi": 17
+      449.3,
+      297.8,
+      471.9,
+      346.7
+     ]
     },
     {
-     "score": 0.107,
-     "p_team": 0.858,
-     "fam": "WHITE",
-     "team": true,
-     "ring_fam": "BLUE",
-     "h": 97.7,
+     "score": 0.162,
+     "p_team": 0.941,
+     "q_team_ring": 0.0,
+     "fam": "RED",
+     "h": 64.4,
      "box": [
-      504.0,
-      290.2,
-      563.9,
-      387.9
-     ],
-     "fi": 9
+      620.3,
+      281.2,
+      649.7,
+      345.5
+     ]
+    },
+    {
+     "score": 0.117,
+     "p_team": 0.937,
+     "q_team_ring": 0.0,
+     "fam": "RED",
+     "h": 72.2,
+     "box": [
+      693.1,
+      239.9,
+      717.9,
+      312.1
+     ]
+    },
+    {
+     "score": 0.069,
+     "p_team": 0.931,
+     "q_team_ring": 0.0,
+     "fam": "WHITE",
+     "h": 69.3,
+     "box": [
+      643.8,
+      256.0,
+      662.3,
+      325.4
+     ]
+    },
+    {
+     "score": 0.105,
+     "p_team": 0.928,
+     "q_team_ring": 0.0,
+     "fam": "RED",
+     "h": 53.5,
+     "box": [
+      630.0,
+      275.6,
+      650.8,
+      329.1
+     ]
     }
    ]
   }
@@ -2093,11 +3206,11 @@
     "n_pairs": 2092,
     "n_tracks_short": 114,
     "len_max": 112,
-    "strict": 0.2604166666666667,
-    "strict_short": 0.3157894736842105,
-    "consec": 0.7633843212237094,
-    "shuffle_consec": 0.3080592734225622,
-    "shuffle_strict_short": 0.005394736842105263,
+    "strict": 0.26,
+    "strict_short": 0.316,
+    "consec": 0.763,
+    "shuffle_consec": 0.308,
+    "shuffle_strict_short": 0.005,
     "len_median": null
    },
    "proto": {
@@ -2105,10 +3218,10 @@
     "n_pairs": 2092,
     "n_tracks_short": 114,
     "len_max": 112,
-    "strict": 0.24479166666666666,
-    "strict_short": 0.2894736842105263,
-    "consec": 0.7409177820267686,
-    "shuffle_consec": 0.2882217973231358,
+    "strict": 0.245,
+    "strict_short": 0.289,
+    "consec": 0.741,
+    "shuffle_consec": 0.288,
     "shuffle_strict_short": null,
     "len_median": null
    },
@@ -2120,11 +3233,11 @@
     "n_pairs": 1735,
     "n_tracks_short": 79,
     "len_max": 112,
-    "strict": 0.2482758620689655,
-    "strict_short": 0.31645569620253167,
-    "consec": 0.7729106628242075,
-    "shuffle_consec": 0.3103227665706051,
-    "shuffle_strict_short": 0.004367088607594936,
+    "strict": 0.248,
+    "strict_short": 0.316,
+    "consec": 0.773,
+    "shuffle_consec": 0.31,
+    "shuffle_strict_short": 0.004,
     "len_median": null
    },
    "proto": {
@@ -2132,10 +3245,10 @@
     "n_pairs": 1735,
     "n_tracks_short": 79,
     "len_max": 112,
-    "strict": 0.22758620689655173,
-    "strict_short": 0.27848101265822783,
-    "consec": 0.745821325648415,
-    "shuffle_consec": 0.2892190201729106,
+    "strict": 0.228,
+    "strict_short": 0.278,
+    "consec": 0.746,
+    "shuffle_consec": 0.289,
     "shuffle_strict_short": null,
     "len_median": null
    },
@@ -2147,10 +3260,10 @@
     "n_pairs": 357,
     "n_tracks_short": 35,
     "len_max": 57,
-    "strict": 0.2978723404255319,
-    "strict_short": 0.3142857142857143,
-    "consec": 0.7170868347338936,
-    "shuffle_consec": 0.2965406162464986,
+    "strict": 0.298,
+    "strict_short": 0.314,
+    "consec": 0.717,
+    "shuffle_consec": 0.297,
     "shuffle_strict_short": 0.006,
     "len_median": null
    },
@@ -2159,10 +3272,10 @@
     "n_pairs": 357,
     "n_tracks_short": 35,
     "len_max": 57,
-    "strict": 0.2978723404255319,
-    "strict_short": 0.3142857142857143,
-    "consec": 0.7170868347338936,
-    "shuffle_consec": 0.28460784313725485,
+    "strict": 0.298,
+    "strict_short": 0.314,
+    "consec": 0.717,
+    "shuffle_consec": 0.285,
     "shuffle_strict_short": null,
     "len_median": null
    },
@@ -2176,9 +3289,9 @@
     "len_max": 102,
     "strict": 0.925,
     "strict_short": 0.92,
-    "consec": 0.9839208410636983,
-    "shuffle_consec": 0.8554381595357329,
-    "shuffle_strict_short": 0.5782007766896873,
+    "consec": 0.984,
+    "shuffle_consec": 0.855,
+    "shuffle_strict_short": 0.578,
     "len_median": null
    },
    "proto": {},
@@ -2190,8 +3303,8 @@
     "h_hi": 32,
     "n_tracks": 4,
     "n_pairs": 23,
-    "consec": 0.9130434782608695,
-    "shuffle_consec": 0.5339130434782609,
+    "consec": 0.913,
+    "shuffle_consec": 0.534,
     "strict": 0.75,
     "strict_short": 0.75
    },
@@ -2200,30 +3313,30 @@
     "h_hi": 56,
     "n_tracks": 21,
     "n_pairs": 128,
-    "consec": 0.828125,
-    "shuffle_consec": 0.44589843749999997,
-    "strict": 0.47619047619047616,
-    "strict_short": 0.473015873015873
+    "consec": 0.828,
+    "shuffle_consec": 0.446,
+    "strict": 0.476,
+    "strict_short": 0.473
    },
    {
     "h_lo": 56,
     "h_hi": 96,
     "n_tracks": 152,
     "n_pairs": 1814,
-    "consec": 0.7513781697905182,
-    "shuffle_consec": 0.35070837927232634,
-    "strict": 0.23026315789473684,
-    "strict_short": 0.2842647235938817
+    "consec": 0.751,
+    "shuffle_consec": 0.351,
+    "strict": 0.23,
+    "strict_short": 0.284
    },
    {
     "h_lo": 96,
     "h_hi": 400,
     "n_tracks": 12,
     "n_pairs": 93,
-    "consec": 0.8494623655913979,
-    "shuffle_consec": 0.5419354838709677,
-    "strict": 0.16666666666666666,
-    "strict_short": 0.27777777777777773
+    "consec": 0.849,
+    "shuffle_consec": 0.542,
+    "strict": 0.167,
+    "strict_short": 0.278
    }
   ]
  },
@@ -2235,49 +3348,54 @@
   "ring_context": 461,
   "torso_jersey": 406,
   "ring_jersey": 119,
-  "torso_team_rate": 0.4992274809160306,
-  "ring_team_rate": 0.10056641221374048,
-  "torso_context_rate": 0.38021221374045805,
-  "ring_context_rate": 0.7039480916030535,
-  "torso_jersey_rate": 0.619787786259542,
-  "ring_jersey_rate": 0.18145648854961832,
-  "mean_p_team": 0.46687633587786254,
+  "p_team_ge_0.5": 326,
+  "p_adj_ge_0.3": 389,
+  "ring_missing": 75,
+  "torso_team_rate": 0.499,
+  "ring_team_rate": 0.101,
+  "torso_context_rate": 0.38,
+  "ring_context_rate": 0.704,
+  "torso_jersey_rate": 0.62,
+  "ring_jersey_rate": 0.181,
+  "p_adj_ge_0.3_rate": 0.594,
+  "mean_p_team": 0.467,
+  "mean_p_adj": 0.353,
   "by_size": [
    {
     "h_lo": 0,
     "h_hi": 32,
     "n": 167,
-    "torso_team_rate": 0.3772694610778443,
-    "ring_team_rate": 0.18583832335329342,
-    "torso_context_rate": 0.35914371257485034,
-    "ring_context_rate": 0.544748502994012
+    "torso_team_rate": 0.377,
+    "ring_team_rate": 0.186,
+    "torso_context_rate": 0.359,
+    "ring_context_rate": 0.545
    },
    {
     "h_lo": 32,
     "h_hi": 56,
     "n": 254,
-    "torso_team_rate": 0.5510511811023622,
-    "ring_team_rate": 0.10629527559055119,
-    "torso_context_rate": 0.3228818897637795,
-    "ring_context_rate": 0.7046141732283464
+    "torso_team_rate": 0.551,
+    "ring_team_rate": 0.106,
+    "torso_context_rate": 0.323,
+    "ring_context_rate": 0.705
    },
    {
     "h_lo": 56,
     "h_hi": 96,
     "n": 155,
-    "torso_team_rate": 0.638683870967742,
-    "ring_team_rate": 0.032070967741935484,
-    "torso_context_rate": 0.3420064516129032,
-    "ring_context_rate": 0.8389225806451612
+    "torso_team_rate": 0.639,
+    "ring_team_rate": 0.032,
+    "torso_context_rate": 0.342,
+    "ring_context_rate": 0.839
    },
    {
     "h_lo": 96,
     "h_hi": 400,
     "n": 76,
-    "torso_team_rate": 0.2893421052631579,
-    "ring_team_rate": 0.02639473684210526,
-    "torso_context_rate": 0.7106578947368422,
-    "ring_context_rate": 0.8028947368421053
+    "torso_team_rate": 0.289,
+    "ring_team_rate": 0.026,
+    "torso_context_rate": 0.711,
+    "ring_context_rate": 0.803
    }
   ]
  },
@@ -2584,6 +3702,10 @@
    "torso_jersey_rate": 0.733,
    "ring_jersey_rate": 0.116,
    "mean_p_team": 0.548,
+   "mean_p_adj": 0.459,
+   "p_team_ge_0.5": 139,
+   "p_adj_ge_0.3": 163,
+   "p_adj_ge_0.3_rate": 0.724,
    "by_size": [
     {
      "h_lo": 0,
@@ -2620,90 +3742,17 @@
    ]
   },
   "p_team_vs_height": {
-   "spearman": -0.09609073570109881,
-   "p": 0.012501418030272311,
+   "spearman": -0.096,
+   "p": 0.013,
    "n": 675
   },
   "rerank_top": [
    {
-    "frame": "match_020.jpg",
-    "score": 0.181,
-    "p_team": 1.0,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "RED",
-    "h": 37.7,
-    "box": [
-     413.3,
-     179.8,
-     435.3,
-     217.5
-    ]
-   },
-   {
-    "frame": "match_020.jpg",
-    "score": 0.057,
-    "p_team": 1.0,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "RED",
-    "h": 31.2,
-    "box": [
-     448.0,
-     188.7,
-     466.0,
-     219.9
-    ]
-   },
-   {
-    "frame": "match_020.jpg",
-    "score": 0.057,
-    "p_team": 1.0,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "RED",
-    "h": 33.6,
-    "box": [
-     540.3,
-     199.0,
-     563.6,
-     232.6
-    ]
-   },
-   {
-    "frame": "match_020.jpg",
-    "score": 0.052,
-    "p_team": 1.0,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "RED",
-    "h": 31.5,
-    "box": [
-     179.1,
-     159.9,
-     199.9,
-     191.5
-    ]
-   },
-   {
-    "frame": "match_040.jpg",
-    "score": 0.051,
-    "p_team": 1.0,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "RED",
-    "h": 21.9,
-    "box": [
-     628.4,
-     338.1,
-     639.5,
-     360.0
-    ]
-   },
-   {
     "frame": "match_009.jpg",
     "score": 0.165,
     "p_team": 0.988,
+    "q_team_ring": 0.0,
+    "p_adj": 0.988,
     "fam": "WHITE",
     "team": true,
     "ring_fam": "GREEN",
@@ -2717,23 +3766,10 @@
    },
    {
     "frame": "match_008.jpg",
-    "score": 0.094,
-    "p_team": 0.988,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "BLUE",
-    "h": 67.0,
-    "box": [
-     403.7,
-     149.2,
-     428.0,
-     216.2
-    ]
-   },
-   {
-    "frame": "match_008.jpg",
     "score": 0.124,
     "p_team": 0.985,
+    "q_team_ring": 0.0,
+    "p_adj": 0.985,
     "fam": "RED",
     "team": true,
     "ring_fam": null,
@@ -2749,6 +3785,8 @@
     "frame": "match_008.jpg",
     "score": 0.219,
     "p_team": 0.983,
+    "q_team_ring": 0.0,
+    "p_adj": 0.983,
     "fam": "RED",
     "team": true,
     "ring_fam": "CYAN",
@@ -2764,6 +3802,8 @@
     "frame": "match_025.jpg",
     "score": 0.203,
     "p_team": 0.979,
+    "q_team_ring": 0.0,
+    "p_adj": 0.979,
     "fam": "WHITE",
     "team": true,
     "ring_fam": "GREEN",
@@ -2779,6 +3819,8 @@
     "frame": "match_040.jpg",
     "score": 0.235,
     "p_team": 0.968,
+    "q_team_ring": 0.0,
+    "p_adj": 0.968,
     "fam": "RED",
     "team": true,
     "ring_fam": "GREEN",
@@ -2794,6 +3836,8 @@
     "frame": "match_005.jpg",
     "score": 0.137,
     "p_team": 0.962,
+    "q_team_ring": 0.0,
+    "p_adj": 0.962,
     "fam": "WHITE",
     "team": true,
     "ring_fam": "GREEN",
@@ -2809,6 +3853,8 @@
     "frame": "match_004.jpg",
     "score": 0.238,
     "p_team": 0.957,
+    "q_team_ring": 0.0,
+    "p_adj": 0.957,
     "fam": "RED",
     "team": true,
     "ring_fam": "GREEN",
@@ -2821,9 +3867,28 @@
     ]
    },
    {
+    "frame": "match_008.jpg",
+    "score": 0.094,
+    "p_team": 0.988,
+    "q_team_ring": 0.031,
+    "p_adj": 0.957,
+    "fam": "RED",
+    "team": true,
+    "ring_fam": "BLUE",
+    "h": 67.0,
+    "box": [
+     403.7,
+     149.2,
+     428.0,
+     216.2
+    ]
+   },
+   {
     "frame": "match_013.jpg",
     "score": 0.146,
     "p_team": 0.944,
+    "q_team_ring": 0.0,
+    "p_adj": 0.944,
     "fam": "WHITE",
     "team": true,
     "ring_fam": "GREEN",
@@ -2839,6 +3904,8 @@
     "frame": "match_030.jpg",
     "score": 0.163,
     "p_team": 0.935,
+    "q_team_ring": 0.0,
+    "p_adj": 0.935,
     "fam": "WHITE",
     "team": true,
     "ring_fam": "GREEN",
@@ -2854,6 +3921,8 @@
     "frame": "match_021.jpg",
     "score": 0.133,
     "p_team": 0.932,
+    "q_team_ring": 0.0,
+    "p_adj": 0.932,
     "fam": "RED",
     "team": true,
     "ring_fam": "GREEN",
@@ -2869,6 +3938,8 @@
     "frame": "match_038.jpg",
     "score": 0.174,
     "p_team": 0.925,
+    "q_team_ring": 0.0,
+    "p_adj": 0.925,
     "fam": "RED",
     "team": true,
     "ring_fam": "GREEN",
@@ -2878,201 +3949,6 @@
      154.6,
      172.5,
      180.4
-    ]
-   },
-   {
-    "frame": "match_010.jpg",
-    "score": 0.144,
-    "p_team": 0.921,
-    "fam": "WHITE",
-    "team": true,
-    "ring_fam": "WHITE",
-    "h": 23.5,
-    "box": [
-     245.8,
-     103.1,
-     256.1,
-     126.6
-    ]
-   },
-   {
-    "frame": "match_011.jpg",
-    "score": 0.052,
-    "p_team": 0.899,
-    "fam": "WHITE",
-    "team": true,
-    "ring_fam": null,
-    "h": 65.0,
-    "box": [
-     505.5,
-     99.3,
-     531.1,
-     164.3
-    ]
-   },
-   {
-    "frame": "match_003.jpg",
-    "score": 0.21,
-    "p_team": 0.889,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 24.5,
-    "box": [
-     261.9,
-     105.6,
-     272.2,
-     130.1
-    ]
-   },
-   {
-    "frame": "match_019.jpg",
-    "score": 0.089,
-    "p_team": 0.889,
-    "fam": "WHITE",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 25.4,
-    "box": [
-     546.0,
-     136.1,
-     560.4,
-     161.5
-    ]
-   },
-   {
-    "frame": "match_030.jpg",
-    "score": 0.064,
-    "p_team": 0.888,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 24.9,
-    "box": [
-     53.7,
-     125.9,
-     66.7,
-     150.8
-    ]
-   },
-   {
-    "frame": "match_021.jpg",
-    "score": 0.211,
-    "p_team": 0.886,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 24.4,
-    "box": [
-     180.4,
-     126.1,
-     192.0,
-     150.5
-    ]
-   },
-   {
-    "frame": "match_007.jpg",
-    "score": 0.115,
-    "p_team": 0.881,
-    "fam": "WHITE",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 28.7,
-    "box": [
-     133.9,
-     138.4,
-     144.2,
-     167.1
-    ]
-   },
-   {
-    "frame": "match_012.jpg",
-    "score": 0.067,
-    "p_team": 0.87,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 35.9,
-    "box": [
-     393.5,
-     166.8,
-     410.3,
-     202.7
-    ]
-   },
-   {
-    "frame": "match_016.jpg",
-    "score": 0.229,
-    "p_team": 0.86,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 36.7,
-    "box": [
-     343.0,
-     245.0,
-     359.9,
-     281.7
-    ]
-   },
-   {
-    "frame": "match_033.jpg",
-    "score": 0.122,
-    "p_team": 0.858,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 24.7,
-    "box": [
-     314.8,
-     203.5,
-     332.4,
-     228.2
-    ]
-   },
-   {
-    "frame": "match_021.jpg",
-    "score": 0.203,
-    "p_team": 0.85,
-    "fam": "RED",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 23.2,
-    "box": [
-     339.1,
-     107.7,
-     351.3,
-     130.9
-    ]
-   },
-   {
-    "frame": "match_024.jpg",
-    "score": 0.135,
-    "p_team": 0.85,
-    "fam": "WHITE",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 26.1,
-    "box": [
-     225.9,
-     97.6,
-     237.0,
-     123.7
-    ]
-   },
-   {
-    "frame": "match_037.jpg",
-    "score": 0.129,
-    "p_team": 0.836,
-    "fam": "WHITE",
-    "team": true,
-    "ring_fam": "GREEN",
-    "h": 28.3,
-    "box": [
-     291.5,
-     174.6,
-     307.9,
-     202.8
     ]
    }
   ],
@@ -3370,5 +4246,135 @@
    "negatives_unclear": 1,
    "note": "p_team>=0.5 的 5 个框全部是真球员(5/5)；p_team<=0.17 的 5 个里 3 个是广告牌(正确拒绝)、1 个是真人被误拒、1 个说不清。误拒的那一个是框跨到了相邻的黄衣裁判+草地。"
   }
+ },
+ "conclusion": {
+  "verdict": "有条件可行",
+  "one_line": "球衣颜色确实能把低分框里的真球员和广告牌/场地分开，但不能只用「框内主色是否等于队色」：纯颜色匹配排序的头部全是广告牌白字。必须用「框内队色占比 − 框外同尺寸环带的队色占比」（对比度）。即便如此，它也只是「候选重排」而不是「判决」，因为颜色在低分辨率下会部分退化成框尺寸的代理。",
+  "main_criterion_temporal": {
+   "what": "同一球员在相邻帧的球衣族标签是否稳定（位置就近关联成≥5帧轨迹，匈牙利匹配 + 全局摇镜补偿）",
+   "tracks_ge5": 192,
+   "adjacent_pairs": 2092,
+   "consec_same_rate": 0.763,
+   "baseline_shuffled_labels": 0.308,
+   "lift": 0.455,
+   "strict_whole_track_same": 0.26,
+   "strict_short_tracks_le10": 0.316,
+   "strict_short_baseline": 0.005,
+   "claims_team_subset": {
+    "n": 145,
+    "consec": 0.773,
+    "baseline": 0.31
+   },
+   "note": "基线不是「均匀猜 3 类 = 33%」，而是每帧内打乱标签 200 次（保留该帧的颜色边际分布），比均匀猜更严：本数据随机水平只有 0.308。所以 0.763 是实打实的提升，但只看「稳」会被下面的负对照打脸。"
+  },
+  "negative_control_ring": {
+   "what": "同尺寸、框外扩 30% 的环带（只取躯干那几行、抠掉其它检测框），用同一套色板分类",
+   "consec_same_rate": 0.984,
+   "baseline": 0.855,
+   "lift": 0.128,
+   "strict": 0.925,
+   "strict_short": 0.92,
+   "verdict": "环带的标签比躯干更「稳定」（0.984 vs 0.763），但它的随机基线也更高（0.855）。环带 lift 只有 +0.128，躯干是 +0.455（3.6 倍）。这说明「稳定」本身毫无意义 —— 球员一直站在同一块草地上，环带当然稳。真正的信息量在 lift，不在绝对值。"
+  },
+  "low_score_decision": {
+   "range": [
+    0.05,
+    0.25
+   ],
+   "n_boxes": 655,
+   "torso_says_team_colour": {
+    "n": 327,
+    "rate": 0.499
+   },
+   "ring_says_team_colour": {
+    "n": 66,
+    "rate": 0.101
+   },
+   "torso_says_pitch_or_ad_colour": {
+    "n": 249,
+    "rate": 0.38
+   },
+   "ring_says_pitch_or_ad_colour": {
+    "n": 461,
+    "rate": 0.704
+   },
+   "contrast_gate_p_adj_ge_0.3": {
+    "n": 389,
+    "rate": 0.594
+   },
+   "ring_missing": 75,
+   "caveat": "0.3 阈值接纳 59.4% 的低分框，这个比例本身不能当精度 —— 只有排序头部（每片段前 10）做了人眼复核，阈值附近的精度未测。别把 59.4% 说成「59% 都是真球员」。",
+   "answer": "在 [0.05,0.25) 的 655 个框里，躯干颜色说「这是队色球员」的占 0.499，而它们的环带说「这是场地/广告色」的占 0.704 —— 同一批框，两个区域给出相反结论，这正是颜色特征可用（有信息）但也危险（会自证）的地方。"
+  },
+  "size_proxy_check": {
+   "spearman_p_team_vs_box_height": {
+    "spearman": -0.096,
+    "p": 0.013,
+    "n": 675
+   },
+   "consec_by_height_band": [],
+   "low_box_team_rate_by_height": [
+    {
+     "h_lo": 0,
+     "h_hi": 32,
+     "n": 167,
+     "torso_team_rate": 0.377,
+     "ring_team_rate": 0.186
+    },
+    {
+     "h_lo": 32,
+     "h_hi": 56,
+     "n": 254,
+     "torso_team_rate": 0.551,
+     "ring_team_rate": 0.106
+    },
+    {
+     "h_lo": 56,
+     "h_hi": 96,
+     "n": 155,
+     "torso_team_rate": 0.639,
+     "ring_team_rate": 0.032
+    },
+    {
+     "h_lo": 96,
+     "h_hi": 400,
+     "n": 76,
+     "torso_team_rate": 0.289,
+     "ring_team_rate": 0.026
+    }
+   ],
+   "verdict": "部分成立，必须承认：低分框的队色命中率随框高变化（h<32 只有 0.377、h56-96 是 0.639、h>96 掉到 0.289，因为大框跨到了看台/广告牌）。但 (a) Spearman rho(p_team, 框高) 在 40 帧部署集上是 -0.096（n=675，弱相关）；(b) 分档后每一档的 consec 仍高于该档自身的打乱基线。所以颜色信息不是纯粹的尺寸代理，但也绝不是尺寸无关的。"
+  },
+  "rerank": {
+   "criterion": "p_adj = p_team(躯干落在队色族的像素占比) − q_team(环带落在队色族的像素占比)",
+   "why": "纯 p_team 排序时前 10 里有 6 个是广告牌白字/台标（见 hd/t*_rerank_pure.png 对照图）；减掉环带后同一批框里真人升到前面（hd/t*_rerank.png）。这是本次实验里唯一被证明有效的改进，也是负对照的真正用途。",
+   "human_top10_precision": {
+    "t6000_goalmouth": "9/10 是真球员（1 个是横跨半个画面的异常大框，躯干带压到白色门柱）",
+    "t1939_open_play": "6/10 是真球员（其余：台标水印 1、白色边线 1、超框 2）"
+   },
+   "clip_top_lists": "见各 clip 的 rerank_top（按 p_adj 降序）与 rerank_top_pure_colour（对照组）"
+  },
+  "human_check": "见本文件 human_check 字段（10 条逐条判决，5 个高对比 + 5 个低对比）",
+  "limitations": [
+   "色板是每片段现学的（该片段 score>=0.50 的躯干像素 k-means，k=6、合并距离 0.10）。换场次/换球衣必须重学；片段里若某队高置信框太少，该队色根本不会进色板。",
+   "队色只用「被高置信框用得最多的前 2 个族」。裁判（黄）、门将（蓝/绿）、替补绿背心都不是队色，会被判成「非队色」而扣分 —— 对判罚辅助来说这是要单独补的第三类。",
+   "红队球衣与红色广告牌/红看台撞色时环带被污染：t1939 的 ring_team_rate 高达 0.213（另两段 0.049/0.019），该片段的负对照因此偏弱。",
+   "环带取不到时（贴画面边缘、被邻框挤掉）q_team 记 0，对比度会偏高。",
+   "颜色分辨率依赖框高：躯干不足 24 像素的框直接判 TOO_SMALL，颜色判据对它们无效。"
+  ],
+  "conditions_to_use": [
+   "每场开赛先跑 3-5 秒高置信帧学色板（clips 模式即此流程），并人工确认学到的两队色。",
+   "低分框只做候选重排：用 p_adj 排序后送二次确认（跟踪连续性/尺寸一致性/球场位置先验），不要单凭颜色接纳。",
+   "环带必须同尺寸、同高度行、且抠掉其它检测框 —— 否则隔壁球员的腿会把对照做废。",
+   "保留第三类（裁判黄/门将/绿背心），否则判罚场景会系统性丢掉裁判。"
+  ],
+  "artifacts": {
+   "tool": "tools/jersey_color.py",
+   "viz_hd": "data/results/viz/jersey/hd/（每片段 _sheet / _rerank / _rerank_pure，不入库）",
+   "viz_deploy": "data/results/viz/jersey/deploy/（40 张 640x360 标定帧 @imgsz320，不入库）",
+   "inspect": "_inspect_hd.png / _inspect_deploy.png：10 个低分框的 上下文|躯干|环带 三联图"
+  },
+  "verdict_basis": "判据先能失败：环带负对照在「稳定」这一项上赢过躯干（0.984 > 0.763），说明该指标单独用会自欺；加上基线后躯干 lift +0.455 > 环带 lift +0.128；低分框上躯干/环带给出相反判决（0.499 vs 0.101）。三条同时成立，才敢说颜色有判别力，且只在「对比度」形式下有。",
+  "reproduce": "& D:\\python\\python.exe tools\\jersey_color.py all --viz-every 4 --human-notes .research\\jersey\\human_notes.json"
  }
 }

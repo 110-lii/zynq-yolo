@@ -1992,8 +1992,13 @@ def main(argv=None):
         pass_test=sum(1 for r in tp if r["passed"]), n_test=len(tp),
         pass_arc_test=sum(1 for r in tp if r.get("passed_arc")),
         test_frames=[tiny(r) for r in tp],
+        # 两个不同的量，别混：
+        #   goal_detected = 盲检「门框」规则真的报出候选的帧数（row["goal"] 是候选 dict）
+        #   goal_model_frames = 拟合出的单应把球门模型线投影到白线掩膜上覆盖率>0 的帧数
+        # 第一版这里误把后者当成了「检出球门」，两者数值碰巧都是 7，但集合不同。
         goal_detected=sum(1 for r in rows if r.get("goal")),
         goal_test=sum(1 for r in tp if r.get("goal")),
+        goal_model_frames=sum(1 for r in rows if (r.get("goal_cov") or 0) > 0.0),
         circle_frames=sum(1 for r in rows if (r.get("arc_cov") or 0) >= 0.25),
         mean_ms=round(float(np.mean(ms)), 1),
         p95_ms=round(float(np.percentile(ms, 95)), 1),
@@ -2004,12 +2009,13 @@ def main(argv=None):
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(result, f, ensure_ascii=False, indent=1)
 
-    print("\nPITCH summary: %d/%d pass (%.1f%%)  arc %d/%d  test %d/%d  goal-det %d  "
+    print("\nPITCH summary: %d/%d pass (%.1f%%)  arc %d/%d  test %d/%d  goal-det %d (%d true)  "
           "mean %.0f ms" % (base["n_pass"], base["n"], 100.0 * base["rate"],
                             base["n_pass_arc"], base["n"],
                             result["conclusion"]["pass_test"],
                             result["conclusion"]["n_test"],
                             result["conclusion"]["goal_detected"],
+                            (result.get("diag_goal") or {}).get("n_true", 0),
                             result["conclusion"]["mean_ms"]))
     if args.viz:
         contact_sheet(sorted(VIZ_DIR.glob("match_*.png")), VIZ_DIR / "_sheet_pitch.png")

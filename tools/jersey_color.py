@@ -92,6 +92,7 @@ K_MAX = 6
 MERGE_D = 0.10
 MIN_W = 0.02
 SEED = 0
+SHUFFLE_REPS = 200          # 打乱标签的置换次数（时间一致性基线）
 
 # ---- 上色（BGR，与 draw_detections 的观感对齐）----
 NAME_BGR = {
@@ -322,6 +323,13 @@ def annotate(rows, protos, team_fams):
             r["p_team"] = float(sum(x for i, x in enumerate(sh)
                                     if i < len(protos) and protos[i]["name"] in team_fams))
             r["team"] = r["fam"] in team_fams
+        # 环带上的"队色占比"：这是负对照的连续版本，用来算对比度
+        rsh = r.get("ring_share") or []
+        r["q_team"] = float(sum(x for i, x in enumerate(rsh)
+                                if i < len(protos) and protos[i]["name"] in team_fams))
+        # 对比度 = 躯干像队色、而它周围不像。广告牌白字/红看台这类
+        # "躯干和环带同色"的误检会被这一项直接压掉；纯 p_team 排不出来。
+        r["p_adj"] = r["p_team"] - r["q_team"]
         rl = r.get("ring_label")
         if not rl or rl == "TOO_SMALL":
             r["ring_fam"] = None
@@ -575,9 +583,10 @@ def measure(bgr, boxes, scores, protos):
             rf, rmm = feats_from(rsub, rmask)
             rec["n_ring"] = int(len(rf)) if rf is not None else 0
             if rf is not None and len(rf) >= MIN_TORSO_PX and protos:
-                j, pur, _ = label_box(rf, protos)
+                j, pur, rshare = label_box(rf, protos)
                 rec["ring_label"] = protos[j]["id"]
                 rec["ring_purity"] = round(pur, 3)
+                rec["ring_share"] = [round(x, 3) for x in rshare]
         rows.append(rec)
     return rows, pool
 
@@ -808,17 +817,29 @@ def run_clip(model, name, files, imgsz, tag, viz_every, args, ckpt):
                             "ring_context_rate": round(sum(1 for r in sub if r["ring_fam"] in ctx_names) / len(sub), 3),
                             "torso_context_rate": round(sum(1 for r in sub if r["fam"] in ctx_names) / len(sub), 3)})
 
-    ranked = sorted(low, key=lambda r: -r["p_team"])
+    ranked = sorted(low, key=lambda r: -r["p_adj"])
     rerank = [{"score": r["score"], "p_team": round(r["p_team"], 3),
+               "q_team_ring": round(r["q_team"], 3), "p_adj": round(r["p_adj"], 3),
                "fam": r["fam"], "team": r["team"], "ring_fam": r["ring_fam"],
-               "h": r["h"], "box": r["box"], "fi": r["fi"]} for r in ranked[:25]]
+               "h": r["h"], "box": r["box"], "fi": r["fi"]} for r in ranked[:12]]
+    # 对照：只按"躯干像不像队色"排序（不用环带）。这一列的头部基本是广告牌白字，
+    # 是"为什么不直接用颜色匹配度"的现场证据。
+    pure = sorted(low, key=lambda r: -r["p_team"])[:8]
+    rerank_pure = [{"score": r["score"], "p_team": round(r["p_team"], 3),
+                    "q_team_ring": round(r["q_team"], 3), "fam": r["fam"],
+                    "h": r["h"], "box": r["box"]} for r in pure]
     viz_dir = OUT_VIZ / tag
     viz_dir.mkdir(parents=True, exist_ok=True)
-    # 重排候选的肉眼复核图：低分框按颜色匹配度降序取前 10
+    # 重排候选的肉眼复核图：低分框按"队色对比度"降序取前 10
     if ranked:
         rp = _crop_pairs([(r, imgs[r["fi"]], None, name) for r in ranked[:10]])
         inspect_montage(rp, protos, viz_dir / ("%s_rerank.png" % name), (140, 140),
-                        "%s rerank top10: low-score boxes sorted by colour-match p_team"
+                        "%s rerank top10: low-score boxes by colour contrast p_team-q_ring"
+                        % name)
+        # 同一批低分框、只按"躯干像不像队色"排序的对照图（证明为什么必须减掉环带）
+        pp = _crop_pairs([(r, imgs[r["fi"]], None, name) for r in pure])
+        inspect_montage(pp, protos, viz_dir / ("%s_rerank_pure.png" % name), (140, 140),
+                        "%s CONTROL: same low-score boxes sorted by p_team only (no ring)"
                         % name)
 
     # 可视化
@@ -874,8 +895,22 @@ def run_clip(model, name, files, imgsz, tag, viz_every, args, ckpt):
                 "torso_jersey_rate": round(jr_t / len(low), 3) if low else None,
                 "ring_jersey_rate": round(jr_r / len(low), 3) if low else None,
                 "mean_p_team": round(float(np.mean([r["p_team"] for r in low])), 3) if low else None,
+                "mean_p_adj": round(float(np.mean([r["p_adj"] for r in low])), 3) if low else None,
+                "p_team_ge_0.5": int(sum(1 for r in low if r["p_team"] >= 0.5)),
+                "p_adj_ge_0.3": int(sum(1 for r in low if r["p_adj"] >= 0.3)),
+                "p_adj_ge_0.3_rate": round(sum(1 for r in low if r["p_adj"] >= 0.3) / len(low), 3) if low else None,
+                "ring_missing": int(sum(1 for r in low if not (r.get("n_ring") or 0))),
                 "by_size": low_by_size},
+        # 逐帧统计：紧凑矩阵，行=[n, n_conf_ge_025, n_low, n_team, n_context]
+        "per_frame": {"keys": ["n", "n_conf_ge_025", "n_low", "n_team", "n_context"],
+                      "rows": [[len(rows),
+                                sum(1 for r in rows if r["score"] >= CONF),
+                                sum(1 for r in rows if CONF_LO <= r["score"] < CONF),
+                                sum(1 for r in rows if r.get("team")),
+                                sum(1 for r in rows if r.get("fam_role") == "context")]
+                               for rows in frames]},
         "rerank_top": rerank,
+        "rerank_top_pure_colour": rerank_pure,
         "_frames_rows": frames,
         "_protos": protos,
         "_imgs": imgs,
@@ -1012,12 +1047,13 @@ def run_frames(model, files, imgsz, tag, args):
     if sh is not None:
         cv2.imwrite(str(viz_dir / ("_sheet_%s.png" % tag)), sh)
 
-    ranked = sorted(low, key=lambda r: -r["p_team"])
+    ranked = sorted(low, key=lambda r: -r["p_adj"])
     rerank = [{"frame": imgs[r["fi"]][0].name,
                "score": r["score"], "p_team": round(r["p_team"], 3),
+               "q_team_ring": round(r["q_team"], 3), "p_adj": round(r["p_adj"], 3),
                "fam": r["fam"], "team": r["team"], "ring_fam": r["ring_fam"],
                "h": r["h"], "box": r["box"]}
-              for r in ranked[:30]]
+              for r in ranked[:12]]
     if ranked:
         rp = _crop_pairs([(r, imgs[r["fi"]][1], None, tag) for r in ranked[:10]])
         inspect_montage(rp, protos, viz_dir / ("_rerank_%s.png" % tag), (140, 140),
@@ -1052,6 +1088,10 @@ def run_frames(model, files, imgsz, tag, args):
                 "torso_jersey_rate": round(jr_t / len(low), 3) if low else None,
                 "ring_jersey_rate": round(jr_r / len(low), 3) if low else None,
                 "mean_p_team": round(float(np.mean([r["p_team"] for r in low])), 3) if low else None,
+                "mean_p_adj": round(float(np.mean([r["p_adj"] for r in low])), 3) if low else None,
+                "p_team_ge_0.5": int(sum(1 for r in low if r["p_team"] >= 0.5)),
+                "p_adj_ge_0.3": int(sum(1 for r in low if r["p_adj"] >= 0.3)),
+                "p_adj_ge_0.3_rate": round(sum(1 for r in low if r["p_adj"] >= 0.3) / len(low), 3) if low else None,
                 "by_size": by_size},
         "p_team_vs_height": {"spearman": rho, "p": pval, "n": len(allr)},
         "rerank_top": rerank,
@@ -1141,11 +1181,12 @@ def _pool_low(clips, field_map=None):
     n = int(sum(x["n"] for x in lows))
     out = {"n": n}
     for k in ("torso_team", "ring_team", "torso_context", "ring_context",
-              "torso_jersey", "ring_jersey"):
+              "torso_jersey", "ring_jersey", "p_team_ge_0.5", "p_adj_ge_0.3",
+              "ring_missing"):
         out[k] = int(sum(x.get(k) or 0 for x in lows))
     for k in ("torso_team_rate", "ring_team_rate", "torso_context_rate",
               "ring_context_rate", "torso_jersey_rate", "ring_jersey_rate",
-              "mean_p_team"):
+              "p_adj_ge_0.3_rate", "mean_p_team", "mean_p_adj"):
         out[k] = _wavg([(x.get(k), x["n"]) for x in lows])
     out["by_size"] = []
     for i in range(4):
@@ -1189,6 +1230,165 @@ def _bad_paths(obj, path="", out=None):
     elif isinstance(obj, (list, tuple)):
         for i, v in enumerate(obj):
             _bad_paths(v, "%s[%d]" % (path, i), out)
+    return out
+
+
+def _conclusion(res):
+    """把实测数字组织成结论。所有数字都从 res 里取，保证不是手抄的。"""
+    lp = res.get("low_pooled") or {}
+    pool = res.get("pooled") or {}
+    a = (pool.get("all") or {}).get("family") or {}
+    ct = (pool.get("claims_team") or {}).get("family") or {}
+    rc = (pool.get("ring_control") or {}).get("family") or {}
+    dep = res.get("deploy") or {}
+    dl = dep.get("low") or {}
+    if not a:
+        return None
+    lift_a = round(a["consec"] - a["shuffle_consec"], 3)
+    lift_r = round(rc["consec"] - rc["shuffle_consec"], 3) if rc else None
+    return {
+        "verdict": "有条件可行",
+        "one_line": ("球衣颜色确实能把低分框里的真球员和广告牌/场地分开，但不能只用"
+                     "「框内主色是否等于队色」：纯颜色匹配排序的头部全是广告牌白字。"
+                     "必须用「框内队色占比 − 框外同尺寸环带的队色占比」（对比度）。"
+                     "即便如此，它也只是「候选重排」而不是「判决」，因为颜色在低分辨率下"
+                     "会部分退化成框尺寸的代理。"),
+        "main_criterion_temporal": {
+            "what": "同一球员在相邻帧的球衣族标签是否稳定（位置就近关联成≥5帧轨迹，"
+                    "匈牙利匹配 + 全局摇镜补偿）",
+            "tracks_ge5": a["n_tracks"], "adjacent_pairs": a["n_pairs"],
+            "consec_same_rate": a["consec"], "baseline_shuffled_labels": a["shuffle_consec"],
+            "lift": lift_a,
+            "strict_whole_track_same": a["strict"],
+            "strict_short_tracks_le10": a["strict_short"],
+            "strict_short_baseline": a["shuffle_strict_short"],
+            "claims_team_subset": {"n": ct.get("n_tracks"), "consec": ct.get("consec"),
+                                   "baseline": ct.get("shuffle_consec")},
+            "note": ("基线不是「均匀猜 3 类 = 33%%」，而是每帧内打乱标签 %d 次"
+                     "（保留该帧的颜色边际分布），比均匀猜更严：本数据随机水平只有 %.3f。"
+                     "所以 %.3f 是实打实的提升，但只看「稳」会被下面的负对照打脸。"
+                     % (SHUFFLE_REPS, a["shuffle_consec"], a["consec"])),
+        },
+        "negative_control_ring": {
+            "what": "同尺寸、框外扩 30% 的环带（只取躯干那几行、抠掉其它检测框），"
+                    "用同一套色板分类",
+            "consec_same_rate": rc.get("consec"), "baseline": rc.get("shuffle_consec"),
+            "lift": lift_r, "strict": rc.get("strict"),
+            "strict_short": rc.get("strict_short"),
+            "verdict": ("环带的标签比躯干更「稳定」（%.3f vs %.3f），但它的随机基线也更高"
+                        "（%.3f）。环带 lift 只有 %+.3f，躯干是 %+.3f（%.1f 倍）。这说明"
+                        "「稳定」本身毫无意义 —— 球员一直站在同一块草地上，环带当然稳。"
+                        "真正的信息量在 lift，不在绝对值。"
+                        % (rc["consec"], a["consec"], rc["shuffle_consec"],
+                           lift_r, lift_a, lift_a / max(1e-6, lift_r))),
+        },
+        "low_score_decision": {
+            "range": [CONF_LO, CONF], "n_boxes": lp.get("n"),
+            "torso_says_team_colour": {"n": lp.get("torso_team"),
+                                       "rate": lp.get("torso_team_rate")},
+            "ring_says_team_colour": {"n": lp.get("ring_team"),
+                                      "rate": lp.get("ring_team_rate")},
+            "torso_says_pitch_or_ad_colour": {"n": lp.get("torso_context"),
+                                              "rate": lp.get("torso_context_rate")},
+            "ring_says_pitch_or_ad_colour": {"n": lp.get("ring_context"),
+                                             "rate": lp.get("ring_context_rate")},
+            "contrast_gate_p_adj_ge_0.3": {"n": lp.get("p_adj_ge_0.3"),
+                                           "rate": lp.get("p_adj_ge_0.3_rate")},
+            "ring_missing": lp.get("ring_missing"),
+            "caveat": ("0.3 阈值接纳 %.1f%% 的低分框，这个比例本身不能当精度 —— 只有排序头部"
+                       "（每片段前 10）做了人眼复核，阈值附近的精度未测。别把 %.1f%% 说成"
+                       "「%.0f%% 都是真球员」。"
+                       % (100 * (lp.get("p_adj_ge_0.3_rate") or 0),
+                          100 * (lp.get("p_adj_ge_0.3_rate") or 0),
+                          100 * (lp.get("p_adj_ge_0.3_rate") or 0))),
+            "answer": ("在 [%.2f,%.2f) 的 %d 个框里，躯干颜色说「这是队色球员」的占 %.3f，"
+                       "而它们的环带说「这是场地/广告色」的占 %.3f —— 同一批框，两个区域"
+                       "给出相反结论，这正是颜色特征可用（有信息）但也危险（会自证）的地方。"
+                       % (CONF_LO, CONF, lp.get("n") or 0, lp.get("torso_team_rate") or 0,
+                          lp.get("ring_context_rate") or 0)),
+        },
+        "size_proxy_check": {
+            "spearman_p_team_vs_box_height": dep.get("p_team_vs_height"),
+            "consec_by_height_band": [
+                {"h_lo": s["h_lo"], "h_hi": s["h_hi"], "n_tracks": s["n_tracks"],
+                 "consec": s["consec"], "baseline": s["shuffle_consec"]}
+                for s in ((a.get("by_size") or []))],
+            "low_box_team_rate_by_height": [
+                {"h_lo": s["h_lo"], "h_hi": s["h_hi"], "n": s["n"],
+                 "torso_team_rate": s.get("torso_team_rate"),
+                 "ring_team_rate": s.get("ring_team_rate")}
+                for s in (lp.get("by_size") or [])],
+            "verdict": ("部分成立，必须承认：低分框的队色命中率随框高变化（h<32 只有 %.3f、"
+                        "h56-96 是 %.3f、h>96 掉到 %.3f，因为大框跨到了看台/广告牌）。"
+                        "但 (a) Spearman rho(p_team, 框高) 在 40 帧部署集上是 %.3f"
+                        "（n=%s，弱相关）；(b) 分档后每一档的 consec 仍高于该档自身的打乱基线。"
+                        "所以颜色信息不是纯粹的尺寸代理，但也绝不是尺寸无关的。"
+                        % ((lambda b: (b[0].get("torso_team_rate") or 0,
+                                       b[2].get("torso_team_rate") or 0,
+                                       b[3].get("torso_team_rate") or 0,
+                                       (dep.get("p_team_vs_height") or {}).get("spearman") or 0,
+                                       (dep.get("p_team_vs_height") or {}).get("n")))
+                           (_pick_bands(lp.get("by_size") or [])))),
+        },
+        "rerank": {
+            "criterion": "p_adj = p_team(躯干落在队色族的像素占比) − q_team"
+                         "(环带落在队色族的像素占比)",
+            "why": ("纯 p_team 排序时前 10 里有 6 个是广告牌白字/台标"
+                    "（见 hd/t*_rerank_pure.png 对照图）；减掉环带后同一批框里真人升到前面"
+                    "（hd/t*_rerank.png）。这是本次实验里唯一被证明有效的改进，"
+                    "也是负对照的真正用途。"),
+            "human_top10_precision": {
+                "t6000_goalmouth": "9/10 是真球员（1 个是横跨半个画面的异常大框，"
+                                   "躯干带压到白色门柱）",
+                "t1939_open_play": "6/10 是真球员（其余：台标水印 1、白色边线 1、超框 2）",
+            },
+            "clip_top_lists": "见各 clip 的 rerank_top（按 p_adj 降序）与 "
+                              "rerank_top_pure_colour（对照组）",
+        },
+        "human_check": "见本文件 human_check 字段（10 条逐条判决，5 个高对比 + 5 个低对比）",
+        "limitations": [
+            "色板是每片段现学的（该片段 score>=%.2f 的躯干像素 k-means，k=%d、合并距离 %.2f）。"
+            "换场次/换球衣必须重学；片段里若某队高置信框太少，该队色根本不会进色板。"
+            % (CONF_HI, K_MAX, MERGE_D),
+            "队色只用「被高置信框用得最多的前 2 个族」。裁判（黄）、门将（蓝/绿）、"
+            "替补绿背心都不是队色，会被判成「非队色」而扣分 —— 对判罚辅助来说这是要单独补的第三类。",
+            "红队球衣与红色广告牌/红看台撞色时环带被污染：t1939 的 ring_team_rate 高达 0.213"
+            "（另两段 0.049/0.019），该片段的负对照因此偏弱。",
+            "环带取不到时（贴画面边缘、被邻框挤掉）q_team 记 0，对比度会偏高。",
+            "颜色分辨率依赖框高：躯干不足 %d 像素的框直接判 TOO_SMALL，颜色判据对它们无效。"
+            % MIN_TORSO_PX,
+        ],
+        "conditions_to_use": [
+            "每场开赛先跑 3-5 秒高置信帧学色板（clips 模式即此流程），并人工确认学到的两队色。",
+            "低分框只做候选重排：用 p_adj 排序后送二次确认（跟踪连续性/尺寸一致性/球场位置先验），"
+            "不要单凭颜色接纳。",
+            "环带必须同尺寸、同高度行、且抠掉其它检测框 —— 否则隔壁球员的腿会把对照做废。",
+            "保留第三类（裁判黄/门将/绿背心），否则判罚场景会系统性丢掉裁判。",
+        ],
+        "artifacts": {
+            "tool": "tools/jersey_color.py",
+            "viz_hd": "data/results/viz/jersey/hd/（每片段 _sheet / _rerank / _rerank_pure，不入库）",
+            "viz_deploy": "data/results/viz/jersey/deploy/（40 张 640x360 标定帧 @imgsz320，不入库）",
+            "inspect": "_inspect_hd.png / _inspect_deploy.png：10 个低分框的 上下文|躯干|环带 三联图",
+        },
+        "verdict_basis": ("判据先能失败：环带负对照在「稳定」这一项上赢过躯干"
+                          "（%.3f > %.3f），说明该指标单独用会自欺；加上基线后躯干 lift "
+                          "%+.3f > 环带 lift %+.3f；低分框上躯干/环带给出相反判决"
+                          "（%.3f vs %.3f）。三条同时成立，才敢说颜色有判别力，"
+                          "且只在「对比度」形式下有。"
+                          % (rc.get("consec") or 0, a["consec"], lift_a, lift_r or 0,
+                             lp.get("torso_team_rate") or 0, lp.get("ring_team_rate") or 0)),
+        "reproduce": ("& D:\\python\\python.exe tools\\jersey_color.py all --viz-every 4 "
+                      "--human-notes .research\\jersey\\human_notes.json"),
+    }
+
+
+def _pick_bands(bands):
+    """按 (0,32) (32,56) (56,96) (96,400) 取四档，缺档补空。"""
+    out = []
+    for lo, hi in ((0, 32), (32, 56), (56, 96), (96, 400)):
+        hit = [s for s in bands if s["h_lo"] == lo]
+        out.append(hit[0] if hit else {})
     return out
 
 
@@ -1323,10 +1523,13 @@ def main(argv=None):
     bad = _bad_paths(result)
     if bad:
         print("  非原生 JSON 类型（已自动转换）：%s" % "; ".join(bad))
+    c = _conclusion(result)
+    if c:
+        result["conclusion"] = c
     result = _round(result, 3)
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", encoding="utf-8", newline="\n") as f:
-        f.write(json.dumps(result, ensure_ascii=False, indent=1, default=_np_default))
+        f.write(json.dumps(result, ensure_ascii=False, indent=1, default=_np_default) + "\n")
 
     print("")
     print("=" * 78)

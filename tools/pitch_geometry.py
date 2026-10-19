@@ -1264,6 +1264,65 @@ GOAL_TRUTH = {
 }
 
 
+def diagnose_closest(paths, p, res_rows):
+    """0/10 之后，「最接近的帧有什么共同点」必须给实数，不能靠印象。
+
+    10 帧全 FAIL，所以任务里「成功帧的共同点」这个问题要改写成「最接近通过的
+    帧有什么共同点」。这里只量两个可量化、且**不依赖检测结果**的量：
+
+      near_in / far_in = 草坪包络的近端/远端边线，有多大比例的横坐标落在画面内
+                         （y 在 [0,h)）。边线被画面下沿/上沿切掉，覆盖率必然上不去。
+      grass           = 草坪占比（任务猜想的那个变量）。
+
+    然后与每帧实际达到的 touch 覆盖率算相关系数。若「草坪占比」相关接近 0 而
+    「远端边线在画面内」相关高，那么结论就要写成「不取决于草坪多少」。
+    """
+    # 注意键名：run_set 返回的是原始行，用 touch_cov / grass_ratio；
+    # touch / grass 只是 slim() 重命名后的名字，这里取不到。
+    tch = {r.get("frame"): r.get("touch_cov") for r in res_rows}
+    grs = {r.get("frame"): r.get("grass_ratio") for r in res_rows}
+    out = []
+    for path in paths:
+        bgr = cv2.imread(str(path))
+        if bgr is None:
+            continue
+        h, w = bgr.shape[:2]
+        env = grass_envelope(grass_mask(bgr, p), p)
+        row = dict(frame=path.name, tch=tch.get(path.name), grs=grs.get(path.name))
+        if env is not None:
+            near, far, _q = env
+            row["near_in"] = round(_line_in_frame(near, w, h), 3)
+            row["far_in"] = round(_line_in_frame(far, w, h), 3)
+        out.append(row)
+
+    def _corr(key):
+        pairs = [(r[key], r["tch"]) for r in out
+                 if r.get(key) is not None and r.get("tch") is not None]
+        if len(pairs) < 3:
+            return None
+        xs = np.array([a for a, _ in pairs], dtype=float)
+        ys = np.array([b for _, b in pairs], dtype=float)
+        if xs.std() < 1e-9 or ys.std() < 1e-9:
+            return None
+        return round(float(np.corrcoef(xs, ys)[0, 1]), 3)
+
+    return dict(frames=out, corr_far_in=_corr("far_in"),
+                corr_near_in=_corr("near_in"), corr_grs=_corr("grs"),
+                note=("10 帧全部 FAIL，故此表回答「最接近的帧有什么共同点」。"
+                      "corr_* = 与该帧实际 touch 覆盖率的皮尔逊相关；"
+                      "near_in/far_in 由草坪包络算出，不依赖检测结果。"))
+
+
+def _line_in_frame(line, w, h, n=400):
+    """无穷直线在 x∈[0,w) 上仍落在 y∈[0,h) 的比例。"""
+    a, b, c = line
+    if abs(b) < 1e-12:
+        return 0.0
+    xs = np.linspace(0, w - 1, n)
+    ys = -(a * xs + c) / b
+    return float(np.mean((ys >= 0) & (ys < h)))
+
+
 def diagnose_goal(paths, p):
     """球门：盲检多少个、人工核实几个真、特征能不能分开。"""
     out = []
@@ -1705,6 +1764,7 @@ def verdict(result):
     orc = result.get("diag_oracle") or []
     sweep = result.get("sensitivity") or []
     gd = result.get("diag_goal") or {}
+    cl = result.get("diag_closest") or {}
 
     def _col(t, name):
         """从列式诊断表里取一列（_tab 压缩后的形状）。"""
@@ -1749,15 +1809,25 @@ def verdict(result):
               "fill_mid/post_below 在真假之间有重叠，没有一条干净的单特征阈值"
               % (gd.get("n_detected", 0), gd.get("n_true", 0),
                  gd.get("precision", 0.0))) if gd else "未测",
+        near_miss=("10 帧全 FAIL，所以「成功帧的共同点」没有样本可讲；改答「最接近的帧"
+                   "有什么共同点」，而且不靠印象、量出来：与该帧实际 touch 覆盖率的"
+                   "皮尔逊相关为 corr(远端边线在画面内)=%s、corr(近端边线在画面内)=%s、"
+                   "corr(草坪占比)=%s（n=%d）。即覆盖率高不高跟草坪多少几乎无关，"
+                   "跟远端边线是否被画面上沿切掉有关。这否掉了"
+                   "「机位远、草坪占比大就能成功」这个猜想。"
+                   % (cl.get("corr_far_in"), cl.get("corr_near_in"),
+                      cl.get("corr_grs"), len(cl.get("rows") or []))) if cl else "未测",
         needed=("要让它可用，需要以下任一条件：(a) 机位更近/更长焦，使画线宽 >=1.5 px；"
                 "(b) 用半自动初始化，人工点 4 个角点后只做跟踪；"
                 "(c) 换成草地纹理/割草条纹方向做几何约束，不再依赖白线像素。"),
         arcs=("中圈/罚球弧：本批帧里中圈直径只有 %.0f-%.0f px、弧半径 %.0f-%.0f px，"
-              "而画线只有 %.2f-%.2f px 宽 -> 弧在二值图上不是连通点集，"
+                   "而画线只有 %.2f-%.2f px 宽 -> 弧在二值图上不是连通点集，"
               "HoughCircles/fitEllipse 没有可拟合的支撑；因此**没有独立跑圆弧检测器**，"
               "中圈的证据来自拟合出的单应把地面圆投影到白线掩膜上的覆盖率。"
               "实测 arc 覆盖率 0.03-0.29，有 2 帧单看弧覆盖率过了 0.25，"
               "但 T2 要求 T1 先通过，T1 是 0 帧 -> 圆/弧二级判据实际 0/10。"
+              "根本障碍和直线同源：画线宽度低于 1 px，弧在任何霍夫空间里都没有稳定的"
+              "支撑票数，在中距离转播机位下这不是调参能解决的。"
               % (min(diam) if diam else 0, max(diam) if diam else 0,
                  min(arcv) if arcv else 0, max(arcv) if arcv else 0,
                  min(widths) if widths else 0, max(widths) if widths else 0)),
@@ -1982,6 +2052,19 @@ def main(argv=None):
                     for r in gd["frames"]],
                    ("frame", "posts", "det", "truth", "x1", "x2", "y", "h",
                     "fill", "post", "hs", "ground")))
+
+        print("\n=== diag 6) what the near-miss frames have in common ===")
+        cl = diagnose_closest(paths, p, rows)
+        for r in cl["frames"]:
+            print("  %-14s near_in=%-6s far_in=%-6s tch=%-6s grs=%s"
+                  % (r["frame"], r.get("near_in"), r.get("far_in"),
+                     r.get("tch"), r.get("grs")))
+        print("  -> corr(tch,far_in)=%s  corr(tch,near_in)=%s  corr(tch,grass)=%s"
+              % (cl["corr_far_in"], cl["corr_near_in"], cl["corr_grs"]))
+        result["diag_closest"] = dict(
+            corr_far_in=cl["corr_far_in"], corr_near_in=cl["corr_near_in"],
+            corr_grs=cl["corr_grs"], note=cl["note"],
+            **_tab(cl["frames"], ("frame", "near_in", "far_in", "tch", "grs")))
 
     test_names = {q.name for q in ecs.list_images(TEST_DIR)}
     tp = [r for r in rows if r["frame"] in test_names]

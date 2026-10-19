@@ -315,6 +315,55 @@ def _clip(s: str, n: int = 160) -> str:
     return s[:n] + (" …" if len(s) > n else "")
 
 
+# ---------------------------------------------------------------------------
+# ★ 密钥脱敏（2026-10-19 新增，**不可关**）
+#
+# 为什么必须有：`ai/raw/` 是**逐字**转录，用户若在对话里粘贴过 token / 私钥 / 密码，
+# 它们会被原样写进仓库并推到 GitHub。本仓库真实发生过一次：用户粘贴 GitHub PAT 后，
+# 首次 `git push` 被 GitHub 的 push protection 以 "repository rule violations" 拒绝 ——
+# 即**密钥已经进了本地仓库**。脱敏放在**写出端**，保证产物从来不含明文密钥。
+#
+# 设计取舍：
+#   · **只替换密钥字面量**，不动其余任何字符 ⇒ 对「逐字」主张的破坏面最小，
+#     且 `verify_raw_match.py` 的逐字比对仍然成立（它对的是**已脱敏后**的同一份产物）。
+#   · 保留**前后各 4 位**，便于人确认「确实是那把钥匙」而不必保存它。
+#   · 同时把「这个位置被脱敏过」写进产物，**不让读者以为是原文如此**。
+# ---------------------------------------------------------------------------
+_SECRET_PATTERNS = [
+    # GitHub token（ghp_ 经典 / gho_/ghu_/ghs_/ghr_ / github_pat_ 细粒度）
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"), "GITHUB_TOKEN"),
+    (re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"), "GITHUB_PAT"),
+    # 常见云厂商 / 服务密钥
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "AWS_ACCESS_KEY"),
+    (re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"), "API_KEY_SK"),
+    (re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"), "SLACK_TOKEN"),
+    (re.compile(r"\bAIza[0-9A-Za-z_\-]{30,}\b"), "GOOGLE_API_KEY"),
+    # 私钥块（PEM）
+    (re.compile(r"-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----"), "PRIVATE_KEY_HEADER"),
+]
+
+
+def redact_secrets(text: str) -> str:
+    """把文本里的密钥字面量替换成 `<REDACTED:TYPE abcd…wxyz>`。
+
+    ⚠️ 这是一处**明知违反「逐字」但仍必须做**的取舍：安全 > 逐字。
+       每处替换都显式留痕（不是静默删除），且 `ai/README.md` 与 `ai/tools/README.md`
+       都写明了「原文层因脱敏而与会话不完全逐字」这一事实。
+    """
+    if not text:
+        return text
+    out = text
+    for pat, kind in _SECRET_PATTERNS:
+        def _sub(m: "re.Match[str]") -> str:
+            s = m.group(0)
+            head = s[:4]
+            tail = s[-4:] if len(s) > 8 else ""
+            return "<REDACTED:%s %s…%s>" % (kind, head, tail)
+        out = pat.sub(_sub, out)
+    return out
+
+
+
 def tool_summary(name: str, args: Any) -> str:
     """把一次工具调用压成一行 —— 保留「做过什么」，不淹没正文（与另四个导出器同口径）。"""
     if isinstance(args, str):
@@ -783,7 +832,9 @@ def render_session(day_turns: List[Dict[str, Any]], meta: Dict[str, Any],
                 L.append("")
             L.append("---")
             L.append("")
-    return "\n".join(L)
+    # ★ 唯一出口：整篇渲染完成后统一脱敏（详见 redact_secrets 的注释）。
+    #   放在这里而不是各个拼接点，是为了保证「没有任何一条路径能绕过脱敏」。
+    return redact_secrets("\n".join(L))
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,5141 @@
+{
+ "schema": "zynq-yolo/layers/v1",
+ "generated_by": "tools/export_layers.py",
+ "contract": {
+  "doc": "docs/accel_interface.md",
+  "sections": [
+   "§2 布局",
+   "§3 定点",
+   "§5 范围"
+  ]
+ },
+ "source": {
+  "onnx": {
+   "path": "data/models/yolov8n_320.onnx",
+   "sha256": "d338b1e23913c56bd55cba7759876df190b8c2986715cb10a4ecdaf9ff54a24b",
+   "nodes": 262,
+   "convs": 64,
+   "opsets": [
+    [
+     "ai.onnx",
+     12
+    ]
+   ],
+   "graph_inputs": {
+    "images": [
+     1,
+     3,
+     320,
+     320
+    ]
+   }
+  },
+  "quant_weights": {
+   "path": "data/models/quant/yolov8n_320_wq.npz",
+   "sha256": "0e9aefa9c5dcac5c9585be4a4c1e8e3d996015a7c35b6c2b740df45140604314",
+   "keys": 128
+  },
+  "golden_json": {
+   "path": "data/golden/yolov8n_320_golden.json",
+   "sha256": "f13e05fb8b6b579addd209a482b5bf81d38d99fd1093f9864af0e6bf73ce3195",
+   "tensors": 270
+  },
+  "golden_npz_sha256": "983247aa876bb7cf59818772629f21d2b9b84cf8512f879e60564eb70dbef44b",
+  "input_seed": 20261019
+ },
+ "calibration": {
+  "activation": "per-tensor QUInt8",
+  "stats_source": "data/golden/*_golden.json 的 min/max（float32 真实激活范围）",
+  "formula": "scale=(max-min)/255; zero_point=clamp(round(-min/scale),0,255)",
+  "rounding": "round-half-away-from-zero（float64 算术）",
+  "known_gap": "契约 §3 只规定怎么用 sx/zx/sp/zp_pre/so/zo，没规定怎么算它们的值；本清单采用上面这条 ORT MinMax 口径。若改了口径，M/S/bias_i32/lut 全变，必须重跑 ref_int8_conv.py 的逐位比对。",
+  "note": "ORT 的 quantize_static 标定在 4 个 head 张量上给出的 scale 与本口径不同（cv3.0/cv3.1/cv3.2 的 Conv 输出与 dfl Conv 输出），原因是标定期取到的 range 与 float 实跑的 min/max 不一致；本清单一律以 golden 的 min/max 为准。"
+ },
+ "layout": {
+  "endianness": "little",
+  "w": "int8 [C_OUT][C_IN][K][K]，内层按 kh*K+kw",
+  "params": "int32 [C_OUT][3] = {bias_i32, M, S}，第 c 通道在 params[3c..3c+2]",
+  "lut": "uint8 [256]",
+  "in": "uint8 [C_IN][H_IN][W_IN]",
+  "out": "uint8 [C_OUT][H_OUT][W_OUT]",
+  "padding": "零 padding 在 uint8 域填 zp_in（不是填 0），PL 越界读 zp_in"
+ },
+ "totals": {
+  "conv_total": 64,
+  "layers": 63,
+  "unsupported": 1,
+  "act_silu": 57,
+  "act_none": 6,
+  "bytes": {
+   "w": 3146176,
+   "params": 68748,
+   "lut": 16384,
+   "in": 5129600,
+   "out": 3782800,
+   "all": 12143708
+  }
+ },
+ "layers": [
+  {
+   "idx": 0,
+   "key": "_model.0_conv_Conv",
+   "onnx_name": "/model.0/conv/Conv",
+   "geom": {
+    "C_IN": 3,
+    "C_OUT": 16,
+    "H_IN": 320,
+    "W_IN": 320,
+    "H_OUT": 160,
+    "W_OUT": 160,
+    "K": 3,
+    "stride": 2,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.035811237260407094,
+    "zx": 124,
+    "sp": 1.0951724183325675,
+    "zp_pre": 127,
+    "so": 0.5519866617286906,
+    "zo": 1,
+    "has_bias": true,
+    "M_min": 1113455708,
+    "M_max": 2098003401,
+    "S_min": 38,
+    "S_max": 42,
+    "sw_min": 0.014347071759402752,
+    "sw_max": 0.13775092363357544,
+    "sum_w_min": -757,
+    "sum_w_max": 293,
+    "bias_i32_min": -40339,
+    "bias_i32_max": 100981
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.0/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "synthetic:np.random.default_rng(20261019).standard_normal([1, 3, 320, 320], dtype=float32)",
+    "weights": "wq:_model.0_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.0_conv_Conv/w.bin",
+    "params": "bin/_model.0_conv_Conv/params.bin",
+    "lut": "bin/_model.0_conv_Conv/lut.bin",
+    "in": "bin/_model.0_conv_Conv/in.bin",
+    "out": "bin/_model.0_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "90cc26aff7e1d7463143135cba41427b452772ad9358a44858703af35295e4e1",
+    "params": "2f03340e981a447c2ea9cf044ce6efdeda2b8b1826d309072e1159d7065a2469",
+    "lut": "02b00e20450924c298cbfff613d13dc50bd815d7f96d776b56223dc5405c6b3b",
+    "in": "7d55f1a99feb216270d086e8503deae7bb17bee0023d8484540c251fb6b1777e",
+    "out": "cebcec59f0f7ea24a583e9833a1440b1a3fee235c80e127b9064fd500d047853"
+   },
+   "bytes": {
+    "w": 432,
+    "params": 192,
+    "lut": 256,
+    "in": 307200,
+    "out": 409600
+   },
+   "ref": {
+    "acc_max_abs": 42636,
+    "acc_int32_pct": 0.001985393465489798,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 409600
+   },
+   "golden": {
+    "input": null,
+    "pre_act": "_model.0_conv_Conv_output_0",
+    "post_act": "_model.0_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 1,
+   "key": "_model.1_conv_Conv",
+   "onnx_name": "/model.1/conv/Conv",
+   "geom": {
+    "C_IN": 16,
+    "C_OUT": 32,
+    "H_IN": 160,
+    "W_IN": 160,
+    "H_OUT": 80,
+    "W_OUT": 80,
+    "K": 3,
+    "stride": 2,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.5519866617286906,
+    "zx": 1,
+    "sp": 2.206729544845282,
+    "zp_pre": 127,
+    "so": 1.1123519272196527,
+    "zo": 0,
+    "has_bias": true,
+    "M_min": 1090915977,
+    "M_max": 2051268719,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.003147717099636793,
+    "sw_max": 0.02320067025721073,
+    "sum_w_min": -348,
+    "sum_w_max": 1267,
+    "bias_i32_min": -1436,
+    "bias_i32_max": 3337
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.0_act_Mul_output_0",
+    "weights": "wq:_model.1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.1_conv_Conv/w.bin",
+    "params": "bin/_model.1_conv_Conv/params.bin",
+    "lut": "bin/_model.1_conv_Conv/lut.bin",
+    "in": "bin/_model.1_conv_Conv/in.bin",
+    "out": "bin/_model.1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "088261879d87a0bfec6a2aa3ef4c53e64994ee5ebdd2dbab8f64de1497a07cb3",
+    "params": "e5f658ef22c6fc1ea1f1c61b84a696917ec95c27d995d3d45f41d51d4de12a55",
+    "lut": "c515f41cf59ae601fb687c270f47eeb07aa56b330a1ff787dc6106e2b719eae8",
+    "in": "d565947a6e658f0b3d0cfe77f4721997814cfb9c22dd75792bae25ef6eba1a26",
+    "out": "df7fbf308551e63acac06fbd6cccc3e616dfbbbd2c6207c773e726f8d5a01d8c"
+   },
+   "bytes": {
+    "w": 4608,
+    "params": 384,
+    "lut": 256,
+    "in": 409600,
+    "out": 204800
+   },
+   "ref": {
+    "acc_max_abs": 73812,
+    "acc_int32_pct": 0.0034371390954764276,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 106180
+   },
+   "golden": {
+    "input": "_model.0_act_Mul_output_0",
+    "pre_act": "_model.1_conv_Conv_output_0",
+    "post_act": "_model.1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 2,
+   "key": "_model.2_cv1_conv_Conv",
+   "onnx_name": "/model.2/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 32,
+    "C_OUT": 32,
+    "H_IN": 80,
+    "W_IN": 80,
+    "H_OUT": 80,
+    "W_OUT": 80,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 1.1123519272196527,
+    "zx": 0,
+    "sp": 1.2113649555281096,
+    "zp_pre": 190,
+    "so": 0.30793654229126727,
+    "zo": 1,
+    "has_bias": true,
+    "M_min": 1081051084,
+    "M_max": 2128449011,
+    "S_min": 37,
+    "S_max": 41,
+    "sw_min": 0.000586529029533267,
+    "sw_max": 0.009672879241406918,
+    "sum_w_min": -781,
+    "sum_w_max": 1082,
+    "bias_i32_min": -116,
+    "bias_i32_max": 2542
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.2/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.1_act_Mul_output_0",
+    "weights": "wq:_model.2_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.2_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.2_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.2_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.2_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.2_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "82f0b063136355fa3feed8b0817185a032837c37565df69b43d93b13899735d7",
+    "params": "9292c56236781df833ef8b8bdc7b4506be9224636406f17503057185b9498bb5",
+    "lut": "40d1fc1571886ea002632fed1a52280b2b7abca1e328b28ed30d528f3230a89e",
+    "in": "799fc5fd051afefdc165e09d27c20bf11e3d6d24a2de1d1360994cd9f81966df",
+    "out": "8814d08bc6191d9067bf3ae49be06fd6f098daef363f6fb53e4986cc3f573e38"
+   },
+   "bytes": {
+    "w": 1024,
+    "params": 384,
+    "lut": 256,
+    "in": 204800,
+    "out": 204800
+   },
+   "ref": {
+    "acc_max_abs": 53408,
+    "acc_int32_pct": 0.0024870038044112752,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 189338
+   },
+   "golden": {
+    "input": "_model.1_act_Mul_output_0",
+    "pre_act": "_model.2_cv1_conv_Conv_output_0",
+    "post_act": "_model.2_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 3,
+   "key": "_model.2_m.0_cv1_conv_Conv",
+   "onnx_name": "/model.2/m.0/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 16,
+    "C_OUT": 16,
+    "H_IN": 80,
+    "W_IN": 80,
+    "H_OUT": 80,
+    "W_OUT": 80,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.12653726771766063,
+    "zx": 2,
+    "sp": 0.5289872412588082,
+    "zp_pre": 136,
+    "so": 0.24707312221620598,
+    "zo": 1,
+    "has_bias": true,
+    "M_min": 1112310786,
+    "M_max": 2095811705,
+    "S_min": 38,
+    "S_max": 40,
+    "sw_min": 0.007968547753989697,
+    "sw_max": 0.023522300645709038,
+    "sum_w_min": -362,
+    "sum_w_max": 511,
+    "bias_i32_min": -5045,
+    "bias_i32_max": 7960
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.2/m.0/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.2_Split_output_1",
+    "weights": "wq:_model.2_m.0_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.2_m.0_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.2_m.0_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.2_m.0_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.2_m.0_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.2_m.0_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "1518fe2f8a1035865728bb92f47251064192ff9930af9313739f48ec7925727b",
+    "params": "2df301200116442f7743515f08aa64f165be2683d7852ce75aba9247cbb83f4c",
+    "lut": "e789e979f6690bf716383726c7e3a9fa902108d8a6b1cec916d06b7df1685c25",
+    "in": "4ab96ada41c7f2857d7390ec41a8646a5529de9ccfc759b768f52dcb9b5af23f",
+    "out": "27ed33e636ffbf76dd93811771b9eeb138873ea39e4c651fc90b72db91a38c56"
+   },
+   "bytes": {
+    "w": 2304,
+    "params": 192,
+    "lut": 256,
+    "in": 102400,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 47669,
+    "acc_int32_pct": 0.002219760791500919,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 254,
+    "out_nonzero": 92338
+   },
+   "golden": {
+    "input": "_model.2_Split_output_1",
+    "pre_act": "_model.2_m.0_cv1_conv_Conv_output_0",
+    "post_act": "_model.2_m.0_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 4,
+   "key": "_model.2_m.0_cv2_conv_Conv",
+   "onnx_name": "/model.2/m.0/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 16,
+    "C_OUT": 16,
+    "H_IN": 80,
+    "W_IN": 80,
+    "H_OUT": 80,
+    "W_OUT": 80,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.24707312221620598,
+    "zx": 1,
+    "sp": 0.6317243987438725,
+    "zp_pre": 136,
+    "so": 0.29584592639231216,
+    "zo": 1,
+    "has_bias": true,
+    "M_min": 1210770356,
+    "M_max": 2130049560,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.001837963587604463,
+    "sw_max": 0.007155663799494505,
+    "sum_w_min": -490,
+    "sum_w_max": 456,
+    "bias_i32_min": -2475,
+    "bias_i32_max": 8712
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.2/m.0/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.2_m.0_cv1_act_Mul_output_0",
+    "weights": "wq:_model.2_m.0_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.2_m.0_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.2_m.0_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.2_m.0_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.2_m.0_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.2_m.0_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "e271cceb544c27f1fd1cf331a2ebb31c10f824e8b73e57a61be7d33a074f213f",
+    "params": "1fe9c398a4bbfc6977f6e2d4b295ee749c5a1738e19d6dcec58df1111402bde6",
+    "lut": "2b4c07452976c920fe513df582d5b9f17b6b95a444a568458347e500b1c81fd9",
+    "in": "36ba420c1d93d5bc685824b7cae44107b9b970a1e6d85d6679fa448ebe99012d",
+    "out": "4a2d622d4b01399561a9b877fc50285697362b0a006dabcf868dece9e8d66b3c"
+   },
+   "bytes": {
+    "w": 2304,
+    "params": 192,
+    "lut": 256,
+    "in": 102400,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 102629,
+    "acc_int32_pct": 0.004779035227736009,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 92486
+   },
+   "golden": {
+    "input": "_model.2_m.0_cv1_act_Mul_output_0",
+    "pre_act": "_model.2_m.0_cv2_conv_Conv_output_0",
+    "post_act": "_model.2_m.0_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 5,
+   "key": "_model.2_cv2_conv_Conv",
+   "onnx_name": "/model.2/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 48,
+    "C_OUT": 32,
+    "H_IN": 80,
+    "W_IN": 80,
+    "H_OUT": 80,
+    "W_OUT": 80,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.3572402135998595,
+    "zx": 2,
+    "sp": 0.2290673947801777,
+    "zp_pre": 174,
+    "so": 0.07420815591718637,
+    "zo": 4,
+    "has_bias": true,
+    "M_min": 1111479516,
+    "M_max": 2146526204,
+    "S_min": 37,
+    "S_max": 39,
+    "sw_min": 0.0014268136583268642,
+    "sw_max": 0.00855981558561325,
+    "sum_w_min": -659,
+    "sum_w_max": 494,
+    "bias_i32_min": -1551,
+    "bias_i32_max": 8404
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.2/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.2_Concat_output_0",
+    "weights": "wq:_model.2_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.2_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.2_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.2_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.2_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.2_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "46062bcb11315325e073b001c3cfecf262bc70f0126d2ddfa4ac82624aaf8548",
+    "params": "ce3c24eba1b45231764bd49d9edaaa90f8bdf7bfd385de8970d936398f358ce7",
+    "lut": "e7cbf05683a390f61335020812216a673d0890dffe59c4dcee153bebca7a8111",
+    "in": "67608fb838651b31f78a30ff6922b32192241e49cb83f708d91c7b3de4ed562f",
+    "out": "de66929da7bc6a11535589cde0864b62282544a1d384d8ffb5ca12feb70e20a2"
+   },
+   "bytes": {
+    "w": 1536,
+    "params": 384,
+    "lut": 256,
+    "in": 307200,
+    "out": 204800
+   },
+   "ref": {
+    "acc_max_abs": 31198,
+    "acc_int32_pct": 0.0014527700848191837,
+    "q_pre_min": 3,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 188375
+   },
+   "golden": {
+    "input": "_model.2_Concat_output_0",
+    "pre_act": "_model.2_cv2_conv_Conv_output_0",
+    "post_act": "_model.2_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 6,
+   "key": "_model.3_conv_Conv",
+   "onnx_name": "/model.3/conv/Conv",
+   "geom": {
+    "C_IN": 32,
+    "C_OUT": 64,
+    "H_IN": 80,
+    "W_IN": 80,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 2,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.07420815591718637,
+    "zx": 4,
+    "sp": 0.09027534933651195,
+    "zp_pre": 161,
+    "so": 0.03442636108865925,
+    "zo": 8,
+    "has_bias": true,
+    "M_min": 1085886667,
+    "M_max": 2134138333,
+    "S_min": 39,
+    "S_max": 42,
+    "sw_min": 0.00048093602526932955,
+    "sw_max": 0.003918581176549196,
+    "sum_w_min": -2915,
+    "sum_w_max": 1577,
+    "bias_i32_min": -26245,
+    "bias_i32_max": 69520
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.3/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.2_cv2_act_Mul_output_0",
+    "weights": "wq:_model.3_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.3_conv_Conv/w.bin",
+    "params": "bin/_model.3_conv_Conv/params.bin",
+    "lut": "bin/_model.3_conv_Conv/lut.bin",
+    "in": "bin/_model.3_conv_Conv/in.bin",
+    "out": "bin/_model.3_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "decd9d3647dcc481d2ea1ef4ea4c77dea9244ec89cd100ecdcb8a4938fbb1f19",
+    "params": "b198b091f417f32c0d79481b41b853afb552eb7af3284bb43814fc181bf95848",
+    "lut": "8064f59d8d87351db899b51c0b12b8039b72bf947d9a53a0aaee9526f5bfd3d7",
+    "in": "0cb12267153cba4d5e15ae537c8e78c31bb710745daaea10c5aec144fb26bc94",
+    "out": "90442c9ebd586ea404913188ab1fd36667b85f1cb89e00fbc472cdd047a8ddd4"
+   },
+   "bytes": {
+    "w": 18432,
+    "params": 768,
+    "lut": 256,
+    "in": 204800,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 144996,
+    "acc_int32_pct": 0.006751902404591396,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 252,
+    "out_nonzero": 87152
+   },
+   "golden": {
+    "input": "_model.2_cv2_act_Mul_output_0",
+    "pre_act": "_model.3_conv_Conv_output_0",
+    "post_act": "_model.3_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 7,
+   "key": "_model.4_cv1_conv_Conv",
+   "onnx_name": "/model.4/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.03442636108865925,
+    "zx": 8,
+    "sp": 0.08776735417983111,
+    "zp_pre": 163,
+    "so": 0.032590152819951375,
+    "zo": 9,
+    "has_bias": true,
+    "M_min": 1084340336,
+    "M_max": 2129724117,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0014559801202267408,
+    "sw_max": 0.014971298165619373,
+    "sum_w_min": -1354,
+    "sum_w_max": 618,
+    "bias_i32_min": -15772,
+    "bias_i32_max": 38985
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.4/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.3_act_Mul_output_0",
+    "weights": "wq:_model.4_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.4_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.4_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.4_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.4_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.4_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "20213c445825e6b439cc259607b535b10bd1604c0d203c7e9e07d56ca792ed89",
+    "params": "49b39248e3504ad14fb312bf68c07f1b9f06d53dbc096ff4109864e69e926fd1",
+    "lut": "24040022869fa98803a1a61536e1a001a55c8ece6188edf9948ae84cf9f6001d",
+    "in": "bcb8d3ece234bfc102d1e086476f54505fbb7d8e44f4fb4a7aaf77183770c179",
+    "out": "aea291907aeba273ddaa0aa2f17a586474195342134d49fdd35337c0c0c16006"
+   },
+   "bytes": {
+    "w": 4096,
+    "params": 768,
+    "lut": 256,
+    "in": 102400,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 63839,
+    "acc_int32_pct": 0.0029727350934281643,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 254,
+    "out_nonzero": 99566
+   },
+   "golden": {
+    "input": "_model.3_act_Mul_output_0",
+    "pre_act": "_model.4_cv1_conv_Conv_output_0",
+    "post_act": "_model.4_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 8,
+   "key": "_model.4_m.0_cv1_conv_Conv",
+   "onnx_name": "/model.4/m.0/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 32,
+    "C_OUT": 32,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.017168158175898535,
+    "zx": 16,
+    "sp": 0.034292158426023,
+    "zp_pre": 159,
+    "so": 0.013484417223462872,
+    "zo": 21,
+    "has_bias": true,
+    "M_min": 1082488189,
+    "M_max": 2140690937,
+    "S_min": 39,
+    "S_max": 40,
+    "sw_min": 0.001966502284631133,
+    "sw_max": 0.007777772843837738,
+    "sum_w_min": -1362,
+    "sum_w_max": 314,
+    "bias_i32_min": -20599,
+    "bias_i32_max": 127624
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.4/m.0/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.4_Split_output_1",
+    "weights": "wq:_model.4_m.0_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.4_m.0_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.4_m.0_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.4_m.0_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.4_m.0_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.4_m.0_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "924864f878e5e3db49e29bce0b1f18e22ff4733b69649ce57c3a00d5fdd4aad7",
+    "params": "179e23d8eb297acb733d03f02d9292582a037becfff88beb572f975f76d1efe1",
+    "lut": "3d7816c73b8ae151e8211b3292f6e003c31945d9b357285c6eb8bded217b1487",
+    "in": "31869973120f5c5545de31399a7cff8ce6078956cd9813cd7c19d275a6a95ca6",
+    "out": "70036bec79b533970eb5919e0476a8c0c7bd1dd2e9b4238cf5c1cc4792761251"
+   },
+   "bytes": {
+    "w": 9216,
+    "params": 384,
+    "lut": 256,
+    "in": 51200,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 97379,
+    "acc_int32_pct": 0.004534563051785605,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 47786
+   },
+   "golden": {
+    "input": "_model.4_Split_output_1",
+    "pre_act": "_model.4_m.0_cv1_conv_Conv_output_0",
+    "post_act": "_model.4_m.0_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 9,
+   "key": "_model.4_m.0_cv2_conv_Conv",
+   "onnx_name": "/model.4/m.0/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 32,
+    "C_OUT": 32,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.013484417223462872,
+    "zx": 21,
+    "sp": 0.03394983703014897,
+    "zp_pre": 146,
+    "so": 0.015305181578093885,
+    "zo": 18,
+    "has_bias": true,
+    "M_min": 1098330280,
+    "M_max": 2052776806,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.001869671861641109,
+    "sw_max": 0.01097152754664421,
+    "sum_w_min": -2919,
+    "sum_w_max": 910,
+    "bias_i32_min": -32761,
+    "bias_i32_max": 71504
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.4/m.0/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.4_m.0_cv1_act_Mul_output_0",
+    "weights": "wq:_model.4_m.0_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.4_m.0_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.4_m.0_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.4_m.0_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.4_m.0_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.4_m.0_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "44e697ba7a181005062419cdbd99f41062ee0454a9b0a6285778834559007238",
+    "params": "3e82d70df91e9159917b7433092458a3bc35eac7a94c921c898bb2cdad010fb8",
+    "lut": "f7344e0f70bbb837904971288b130a64400b035bd4b1d169608a1f769890cfe5",
+    "in": "1f444e6f3066c02c4f3b063e9363731b248a1d24898089e7859d9069e30a3341",
+    "out": "510fb8db49cb4db533c08512ab741299d44f047722ab3346cdee609456749ba9"
+   },
+   "bytes": {
+    "w": 9216,
+    "params": 384,
+    "lut": 256,
+    "in": 51200,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 87897,
+    "acc_int32_pct": 0.004093023018954798,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 47349
+   },
+   "golden": {
+    "input": "_model.4_m.0_cv1_act_Mul_output_0",
+    "pre_act": "_model.4_m.0_cv2_conv_Conv_output_0",
+    "post_act": "_model.4_m.0_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 10,
+   "key": "_model.4_m.1_cv1_conv_Conv",
+   "onnx_name": "/model.4/m.1/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 32,
+    "C_OUT": 32,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.020029170372906854,
+    "zx": 28,
+    "sp": 0.025714046814862418,
+    "zp_pre": 172,
+    "so": 0.008570231292762008,
+    "zo": 32,
+    "has_bias": true,
+    "M_min": 1096272575,
+    "M_max": 2135533332,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0011018699733540416,
+    "sw_max": 0.004433360416442156,
+    "sum_w_min": -1206,
+    "sum_w_max": 131,
+    "bias_i32_min": -21534,
+    "bias_i32_max": 79152
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.4/m.1/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.4_m.0_Add_output_0",
+    "weights": "wq:_model.4_m.1_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.4_m.1_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.4_m.1_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.4_m.1_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.4_m.1_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.4_m.1_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "b184bd045ff92e4faae50a78a0c09edd4fe8206585eccbf1b8b973e944f75a07",
+    "params": "4e96dacc9fc7d47e4474ebf794ccf610c9d86d3a77ab12d5850465850dee416a",
+    "lut": "d588a84475b0fb7cf4d632d9d9350cc7a2828b3a0a37756ccb2dc4b0fcf1a52d",
+    "in": "6f02fbe091c2512d4a500434eca872c4ff8ce53d47bb9968a23bd7c28ad502a0",
+    "out": "4ee7f08bde9f30761a1f01711a2ec969687e07066cbcdf67837b6a7af0b9ba2c"
+   },
+   "bytes": {
+    "w": 9216,
+    "params": 384,
+    "lut": 256,
+    "in": 51200,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 96451,
+    "acc_int32_pct": 0.004491349684303324,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 39983
+   },
+   "golden": {
+    "input": "_model.4_m.0_Add_output_0",
+    "pre_act": "_model.4_m.1_cv1_conv_Conv_output_0",
+    "post_act": "_model.4_m.1_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 11,
+   "key": "_model.4_m.1_cv2_conv_Conv",
+   "onnx_name": "/model.4/m.1/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 32,
+    "C_OUT": 32,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.008570231292762008,
+    "zx": 32,
+    "sp": 0.03787745681463504,
+    "zp_pre": 130,
+    "so": 0.019434589498183306,
+    "zo": 14,
+    "has_bias": true,
+    "M_min": 1129059741,
+    "M_max": 2137164725,
+    "S_min": 39,
+    "S_max": 40,
+    "sw_min": 0.0048683821223676205,
+    "sw_max": 0.01566864177584648,
+    "sum_w_min": -2275,
+    "sum_w_max": 265,
+    "bias_i32_min": -5569,
+    "bias_i32_max": 63046
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.4/m.1/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.4_m.1_cv1_act_Mul_output_0",
+    "weights": "wq:_model.4_m.1_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.4_m.1_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.4_m.1_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.4_m.1_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.4_m.1_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.4_m.1_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "baa6bbf89820352c361b301f0a63babadc4c23db3610a6a8f8604683b94ad23d",
+    "params": "0cee8fa3c47fdd77151897a7ab8a098c13d3f638405e271747cad6d970e16c92",
+    "lut": "16528d55fbe064421a17d726b9d17abc75d1af3f355ce101841f02c4007dd6ab",
+    "in": "06b280791e38b5b05edcbcd25d0695d10ae9d52ecc400ca3b279abeeaa4d896e",
+    "out": "a47c2c2577b847a6ad10e484d1c799d9c7fdcdae2c7ac8d219ba6e68805f5f92"
+   },
+   "bytes": {
+    "w": 9216,
+    "params": 384,
+    "lut": 256,
+    "in": 51200,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 100053,
+    "acc_int32_pct": 0.004659080880069677,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 46549
+   },
+   "golden": {
+    "input": "_model.4_m.1_cv1_act_Mul_output_0",
+    "pre_act": "_model.4_m.1_cv2_conv_Conv_output_0",
+    "post_act": "_model.4_m.1_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 12,
+   "key": "_model.4_cv2_conv_Conv",
+   "onnx_name": "/model.4/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 64,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.034760267126793955,
+    "zx": 24,
+    "sp": 0.044385950238096945,
+    "zp_pre": 175,
+    "so": 0.014639124332689771,
+    "zo": 19,
+    "has_bias": true,
+    "M_min": 1080536399,
+    "M_max": 2142938710,
+    "S_min": 38,
+    "S_max": 40,
+    "sw_min": 0.001258823205716908,
+    "sw_max": 0.005659311078488827,
+    "sum_w_min": -1164,
+    "sum_w_max": 853,
+    "bias_i32_min": -43451,
+    "bias_i32_max": 64955
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.4/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.4_Concat_output_0",
+    "weights": "wq:_model.4_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.4_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.4_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.4_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.4_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.4_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "7797a907d5cd24b6c79ea66fa7846bef06675644b00b2df053021fb9a931142d",
+    "params": "d76201093eac2c0e6f85d77059262969f953f9736856719121a6bdd34445bbd3",
+    "lut": "4b10ad0b465e34c9d2b87b0889d112b8fe2556432cae8c032e4b9e07564f2995",
+    "in": "960d58bf7fbed0b0fbee1956958f495d4bea9e671c0d062b371bd896c144d0a8",
+    "out": "67ff29623005550d2b6ff59685f3c79796c6404a2f96dc4a0cf460557b9f8f71"
+   },
+   "bytes": {
+    "w": 8192,
+    "params": 768,
+    "lut": 256,
+    "in": 204800,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 61983,
+    "acc_int32_pct": 0.0028863083584636023,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 94668
+   },
+   "golden": {
+    "input": "_model.4_Concat_output_0",
+    "pre_act": "_model.4_cv2_conv_Conv_output_0",
+    "post_act": "_model.4_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 13,
+   "key": "_model.5_conv_Conv",
+   "onnx_name": "/model.5/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 128,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 2,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.014639124332689771,
+    "zx": 19,
+    "sp": 0.03615536222270891,
+    "zp_pre": 160,
+    "so": 0.014102757210825004,
+    "zo": 20,
+    "has_bias": true,
+    "M_min": 1078152307,
+    "M_max": 2089079352,
+    "S_min": 39,
+    "S_max": 42,
+    "sw_min": 0.0008440103847533464,
+    "sw_max": 0.005256039090454578,
+    "sum_w_min": -4033,
+    "sum_w_max": 2667,
+    "bias_i32_min": -85936,
+    "bias_i32_max": 108343
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.5/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.4_cv2_act_Mul_output_0",
+    "weights": "wq:_model.5_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.5_conv_Conv/w.bin",
+    "params": "bin/_model.5_conv_Conv/params.bin",
+    "lut": "bin/_model.5_conv_Conv/lut.bin",
+    "in": "bin/_model.5_conv_Conv/in.bin",
+    "out": "bin/_model.5_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "a9eea094c4dca091b89b7d420b17f4202ccb235830a44dde2f007035b6c9d7ef",
+    "params": "e658c86579a4647474733c855072ee67ad36b64bba1b344ba02a8601fc50d991",
+    "lut": "72ca1734f4a45aea8bd2d49acf91ae20e64ac267e61f65e5fe0a213a6ae1e8bd",
+    "in": "454bb203188cd05c98540a3f103c303df67ae9fbccdfdb4af34371247c972c25",
+    "out": "46a60c0c68b39a079b106ba2d9d5d425423d69d06c57c4a964bfa17dced0eadb"
+   },
+   "bytes": {
+    "w": 73728,
+    "params": 1536,
+    "lut": 256,
+    "in": 102400,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 218087,
+    "acc_int32_pct": 0.010155467321237302,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 47233
+   },
+   "golden": {
+    "input": "_model.4_cv2_act_Mul_output_0",
+    "pre_act": "_model.5_conv_Conv_output_0",
+    "post_act": "_model.5_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 14,
+   "key": "_model.6_cv1_conv_Conv",
+   "onnx_name": "/model.6/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 128,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.014102757210825004,
+    "zx": 20,
+    "sp": 0.06324477663227156,
+    "zp_pre": 182,
+    "so": 0.018898282448450723,
+    "zo": 15,
+    "has_bias": true,
+    "M_min": 1076170298,
+    "M_max": 2137660022,
+    "S_min": 39,
+    "S_max": 42,
+    "sw_min": 0.001524361316114664,
+    "sw_max": 0.016603760421276093,
+    "sum_w_min": -2075,
+    "sum_w_max": 1823,
+    "bias_i32_min": -61968,
+    "bias_i32_max": 111673
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.6/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.5_act_Mul_output_0",
+    "weights": "wq:_model.6_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.6_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.6_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.6_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.6_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.6_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "088508a16749d1f17ba7d0122b19b9370aa8949f125a960c9870f933b9c723ca",
+    "params": "064883a2d436d0e53fbb80da360b289e93b21ea0fc0f3cc2a9341a25068f1628",
+    "lut": "38253c62e3c375088f5bf66806f02536d5d4774e58566e399121e1a8eb02f9ea",
+    "in": "f7360319719757e272c9116acb5d48cbf8c0428af63b37e856e0df71d70f45dc",
+    "out": "19be9aaf7898a8e5a654908ccc70a30a71b5191f7e1c5c0fab390035bce7ff79"
+   },
+   "bytes": {
+    "w": 16384,
+    "params": 1536,
+    "lut": 256,
+    "in": 51200,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 90256,
+    "acc_int32_pct": 0.0042028725166818465,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 47184
+   },
+   "golden": {
+    "input": "_model.5_act_Mul_output_0",
+    "pre_act": "_model.6_cv1_conv_Conv_output_0",
+    "post_act": "_model.6_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 15,
+   "key": "_model.6_m.0_cv1_conv_Conv",
+   "onnx_name": "/model.6/m.0/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.012152243712369134,
+    "zx": 23,
+    "sp": 0.04171125000598384,
+    "zp_pre": 179,
+    "so": 0.013014820627137727,
+    "zo": 21,
+    "has_bias": true,
+    "M_min": 1085447819,
+    "M_max": 2139051582,
+    "S_min": 39,
+    "S_max": 42,
+    "sw_min": 0.0016602264950051904,
+    "sw_max": 0.011140022426843643,
+    "sum_w_min": -5707,
+    "sum_w_max": 268,
+    "bias_i32_min": -21082,
+    "bias_i32_max": 164972
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.6/m.0/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.6_Split_output_1",
+    "weights": "wq:_model.6_m.0_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.6_m.0_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.6_m.0_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.6_m.0_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.6_m.0_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.6_m.0_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "35a5086e4e4bc5905dca132af323a0375dab831e578170744efaf5a42c8855c9",
+    "params": "8f9ff360dfd0acbcc4adcafe15f968cd1a40913818cb075b27f44530f0bd63d4",
+    "lut": "442b3abc02dfff985fcf4846feba783043a1254b72a655192206831c790f94a3",
+    "in": "ab41df1a5ca787c96c97986652b84328078621c7817961019aece2cf9f9a5d6d",
+    "out": "19ef73dc4d997381147412b46965bde15a5a9bc10efe9c53ca33a723b0258341"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 117384,
+    "acc_int32_pct": 0.005466118457478526,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 19633
+   },
+   "golden": {
+    "input": "_model.6_Split_output_1",
+    "pre_act": "_model.6_m.0_cv1_conv_Conv_output_0",
+    "post_act": "_model.6_m.0_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 16,
+   "key": "_model.6_m.0_cv2_conv_Conv",
+   "onnx_name": "/model.6/m.0/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.013014820627137727,
+    "zx": 21,
+    "sp": 0.022969868603874656,
+    "zp_pre": 164,
+    "so": 0.0083436835045908,
+    "zo": 33,
+    "has_bias": true,
+    "M_min": 1083093834,
+    "M_max": 2115645499,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0013294608797878027,
+    "sw_max": 0.006400508340448141,
+    "sum_w_min": -4840,
+    "sum_w_max": 2756,
+    "bias_i32_min": -30772,
+    "bias_i32_max": 76012
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.6/m.0/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.6_m.0_cv1_act_Mul_output_0",
+    "weights": "wq:_model.6_m.0_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.6_m.0_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.6_m.0_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.6_m.0_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.6_m.0_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.6_m.0_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "cd9e70c76f204f8fcfba071a5da6a44b6611c39cf35ae6d4c10a0dfeafc199a0",
+    "params": "ac549cac73736dca0500096dc073c33d834a6af938c0b74659d9b479c6abb2db",
+    "lut": "cb09fd784cfda783c7544a5949ed2bf7ab6e15a4abfc629c4772340895f0dfce",
+    "in": "c231865139acc11d2d77f25ed6775c20d77dc4e2f4bb103e9137e73e7a8520e9",
+    "out": "2c3656d4abd72b327ef3ddef4ae42be2da376dddf3163dad8bec4b4247be654e"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 99404,
+    "acc_int32_pct": 0.004628859462509332,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 24052
+   },
+   "golden": {
+    "input": "_model.6_m.0_cv1_act_Mul_output_0",
+    "pre_act": "_model.6_m.0_cv2_conv_Conv_output_0",
+    "post_act": "_model.6_m.0_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 17,
+   "key": "_model.6_m.1_cv1_conv_Conv",
+   "onnx_name": "/model.6/m.1/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.014909838695152134,
+    "zx": 37,
+    "sp": 0.021874372631895775,
+    "zp_pre": 169,
+    "so": 0.007461888182396982,
+    "zo": 37,
+    "has_bias": true,
+    "M_min": 1074098729,
+    "M_max": 2125578666,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0007170640747062862,
+    "sw_max": 0.005928487982600927,
+    "sum_w_min": -2574,
+    "sum_w_max": -437,
+    "bias_i32_min": -16668,
+    "bias_i32_max": 223151
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.6/m.1/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.6_m.0_Add_output_0",
+    "weights": "wq:_model.6_m.1_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.6_m.1_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.6_m.1_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.6_m.1_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.6_m.1_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.6_m.1_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "6768b5e44d5d3993a2ea815e414d6a941368ca5c8f928810c04a5d13c7c55500",
+    "params": "6c766c1fb644eb385ee31c1a899ea43e85247a8728c9b9672259c5479c1d5b89",
+    "lut": "3d394b38e2a2cb826fa22f6b80d19fd413f56fd6998c2b4ae6635636951b3adb",
+    "in": "b127741e19bfb534b21343e3d858faabab0d431fbc8e1dd157b0661aa5d77a71",
+    "out": "b9fd51823a6686bd526ba1005cfdc341a8e7d48456a72a6bebb2e78760cdf210"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 175234,
+    "acc_int32_pct": 0.00815996900580822,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 21322
+   },
+   "golden": {
+    "input": "_model.6_m.0_Add_output_0",
+    "pre_act": "_model.6_m.1_cv1_conv_Conv_output_0",
+    "post_act": "_model.6_m.1_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 18,
+   "key": "_model.6_m.1_cv2_conv_Conv",
+   "onnx_name": "/model.6/m.1/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.007461888182396982,
+    "zx": 37,
+    "sp": 0.0324769328622257,
+    "zp_pre": 146,
+    "so": 0.014637689029469209,
+    "zo": 19,
+    "has_bias": true,
+    "M_min": 1083275218,
+    "M_max": 2136013536,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.002582229906693101,
+    "sw_max": 0.019160553812980652,
+    "sum_w_min": -4139,
+    "sum_w_max": 2303,
+    "bias_i32_min": -57371,
+    "bias_i32_max": 107715
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.6/m.1/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.6_m.1_cv1_act_Mul_output_0",
+    "weights": "wq:_model.6_m.1_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.6_m.1_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.6_m.1_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.6_m.1_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.6_m.1_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.6_m.1_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "3084c815753c856841a3533b2ab0f4de2a8b2dc07c50262c76883534681b9b37",
+    "params": "f6305c16e361068df361520d1fb459843194effa3c2f0eb76cc3af7bde392efa",
+    "lut": "112b558c1d543f54bd77ed26f8c4b04fdc8b6dbc478edc9170cbd0b6c3b80230",
+    "in": "911b712a647beabf1ab4627db9c3531a6810909997a36481b33f7add48d4152e",
+    "out": "fa7dbb350a134a7eefea3f6c75d7c51aadb8e4dc9a19c40fbc4141637794f4da"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 140243,
+    "acc_int32_pct": 0.006530573594630963,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 24243
+   },
+   "golden": {
+    "input": "_model.6_m.1_cv1_act_Mul_output_0",
+    "pre_act": "_model.6_m.1_cv2_conv_Conv_output_0",
+    "post_act": "_model.6_m.1_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 19,
+   "key": "_model.6_cv2_conv_Conv",
+   "onnx_name": "/model.6/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 256,
+    "C_OUT": 128,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.02106014887491862,
+    "zx": 39,
+    "sp": 0.028314884036195045,
+    "zp_pre": 170,
+    "so": 0.00977440733535617,
+    "zo": 28,
+    "has_bias": true,
+    "M_min": 1073786111,
+    "M_max": 2145102241,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0006808671168982983,
+    "sw_max": 0.003982611931860447,
+    "sum_w_min": -2009,
+    "sum_w_max": 1547,
+    "bias_i32_min": -65783,
+    "bias_i32_max": 139636
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.6/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.6_Concat_output_0",
+    "weights": "wq:_model.6_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.6_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.6_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.6_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.6_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.6_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "b2395deca8115c348b2fb1937b2756568febc91587dcaede117ede24bb208b73",
+    "params": "5751d8d245b0f7b7183a3d9efa7f77c12ed0c33c3006f97856f9431fe6834b60",
+    "lut": "d2b7e49c33b59dee92ae234698cd0169d9f32cf5a3b343fd41f68c12cde8b617",
+    "in": "59d78b951849b2d9180df771e0dbd0b4ffd35ec0cb0f8843efc486298dc4a3be",
+    "out": "b76906da1c75b049259fd72f9e36d2c78bc548fdecf9b59ac7d2773b04ea3420"
+   },
+   "bytes": {
+    "w": 32768,
+    "params": 1536,
+    "lut": 256,
+    "in": 102400,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 118924,
+    "acc_int32_pct": 0.0055378302957573115,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 44516
+   },
+   "golden": {
+    "input": "_model.6_Concat_output_0",
+    "pre_act": "_model.6_cv2_conv_Conv_output_0",
+    "post_act": "_model.6_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 20,
+   "key": "_model.7_conv_Conv",
+   "onnx_name": "/model.7/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 256,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 2,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.00977440733535617,
+    "zx": 28,
+    "sp": 0.031243329889634075,
+    "zp_pre": 153,
+    "so": 0.01309931804152096,
+    "zo": 21,
+    "has_bias": true,
+    "M_min": 1079765635,
+    "M_max": 2144045253,
+    "S_min": 40,
+    "S_max": 42,
+    "sw_min": 0.0009643820230849087,
+    "sw_max": 0.004559171851724386,
+    "sum_w_min": -12015,
+    "sum_w_max": 3601,
+    "bias_i32_min": -184471,
+    "bias_i32_max": 243929
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.7/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.6_cv2_act_Mul_output_0",
+    "weights": "wq:_model.7_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.7_conv_Conv/w.bin",
+    "params": "bin/_model.7_conv_Conv/params.bin",
+    "lut": "bin/_model.7_conv_Conv/lut.bin",
+    "in": "bin/_model.7_conv_Conv/in.bin",
+    "out": "bin/_model.7_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "e98478fe0afbb1a8c10ce5d15179e8e426b9af1405c9b8919d6694ab2f5c60b0",
+    "params": "ae7b303fd4c56acba92c9ed8c8793b7306a90e77b7fc456c21346c2c543d9571",
+    "lut": "3ab2c70a846d93f6412d986dd13a7b5d2225ec1a900cd6d95b0c68819715fb75",
+    "in": "c24d76914391ce0163699099533934d739097a5cb6895f0da8a8cd0eae928607",
+    "out": "c754d22dd02b2172f8668f6a8618ef30d4ee821349c17f815bff30902ef5bb88"
+   },
+   "bytes": {
+    "w": 294912,
+    "params": 3072,
+    "lut": 256,
+    "in": 51200,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 277145,
+    "acc_int32_pct": 0.012905569753099965,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 20398
+   },
+   "golden": {
+    "input": "_model.6_cv2_act_Mul_output_0",
+    "pre_act": "_model.7_conv_Conv_output_0",
+    "post_act": "_model.7_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 21,
+   "key": "_model.8_cv1_conv_Conv",
+   "onnx_name": "/model.8/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 256,
+    "C_OUT": 256,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.01309931804152096,
+    "zx": 21,
+    "sp": 0.05257479162777171,
+    "zp_pre": 111,
+    "so": 0.0307964821656545,
+    "zo": 9,
+    "has_bias": true,
+    "M_min": 1076196840,
+    "M_max": 2147416750,
+    "S_min": 39,
+    "S_max": 43,
+    "sw_min": 0.0005510156624950469,
+    "sw_max": 0.01178281381726265,
+    "sum_w_min": -2934,
+    "sum_w_max": 3389,
+    "bias_i32_min": -26598,
+    "bias_i32_max": 200141
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.8/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.7_act_Mul_output_0",
+    "weights": "wq:_model.8_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.8_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.8_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.8_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.8_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.8_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "b489bd7dccab849ab1345fb7504040624449087e58719782c8d0f8dffe739626",
+    "params": "6a81c8e7e0f780aa55b387abd8d0f9e631c1cf4442ec4eecbd62ebf06abd9c26",
+    "lut": "1b4ae1f2ad4ccad6242fed53367c428fa9f108dc44c1d57600dc8a312653f674",
+    "in": "6b969eb12e0a384db6e3635526e5a35fd0b9aa057bf903eb4364f3e426676e8f",
+    "out": "5a8449057ad1ecc2b1c0d7fd7e4c549d66766caaa87800f78fc065b72f2634cd"
+   },
+   "bytes": {
+    "w": 65536,
+    "params": 3072,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 305187,
+    "acc_int32_pct": 0.014211377135576391,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 19463
+   },
+   "golden": {
+    "input": "_model.7_act_Mul_output_0",
+    "pre_act": "_model.8_cv1_conv_Conv_output_0",
+    "post_act": "_model.8_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 22,
+   "key": "_model.8_m.0_cv1_conv_Conv",
+   "onnx_name": "/model.8/m.0/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 128,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.008857898151173311,
+    "zx": 31,
+    "sp": 0.02940827911975337,
+    "zp_pre": 146,
+    "so": 0.01319270040474686,
+    "zo": 21,
+    "has_bias": true,
+    "M_min": 1073822295,
+    "M_max": 2144572904,
+    "S_min": 39,
+    "S_max": 43,
+    "sw_min": 0.000702301855199039,
+    "sw_max": 0.00667821429669857,
+    "sum_w_min": -7501,
+    "sum_w_max": 2106,
+    "bias_i32_min": -71778,
+    "bias_i32_max": 234683
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.8/m.0/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.8_Split_output_1",
+    "weights": "wq:_model.8_m.0_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.8_m.0_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.8_m.0_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.8_m.0_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.8_m.0_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.8_m.0_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "ad544068895917266576962a33e9aeafa38e28f5a8644e8449d693953a981f35",
+    "params": "7268f42ae75085a3751e2a22f005f7402d35305d1009a42a0e4665267fbd92e5",
+    "lut": "bef8379c84f07ea8a54e471e2ad638bc05766b672c3b76e5cc8c792b35c7c55a",
+    "in": "aeb3e5c8b853d3239067e17075f2e99e438744ebf61abe9215bf1db4a291dacb",
+    "out": "6aebaa1d97d30a176f2b392e3ce4a23da0fa446ab4547b5d1a323ad679da6180"
+   },
+   "bytes": {
+    "w": 147456,
+    "params": 1536,
+    "lut": 256,
+    "in": 12800,
+    "out": 12800
+   },
+   "ref": {
+    "acc_max_abs": 390288,
+    "acc_int32_pct": 0.018174201258539316,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 10985
+   },
+   "golden": {
+    "input": "_model.8_Split_output_1",
+    "pre_act": "_model.8_m.0_cv1_conv_Conv_output_0",
+    "post_act": "_model.8_m.0_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 23,
+   "key": "_model.8_m.0_cv2_conv_Conv",
+   "onnx_name": "/model.8/m.0/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 128,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.01319270040474686,
+    "zx": 21,
+    "sp": 0.046909665126426546,
+    "zp_pre": 156,
+    "so": 0.01920500631425895,
+    "zo": 14,
+    "has_bias": true,
+    "M_min": 1074396730,
+    "M_max": 2138602213,
+    "S_min": 39,
+    "S_max": 42,
+    "sw_min": 0.0013546502450481057,
+    "sw_max": 0.013025234453380108,
+    "sum_w_min": -12776,
+    "sum_w_max": 7206,
+    "bias_i32_min": -123269,
+    "bias_i32_max": 315696
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.8/m.0/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.8_m.0_cv1_act_Mul_output_0",
+    "weights": "wq:_model.8_m.0_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.8_m.0_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.8_m.0_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.8_m.0_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.8_m.0_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.8_m.0_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "1f985a88463d8aa821a6a7382699d0966e4e3407896323b622abfa16c9ef73eb",
+    "params": "fd8ee0e35b874195bb44ca66cc3b0e5d48bd136de561a54cc11922c49df7920f",
+    "lut": "81a1c3d54796d9dd0038bd5d4b06be77a6c1704006a71cb910aae631b5c6a4d0",
+    "in": "32df0691e9e53195f169f2f8de14c9fa4d488c7902a2079631640adca3b0d990",
+    "out": "5ed43449eaa7d8e80f5d38f96d7073591999f05da6539d4f48a595878add1df8"
+   },
+   "bytes": {
+    "w": 147456,
+    "params": 1536,
+    "lut": 256,
+    "in": 12800,
+    "out": 12800
+   },
+   "ref": {
+    "acc_max_abs": 170751,
+    "acc_int32_pct": 0.007951213050610952,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 10874
+   },
+   "golden": {
+    "input": "_model.8_m.0_cv1_act_Mul_output_0",
+    "pre_act": "_model.8_m.0_cv2_conv_Conv_output_0",
+    "post_act": "_model.8_m.0_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 24,
+   "key": "_model.8_cv2_conv_Conv",
+   "onnx_name": "/model.8/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 384,
+    "C_OUT": 256,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.03188849220088884,
+    "zx": 17,
+    "sp": 0.028614933350506952,
+    "zp_pre": 149,
+    "so": 0.012432063911475387,
+    "zo": 22,
+    "has_bias": true,
+    "M_min": 1074782559,
+    "M_max": 2146269632,
+    "S_min": 38,
+    "S_max": 40,
+    "sw_min": 0.001136432751081884,
+    "sw_max": 0.004965711385011673,
+    "sum_w_min": -3365,
+    "sum_w_max": 2352,
+    "bias_i32_min": -85794,
+    "bias_i32_max": 63313
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.8/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.8_Concat_output_0",
+    "weights": "wq:_model.8_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.8_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.8_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.8_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.8_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.8_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "8319e3ce1e35c52dd3ab9e2beb969b820c4f525877bb9ca437215326143809c5",
+    "params": "3cfefe0f790cecae59f87e5e11f85971adca9b542ed1ecda1787ea2651b3d9db",
+    "lut": "e34140d40bc76fd1786555e2146c7e36529b27164556aca85a21a4efde92d53d",
+    "in": "768182fed9b3a0786164a54a541f295334357998ddd794ded6a1caecd84ade9a",
+    "out": "480d662c810326541d89fc5d6f827463d4b2e28e91d1e0b64c823b5af4cf93f3"
+   },
+   "bytes": {
+    "w": 98304,
+    "params": 3072,
+    "lut": 256,
+    "in": 38400,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 84711,
+    "acc_int32_pct": 0.003944663332749467,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 21072
+   },
+   "golden": {
+    "input": "_model.8_Concat_output_0",
+    "pre_act": "_model.8_cv2_conv_Conv_output_0",
+    "post_act": "_model.8_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 25,
+   "key": "_model.9_cv1_conv_Conv",
+   "onnx_name": "/model.9/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 256,
+    "C_OUT": 128,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.012432063911475387,
+    "zx": 22,
+    "sp": 0.025999770444982192,
+    "zp_pre": 76,
+    "so": 0.0191687497438169,
+    "zo": 15,
+    "has_bias": true,
+    "M_min": 1078741531,
+    "M_max": 2137493656,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0016767291817814112,
+    "sw_max": 0.008318074978888035,
+    "sum_w_min": -3269,
+    "sum_w_max": 2814,
+    "bias_i32_min": -184,
+    "bias_i32_max": 157198
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.9/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.8_cv2_act_Mul_output_0",
+    "weights": "wq:_model.9_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.9_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.9_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.9_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.9_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.9_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "da0fbc6b18c5ac8d8209a5516e4f8ec9975afa8d024661dd3ba616daa7ec37ff",
+    "params": "0f05cea9c74ec5115193730c4a03562ecc3e33960e55b8037f73184132472ef1",
+    "lut": "5c8ae67716a64e3d49506420ba106a6239cf9cc43fdf924ef32ce660b8cef2b3",
+    "in": "ccabc02761c0a0532a87a3177affbfefb474abe51304966553eb01ac91347dec",
+    "out": "51d289df684033049321ea699160082fe1fb0ae5c09fb84373d90612aa08f0ee"
+   },
+   "bytes": {
+    "w": 32768,
+    "params": 1536,
+    "lut": 256,
+    "in": 25600,
+    "out": 12800
+   },
+   "ref": {
+    "acc_max_abs": 135054,
+    "acc_int32_pct": 0.006288941952534459,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 12784
+   },
+   "golden": {
+    "input": "_model.8_cv2_act_Mul_output_0",
+    "pre_act": "_model.9_cv1_conv_Conv_output_0",
+    "post_act": "_model.9_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 26,
+   "key": "_model.9_cv2_conv_Conv",
+   "onnx_name": "/model.9/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 512,
+    "C_OUT": 256,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.0191687497438169,
+    "zx": 15,
+    "sp": 0.03334996840533088,
+    "zp_pre": 157,
+    "so": 0.013379381217208563,
+    "zo": 21,
+    "has_bias": true,
+    "M_min": 1074428324,
+    "M_max": 2143700772,
+    "S_min": 38,
+    "S_max": 42,
+    "sw_min": 0.0005428920849226415,
+    "sw_max": 0.007058576215058565,
+    "sum_w_min": -1972,
+    "sum_w_max": 1486,
+    "bias_i32_min": -287629,
+    "bias_i32_max": 316462
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.9/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.9_Concat_output_0",
+    "weights": "wq:_model.9_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.9_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.9_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.9_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.9_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.9_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "506456369130654ed0be24a17b9f2d40d26724f6286cdddd360a1dcd19591e5f",
+    "params": "cb9b31f0f26464953bb39c6860799ae083f330f1dbc39f9e29de9fe52fb009fb",
+    "lut": "671e223fa831a38eadd9fc2469464555918e942529334be69401f531aec1ef6a",
+    "in": "d7ee6c1e491e3174a9c827a573ad2a4fe366bc446f9b4cddbf1468e24b7fc3f6",
+    "out": "d88212b16be43880e0055e27e4819e3c5e09d6a568a0ed6f49816c5ca8bf790f"
+   },
+   "bytes": {
+    "w": 131072,
+    "params": 3072,
+    "lut": 256,
+    "in": 51200,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 183303,
+    "acc_int32_pct": 0.008535711098711804,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 254,
+    "out_nonzero": 23003
+   },
+   "golden": {
+    "input": "_model.9_Concat_output_0",
+    "pre_act": "_model.9_cv2_conv_Conv_output_0",
+    "post_act": "_model.9_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 27,
+   "key": "_model.12_cv1_conv_Conv",
+   "onnx_name": "/model.12/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 384,
+    "C_OUT": 128,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.013379381334080415,
+    "zx": 21,
+    "sp": 0.03053579610936782,
+    "zp_pre": 158,
+    "so": 0.012153370357027241,
+    "zo": 23,
+    "has_bias": true,
+    "M_min": 1075467553,
+    "M_max": 2133669622,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0016086731338873506,
+    "sw_max": 0.013160989619791508,
+    "sum_w_min": -3018,
+    "sum_w_max": 493,
+    "bias_i32_min": -35546,
+    "bias_i32_max": 78789
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.12/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.11_Concat_output_0",
+    "weights": "wq:_model.12_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.12_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.12_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.12_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.12_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.12_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "5e74a513f732d83625a367fc7bc3202556a0f63daceaafb2336eab6c9d7fef28",
+    "params": "c9e8b1951c9ced021fdec1271edb54ed4e2ea6d1cbe3455c18f3d692b38dd4f7",
+    "lut": "95d129837283deb1392d7f6717d28f1b348988ebe838d4c2f154004eb6341151",
+    "in": "6971a98975e301a5f77fbc7fc764652ac2416189714095ff0c5961e48950295b",
+    "out": "eadae44587f302db7161fe8cf4d4aeb48fa870cdf24cf0b3165c42f81d93ac67"
+   },
+   "bytes": {
+    "w": 49152,
+    "params": 1536,
+    "lut": 256,
+    "in": 153600,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 103140,
+    "acc_int32_pct": 0.004802830519528515,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 45828
+   },
+   "golden": {
+    "input": "_model.11_Concat_output_0",
+    "pre_act": "_model.12_cv1_conv_Conv_output_0",
+    "post_act": "_model.12_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 28,
+   "key": "_model.12_m.0_cv1_conv_Conv",
+   "onnx_name": "/model.12/m.0/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.011261680079441444,
+    "zx": 25,
+    "sp": 0.03049777909821155,
+    "zp_pre": 174,
+    "so": 0.009974473130469228,
+    "zo": 28,
+    "has_bias": true,
+    "M_min": 1098376232,
+    "M_max": 2105104137,
+    "S_min": 40,
+    "S_max": 42,
+    "sw_min": 0.0010894027072936296,
+    "sw_max": 0.004626414738595486,
+    "sum_w_min": -3373,
+    "sum_w_max": 420,
+    "bias_i32_min": -51379,
+    "bias_i32_max": 155516
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.12/m.0/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.12_Split_output_1",
+    "weights": "wq:_model.12_m.0_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.12_m.0_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.12_m.0_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.12_m.0_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.12_m.0_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.12_m.0_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "0fdde48a6450a4b7e387d08eb8ff4a25e7a96c56b85a2fc10950d2c9890a4c19",
+    "params": "6d7af658f4f2442f2b19ca399f6072a812457b36f3088fe0820549c4d7d0ae8c",
+    "lut": "47153ed0cd44a48186f02d236a2fb80306ad78c3b6d22224e4cabf142ffbec65",
+    "in": "f5d04d276cc52c4c93d995b3a332a6756e7af6a6181418c4c89deb10e1836b65",
+    "out": "150e331d1aa159e2a7c337d4103e1c656cd9d5a0eb121e4fc6b1c1beba15b6d3"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 157213,
+    "acc_int32_pct": 0.007320800799560175,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 22587
+   },
+   "golden": {
+    "input": "_model.12_Split_output_1",
+    "pre_act": "_model.12_m.0_cv1_conv_Conv_output_0",
+    "post_act": "_model.12_m.0_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 29,
+   "key": "_model.12_m.0_cv2_conv_Conv",
+   "onnx_name": "/model.12/m.0/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.009974473130469228,
+    "zx": 28,
+    "sp": 0.025784977744607366,
+    "zp_pre": 132,
+    "so": 0.013005053646424238,
+    "zo": 21,
+    "has_bias": true,
+    "M_min": 1086025453,
+    "M_max": 2142719849,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0018785473657771945,
+    "sw_max": 0.01021355576813221,
+    "sum_w_min": -3225,
+    "sum_w_max": 993,
+    "bias_i32_min": -10682,
+    "bias_i32_max": 96182
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.12/m.0/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.12_m.0_cv1_act_Mul_output_0",
+    "weights": "wq:_model.12_m.0_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.12_m.0_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.12_m.0_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.12_m.0_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.12_m.0_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.12_m.0_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "b70c5bddcc15f96eccfb1619df4f20b195cd7ede887ac3ccc308cbef444fbe7a",
+    "params": "8f9cca64bda346d75b2eab7e533f8febe777bfea5368ba7d519ccca75423da8d",
+    "lut": "0d9f735e1d465b9e000f6c323a77a8d9db0e1bff1df3085d06cf3742189e362c",
+    "in": "ac9e39fa1ec88356575e4b3b06cb56a0c78cfb743eb10ed45a957a5521e2fa28",
+    "out": "01d2eb049e94af533a8156c3262af058d02c55ec6b07f57f748cf2a476924a7d"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 115986,
+    "acc_int32_pct": 0.00540101900948259,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 21753
+   },
+   "golden": {
+    "input": "_model.12_m.0_cv1_act_Mul_output_0",
+    "pre_act": "_model.12_m.0_cv2_conv_Conv_output_0",
+    "post_act": "_model.12_m.0_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 30,
+   "key": "_model.12_cv2_conv_Conv",
+   "onnx_name": "/model.12/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 192,
+    "C_OUT": 128,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.013005053880167943,
+    "zx": 21,
+    "sp": 0.026839797637041876,
+    "zp_pre": 151,
+    "so": 0.011400134890687232,
+    "zo": 24,
+    "has_bias": true,
+    "M_min": 1075735806,
+    "M_max": 2140651823,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0014279381139203906,
+    "sw_max": 0.008881966583430767,
+    "sum_w_min": -2416,
+    "sum_w_max": 141,
+    "bias_i32_min": -27020,
+    "bias_i32_max": 83766
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.12/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.12_Concat_output_0",
+    "weights": "wq:_model.12_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.12_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.12_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.12_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.12_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.12_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "03d328b275f27fed4e2327b78071d0fa89f3c195f72251352d70128f41ce39f7",
+    "params": "e234ba9a55862ae1a6cb4fa0bd90f35b7f5696ba7a40f539255fab6e3d0993c0",
+    "lut": "0010377241151b6021129a207c998948f90a0f8bf602edac90da3106bb08a61e",
+    "in": "00e58bb9c2830af347bc294a51b5e800e87bd53f4fd5155909bbaa6f7b35f316",
+    "out": "ccccbeaae3d6e48a719bde4ce237ad65d6ecabcad6580ba483b1eed8311f2beb"
+   },
+   "bytes": {
+    "w": 24576,
+    "params": 1536,
+    "lut": 256,
+    "in": 76800,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 123660,
+    "acc_int32_pct": 0.0057583674815289525,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 43974
+   },
+   "golden": {
+    "input": "_model.12_Concat_output_0",
+    "pre_act": "_model.12_cv2_conv_Conv_output_0",
+    "post_act": "_model.12_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 31,
+   "key": "_model.15_cv1_conv_Conv",
+   "onnx_name": "/model.15/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 192,
+    "C_OUT": 64,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.014639124332689771,
+    "zx": 19,
+    "sp": 0.035415542826933016,
+    "zp_pre": 170,
+    "so": 0.012271294991175333,
+    "zo": 23,
+    "has_bias": true,
+    "M_min": 1075593595,
+    "M_max": 2109384058,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0013589328154921532,
+    "sw_max": 0.008920404128730297,
+    "sum_w_min": -1290,
+    "sum_w_max": 1337,
+    "bias_i32_min": -23489,
+    "bias_i32_max": 81825
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.15/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.14_Concat_output_0",
+    "weights": "wq:_model.15_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.15_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.15_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.15_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.15_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.15_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "423c8fc42b85d487e693a5de4b76bb945b9a05eae2db4de21e9b7c76d2b1a2e8",
+    "params": "d0acd30834ae4bd076e3d3d010c6a9169d11f6454cddce1dcc9dc992d628f393",
+    "lut": "7407405ac9104c44946c89a8bbf39d937ff5a9432ec724e66e4b55b5a67f0058",
+    "in": "d4cd7bfedd505369df1199bf6fa7615763ff703ccfb0bc11af4142c3c2e0b2f5",
+    "out": "fa4c5724521e104a716774394fbb05b0805b6e14b5c220bff32e12c79a809df9"
+   },
+   "bytes": {
+    "w": 12288,
+    "params": 768,
+    "lut": 256,
+    "in": 307200,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 142331,
+    "acc_int32_pct": 0.006627803671466095,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 98902
+   },
+   "golden": {
+    "input": "_model.14_Concat_output_0",
+    "pre_act": "_model.15_cv1_conv_Conv_output_0",
+    "post_act": "_model.15_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 32,
+   "key": "_model.15_m.0_cv1_conv_Conv",
+   "onnx_name": "/model.15/m.0/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 32,
+    "C_OUT": 32,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.01162970591993893,
+    "zx": 24,
+    "sp": 0.024896272023518882,
+    "zp_pre": 163,
+    "so": 0.009230483863867966,
+    "zo": 30,
+    "has_bias": true,
+    "M_min": 1083525051,
+    "M_max": 2088133993,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0012126336805522442,
+    "sw_max": 0.0055085658095777035,
+    "sum_w_min": -1357,
+    "sum_w_max": 527,
+    "bias_i32_min": -55993,
+    "bias_i32_max": 121787
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.15/m.0/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.15_Split_output_1",
+    "weights": "wq:_model.15_m.0_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.15_m.0_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.15_m.0_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.15_m.0_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.15_m.0_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.15_m.0_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "3d00e544996d8c2ff36a4f7b1c383f134e0fd960a76e567fddc3dd165e39d08b",
+    "params": "6479acc2d08ddc6a4df44f7158f7d1a97b1a8689990184101c4abf7869ac26d5",
+    "lut": "af07fbf198e2a0048767856eefa7a5baa8f8e81c9b6b4c4b628a1567e7f74cc8",
+    "in": "901b4bffd1306a5b69c4bd59c9732caa49e12393f83f41473d7a9f90a38b182e",
+    "out": "ddf78f964b70158d1b69a59e5c8c7a8ece4ed2a7116370988c7e6e17815f0f6c"
+   },
+   "bytes": {
+    "w": 9216,
+    "params": 384,
+    "lut": 256,
+    "in": 51200,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 162008,
+    "acc_int32_pct": 0.007544085386928211,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 44117
+   },
+   "golden": {
+    "input": "_model.15_Split_output_1",
+    "pre_act": "_model.15_m.0_cv1_conv_Conv_output_0",
+    "post_act": "_model.15_m.0_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 33,
+   "key": "_model.15_m.0_cv2_conv_Conv",
+   "onnx_name": "/model.15/m.0/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 32,
+    "C_OUT": 32,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.009230483863867966,
+    "zx": 30,
+    "sp": 0.030672177146462833,
+    "zp_pre": 107,
+    "so": 0.0186780547394472,
+    "zo": 15,
+    "has_bias": true,
+    "M_min": 1087596912,
+    "M_max": 2141676373,
+    "S_min": 39,
+    "S_max": 40,
+    "sw_min": 0.0037988233380019665,
+    "sw_max": 0.009803508408367634,
+    "sum_w_min": -704,
+    "sum_w_max": 635,
+    "bias_i32_min": -41179,
+    "bias_i32_max": 108043
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.15/m.0/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.15_m.0_cv1_act_Mul_output_0",
+    "weights": "wq:_model.15_m.0_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.15_m.0_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.15_m.0_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.15_m.0_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.15_m.0_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.15_m.0_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "6e6f7241156a40edf650d294f74451c38b8d40c27869077220e62da88835bb50",
+    "params": "ea900442d9b919c862cc394177add77692aa39f39d5cb2364967d1d6a4a37a44",
+    "lut": "dc7b1f99a62d983746197d2eb343e828cd08f6e58b6d55cb48d47a51e24ef03b",
+    "in": "aba5c2f3fd5a71ab0cf9f146054a17472ab989fdbdc6bb5fca513516fe636451",
+    "out": "73daf1bcc35e55cdec95a7573fd770d253e131e1e2a649dc28ef159a905d3bfd"
+   },
+   "bytes": {
+    "w": 9216,
+    "params": 384,
+    "lut": 256,
+    "in": 51200,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 121525,
+    "acc_int32_pct": 0.005658948796642455,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 48717
+   },
+   "golden": {
+    "input": "_model.15_m.0_cv1_act_Mul_output_0",
+    "pre_act": "_model.15_m.0_cv2_conv_Conv_output_0",
+    "post_act": "_model.15_m.0_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 34,
+   "key": "_model.15_cv2_conv_Conv",
+   "onnx_name": "/model.15/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 96,
+    "C_OUT": 64,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.0186780547394472,
+    "zx": 15,
+    "sp": 0.03320911912357106,
+    "zp_pre": 151,
+    "so": 0.014195677813361673,
+    "zo": 20,
+    "has_bias": true,
+    "M_min": 1102894378,
+    "M_max": 2142164095,
+    "S_min": 38,
+    "S_max": 40,
+    "sw_min": 0.002093561924993992,
+    "sw_max": 0.008952673524618149,
+    "sum_w_min": -903,
+    "sum_w_max": 1166,
+    "bias_i32_min": -34626,
+    "bias_i32_max": 72918
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.15/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.15_Concat_output_0",
+    "weights": "wq:_model.15_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.15_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.15_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.15_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.15_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.15_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "cd9d7dd7e29f70608cac3e01b2f1a87aac92dd16cdab92326bd82fef4a68123e",
+    "params": "33afb67d7bf73c89997fab2e3bf0be1cab8e9541bd163dc5c016cc1a9cf51704",
+    "lut": "390aaf63be3670105421c5b33f08f525887e13169efdf70d37cf0f7502d9630b",
+    "in": "6c650232534eb9629ca6094e5b88a05123147f94d0e2c16f139096c516ffc83c",
+    "out": "1ff9aaf9586a621c4f07aa12a727d94b3c0b24b91926af98fc287ec6d73989dd"
+   },
+   "bytes": {
+    "w": 6144,
+    "params": 768,
+    "lut": 256,
+    "in": 153600,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 74905,
+    "acc_int32_pct": 0.003488035874202864,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 98997
+   },
+   "golden": {
+    "input": "_model.15_Concat_output_0",
+    "pre_act": "_model.15_cv2_conv_Conv_output_0",
+    "post_act": "_model.15_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 35,
+   "key": "_model.16_conv_Conv",
+   "onnx_name": "/model.16/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 2,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.014195677813361673,
+    "zx": 20,
+    "sp": 0.03229255302279603,
+    "zp_pre": 139,
+    "so": 0.015466594812916774,
+    "zo": 18,
+    "has_bias": true,
+    "M_min": 1084565788,
+    "M_max": 2136520726,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0011244650231674314,
+    "sw_max": 0.005968721117824316,
+    "sum_w_min": -6024,
+    "sum_w_max": 2577,
+    "bias_i32_min": -126723,
+    "bias_i32_max": 183345
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.16/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.15_cv2_act_Mul_output_0",
+    "weights": "wq:_model.16_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.16_conv_Conv/w.bin",
+    "params": "bin/_model.16_conv_Conv/params.bin",
+    "lut": "bin/_model.16_conv_Conv/lut.bin",
+    "in": "bin/_model.16_conv_Conv/in.bin",
+    "out": "bin/_model.16_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "2e615216b35518f6b105b3dc58525f6ff45477e81224bf891b06c27049b174c7",
+    "params": "4347c2e7da980c639ad2aedc50a66dc5617436d0b0b255028c8f0c4dde346b8b",
+    "lut": "6ba277c44316aecc71337bf37cec43126acc9fd501816f12b51b2f879ced5225",
+    "in": "b026c5c57afc5d91c4f4f43357e5f1a01e495f3e789909d25d9468bf60ebe16e",
+    "out": "30269513c174d981afb839eb72b59e41e46f6d28edebdcacc1f0470e05836600"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 102400,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 224759,
+    "acc_int32_pct": 0.010466156532273702,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 22164
+   },
+   "golden": {
+    "input": "_model.15_cv2_act_Mul_output_0",
+    "pre_act": "_model.16_conv_Conv_output_0",
+    "post_act": "_model.16_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 36,
+   "key": "_model.18_cv1_conv_Conv",
+   "onnx_name": "/model.18/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 192,
+    "C_OUT": 128,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.015466594812916774,
+    "zx": 18,
+    "sp": 0.03575985665414848,
+    "zp_pre": 150,
+    "so": 0.015528272179996265,
+    "zo": 18,
+    "has_bias": true,
+    "M_min": 1077235222,
+    "M_max": 2146444778,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.001321475487202406,
+    "sw_max": 0.008838046342134476,
+    "sum_w_min": -2007,
+    "sum_w_max": 1227,
+    "bias_i32_min": -40919,
+    "bias_i32_max": 68790
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.18/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.17_Concat_output_0",
+    "weights": "wq:_model.18_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.18_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.18_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.18_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.18_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.18_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "4a3bc04569740a775abcceb9964c0b0313b3760d71114cea5c9e1fdd6f064c7f",
+    "params": "33fcbf6ca0a16c6780b1734338878b68faf82d4535c9316f8c6f4918e3cdea51",
+    "lut": "a044e22ae75c37d6549aa77504da60810bf0a90bb0d8d42c62f02a44b8c68ccd",
+    "in": "7e95cc07e0f9a717b311b57337c88ecea7d74c27210f04df7a554f3db751ac19",
+    "out": "6c72cb3fbbca3433fa591525fffa00647ab341bba28239505873774ff2b87355"
+   },
+   "bytes": {
+    "w": 24576,
+    "params": 1536,
+    "lut": 256,
+    "in": 76800,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 137608,
+    "acc_int32_pct": 0.006407871845368236,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 44862
+   },
+   "golden": {
+    "input": "_model.17_Concat_output_0",
+    "pre_act": "_model.18_cv1_conv_Conv_output_0",
+    "post_act": "_model.18_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 37,
+   "key": "_model.18_m.0_cv1_conv_Conv",
+   "onnx_name": "/model.18/m.0/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.015528272179996265,
+    "zx": 18,
+    "sp": 0.0288573003282734,
+    "zp_pre": 173,
+    "so": 0.009563412385828354,
+    "zo": 29,
+    "has_bias": true,
+    "M_min": 1081017352,
+    "M_max": 2138635501,
+    "S_min": 39,
+    "S_max": 43,
+    "sw_min": 0.0002818620705511421,
+    "sw_max": 0.005744718015193939,
+    "sum_w_min": -2444,
+    "sum_w_max": -230,
+    "bias_i32_min": -24544,
+    "bias_i32_max": 459866
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.18/m.0/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.18_Split_output_1",
+    "weights": "wq:_model.18_m.0_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.18_m.0_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.18_m.0_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.18_m.0_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.18_m.0_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.18_m.0_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "e6c96f9b27d72e0034bf3da96888fb2e0cd14fe54878fdc90ad71766c74a324d",
+    "params": "025346d443c993edd2b7ea69dc4c9388bf3d05905a7ca2807e75ac9029004bdd",
+    "lut": "c63ef316155b22bddb46e8f7fa239530ae1bfa2161a932196fadfabe581b864d",
+    "in": "1b8dc3a576acfa1935b3005e8abc65471b4720192f982d5fc50bf7b6d768c279",
+    "out": "0386ba89873f7be73f18b7b8513df1da380b52bae6083199f643a7bca7854d17"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 540017,
+    "acc_int32_pct": 0.025146501150516094,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 21871
+   },
+   "golden": {
+    "input": "_model.18_Split_output_1",
+    "pre_act": "_model.18_m.0_cv1_conv_Conv_output_0",
+    "post_act": "_model.18_m.0_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 38,
+   "key": "_model.18_m.0_cv2_conv_Conv",
+   "onnx_name": "/model.18/m.0/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.009563412385828354,
+    "zx": 29,
+    "sp": 0.0401157117357441,
+    "zp_pre": 138,
+    "so": 0.01939387321472168,
+    "zo": 14,
+    "has_bias": true,
+    "M_min": 1088800568,
+    "M_max": 2144119244,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0030210523400455713,
+    "sw_max": 0.01748967543244362,
+    "sum_w_min": -1973,
+    "sum_w_max": 1655,
+    "bias_i32_min": -32585,
+    "bias_i32_max": 76846
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.18/m.0/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.18_m.0_cv1_act_Mul_output_0",
+    "weights": "wq:_model.18_m.0_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.18_m.0_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.18_m.0_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.18_m.0_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.18_m.0_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.18_m.0_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "54204c80ab6d7babd159565e5abf4d4c8f8e3cf2e76983f1f8165e936550fa13",
+    "params": "ce0ceda141b8d4b1d229c9192a957bd3a27b64d5824044e7bf0546e95c39e3a2",
+    "lut": "3832fd811031a3759185e7c19372a1fa0c102b4f91fa1ed3d4d766be12e23c11",
+    "in": "4af5c162257291efc3b595ac2428ce12bd1cb2b2891324b7f5476aff0d044efd",
+    "out": "93b6310e3a4fd350bab4e252ce6ea1a5be1b3451c1ed468cfbdac2a8fdd3e43c"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 107319,
+    "acc_int32_pct": 0.004997430371585037,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 22366
+   },
+   "golden": {
+    "input": "_model.18_m.0_cv1_act_Mul_output_0",
+    "pre_act": "_model.18_m.0_cv2_conv_Conv_output_0",
+    "post_act": "_model.18_m.0_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 39,
+   "key": "_model.18_cv2_conv_Conv",
+   "onnx_name": "/model.18/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 192,
+    "C_OUT": 128,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.01939387321472168,
+    "zx": 14,
+    "sp": 0.04303838318469478,
+    "zp_pre": 193,
+    "so": 0.01095260358324238,
+    "zo": 25,
+    "has_bias": true,
+    "M_min": 1079734886,
+    "M_max": 2131227771,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0012210705317556858,
+    "sw_max": 0.013162367977201939,
+    "sum_w_min": -1444,
+    "sum_w_max": 1482,
+    "bias_i32_min": -72993,
+    "bias_i32_max": 88888
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.18/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.18_Concat_output_0",
+    "weights": "wq:_model.18_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.18_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.18_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.18_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.18_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.18_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "3564f55a0bd6d46cc6165506e0f1f752649ead57a3b7bf408fb9647d2c89664b",
+    "params": "5a329860a6897a8754b8f8a764f48c103d3f42b8d8c7d37297885d98f518dee0",
+    "lut": "dae33b6a23013326e94ae52d0e49dd6476f3d961aac5cc57fda67303815e5213",
+    "in": "a7b1585ec229e74af60d0646cd7bb3692986ec7ba59e90bd592a4cb3e1aba29d",
+    "out": "a27f21696fb2787c1dfda1f7ab879cc40d4dcb908200f68ac41a2433d4a21473"
+   },
+   "bytes": {
+    "w": 24576,
+    "params": 1536,
+    "lut": 256,
+    "in": 76800,
+    "out": 51200
+   },
+   "ref": {
+    "acc_max_abs": 113463,
+    "acc_int32_pct": 0.0052835326666401386,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 253,
+    "out_nonzero": 45140
+   },
+   "golden": {
+    "input": "_model.18_Concat_output_0",
+    "pre_act": "_model.18_cv2_conv_Conv_output_0",
+    "post_act": "_model.18_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 40,
+   "key": "_model.19_conv_Conv",
+   "onnx_name": "/model.19/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 128,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 2,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.01095260358324238,
+    "zx": 25,
+    "sp": 0.03558371394288306,
+    "zp_pre": 173,
+    "so": 0.011888821919759115,
+    "zo": 23,
+    "has_bias": true,
+    "M_min": 1097246557,
+    "M_max": 2133825604,
+    "S_min": 40,
+    "S_max": 43,
+    "sw_min": 0.0007449114928022027,
+    "sw_max": 0.0037009138613939285,
+    "sum_w_min": -6960,
+    "sum_w_max": 1488,
+    "bias_i32_min": -115697,
+    "bias_i32_max": 221976
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.19/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.18_cv2_act_Mul_output_0",
+    "weights": "wq:_model.19_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.19_conv_Conv/w.bin",
+    "params": "bin/_model.19_conv_Conv/params.bin",
+    "lut": "bin/_model.19_conv_Conv/lut.bin",
+    "in": "bin/_model.19_conv_Conv/in.bin",
+    "out": "bin/_model.19_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "b6fe513891d98025f0ea485f08fc149486ca3c8a2535841fc9cd3082768b5c42",
+    "params": "88c30dd16eb966e2e94721921e021de248ae4d4c538e238884f44bbb85419f5d",
+    "lut": "0b2560983f62c0eb347a85b97ec5b530cd092e2fd64e129e0bb229edde717d49",
+    "in": "843bc495c6a9ff6059cdc557640ccb449cb8ce428d21680137c3bf2431509b38",
+    "out": "5b32c96f936bf30c29c9050d9ae9fe380001440a2fa76807166a0f2521b92f46"
+   },
+   "bytes": {
+    "w": 147456,
+    "params": 1536,
+    "lut": 256,
+    "in": 51200,
+    "out": 12800
+   },
+   "ref": {
+    "acc_max_abs": 217656,
+    "acc_int32_pct": 0.010135397319744992,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 10195
+   },
+   "golden": {
+    "input": "_model.18_cv2_act_Mul_output_0",
+    "pre_act": "_model.19_conv_Conv_output_0",
+    "post_act": "_model.19_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 41,
+   "key": "_model.21_cv1_conv_Conv",
+   "onnx_name": "/model.21/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 384,
+    "C_OUT": 256,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.013379381217208563,
+    "zx": 21,
+    "sp": 0.03372322344312481,
+    "zp_pre": 145,
+    "so": 0.015258651738073312,
+    "zo": 18,
+    "has_bias": true,
+    "M_min": 1074677771,
+    "M_max": 2139174193,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.002195336390286684,
+    "sw_max": 0.012017262168228626,
+    "sum_w_min": -3722,
+    "sum_w_max": 480,
+    "bias_i32_min": -28270,
+    "bias_i32_max": 46039
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.21/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.20_Concat_output_0",
+    "weights": "wq:_model.21_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.21_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.21_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.21_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.21_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.21_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "c693feb8246b20ac0ff716d907dc67fc9135a4995eccb2620ec6af3620d51dfa",
+    "params": "ddf46cc09a509a2d309fcfdc86334e774c4b954d24acc3164796d79299fe2f8f",
+    "lut": "c7639588d4fddc67754eeca6c7ac788ec8b2b69e13b6d7f1c04f9a5bba297d21",
+    "in": "3d782a4211ecba31ec46c7436b1245cdf7394bacbccfd40cca42b6d547182673",
+    "out": "0d7ef96981db9044e5abed8c4526f1f5a4b595f7abd7f7a113bc13702a0b53b6"
+   },
+   "bytes": {
+    "w": 98304,
+    "params": 3072,
+    "lut": 256,
+    "in": 38400,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 96993,
+    "acc_int32_pct": 0.004516588526087156,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 20593
+   },
+   "golden": {
+    "input": "_model.20_Concat_output_0",
+    "pre_act": "_model.21_cv1_conv_Conv_output_0",
+    "post_act": "_model.21_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 42,
+   "key": "_model.21_m.0_cv1_conv_Conv",
+   "onnx_name": "/model.21/m.0/cv1/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 128,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.015258651738073312,
+    "zx": 18,
+    "sp": 0.03682462280871821,
+    "zp_pre": 173,
+    "so": 0.0123352471519919,
+    "zo": 23,
+    "has_bias": true,
+    "M_min": 1078793559,
+    "M_max": 2134144074,
+    "S_min": 39,
+    "S_max": 42,
+    "sw_min": 0.0008403018582612276,
+    "sw_max": 0.006617315113544464,
+    "sum_w_min": -6340,
+    "sum_w_max": 403,
+    "bias_i32_min": -60286,
+    "bias_i32_max": 119199
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.21/m.0/cv1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.21_Split_output_1",
+    "weights": "wq:_model.21_m.0_cv1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.21_m.0_cv1_conv_Conv/w.bin",
+    "params": "bin/_model.21_m.0_cv1_conv_Conv/params.bin",
+    "lut": "bin/_model.21_m.0_cv1_conv_Conv/lut.bin",
+    "in": "bin/_model.21_m.0_cv1_conv_Conv/in.bin",
+    "out": "bin/_model.21_m.0_cv1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "5e0a9365da32bc944d2968ebaf1d5ae31d113779e31df96030638959c6c4a9b7",
+    "params": "ffa8910485f7a577bfc94ab56a35934cd318834e91bb45ac86f58c1a4333f1eb",
+    "lut": "86374ed6ba88c99aaa3c208c3ebd8b22c7cecc8fb17b5f85d5fbdb6ce3cfd1fe",
+    "in": "4cb8ddd742c2d33cc800f7799adadd6a0d05a601ea9ba90a717101cc3c4d3e31",
+    "out": "e3327b98f56239de769992c70d3506d9a768220cae922072283c9e644ce1e41d"
+   },
+   "bytes": {
+    "w": 147456,
+    "params": 1536,
+    "lut": 256,
+    "in": 12800,
+    "out": 12800
+   },
+   "ref": {
+    "acc_max_abs": 171995,
+    "acc_int32_pct": 0.00800914131477901,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 12076
+   },
+   "golden": {
+    "input": "_model.21_Split_output_1",
+    "pre_act": "_model.21_m.0_cv1_conv_Conv_output_0",
+    "post_act": "_model.21_m.0_cv1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 43,
+   "key": "_model.21_m.0_cv2_conv_Conv",
+   "onnx_name": "/model.21/m.0/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 128,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.0123352471519919,
+    "zx": 23,
+    "sp": 0.04239316641115675,
+    "zp_pre": 142,
+    "so": 0.019747164553286983,
+    "zo": 14,
+    "has_bias": true,
+    "M_min": 1073827395,
+    "M_max": 2131139989,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.001726294867694378,
+    "sw_max": 0.013795270584523678,
+    "sum_w_min": -4607,
+    "sum_w_max": 2158,
+    "bias_i32_min": -81949,
+    "bias_i32_max": 123645
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.21/m.0/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.21_m.0_cv1_act_Mul_output_0",
+    "weights": "wq:_model.21_m.0_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.21_m.0_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.21_m.0_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.21_m.0_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.21_m.0_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.21_m.0_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "6c8dde3d9a13889caa1134505eacf54fa703b20ed5d829e27eb784944abefc8f",
+    "params": "ae57874b6ce36806e2517c8743e65a1c898e9341a15ff8480b1038b4f579b831",
+    "lut": "bcf8c0558fdc46e10650c42d0380fdcaf2d051c48d78fc93b4c8e5e693317e76",
+    "in": "481cdc745d764c98bf7ab91d388ddb8c872694955ec9a37fa9ae4e3f23766571",
+    "out": "71826f6e04d753c39bfd96015c041b32c37cfc2bfed6ed8e8d5ee7fd98a49260"
+   },
+   "bytes": {
+    "w": 147456,
+    "params": 1536,
+    "lut": 256,
+    "in": 12800,
+    "out": 12800
+   },
+   "ref": {
+    "acc_max_abs": 161901,
+    "acc_int32_pct": 0.007539102811151698,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 10998
+   },
+   "golden": {
+    "input": "_model.21_m.0_cv1_act_Mul_output_0",
+    "pre_act": "_model.21_m.0_cv2_conv_Conv_output_0",
+    "post_act": "_model.21_m.0_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 44,
+   "key": "_model.21_cv2_conv_Conv",
+   "onnx_name": "/model.21/cv2/conv/Conv",
+   "geom": {
+    "C_IN": 384,
+    "C_OUT": 256,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.019747164787030688,
+    "zx": 14,
+    "sp": 0.061558230717976885,
+    "zp_pre": 194,
+    "so": 0.015463161585377711,
+    "zo": 18,
+    "has_bias": true,
+    "M_min": 1075656697,
+    "M_max": 2142852876,
+    "S_min": 38,
+    "S_max": 42,
+    "sw_min": 0.001421012100763619,
+    "sw_max": 0.018241271376609802,
+    "sum_w_min": -3990,
+    "sum_w_max": 1186,
+    "bias_i32_min": -67691,
+    "bias_i32_max": 45923
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.21/cv2/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.21_Concat_output_0",
+    "weights": "wq:_model.21_cv2_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.21_cv2_conv_Conv/w.bin",
+    "params": "bin/_model.21_cv2_conv_Conv/params.bin",
+    "lut": "bin/_model.21_cv2_conv_Conv/lut.bin",
+    "in": "bin/_model.21_cv2_conv_Conv/in.bin",
+    "out": "bin/_model.21_cv2_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "3dd7c498598503e15c0ac5e899f42749e605a3684da839d710fc6eea9c927452",
+    "params": "ef9ef00ba9bd143e66f25cc28998a7c7cf9465fb9aca60b9c68d2e6d76e31ece",
+    "lut": "b0f42506fb839f3236eb0aa519804ad5853bf75b9ab258a39cc70660dba08626",
+    "in": "41aeb78033f962a594748fa3c51fe6cb180582ca5d0e46827f8342092da1adcb",
+    "out": "2bad9c6fb0a107fecd3497b47878b820a514720cc0892ffd1b907dc225e78a73"
+   },
+   "bytes": {
+    "w": 98304,
+    "params": 3072,
+    "lut": 256,
+    "in": 38400,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 84304,
+    "acc_int32_pct": 0.003925710918347217,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 20567
+   },
+   "golden": {
+    "input": "_model.21_Concat_output_0",
+    "pre_act": "_model.21_cv2_conv_Conv_output_0",
+    "post_act": "_model.21_cv2_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 45,
+   "key": "_model.22_cv2.0_cv2.0.0_conv_Conv",
+   "onnx_name": "/model.22/cv2.0/cv2.0.0/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.014195677813361673,
+    "zx": 20,
+    "sp": 0.0384037223516726,
+    "zp_pre": 166,
+    "so": 0.014029061677409154,
+    "zo": 20,
+    "has_bias": true,
+    "M_min": 1085819334,
+    "M_max": 2139146018,
+    "S_min": 39,
+    "S_max": 42,
+    "sw_min": 0.0007391721592284739,
+    "sw_max": 0.00936562567949295,
+    "sum_w_min": -2755,
+    "sum_w_max": 2280,
+    "bias_i32_min": -79069,
+    "bias_i32_max": 161684
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.0/cv2.0.0/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.15_cv2_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.0_cv2.0.0_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.0_cv2.0.0_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv2.0_cv2.0.0_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.0_cv2.0.0_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.0_cv2.0.0_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv2.0_cv2.0.0_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "17a1c5a52af9b2e804ac76e3c1d9b3a03542f54bad2d1f7f87119d75085f1595",
+    "params": "2bd16cd475fb4d7e28c5d5d1bdfa1f4e7079d6aa43670af3ff6f40a2d47b91a5",
+    "lut": "62555cb8869ba207b35f2b2400288b26865930e04f8ccc8a0976ae73b2960f60",
+    "in": "b026c5c57afc5d91c4f4f43357e5f1a01e495f3e789909d25d9468bf60ebe16e",
+    "out": "738b7de5be11071826dbcec31e35e4ae20d53776cc42e474a25b5bc7ceb23059"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 102400,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 211728,
+    "acc_int32_pct": 0.009859353308500421,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 92115
+   },
+   "golden": {
+    "input": "_model.15_cv2_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.0_cv2.0.0_conv_Conv_output_0",
+    "post_act": "_model.22_cv2.0_cv2.0.0_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 46,
+   "key": "_model.22_cv2.0_cv2.0.1_conv_Conv",
+   "onnx_name": "/model.22/cv2.0/cv2.0.1/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.014029061677409154,
+    "zx": 20,
+    "sp": 0.13644904342352177,
+    "zp_pre": 130,
+    "so": 0.06801039471345789,
+    "zo": 4,
+    "has_bias": true,
+    "M_min": 1087563921,
+    "M_max": 2126928671,
+    "S_min": 38,
+    "S_max": 42,
+    "sw_min": 0.004260463640093803,
+    "sw_max": 0.04400346428155899,
+    "sum_w_min": -1370,
+    "sum_w_max": 1022,
+    "bias_i32_min": -15055,
+    "bias_i32_max": 57713
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.0/cv2.0.1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv2.0_cv2.0.0_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.0_cv2.0.1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.0_cv2.0.1_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv2.0_cv2.0.1_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.0_cv2.0.1_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.0_cv2.0.1_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv2.0_cv2.0.1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "93159b7f4dcded4407e0a04c539de3f5ba6a5727a84c063d638303ad4595db5b",
+    "params": "73647bfe5a6e045722c2189e9e06e0bc52c925d7ee06944ac2ad0312d8c6e157",
+    "lut": "fe1478e4c351c000c8ebe311a4e9266cda6f055d83fb28ec86c09e0cabea55f7",
+    "in": "6b8f2f3aad79a9eeaa61aebc052735fb3f97be6a36cd6fa1ff4ea36a2dec5089",
+    "out": "bd52047216fa9994f4ff0e17de97b8272560587d83525ec5e255bb26701008d7"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 102400,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 115940,
+    "acc_int32_pct": 0.005398876967559977,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 92492
+   },
+   "golden": {
+    "input": "_model.22_cv2.0_cv2.0.0_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.0_cv2.0.1_conv_Conv_output_0",
+    "post_act": "_model.22_cv2.0_cv2.0.1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 47,
+   "key": "_model.22_cv2.0_cv2.0.2_Conv",
+   "onnx_name": "/model.22/cv2.0/cv2.0.2/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.06801039471345789,
+    "zx": 4,
+    "sp": 0.06528886533250995,
+    "zp_pre": 50,
+    "so": 0.06528886533250995,
+    "zo": 50,
+    "has_bias": true,
+    "M_min": 1085473581,
+    "M_max": 2135718827,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0005695012514479458,
+    "sw_max": 0.0024317943025380373,
+    "sum_w_min": -795,
+    "sum_w_max": 526,
+    "bias_i32_min": -30082,
+    "bias_i32_max": 27397
+   },
+   "act": "none",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.0/cv2.0.2/Conv_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv2.0_cv2.0.1_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.0_cv2.0.2_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.0_cv2.0.2_Conv/w.bin",
+    "params": "bin/_model.22_cv2.0_cv2.0.2_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.0_cv2.0.2_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.0_cv2.0.2_Conv/in.bin",
+    "out": "bin/_model.22_cv2.0_cv2.0.2_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "4fac287bd199784b99c4b7db38b8813a82a850228beffdb9bf3725494cef4beb",
+    "params": "4145bc9e611200cba83211c80c72c235b457be83477e29eef6efc7f61c4ddde6",
+    "lut": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880",
+    "in": "aba64398c2ee8908f7a9b0033b14022d6d03338696f1902b94caee9d9409f3ee",
+    "out": "8697b26b2d9ef97b33943f109f2e7f9d7b08d0c5fbf3892c0c21e3092940d981"
+   },
+   "bytes": {
+    "w": 4096,
+    "params": 768,
+    "lut": 256,
+    "in": 102400,
+    "out": 102400
+   },
+   "ref": {
+    "acc_max_abs": 87888,
+    "acc_int32_pct": 0.004092603923796026,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 102399
+   },
+   "golden": {
+    "input": "_model.22_cv2.0_cv2.0.1_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.0_cv2.0.2_Conv_output_0",
+    "post_act": "_model.22_cv2.0_cv2.0.2_Conv_output_0"
+   }
+  },
+  {
+   "idx": 48,
+   "key": "_model.22_cv2.1_cv2.1.0_conv_Conv",
+   "onnx_name": "/model.22/cv2.1/cv2.1.0/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.01095260358324238,
+    "zx": 25,
+    "sp": 0.049495794258865654,
+    "zp_pre": 146,
+    "so": 0.022152415443869197,
+    "zo": 13,
+    "has_bias": true,
+    "M_min": 1083437197,
+    "M_max": 2076751034,
+    "S_min": 39,
+    "S_max": 43,
+    "sw_min": 0.0009593687718734145,
+    "sw_max": 0.015697287395596504,
+    "sum_w_min": -2920,
+    "sum_w_max": 2320,
+    "bias_i32_min": -13830,
+    "bias_i32_max": 108529
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.1/cv2.1.0/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.18_cv2_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.1_cv2.1.0_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.1_cv2.1.0_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv2.1_cv2.1.0_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.1_cv2.1.0_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.1_cv2.1.0_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv2.1_cv2.1.0_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "fc9e8ad95ecaebc8b0c7deafd2bc81fe8e555b9fb86246023f07034f255b6aab",
+    "params": "e9c7a9b9a079f6873780f1104191c530fa36d65ab74e717f95177c8bb9f8abda",
+    "lut": "6f174da64d28f2937ce82c64f43b15a7c93eca086db60bd8904efb3681913877",
+    "in": "843bc495c6a9ff6059cdc557640ccb449cb8ce428d21680137c3bf2431509b38",
+    "out": "268007fcd4890377eedc1df9b6c514f89f2af0c281da81e67b22de2b19fb7bb8"
+   },
+   "bytes": {
+    "w": 73728,
+    "params": 768,
+    "lut": 256,
+    "in": 51200,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 167848,
+    "acc_int32_pct": 0.007816031578842565,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 24246
+   },
+   "golden": {
+    "input": "_model.18_cv2_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.1_cv2.1.0_conv_Conv_output_0",
+    "post_act": "_model.22_cv2.1_cv2.1.0_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 49,
+   "key": "_model.22_cv2.1_cv2.1.1_conv_Conv",
+   "onnx_name": "/model.22/cv2.1/cv2.1.1/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.022152415443869197,
+    "zx": 13,
+    "sp": 0.11827664468802658,
+    "zp_pre": 73,
+    "so": 0.08556938627186944,
+    "zo": 3,
+    "has_bias": true,
+    "M_min": 1080668519,
+    "M_max": 2059421132,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.002693281741812825,
+    "sw_max": 0.029280200600624084,
+    "sum_w_min": -756,
+    "sum_w_max": 487,
+    "bias_i32_min": -9602,
+    "bias_i32_max": 34619
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.1/cv2.1.1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv2.1_cv2.1.0_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.1_cv2.1.1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.1_cv2.1.1_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv2.1_cv2.1.1_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.1_cv2.1.1_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.1_cv2.1.1_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv2.1_cv2.1.1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "175f7ff7f019994c190e2c4e618a35333683021fb5df71bd973fb306b7a5e513",
+    "params": "b56ce090eca2137bacfc7739031c78765894dac2398e6d69668402a32db9bd08",
+    "lut": "acc0cbf9db0d673a04c3b3e02184ea14a1ef4dbaa6c3f4a6aab94c038014e68a",
+    "in": "a5894e5f25fc9cb1c2eba973aa9844d979e5c3d6fe418b917e2db37cc400b2d9",
+    "out": "2ad809f558139dd48aca81c6571d80f15e7cc3798d7e95d225043c7c8bb6a673"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 90989,
+    "acc_int32_pct": 0.004237005489057398,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 20877
+   },
+   "golden": {
+    "input": "_model.22_cv2.1_cv2.1.0_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.1_cv2.1.1_conv_Conv_output_0",
+    "post_act": "_model.22_cv2.1_cv2.1.1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 50,
+   "key": "_model.22_cv2.1_cv2.1.2_Conv",
+   "onnx_name": "/model.22/cv2.1/cv2.1.2/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.08556938627186944,
+    "zx": 3,
+    "sp": 0.046110977846033435,
+    "zp_pre": 55,
+    "so": 0.046110977846033435,
+    "zo": 55,
+    "has_bias": true,
+    "M_min": 1104151385,
+    "M_max": 2106320803,
+    "S_min": 38,
+    "S_max": 40,
+    "sw_min": 0.0008112389477901161,
+    "sw_max": 0.0026278758887201548,
+    "sum_w_min": -490,
+    "sum_w_max": 416,
+    "bias_i32_min": -13977,
+    "bias_i32_max": 17584
+   },
+   "act": "none",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.1/cv2.1.2/Conv_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv2.1_cv2.1.1_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.1_cv2.1.2_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.1_cv2.1.2_Conv/w.bin",
+    "params": "bin/_model.22_cv2.1_cv2.1.2_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.1_cv2.1.2_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.1_cv2.1.2_Conv/in.bin",
+    "out": "bin/_model.22_cv2.1_cv2.1.2_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "98a1943db4fcdddd03b626f9ca2e5e0a6d27cbc5a95bc6c86c87e8f636ccc2c5",
+    "params": "f1b934a8526dd0f53e0642b4f5e4e1ee7eec8be8724ee756d5215350ffebafea",
+    "lut": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880",
+    "in": "20cf4b74def5c3c845d9f7133b87c373780f673ff14ded4eb6213972357dbf21",
+    "out": "45a6fcbc35131c8c4eba0c4c274ccd42b17772c6ea87c807aea2523a61e2e850"
+   },
+   "bytes": {
+    "w": 4096,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 25600
+   },
+   "ref": {
+    "acc_max_abs": 53629,
+    "acc_int32_pct": 0.0024972949188655684,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 25599
+   },
+   "golden": {
+    "input": "_model.22_cv2.1_cv2.1.1_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.1_cv2.1.2_Conv_output_0",
+    "post_act": "_model.22_cv2.1_cv2.1.2_Conv_output_0"
+   }
+  },
+  {
+   "idx": 51,
+   "key": "_model.22_cv2.2_cv2.2.0_conv_Conv",
+   "onnx_name": "/model.22/cv2.2/cv2.2.0/conv/Conv",
+   "geom": {
+    "C_IN": 256,
+    "C_OUT": 64,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.015463161585377711,
+    "zx": 18,
+    "sp": 0.06416343427171894,
+    "zp_pre": 136,
+    "so": 0.03108448993925955,
+    "zo": 9,
+    "has_bias": true,
+    "M_min": 1085359783,
+    "M_max": 2115921240,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0024986458010971546,
+    "sw_max": 0.008555267937481403,
+    "sum_w_min": -3089,
+    "sum_w_max": 110,
+    "bias_i32_min": -4981,
+    "bias_i32_max": 47397
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.2/cv2.2.0/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.21_cv2_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.2_cv2.2.0_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.2_cv2.2.0_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv2.2_cv2.2.0_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.2_cv2.2.0_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.2_cv2.2.0_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv2.2_cv2.2.0_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "cfd0fa437fb24c84940bc988999b0747be5f514bee6243cad0e448e791424891",
+    "params": "d8f1adb4305ba60768eb1e08a99fa3d97d14bfbc48a430e20b6435340e3fcddd",
+    "lut": "bdaee29190ed8f39fd0d5767a31f972e1adbb462ac0eaaa3d32e91467a091310",
+    "in": "249c9834b6c87953478ca4b37ee75b2a960a22c56646fc6629d0c8dd7cf8facc",
+    "out": "ea0a9c0eab1a71ba4bcdc77119e8287a4f63813a4f2fc89ff11d6763d99da945"
+   },
+   "bytes": {
+    "w": 147456,
+    "params": 768,
+    "lut": 256,
+    "in": 25600,
+    "out": 6400
+   },
+   "ref": {
+    "acc_max_abs": 141503,
+    "acc_int32_pct": 0.00658924691685906,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 5487
+   },
+   "golden": {
+    "input": "_model.21_cv2_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.2_cv2.2.0_conv_Conv_output_0",
+    "post_act": "_model.22_cv2.2_cv2.2.0_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 52,
+   "key": "_model.22_cv2.2_cv2.2.1_conv_Conv",
+   "onnx_name": "/model.22/cv2.2/cv2.2.1/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.03108448993925955,
+    "zx": 9,
+    "sp": 0.11196528416053922,
+    "zp_pre": 98,
+    "so": 0.07021068954000285,
+    "zo": 4,
+    "has_bias": true,
+    "M_min": 1123281663,
+    "M_max": 2104815324,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.0022282444406300783,
+    "sw_max": 0.018921706825494766,
+    "sum_w_min": -566,
+    "sum_w_max": 271,
+    "bias_i32_min": 1706,
+    "bias_i32_max": 22925
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.2/cv2.2.1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv2.2_cv2.2.0_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.2_cv2.2.1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.2_cv2.2.1_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv2.2_cv2.2.1_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.2_cv2.2.1_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.2_cv2.2.1_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv2.2_cv2.2.1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "523029f447a749266f08105af4cc981ccfc67d12ba60ebd0c8e14ecabe10e3a6",
+    "params": "4cecb91c2a448eea9fbb0a99f0d0521bcfdc48109525ad9adb9ae6bd3bd72f00",
+    "lut": "61c9c087134a8c78e57b5c17b795e17caf67a2edc74bec0aa7471f370eab55ee",
+    "in": "94a123d42bec21749034784b480f4a26114e9536cc233d1d55878d3fc4a11586",
+    "out": "66d3ac322e487ace7594703a279519da9d845840f3f25421fed603cc1f31b990"
+   },
+   "bytes": {
+    "w": 36864,
+    "params": 768,
+    "lut": 256,
+    "in": 6400,
+    "out": 6400
+   },
+   "ref": {
+    "acc_max_abs": 103721,
+    "acc_int32_pct": 0.004829885440333693,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 5470
+   },
+   "golden": {
+    "input": "_model.22_cv2.2_cv2.2.0_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.2_cv2.2.1_conv_Conv_output_0",
+    "post_act": "_model.22_cv2.2_cv2.2.1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 53,
+   "key": "_model.22_cv2.2_cv2.2.2_Conv",
+   "onnx_name": "/model.22/cv2.2/cv2.2.2/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 64,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.07021068954000285,
+    "zx": 4,
+    "sp": 0.057016451218548946,
+    "zp_pre": 83,
+    "so": 0.057016451218548946,
+    "zo": 83,
+    "has_bias": true,
+    "M_min": 1076253911,
+    "M_max": 2119972877,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0005536417593248188,
+    "sw_max": 0.0025163786485791206,
+    "sum_w_min": -695,
+    "sum_w_max": 374,
+    "bias_i32_min": -30684,
+    "bias_i32_max": 20062
+   },
+   "act": "none",
+   "act_check": {
+    "post_act_name": "/model.22/cv2.2/cv2.2.2/Conv_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv2.2_cv2.2.1_act_Mul_output_0",
+    "weights": "wq:_model.22_cv2.2_cv2.2.2_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv2.2_cv2.2.2_Conv/w.bin",
+    "params": "bin/_model.22_cv2.2_cv2.2.2_Conv/params.bin",
+    "lut": "bin/_model.22_cv2.2_cv2.2.2_Conv/lut.bin",
+    "in": "bin/_model.22_cv2.2_cv2.2.2_Conv/in.bin",
+    "out": "bin/_model.22_cv2.2_cv2.2.2_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "3441658ae110555ad0dddc35881b448d50b93e1cf5e2802f38fe9fdd79e2d376",
+    "params": "db7e6cb059e2122639631310e0834d7e7cae7de7b3857ef4048ff97be689da5f",
+    "lut": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880",
+    "in": "d1efd5218bc467cb76c59829817d2569e25c72f42717cf6781fd227e6fb0f25f",
+    "out": "0e0057bd337ee35d380f9dc52b08f91aef9bf3fede288a74bcd03be157292c37"
+   },
+   "bytes": {
+    "w": 4096,
+    "params": 768,
+    "lut": 256,
+    "in": 6400,
+    "out": 6400
+   },
+   "ref": {
+    "acc_max_abs": 88374,
+    "acc_int32_pct": 0.004115235062369721,
+    "q_pre_min": 1,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 6400
+   },
+   "golden": {
+    "input": "_model.22_cv2.2_cv2.2.1_act_Mul_output_0",
+    "pre_act": "_model.22_cv2.2_cv2.2.2_Conv_output_0",
+    "post_act": "_model.22_cv2.2_cv2.2.2_Conv_output_0"
+   }
+  },
+  {
+   "idx": 54,
+   "key": "_model.22_cv3.0_cv3.0.0_conv_Conv",
+   "onnx_name": "/model.22/cv3.0/cv3.0.0/conv/Conv",
+   "geom": {
+    "C_IN": 64,
+    "C_OUT": 80,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.014195677813361673,
+    "zx": 20,
+    "sp": 0.03277576951419606,
+    "zp_pre": 180,
+    "so": 0.009922766334870282,
+    "zo": 28,
+    "has_bias": true,
+    "M_min": 1073758891,
+    "M_max": 2140646264,
+    "S_min": 39,
+    "S_max": 42,
+    "sw_min": 0.0009210045100189745,
+    "sw_max": 0.007762270979583263,
+    "sum_w_min": -5761,
+    "sum_w_max": 1785,
+    "bias_i32_min": -85872,
+    "bias_i32_max": 228232
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.0/cv3.0.0/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.15_cv2_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.0_cv3.0.0_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.0_cv3.0.0_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv3.0_cv3.0.0_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.0_cv3.0.0_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.0_cv3.0.0_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv3.0_cv3.0.0_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "c23afcf6e571182d538ba50e70ad18dd0ee5e4072601232c033dc0822f3a29ac",
+    "params": "56ff561f5fcb0e13997edbd9b167783a972618d2c9d95cbe6457fba1fb1d82fa",
+    "lut": "0fd3df70a438a478e7f6b8c97be5e3be291cf889d213cf9bb8703e24cda546e1",
+    "in": "b026c5c57afc5d91c4f4f43357e5f1a01e495f3e789909d25d9468bf60ebe16e",
+    "out": "79e1fe9fd9c6d7d8bc059f487cea8e845261a24c91da779138a2795a1edc37b4"
+   },
+   "bytes": {
+    "w": 46080,
+    "params": 960,
+    "lut": 256,
+    "in": 102400,
+    "out": 128000
+   },
+   "ref": {
+    "acc_max_abs": 127832,
+    "acc_int32_pct": 0.005952641370684207,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 109221
+   },
+   "golden": {
+    "input": "_model.15_cv2_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.0_cv3.0.0_conv_Conv_output_0",
+    "post_act": "_model.22_cv3.0_cv3.0.0_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 55,
+   "key": "_model.22_cv3.0_cv3.0.1_conv_Conv",
+   "onnx_name": "/model.22/cv3.0/cv3.0.1/conv/Conv",
+   "geom": {
+    "C_IN": 80,
+    "C_OUT": 80,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.009922766334870282,
+    "zx": 28,
+    "sp": 0.10732589422487746,
+    "zp_pre": 114,
+    "so": 0.06025683564298293,
+    "zo": 5,
+    "has_bias": true,
+    "M_min": 1076976865,
+    "M_max": 2116064279,
+    "S_min": 37,
+    "S_max": 42,
+    "sw_min": 0.004251204431056976,
+    "sw_max": 0.08831193298101425,
+    "sum_w_min": -5186,
+    "sum_w_max": 2937,
+    "bias_i32_min": -114421,
+    "bias_i32_max": 255702
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.0/cv3.0.1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv3.0_cv3.0.0_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.0_cv3.0.1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.0_cv3.0.1_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv3.0_cv3.0.1_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.0_cv3.0.1_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.0_cv3.0.1_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv3.0_cv3.0.1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "7e4e152c9f5066520342112429f3cc7ec5dd86c180c135009663db1ada20eefe",
+    "params": "f890cf9fe42e25d764e5384348387c8752fcbd168928852c1a325cdaef7ef51c",
+    "lut": "7dccfb1109c95e38febd6f45cd8bb48213ea38853951ded110f5ff5c10f11ea1",
+    "in": "d7ff8277f9c1dafb9603c998eb03aea83b660e22397f0a3d70a7fb8d2873bb7d",
+    "out": "5cc76d031a88fb45326a3b3e0ba7c544fb9fad90df297812316444cf42f3d7ff"
+   },
+   "bytes": {
+    "w": 57600,
+    "params": 960,
+    "lut": 256,
+    "in": 128000,
+    "out": 128000
+   },
+   "ref": {
+    "acc_max_abs": 189699,
+    "acc_int32_pct": 0.008833548058212525,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 120667
+   },
+   "golden": {
+    "input": "_model.22_cv3.0_cv3.0.0_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.0_cv3.0.1_conv_Conv_output_0",
+    "post_act": "_model.22_cv3.0_cv3.0.1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 56,
+   "key": "_model.22_cv3.0_cv3.0.2_Conv",
+   "onnx_name": "/model.22/cv3.0/cv3.0.2/Conv",
+   "geom": {
+    "C_IN": 80,
+    "C_OUT": 80,
+    "H_IN": 40,
+    "W_IN": 40,
+    "H_OUT": 40,
+    "W_OUT": 40,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.06025683564298293,
+    "zx": 5,
+    "sp": 0.04902603859994926,
+    "zp_pre": 255,
+    "so": 0.04902603859994926,
+    "zo": 255,
+    "has_bias": true,
+    "M_min": 1080709629,
+    "M_max": 2132842658,
+    "S_min": 39,
+    "S_max": 40,
+    "sw_min": 0.0008295014267787337,
+    "sw_max": 0.0018829585751518607,
+    "sum_w_min": -1318,
+    "sum_w_max": -460,
+    "bias_i32_min": -246643,
+    "bias_i32_max": -56175
+   },
+   "act": "none",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.0/cv3.0.2/Conv_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv3.0_cv3.0.1_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.0_cv3.0.2_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.0_cv3.0.2_Conv/w.bin",
+    "params": "bin/_model.22_cv3.0_cv3.0.2_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.0_cv3.0.2_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.0_cv3.0.2_Conv/in.bin",
+    "out": "bin/_model.22_cv3.0_cv3.0.2_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "678160a49f16dfa20e2e0d44a655c27e84d199d20501373987dc893568247549",
+    "params": "69b5b8129be683b94e2b08028e459fcc70f6a71f86c756be78e777dbd07c4953",
+    "lut": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880",
+    "in": "456f898cfef542ada2cca9cf44055264afb7170a86141347f819225e50343f0f",
+    "out": "bdeaa84a7804111f2c9ef278ad7e5c1e44a8ef5c33c080a971022f214448c2f0"
+   },
+   "bytes": {
+    "w": 6400,
+    "params": 960,
+    "lut": 256,
+    "in": 128000,
+    "out": 128000
+   },
+   "ref": {
+    "acc_max_abs": 375498,
+    "acc_int32_pct": 0.017485488214290464,
+    "q_pre_min": 0,
+    "q_pre_max": 93,
+    "out_max": 93,
+    "out_nonzero": 2922
+   },
+   "golden": {
+    "input": "_model.22_cv3.0_cv3.0.1_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.0_cv3.0.2_Conv_output_0",
+    "post_act": "_model.22_cv3.0_cv3.0.2_Conv_output_0"
+   }
+  },
+  {
+   "idx": 57,
+   "key": "_model.22_cv3.1_cv3.1.0_conv_Conv",
+   "onnx_name": "/model.22/cv3.1/cv3.1.0/conv/Conv",
+   "geom": {
+    "C_IN": 128,
+    "C_OUT": 80,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.01095260358324238,
+    "zx": 25,
+    "sp": 0.03934809553856943,
+    "zp_pre": 176,
+    "so": 0.012679496465944776,
+    "zo": 22,
+    "has_bias": true,
+    "M_min": 1099683925,
+    "M_max": 2125801378,
+    "S_min": 38,
+    "S_max": 43,
+    "sw_min": 0.0005416905623860657,
+    "sw_max": 0.014957194216549397,
+    "sum_w_min": -6372,
+    "sum_w_max": 744,
+    "bias_i32_min": -52131,
+    "bias_i32_max": 363401
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.1/cv3.1.0/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.18_cv2_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.1_cv3.1.0_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.1_cv3.1.0_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv3.1_cv3.1.0_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.1_cv3.1.0_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.1_cv3.1.0_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv3.1_cv3.1.0_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "af7064173eda72773623351b52e46dc7673b9e11bcb09a76511d4af614690b0c",
+    "params": "6ff7c0484cc220966bfbe6d2020f5e91a37a37503e1b68bd7856fb0cd0a51e68",
+    "lut": "444a99800360fe44968ca3a814420d255db2190c2d457e91f21240982c822030",
+    "in": "843bc495c6a9ff6059cdc557640ccb449cb8ce428d21680137c3bf2431509b38",
+    "out": "f73c57930d488806c948e88de53fd1ed53f7796d2d62343a20d7eed09e459045"
+   },
+   "bytes": {
+    "w": 92160,
+    "params": 960,
+    "lut": 256,
+    "in": 51200,
+    "out": 32000
+   },
+   "ref": {
+    "acc_max_abs": 408306,
+    "acc_int32_pct": 0.019013229766401105,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 28643
+   },
+   "golden": {
+    "input": "_model.18_cv2_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.1_cv3.1.0_conv_Conv_output_0",
+    "post_act": "_model.22_cv3.1_cv3.1.0_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 58,
+   "key": "_model.22_cv3.1_cv3.1.1_conv_Conv",
+   "onnx_name": "/model.22/cv3.1/cv3.1.1/conv/Conv",
+   "geom": {
+    "C_IN": 80,
+    "C_OUT": 80,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.012679496465944776,
+    "zx": 22,
+    "sp": 0.1745061014212814,
+    "zp_pre": 185,
+    "so": 0.04925147131377575,
+    "zo": 6,
+    "has_bias": true,
+    "M_min": 1084058496,
+    "M_max": 2138680128,
+    "S_min": 38,
+    "S_max": 43,
+    "sw_min": 0.0032239744905382395,
+    "sw_max": 0.10520666837692261,
+    "sum_w_min": -4409,
+    "sum_w_max": 3043,
+    "bias_i32_min": -78276,
+    "bias_i32_max": 218926
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.1/cv3.1.1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv3.1_cv3.1.0_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.1_cv3.1.1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.1_cv3.1.1_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv3.1_cv3.1.1_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.1_cv3.1.1_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.1_cv3.1.1_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv3.1_cv3.1.1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "30c3162f59fc8625a023488303850f42034e6f1f84e0fde97e2ac80423eafdeb",
+    "params": "9970b4486a92f61da108c3ce0c9fd853fac824dd68a32adbbeb1b5d77e364d57",
+    "lut": "c34f0e68a4ce90da8863342cd4184aa085151d09759ae5d7015841933bce320e",
+    "in": "cb2a90282bcb3760a25c56a8897aafad651b7cb99a3cffa0ca48399b118b7d53",
+    "out": "26eeb0f7e5e81d8998d764ad144aedfed209ad224d5d70c2fc67463a63ff8474"
+   },
+   "bytes": {
+    "w": 57600,
+    "params": 960,
+    "lut": 256,
+    "in": 32000,
+    "out": 32000
+   },
+   "ref": {
+    "acc_max_abs": 189416,
+    "acc_int32_pct": 0.008820369843775579,
+    "q_pre_min": 2,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 29725
+   },
+   "golden": {
+    "input": "_model.22_cv3.1_cv3.1.0_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.1_cv3.1.1_conv_Conv_output_0",
+    "post_act": "_model.22_cv3.1_cv3.1.1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 59,
+   "key": "_model.22_cv3.1_cv3.1.2_Conv",
+   "onnx_name": "/model.22/cv3.1/cv3.1.2/Conv",
+   "geom": {
+    "C_IN": 80,
+    "C_OUT": 80,
+    "H_IN": 20,
+    "W_IN": 20,
+    "H_OUT": 20,
+    "W_OUT": 20,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.04925147131377575,
+    "zx": 6,
+    "sp": 0.04508450078029259,
+    "zp_pre": 255,
+    "so": 0.04508450078029259,
+    "zo": 255,
+    "has_bias": true,
+    "M_min": 1084663168,
+    "M_max": 2142772524,
+    "S_min": 39,
+    "S_max": 41,
+    "sw_min": 0.0007857675664126873,
+    "sw_max": 0.002274160273373127,
+    "sum_w_min": -1046,
+    "sum_w_max": -352,
+    "bias_i32_min": -299492,
+    "bias_i32_max": -45804
+   },
+   "act": "none",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.1/cv3.1.2/Conv_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv3.1_cv3.1.1_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.1_cv3.1.2_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.1_cv3.1.2_Conv/w.bin",
+    "params": "bin/_model.22_cv3.1_cv3.1.2_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.1_cv3.1.2_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.1_cv3.1.2_Conv/in.bin",
+    "out": "bin/_model.22_cv3.1_cv3.1.2_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "b5762ed38bbe1040a71bc64167f138092c499c75f28c69e5d6c2906fd98d1c64",
+    "params": "16beb29c1d3a1e83f4a09fb2b039fd23b74a97a98f3f8307d3a179fa4146ed04",
+    "lut": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880",
+    "in": "cdcea73184daf435ef09f7a4552899845907434c9f1c0f7b7fad0989cd2015ab",
+    "out": "1754a52279438d5cbe893937c2d321e3c22df35c53278ec99702e88ee168b65a"
+   },
+   "bytes": {
+    "w": 6400,
+    "params": 960,
+    "lut": 256,
+    "in": 32000,
+    "out": 32000
+   },
+   "ref": {
+    "acc_max_abs": 430543,
+    "acc_int32_pct": 0.020048720771469512,
+    "q_pre_min": 0,
+    "q_pre_max": 113,
+    "out_max": 113,
+    "out_nonzero": 694
+   },
+   "golden": {
+    "input": "_model.22_cv3.1_cv3.1.1_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.1_cv3.1.2_Conv_output_0",
+    "post_act": "_model.22_cv3.1_cv3.1.2_Conv_output_0"
+   }
+  },
+  {
+   "idx": 60,
+   "key": "_model.22_cv3.2_cv3.2.0_conv_Conv",
+   "onnx_name": "/model.22/cv3.2/cv3.2.0/conv/Conv",
+   "geom": {
+    "C_IN": 256,
+    "C_OUT": 80,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.015463161585377711,
+    "zx": 18,
+    "sp": 0.048523510203642005,
+    "zp_pre": 158,
+    "so": 0.019444773127050962,
+    "zo": 14,
+    "has_bias": true,
+    "M_min": 1074116314,
+    "M_max": 2119366532,
+    "S_min": 38,
+    "S_max": 43,
+    "sw_min": 0.00044418955803848803,
+    "sw_max": 0.016212893649935722,
+    "sum_w_min": -12363,
+    "sum_w_max": 1800,
+    "bias_i32_min": -41473,
+    "bias_i32_max": 466593
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.2/cv3.2.0/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.21_cv2_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.2_cv3.2.0_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.2_cv3.2.0_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv3.2_cv3.2.0_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.2_cv3.2.0_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.2_cv3.2.0_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv3.2_cv3.2.0_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "f6e119fce0e4f1028e1306b3798598e1ca1572bcf66640ea8053ff27191a5064",
+    "params": "094d8af33c2dab4177d2a327dc9e41ea55bb2667acd3b92bb2a10f1ad22ff57d",
+    "lut": "495172e2c406c30f09f43112dcf58b84186d9722225717834ef83e219e6f161c",
+    "in": "249c9834b6c87953478ca4b37ee75b2a960a22c56646fc6629d0c8dd7cf8facc",
+    "out": "f1e6be959110528faba9fa0b98b5ce99c517abff82f8deedd78d71a2a02e6f53"
+   },
+   "bytes": {
+    "w": 184320,
+    "params": 960,
+    "lut": 256,
+    "in": 25600,
+    "out": 8000
+   },
+   "ref": {
+    "acc_max_abs": 380476,
+    "acc_int32_pct": 0.0177172944032202,
+    "q_pre_min": 0,
+    "q_pre_max": 255,
+    "out_max": 254,
+    "out_nonzero": 6979
+   },
+   "golden": {
+    "input": "_model.21_cv2_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.2_cv3.2.0_conv_Conv_output_0",
+    "post_act": "_model.22_cv3.2_cv3.2.0_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 61,
+   "key": "_model.22_cv3.2_cv3.2.1_conv_Conv",
+   "onnx_name": "/model.22/cv3.2/cv3.2.1/conv/Conv",
+   "geom": {
+    "C_IN": 80,
+    "C_OUT": 80,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 3,
+    "stride": 1,
+    "pad": 1
+   },
+   "quant": {
+    "sx": 0.019444773127050962,
+    "zx": 14,
+    "sp": 0.3902549893248315,
+    "zp_pre": 113,
+    "so": 0.21840450529958688,
+    "zo": 1,
+    "has_bias": true,
+    "M_min": 1089397219,
+    "M_max": 2140757400,
+    "S_min": 38,
+    "S_max": 44,
+    "sw_min": 0.002342845080420375,
+    "sw_max": 0.08042965829372406,
+    "sum_w_min": -5425,
+    "sum_w_max": 2569,
+    "bias_i32_min": -60964,
+    "bias_i32_max": 203739
+   },
+   "act": "silu",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.2/cv3.2.1/act/Mul_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv3.2_cv3.2.0_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.2_cv3.2.1_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.2_cv3.2.1_conv_Conv/w.bin",
+    "params": "bin/_model.22_cv3.2_cv3.2.1_conv_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.2_cv3.2.1_conv_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.2_cv3.2.1_conv_Conv/in.bin",
+    "out": "bin/_model.22_cv3.2_cv3.2.1_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "e68b1b06dcdbef1a65ff0c08180fd2b47cc4172790049d2fd97e29f46a8500e2",
+    "params": "4da1221bc74459a97a637722168aebff86947a8bb5be07f08e195dd9ba5c76cb",
+    "lut": "77cc7b9db6d2cbc253949f7be13f8147af3b054b95c39666d2989a1d0277701b",
+    "in": "55709de63fe444de6b107532bec78ba15878d4bd72e987a6220750e3f854313f",
+    "out": "5639f873dd1a56dd7bee49f58a1d132cbc37056b82ee71aff6f403c4bb1c7d0a"
+   },
+   "bytes": {
+    "w": 57600,
+    "params": 960,
+    "lut": 256,
+    "in": 8000,
+    "out": 8000
+   },
+   "ref": {
+    "acc_max_abs": 337755,
+    "acc_int32_pct": 0.015727942816786442,
+    "q_pre_min": 0,
+    "q_pre_max": 254,
+    "out_max": 253,
+    "out_nonzero": 5734
+   },
+   "golden": {
+    "input": "_model.22_cv3.2_cv3.2.0_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.2_cv3.2.1_conv_Conv_output_0",
+    "post_act": "_model.22_cv3.2_cv3.2.1_act_Mul_output_0"
+   }
+  },
+  {
+   "idx": 62,
+   "key": "_model.22_cv3.2_cv3.2.2_Conv",
+   "onnx_name": "/model.22/cv3.2/cv3.2.2/Conv",
+   "geom": {
+    "C_IN": 80,
+    "C_OUT": 80,
+    "H_IN": 10,
+    "W_IN": 10,
+    "H_OUT": 10,
+    "W_OUT": 10,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.21840450529958688,
+    "zx": 1,
+    "sp": 0.12559957317277498,
+    "zp_pre": 255,
+    "so": 0.12559957317277498,
+    "zo": 255,
+    "has_bias": true,
+    "M_min": 1083336547,
+    "M_max": 2144620451,
+    "S_min": 38,
+    "S_max": 41,
+    "sw_min": 0.00045295775635167956,
+    "sw_max": 0.0029219980351626873,
+    "sum_w_min": -1243,
+    "sum_w_max": -393,
+    "bias_i32_min": -106395,
+    "bias_i32_max": -6827
+   },
+   "act": "none",
+   "act_check": {
+    "post_act_name": "/model.22/cv3.2/cv3.2.2/Conv_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_cv3.2_cv3.2.1_act_Mul_output_0",
+    "weights": "wq:_model.22_cv3.2_cv3.2.2_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_cv3.2_cv3.2.2_Conv/w.bin",
+    "params": "bin/_model.22_cv3.2_cv3.2.2_Conv/params.bin",
+    "lut": "bin/_model.22_cv3.2_cv3.2.2_Conv/lut.bin",
+    "in": "bin/_model.22_cv3.2_cv3.2.2_Conv/in.bin",
+    "out": "bin/_model.22_cv3.2_cv3.2.2_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "ce7e5916e7198c5e62b29c35000ead08d60db575a92898c9632103325e09cfc7",
+    "params": "b36b8cb0ead1e3d37721b46549cdb63be7ee3f7168733ef2025b467363838a53",
+    "lut": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880",
+    "in": "b2742bd7105ae706abad52ee7553147a91fcff02f29cd0b764abc7d0d2f71ef2",
+    "out": "6ca7e96c993a30466e49ae178185534722f07109ffc3b0ffb7b88fb1190de7e3"
+   },
+   "bytes": {
+    "w": 6400,
+    "params": 960,
+    "lut": 256,
+    "in": 8000,
+    "out": 8000
+   },
+   "ref": {
+    "acc_max_abs": 167320,
+    "acc_int32_pct": 0.007791444662861267,
+    "q_pre_min": 0,
+    "q_pre_max": 233,
+    "out_max": 233,
+    "out_nonzero": 7997
+   },
+   "golden": {
+    "input": "_model.22_cv3.2_cv3.2.1_act_Mul_output_0",
+    "pre_act": "_model.22_cv3.2_cv3.2.2_Conv_output_0",
+    "post_act": "_model.22_cv3.2_cv3.2.2_Conv_output_0"
+   }
+  }
+ ],
+ "unsupported": [
+  {
+   "idx": 0,
+   "key": "_model.22_dfl_conv_Conv",
+   "onnx_name": "/model.22/dfl/conv/Conv",
+   "geom": {
+    "C_IN": 16,
+    "C_OUT": 1,
+    "H_IN": 4,
+    "W_IN": 2100,
+    "H_OUT": 4,
+    "W_OUT": 2100,
+    "K": 1,
+    "stride": 1,
+    "pad": 0
+   },
+   "quant": {
+    "sx": 0.002907245039228136,
+    "zx": 0,
+    "sp": 0.04217508587182737,
+    "zp_pre": 0,
+    "so": 0.04217508587182737,
+    "zo": 0,
+    "has_bias": false,
+    "M_min": 1118981876,
+    "M_max": 1118981876,
+    "S_min": 37,
+    "S_max": 37,
+    "sw_min": 0.11811023950576782,
+    "sw_max": 0.11811023950576782,
+    "sum_w_min": 1016,
+    "sum_w_max": 1016,
+    "bias_i32_min": 0,
+    "bias_i32_max": 0
+   },
+   "act": "none",
+   "act_check": {
+    "post_act_name": "/model.22/dfl/conv/Conv_output_0",
+    "rule": "golden 里存在 <conv_out 同目录>/act/Mul_output_0 => silu；否则 none"
+   },
+   "sources": {
+    "in": "golden_npz:_model.22_dfl_Transpose_1_output_0",
+    "weights": "wq:_model.22_dfl_conv_Conv",
+    "stats": "golden_json min/max（float32 真值）"
+   },
+   "files": {
+    "w": "bin/_model.22_dfl_conv_Conv/w.bin",
+    "params": "bin/_model.22_dfl_conv_Conv/params.bin",
+    "lut": "bin/_model.22_dfl_conv_Conv/lut.bin",
+    "in": "bin/_model.22_dfl_conv_Conv/in.bin",
+    "out": "bin/_model.22_dfl_conv_Conv/out.bin"
+   },
+   "sha256": {
+    "w": "0791aa3cc43aca1022d9651a6a6b1152a57cf1fb68537ec771a36f8357c32e4b",
+    "params": "d9734c5e54c4995a52384b9ea7d44adbb542d22bfad6e23cef83cf0201646aeb",
+    "lut": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880",
+    "in": "a06528e6e6e6c4424186761c4343c4e8fd0c898a60d739eb5ac6dd0d6a04c642",
+    "out": "342f0d024f6243606c3054110937c1d51d2454b788089993f81d8b88d7aa75e2"
+   },
+   "bytes": {
+    "w": 16,
+    "params": 12,
+    "lut": 256,
+    "in": 134400,
+    "out": 8400
+   },
+   "ref": {
+    "acc_max_abs": 32152,
+    "acc_int32_pct": 0.0014971941716490286,
+    "q_pre_min": 6,
+    "q_pre_max": 255,
+    "out_max": 255,
+    "out_nonzero": 8400
+   },
+   "golden": {
+    "input": "_model.22_dfl_Transpose_1_output_0",
+    "pre_act": "_model.22_dfl_conv_Conv_output_0",
+    "post_act": "_model.22_dfl_conv_Conv_output_0"
+   },
+   "unsupported": true,
+   "reason": "C_OUT=1 不在 [16, 256]; H_IN=4 不在 [10, 320]; W_IN=2100 不在 [10, 320]",
+   "note": "算术本身合法（K/stride/pad 都合规），但 H/W/C 超契约 §5；硬件不跑它，PS 侧用 numpy 算。这些 .bin 是给 PS 实现当比对基准的。"
+  }
+ ]
+}

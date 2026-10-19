@@ -1,0 +1,1496 @@
+{
+  "convs": {
+    "/model.0/conv/Conv": {
+      "name": "/model.0/conv/Conv",
+      "act": "images_DequantizeLinear_Output",
+      "w": "model.0.conv.weight_DequantizeLinear_Output",
+      "bias": "model.0.conv.bias"
+    },
+    "/model.1/conv/Conv": {
+      "name": "/model.1/conv/Conv",
+      "act": "/model.0/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.1.conv.bias"
+    },
+    "/model.2/cv1/conv/Conv": {
+      "name": "/model.2/cv1/conv/Conv",
+      "act": "/model.1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.2.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.2.cv1.conv.bias"
+    },
+    "/model.2/m.0/cv1/conv/Conv": {
+      "name": "/model.2/m.0/cv1/conv/Conv",
+      "act": "/model.2/Split_output_1_DequantizeLinear_Output",
+      "w": "model.2.m.0.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.2.m.0.cv1.conv.bias"
+    },
+    "/model.2/m.0/cv2/conv/Conv": {
+      "name": "/model.2/m.0/cv2/conv/Conv",
+      "act": "/model.2/m.0/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.2.m.0.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.2.m.0.cv2.conv.bias"
+    },
+    "/model.2/cv2/conv/Conv": {
+      "name": "/model.2/cv2/conv/Conv",
+      "act": "/model.2/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.2.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.2.cv2.conv.bias"
+    },
+    "/model.3/conv/Conv": {
+      "name": "/model.3/conv/Conv",
+      "act": "/model.2/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.3.conv.weight_DequantizeLinear_Output",
+      "bias": "model.3.conv.bias"
+    },
+    "/model.4/cv1/conv/Conv": {
+      "name": "/model.4/cv1/conv/Conv",
+      "act": "/model.3/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.4.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.4.cv1.conv.bias"
+    },
+    "/model.4/m.0/cv1/conv/Conv": {
+      "name": "/model.4/m.0/cv1/conv/Conv",
+      "act": "/model.4/Split_output_1_DequantizeLinear_Output",
+      "w": "model.4.m.0.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.4.m.0.cv1.conv.bias"
+    },
+    "/model.4/m.0/cv2/conv/Conv": {
+      "name": "/model.4/m.0/cv2/conv/Conv",
+      "act": "/model.4/m.0/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.4.m.0.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.4.m.0.cv2.conv.bias"
+    },
+    "/model.4/m.1/cv1/conv/Conv": {
+      "name": "/model.4/m.1/cv1/conv/Conv",
+      "act": "/model.4/m.0/Add_output_0_DequantizeLinear_Output",
+      "w": "model.4.m.1.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.4.m.1.cv1.conv.bias"
+    },
+    "/model.4/m.1/cv2/conv/Conv": {
+      "name": "/model.4/m.1/cv2/conv/Conv",
+      "act": "/model.4/m.1/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.4.m.1.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.4.m.1.cv2.conv.bias"
+    },
+    "/model.4/cv2/conv/Conv": {
+      "name": "/model.4/cv2/conv/Conv",
+      "act": "/model.4/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.4.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.4.cv2.conv.bias"
+    },
+    "/model.5/conv/Conv": {
+      "name": "/model.5/conv/Conv",
+      "act": "/model.4/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.5.conv.weight_DequantizeLinear_Output",
+      "bias": "model.5.conv.bias"
+    },
+    "/model.6/cv1/conv/Conv": {
+      "name": "/model.6/cv1/conv/Conv",
+      "act": "/model.5/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.6.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.6.cv1.conv.bias"
+    },
+    "/model.6/m.0/cv1/conv/Conv": {
+      "name": "/model.6/m.0/cv1/conv/Conv",
+      "act": "/model.6/Split_output_1_DequantizeLinear_Output",
+      "w": "model.6.m.0.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.6.m.0.cv1.conv.bias"
+    },
+    "/model.6/m.0/cv2/conv/Conv": {
+      "name": "/model.6/m.0/cv2/conv/Conv",
+      "act": "/model.6/m.0/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.6.m.0.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.6.m.0.cv2.conv.bias"
+    },
+    "/model.6/m.1/cv1/conv/Conv": {
+      "name": "/model.6/m.1/cv1/conv/Conv",
+      "act": "/model.6/m.0/Add_output_0_DequantizeLinear_Output",
+      "w": "model.6.m.1.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.6.m.1.cv1.conv.bias"
+    },
+    "/model.6/m.1/cv2/conv/Conv": {
+      "name": "/model.6/m.1/cv2/conv/Conv",
+      "act": "/model.6/m.1/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.6.m.1.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.6.m.1.cv2.conv.bias"
+    },
+    "/model.6/cv2/conv/Conv": {
+      "name": "/model.6/cv2/conv/Conv",
+      "act": "/model.6/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.6.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.6.cv2.conv.bias"
+    },
+    "/model.7/conv/Conv": {
+      "name": "/model.7/conv/Conv",
+      "act": "/model.6/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.7.conv.weight_DequantizeLinear_Output",
+      "bias": "model.7.conv.bias"
+    },
+    "/model.8/cv1/conv/Conv": {
+      "name": "/model.8/cv1/conv/Conv",
+      "act": "/model.7/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.8.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.8.cv1.conv.bias"
+    },
+    "/model.8/m.0/cv1/conv/Conv": {
+      "name": "/model.8/m.0/cv1/conv/Conv",
+      "act": "/model.8/Split_output_1_DequantizeLinear_Output",
+      "w": "model.8.m.0.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.8.m.0.cv1.conv.bias"
+    },
+    "/model.8/m.0/cv2/conv/Conv": {
+      "name": "/model.8/m.0/cv2/conv/Conv",
+      "act": "/model.8/m.0/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.8.m.0.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.8.m.0.cv2.conv.bias"
+    },
+    "/model.8/cv2/conv/Conv": {
+      "name": "/model.8/cv2/conv/Conv",
+      "act": "/model.8/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.8.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.8.cv2.conv.bias"
+    },
+    "/model.9/cv1/conv/Conv": {
+      "name": "/model.9/cv1/conv/Conv",
+      "act": "/model.8/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.9.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.9.cv1.conv.bias"
+    },
+    "/model.9/cv2/conv/Conv": {
+      "name": "/model.9/cv2/conv/Conv",
+      "act": "/model.9/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.9.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.9.cv2.conv.bias"
+    },
+    "/model.12/cv1/conv/Conv": {
+      "name": "/model.12/cv1/conv/Conv",
+      "act": "/model.11/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.12.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.12.cv1.conv.bias"
+    },
+    "/model.12/m.0/cv1/conv/Conv": {
+      "name": "/model.12/m.0/cv1/conv/Conv",
+      "act": "/model.12/Split_output_1_DequantizeLinear_Output",
+      "w": "model.12.m.0.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.12.m.0.cv1.conv.bias"
+    },
+    "/model.12/m.0/cv2/conv/Conv": {
+      "name": "/model.12/m.0/cv2/conv/Conv",
+      "act": "/model.12/m.0/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.12.m.0.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.12.m.0.cv2.conv.bias"
+    },
+    "/model.12/cv2/conv/Conv": {
+      "name": "/model.12/cv2/conv/Conv",
+      "act": "/model.12/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.12.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.12.cv2.conv.bias"
+    },
+    "/model.15/cv1/conv/Conv": {
+      "name": "/model.15/cv1/conv/Conv",
+      "act": "/model.14/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.15.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.15.cv1.conv.bias"
+    },
+    "/model.15/m.0/cv1/conv/Conv": {
+      "name": "/model.15/m.0/cv1/conv/Conv",
+      "act": "/model.15/Split_output_1_DequantizeLinear_Output",
+      "w": "model.15.m.0.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.15.m.0.cv1.conv.bias"
+    },
+    "/model.15/m.0/cv2/conv/Conv": {
+      "name": "/model.15/m.0/cv2/conv/Conv",
+      "act": "/model.15/m.0/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.15.m.0.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.15.m.0.cv2.conv.bias"
+    },
+    "/model.15/cv2/conv/Conv": {
+      "name": "/model.15/cv2/conv/Conv",
+      "act": "/model.15/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.15.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.15.cv2.conv.bias"
+    },
+    "/model.16/conv/Conv": {
+      "name": "/model.16/conv/Conv",
+      "act": "/model.15/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.16.conv.weight_DequantizeLinear_Output",
+      "bias": "model.16.conv.bias"
+    },
+    "/model.22/cv2.0/cv2.0.0/conv/Conv": {
+      "name": "/model.22/cv2.0/cv2.0.0/conv/Conv",
+      "act": "/model.15/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.0.0.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.0.0.conv.bias"
+    },
+    "/model.22/cv3.0/cv3.0.0/conv/Conv": {
+      "name": "/model.22/cv3.0/cv3.0.0/conv/Conv",
+      "act": "/model.15/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.0.0.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.0.0.conv.bias"
+    },
+    "/model.22/cv2.0/cv2.0.1/conv/Conv": {
+      "name": "/model.22/cv2.0/cv2.0.1/conv/Conv",
+      "act": "/model.22/cv2.0/cv2.0.0/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.0.1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.0.1.conv.bias"
+    },
+    "/model.22/cv3.0/cv3.0.1/conv/Conv": {
+      "name": "/model.22/cv3.0/cv3.0.1/conv/Conv",
+      "act": "/model.22/cv3.0/cv3.0.0/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.0.1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.0.1.conv.bias"
+    },
+    "/model.18/cv1/conv/Conv": {
+      "name": "/model.18/cv1/conv/Conv",
+      "act": "/model.17/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.18.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.18.cv1.conv.bias"
+    },
+    "/model.22/cv2.0/cv2.0.2/Conv": {
+      "name": "/model.22/cv2.0/cv2.0.2/Conv",
+      "act": "/model.22/cv2.0/cv2.0.1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.0.2.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.0.2.bias"
+    },
+    "/model.22/cv3.0/cv3.0.2/Conv": {
+      "name": "/model.22/cv3.0/cv3.0.2/Conv",
+      "act": "/model.22/cv3.0/cv3.0.1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.0.2.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.0.2.bias"
+    },
+    "/model.18/m.0/cv1/conv/Conv": {
+      "name": "/model.18/m.0/cv1/conv/Conv",
+      "act": "/model.18/Split_output_1_DequantizeLinear_Output",
+      "w": "model.18.m.0.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.18.m.0.cv1.conv.bias"
+    },
+    "/model.18/m.0/cv2/conv/Conv": {
+      "name": "/model.18/m.0/cv2/conv/Conv",
+      "act": "/model.18/m.0/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.18.m.0.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.18.m.0.cv2.conv.bias"
+    },
+    "/model.18/cv2/conv/Conv": {
+      "name": "/model.18/cv2/conv/Conv",
+      "act": "/model.18/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.18.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.18.cv2.conv.bias"
+    },
+    "/model.19/conv/Conv": {
+      "name": "/model.19/conv/Conv",
+      "act": "/model.18/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.19.conv.weight_DequantizeLinear_Output",
+      "bias": "model.19.conv.bias"
+    },
+    "/model.22/cv2.1/cv2.1.0/conv/Conv": {
+      "name": "/model.22/cv2.1/cv2.1.0/conv/Conv",
+      "act": "/model.18/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.1.0.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.1.0.conv.bias"
+    },
+    "/model.22/cv3.1/cv3.1.0/conv/Conv": {
+      "name": "/model.22/cv3.1/cv3.1.0/conv/Conv",
+      "act": "/model.18/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.1.0.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.1.0.conv.bias"
+    },
+    "/model.22/cv2.1/cv2.1.1/conv/Conv": {
+      "name": "/model.22/cv2.1/cv2.1.1/conv/Conv",
+      "act": "/model.22/cv2.1/cv2.1.0/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.1.1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.1.1.conv.bias"
+    },
+    "/model.22/cv3.1/cv3.1.1/conv/Conv": {
+      "name": "/model.22/cv3.1/cv3.1.1/conv/Conv",
+      "act": "/model.22/cv3.1/cv3.1.0/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.1.1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.1.1.conv.bias"
+    },
+    "/model.21/cv1/conv/Conv": {
+      "name": "/model.21/cv1/conv/Conv",
+      "act": "/model.20/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.21.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.21.cv1.conv.bias"
+    },
+    "/model.22/cv2.1/cv2.1.2/Conv": {
+      "name": "/model.22/cv2.1/cv2.1.2/Conv",
+      "act": "/model.22/cv2.1/cv2.1.1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.1.2.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.1.2.bias"
+    },
+    "/model.22/cv3.1/cv3.1.2/Conv": {
+      "name": "/model.22/cv3.1/cv3.1.2/Conv",
+      "act": "/model.22/cv3.1/cv3.1.1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.1.2.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.1.2.bias"
+    },
+    "/model.21/m.0/cv1/conv/Conv": {
+      "name": "/model.21/m.0/cv1/conv/Conv",
+      "act": "/model.21/Split_output_1_DequantizeLinear_Output",
+      "w": "model.21.m.0.cv1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.21.m.0.cv1.conv.bias"
+    },
+    "/model.21/m.0/cv2/conv/Conv": {
+      "name": "/model.21/m.0/cv2/conv/Conv",
+      "act": "/model.21/m.0/cv1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.21.m.0.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.21.m.0.cv2.conv.bias"
+    },
+    "/model.21/cv2/conv/Conv": {
+      "name": "/model.21/cv2/conv/Conv",
+      "act": "/model.21/Concat_output_0_DequantizeLinear_Output",
+      "w": "model.21.cv2.conv.weight_DequantizeLinear_Output",
+      "bias": "model.21.cv2.conv.bias"
+    },
+    "/model.22/cv2.2/cv2.2.0/conv/Conv": {
+      "name": "/model.22/cv2.2/cv2.2.0/conv/Conv",
+      "act": "/model.21/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.2.0.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.2.0.conv.bias"
+    },
+    "/model.22/cv3.2/cv3.2.0/conv/Conv": {
+      "name": "/model.22/cv3.2/cv3.2.0/conv/Conv",
+      "act": "/model.21/cv2/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.2.0.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.2.0.conv.bias"
+    },
+    "/model.22/cv2.2/cv2.2.1/conv/Conv": {
+      "name": "/model.22/cv2.2/cv2.2.1/conv/Conv",
+      "act": "/model.22/cv2.2/cv2.2.0/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.2.1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.2.1.conv.bias"
+    },
+    "/model.22/cv3.2/cv3.2.1/conv/Conv": {
+      "name": "/model.22/cv3.2/cv3.2.1/conv/Conv",
+      "act": "/model.22/cv3.2/cv3.2.0/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.2.1.conv.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.2.1.conv.bias"
+    },
+    "/model.22/cv2.2/cv2.2.2/Conv": {
+      "name": "/model.22/cv2.2/cv2.2.2/Conv",
+      "act": "/model.22/cv2.2/cv2.2.1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv2.2.2.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv2.2.2.bias"
+    },
+    "/model.22/cv3.2/cv3.2.2/Conv": {
+      "name": "/model.22/cv3.2/cv3.2.2/Conv",
+      "act": "/model.22/cv3.2/cv3.2.1/act/Mul_output_0_DequantizeLinear_Output",
+      "w": "model.22.cv3.2.2.weight_DequantizeLinear_Output",
+      "bias": "model.22.cv3.2.2.bias"
+    },
+    "/model.22/dfl/conv/Conv": {
+      "name": "/model.22/dfl/conv/Conv",
+      "act": "/model.22/dfl/Transpose_1_output_0_DequantizeLinear_Output",
+      "w": "model.22.dfl.conv.weight_DequantizeLinear_Output"
+    }
+  },
+  "quantize_nodes": {
+    "images_QuantizeLinear_Output": {
+      "scale": [
+        0.03581123799085617
+      ],
+      "zero_point": [
+        124
+      ],
+      "per_channel": 0
+    },
+    "/model.0/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        1.09517240524292
+      ],
+      "zero_point": [
+        127
+      ],
+      "per_channel": 0
+    },
+    "/model.0/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.5519866347312927
+      ],
+      "zero_point": [
+        1
+      ],
+      "per_channel": 0
+    },
+    "/model.1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        2.2067296504974365
+      ],
+      "zero_point": [
+        127
+      ],
+      "per_channel": 0
+    },
+    "/model.1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        1.112351894378662
+      ],
+      "zero_point": [
+        0
+      ],
+      "per_channel": 0
+    },
+    "/model.2/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        1.211364984512329
+      ],
+      "zero_point": [
+        190
+      ],
+      "per_channel": 0
+    },
+    "/model.2/Split_output_1_QuantizeLinear_Output": {
+      "scale": [
+        0.1265372633934021
+      ],
+      "zero_point": [
+        2
+      ],
+      "per_channel": 0
+    },
+    "/model.2/m.0/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.5289872288703918
+      ],
+      "zero_point": [
+        136
+      ],
+      "per_channel": 0
+    },
+    "/model.2/m.0/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.24707312881946564
+      ],
+      "zero_point": [
+        1
+      ],
+      "per_channel": 0
+    },
+    "/model.2/m.0/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.6317244172096252
+      ],
+      "zero_point": [
+        136
+      ],
+      "per_channel": 0
+    },
+    "/model.2/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.3572402000427246
+      ],
+      "zero_point": [
+        2
+      ],
+      "per_channel": 0
+    },
+    "/model.2/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.22906740009784698
+      ],
+      "zero_point": [
+        174
+      ],
+      "per_channel": 0
+    },
+    "/model.2/cv2/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.07420815527439117
+      ],
+      "zero_point": [
+        4
+      ],
+      "per_channel": 0
+    },
+    "/model.3/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.0902753472328186
+      ],
+      "zero_point": [
+        161
+      ],
+      "per_channel": 0
+    },
+    "/model.3/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.034426361322402954
+      ],
+      "zero_point": [
+        8
+      ],
+      "per_channel": 0
+    },
+    "/model.4/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.0877673551440239
+      ],
+      "zero_point": [
+        163
+      ],
+      "per_channel": 0
+    },
+    "/model.4/Split_output_1_QuantizeLinear_Output": {
+      "scale": [
+        0.017168158665299416
+      ],
+      "zero_point": [
+        16
+      ],
+      "per_channel": 0
+    },
+    "/model.4/m.0/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.034292157739400864
+      ],
+      "zero_point": [
+        159
+      ],
+      "per_channel": 0
+    },
+    "/model.4/m.0/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.013484417460858822
+      ],
+      "zero_point": [
+        21
+      ],
+      "per_channel": 0
+    },
+    "/model.4/m.0/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.0339498370885849
+      ],
+      "zero_point": [
+        146
+      ],
+      "per_channel": 0
+    },
+    "/model.4/m.0/Add_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.02002917043864727
+      ],
+      "zero_point": [
+        28
+      ],
+      "per_channel": 0
+    },
+    "/model.4/m.1/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.025714047253131866
+      ],
+      "zero_point": [
+        172
+      ],
+      "per_channel": 0
+    },
+    "/model.4/m.1/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.00857023149728775
+      ],
+      "zero_point": [
+        32
+      ],
+      "per_channel": 0
+    },
+    "/model.4/m.1/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03787745535373688
+      ],
+      "zero_point": [
+        130
+      ],
+      "per_channel": 0
+    },
+    "/model.4/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03476026654243469
+      ],
+      "zero_point": [
+        24
+      ],
+      "per_channel": 0
+    },
+    "/model.4/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.04438595101237297
+      ],
+      "zero_point": [
+        175
+      ],
+      "per_channel": 0
+    },
+    "/model.4/cv2/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.014639124274253845
+      ],
+      "zero_point": [
+        19
+      ],
+      "per_channel": 0
+    },
+    "/model.5/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03615536168217659
+      ],
+      "zero_point": [
+        160
+      ],
+      "per_channel": 0
+    },
+    "/model.5/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.014102756977081299
+      ],
+      "zero_point": [
+        20
+      ],
+      "per_channel": 0
+    },
+    "/model.6/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.0632447749376297
+      ],
+      "zero_point": [
+        182
+      ],
+      "per_channel": 0
+    },
+    "/model.6/Split_output_1_QuantizeLinear_Output": {
+      "scale": [
+        0.01215224340558052
+      ],
+      "zero_point": [
+        23
+      ],
+      "per_channel": 0
+    },
+    "/model.6/m.0/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.04171124845743179
+      ],
+      "zero_point": [
+        179
+      ],
+      "per_channel": 0
+    },
+    "/model.6/m.0/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.013014820404350758
+      ],
+      "zero_point": [
+        21
+      ],
+      "per_channel": 0
+    },
+    "/model.6/m.0/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.022969868034124374
+      ],
+      "zero_point": [
+        164
+      ],
+      "per_channel": 0
+    },
+    "/model.6/m.0/Add_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.014909838326275349
+      ],
+      "zero_point": [
+        37
+      ],
+      "per_channel": 0
+    },
+    "/model.6/m.1/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.02187437191605568
+      ],
+      "zero_point": [
+        169
+      ],
+      "per_channel": 0
+    },
+    "/model.6/m.1/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.007461888249963522
+      ],
+      "zero_point": [
+        37
+      ],
+      "per_channel": 0
+    },
+    "/model.6/m.1/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03247693181037903
+      ],
+      "zero_point": [
+        146
+      ],
+      "per_channel": 0
+    },
+    "/model.6/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.021060148254036903
+      ],
+      "zero_point": [
+        39
+      ],
+      "per_channel": 0
+    },
+    "/model.6/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.02831488475203514
+      ],
+      "zero_point": [
+        170
+      ],
+      "per_channel": 0
+    },
+    "/model.6/cv2/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.009774407371878624
+      ],
+      "zero_point": [
+        28
+      ],
+      "per_channel": 0
+    },
+    "/model.7/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.031243329867720604
+      ],
+      "zero_point": [
+        153
+      ],
+      "per_channel": 0
+    },
+    "/model.7/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.013099318370223045
+      ],
+      "zero_point": [
+        21
+      ],
+      "per_channel": 0
+    },
+    "/model.8/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.05257479101419449
+      ],
+      "zero_point": [
+        111
+      ],
+      "per_channel": 0
+    },
+    "/model.8/Split_output_1_QuantizeLinear_Output": {
+      "scale": [
+        0.00885789841413498
+      ],
+      "zero_point": [
+        31
+      ],
+      "per_channel": 0
+    },
+    "/model.8/m.0/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.029408279806375504
+      ],
+      "zero_point": [
+        146
+      ],
+      "per_channel": 0
+    },
+    "/model.8/m.0/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.01319270022213459
+      ],
+      "zero_point": [
+        21
+      ],
+      "per_channel": 0
+    },
+    "/model.8/m.0/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.04690966382622719
+      ],
+      "zero_point": [
+        156
+      ],
+      "per_channel": 0
+    },
+    "/model.8/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03188849240541458
+      ],
+      "zero_point": [
+        17
+      ],
+      "per_channel": 0
+    },
+    "/model.8/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.028614932671189308
+      ],
+      "zero_point": [
+        149
+      ],
+      "per_channel": 0
+    },
+    "/model.8/cv2/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.012432063929736614
+      ],
+      "zero_point": [
+        22
+      ],
+      "per_channel": 0
+    },
+    "/model.9/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.0259997695684433
+      ],
+      "zero_point": [
+        76
+      ],
+      "per_channel": 0
+    },
+    "/model.9/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.019168749451637268
+      ],
+      "zero_point": [
+        15
+      ],
+      "per_channel": 0
+    },
+    "/model.9/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03334996849298477
+      ],
+      "zero_point": [
+        157
+      ],
+      "per_channel": 0
+    },
+    "/model.11/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.013379381038248539
+      ],
+      "zero_point": [
+        21
+      ],
+      "per_channel": 0
+    },
+    "/model.12/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.030535796657204628
+      ],
+      "zero_point": [
+        158
+      ],
+      "per_channel": 0
+    },
+    "/model.12/Split_output_1_QuantizeLinear_Output": {
+      "scale": [
+        0.011261680163443089
+      ],
+      "zero_point": [
+        25
+      ],
+      "per_channel": 0
+    },
+    "/model.12/m.0/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.030497778207063675
+      ],
+      "zero_point": [
+        174
+      ],
+      "per_channel": 0
+    },
+    "/model.12/m.0/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.009974473156034946
+      ],
+      "zero_point": [
+        28
+      ],
+      "per_channel": 0
+    },
+    "/model.12/m.0/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.02578497864305973
+      ],
+      "zero_point": [
+        132
+      ],
+      "per_channel": 0
+    },
+    "/model.12/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.013005053624510765
+      ],
+      "zero_point": [
+        21
+      ],
+      "per_channel": 0
+    },
+    "/model.12/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.02683979831635952
+      ],
+      "zero_point": [
+        151
+      ],
+      "per_channel": 0
+    },
+    "/model.14/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.014639124274253845
+      ],
+      "zero_point": [
+        19
+      ],
+      "per_channel": 0
+    },
+    "/model.15/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.035415541380643845
+      ],
+      "zero_point": [
+        170
+      ],
+      "per_channel": 0
+    },
+    "/model.15/Split_output_1_QuantizeLinear_Output": {
+      "scale": [
+        0.011629706248641014
+      ],
+      "zero_point": [
+        24
+      ],
+      "per_channel": 0
+    },
+    "/model.15/m.0/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.024896271526813507
+      ],
+      "zero_point": [
+        163
+      ],
+      "per_channel": 0
+    },
+    "/model.15/m.0/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.009230484254658222
+      ],
+      "zero_point": [
+        30
+      ],
+      "per_channel": 0
+    },
+    "/model.15/m.0/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03067217767238617
+      ],
+      "zero_point": [
+        107
+      ],
+      "per_channel": 0
+    },
+    "/model.15/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.018678054213523865
+      ],
+      "zero_point": [
+        15
+      ],
+      "per_channel": 0
+    },
+    "/model.15/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.033209118992090225
+      ],
+      "zero_point": [
+        151
+      ],
+      "per_channel": 0
+    },
+    "/model.15/cv2/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.014195677824318409
+      ],
+      "zero_point": [
+        20
+      ],
+      "per_channel": 0
+    },
+    "/model.16/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.032292552292346954
+      ],
+      "zero_point": [
+        139
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.0/cv2.0.0/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.038403723388910294
+      ],
+      "zero_point": [
+        166
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.0/cv3.0.0/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.032775770872831345
+      ],
+      "zero_point": [
+        180
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.0/cv2.0.0/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.014029061421751976
+      ],
+      "zero_point": [
+        20
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.0/cv3.0.0/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.009922766126692295
+      ],
+      "zero_point": [
+        28
+      ],
+      "per_channel": 0
+    },
+    "/model.17/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.015466595068573952
+      ],
+      "zero_point": [
+        18
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.0/cv2.0.1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.13644903898239136
+      ],
+      "zero_point": [
+        130
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.0/cv3.0.1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.10732589662075043
+      ],
+      "zero_point": [
+        114
+      ],
+      "per_channel": 0
+    },
+    "/model.18/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.035759855061769485
+      ],
+      "zero_point": [
+        150
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.0/cv2.0.1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.06801039725542068
+      ],
+      "zero_point": [
+        4
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.0/cv3.0.1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.06025683507323265
+      ],
+      "zero_point": [
+        5
+      ],
+      "per_channel": 0
+    },
+    "/model.18/Split_output_1_QuantizeLinear_Output": {
+      "scale": [
+        0.015528271906077862
+      ],
+      "zero_point": [
+        18
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.0/cv2.0.2/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.06528886407613754
+      ],
+      "zero_point": [
+        50
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.0/cv3.0.2/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.08025647699832916
+      ],
+      "zero_point": [
+        255
+      ],
+      "per_channel": 0
+    },
+    "/model.18/m.0/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.02885730005800724
+      ],
+      "zero_point": [
+        173
+      ],
+      "per_channel": 0
+    },
+    "/model.18/m.0/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.009563412517309189
+      ],
+      "zero_point": [
+        29
+      ],
+      "per_channel": 0
+    },
+    "/model.18/m.0/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.040115710347890854
+      ],
+      "zero_point": [
+        138
+      ],
+      "per_channel": 0
+    },
+    "/model.18/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.01939387246966362
+      ],
+      "zero_point": [
+        14
+      ],
+      "per_channel": 0
+    },
+    "/model.18/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.04303838312625885
+      ],
+      "zero_point": [
+        193
+      ],
+      "per_channel": 0
+    },
+    "/model.18/cv2/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.010952604003250599
+      ],
+      "zero_point": [
+        25
+      ],
+      "per_channel": 0
+    },
+    "/model.19/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03558371216058731
+      ],
+      "zero_point": [
+        173
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.1/cv2.1.0/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.049495793879032135
+      ],
+      "zero_point": [
+        146
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.1/cv3.1.0/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.039348095655441284
+      ],
+      "zero_point": [
+        176
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.1/cv2.1.0/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.022152414545416832
+      ],
+      "zero_point": [
+        13
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.1/cv3.1.0/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.01267949678003788
+      ],
+      "zero_point": [
+        22
+      ],
+      "per_channel": 0
+    },
+    "/model.20/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.013379381038248539
+      ],
+      "zero_point": [
+        21
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.1/cv2.1.1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.11827664822340012
+      ],
+      "zero_point": [
+        73
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.1/cv3.1.1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.17450609803199768
+      ],
+      "zero_point": [
+        185
+      ],
+      "per_channel": 0
+    },
+    "/model.21/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03372322395443916
+      ],
+      "zero_point": [
+        145
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.1/cv2.1.1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.08556938916444778
+      ],
+      "zero_point": [
+        3
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.1/cv3.1.1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.04925147071480751
+      ],
+      "zero_point": [
+        6
+      ],
+      "per_channel": 0
+    },
+    "/model.21/Split_output_1_QuantizeLinear_Output": {
+      "scale": [
+        0.015258652158081532
+      ],
+      "zero_point": [
+        18
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.1/cv2.1.2/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.04611097648739815
+      ],
+      "zero_point": [
+        55
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.1/cv3.1.2/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.07021143287420273
+      ],
+      "zero_point": [
+        255
+      ],
+      "per_channel": 0
+    },
+    "/model.21/m.0/cv1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.03682462126016617
+      ],
+      "zero_point": [
+        173
+      ],
+      "per_channel": 0
+    },
+    "/model.21/m.0/cv1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.012335247360169888
+      ],
+      "zero_point": [
+        23
+      ],
+      "per_channel": 0
+    },
+    "/model.21/m.0/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.042393166571855545
+      ],
+      "zero_point": [
+        142
+      ],
+      "per_channel": 0
+    },
+    "/model.21/Concat_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.019747164100408554
+      ],
+      "zero_point": [
+        14
+      ],
+      "per_channel": 0
+    },
+    "/model.21/cv2/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.061558231711387634
+      ],
+      "zero_point": [
+        194
+      ],
+      "per_channel": 0
+    },
+    "/model.21/cv2/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.015463161282241344
+      ],
+      "zero_point": [
+        18
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.2/cv2.2.0/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.06416343152523041
+      ],
+      "zero_point": [
+        136
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.2/cv3.2.0/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.04852351173758507
+      ],
+      "zero_point": [
+        158
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.2/cv2.2.0/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.031084489077329636
+      ],
+      "zero_point": [
+        9
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.2/cv3.2.0/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.019444772973656654
+      ],
+      "zero_point": [
+        14
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.2/cv2.2.1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.11196528375148773
+      ],
+      "zero_point": [
+        98
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.2/cv3.2.1/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.39025500416755676
+      ],
+      "zero_point": [
+        113
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.2/cv2.2.1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.07021068781614304
+      ],
+      "zero_point": [
+        4
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.2/cv3.2.1/act/Mul_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.21840450167655945
+      ],
+      "zero_point": [
+        1
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv2.2/cv2.2.2/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.05701645091176033
+      ],
+      "zero_point": [
+        83
+      ],
+      "per_channel": 0
+    },
+    "/model.22/cv3.2/cv3.2.2/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.1363227665424347
+      ],
+      "zero_point": [
+        255
+      ],
+      "per_channel": 0
+    },
+    "/model.22/dfl/Transpose_1_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.002907245419919491
+      ],
+      "zero_point": [
+        0
+      ],
+      "per_channel": 0
+    },
+    "/model.22/dfl/conv/Conv_output_0_QuantizeLinear_Output": {
+      "scale": [
+        0.043197646737098694
+      ],
+      "zero_point": [
+        0
+      ],
+      "per_channel": 0
+    }
+  }
+}

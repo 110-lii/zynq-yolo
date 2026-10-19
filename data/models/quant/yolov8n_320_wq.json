@@ -1,0 +1,391 @@
+{
+  "model": "yolov8n_320.onnx",
+  "quant_scheme": "symmetric per-output-channel INT8, zero_point=0",
+  "conv_layers_quantized": 64,
+  "total_int8_weight_bytes": 3146176,
+  "total_int8_weight_MB": 3.1462,
+  "max_rel_err_over_all_layers": 0.00393704604357481,
+  "layers": [
+    {
+      "node": "/model.7/conv/Conv",
+      "weight_tensor": "model.7.conv.weight",
+      "shape": [
+        256,
+        128,
+        3,
+        3
+      ],
+      "cout": 256,
+      "params": 294912,
+      "int8_bytes": 294912,
+      "scale_min": 0.0009643820230849087,
+      "scale_max": 0.004559171851724386,
+      "scale_mean": 0.0018742134561762214,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937022760510445,
+      "mean_abs_err": 0.00046901803580112755
+    },
+    {
+      "node": "/model.22/cv3.2/cv3.2.0/conv/Conv",
+      "weight_tensor": "model.22.cv3.2.0.conv.weight",
+      "shape": [
+        80,
+        256,
+        3,
+        3
+      ],
+      "cout": 80,
+      "params": 184320,
+      "int8_bytes": 184320,
+      "scale_min": 0.00044418955803848803,
+      "scale_max": 0.016212893649935722,
+      "scale_mean": 0.002855744445696473,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937008325010538,
+      "mean_abs_err": 0.0007135258056223392
+    },
+    {
+      "node": "/model.8/m.0/cv1/conv/Conv",
+      "weight_tensor": "model.8.m.0.cv1.conv.weight",
+      "shape": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "cout": 128,
+      "params": 147456,
+      "int8_bytes": 147456,
+      "scale_min": 0.000702301855199039,
+      "scale_max": 0.00667821429669857,
+      "scale_mean": 0.003141347784548998,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937013912945986,
+      "mean_abs_err": 0.0007844784995540977
+    },
+    {
+      "node": "/model.8/m.0/cv2/conv/Conv",
+      "weight_tensor": "model.8.m.0.cv2.conv.weight",
+      "shape": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "cout": 128,
+      "params": 147456,
+      "int8_bytes": 147456,
+      "scale_min": 0.0013546502450481057,
+      "scale_max": 0.013025234453380108,
+      "scale_mean": 0.0025405087508261204,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.0039370181038975716,
+      "mean_abs_err": 0.000633704592473805
+    },
+    {
+      "node": "/model.19/conv/Conv",
+      "weight_tensor": "model.19.conv.weight",
+      "shape": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "cout": 128,
+      "params": 147456,
+      "int8_bytes": 147456,
+      "scale_min": 0.0007449114928022027,
+      "scale_max": 0.0037009138613939285,
+      "scale_mean": 0.002124272519722581,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937020432204008,
+      "mean_abs_err": 0.0005306637031026185
+    },
+    {
+      "node": "/model.21/m.0/cv1/conv/Conv",
+      "weight_tensor": "model.21.m.0.cv1.conv.weight",
+      "shape": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "cout": 128,
+      "params": 147456,
+      "int8_bytes": 147456,
+      "scale_min": 0.0008403018582612276,
+      "scale_max": 0.006617315113544464,
+      "scale_mean": 0.0030854346696287394,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937011118978262,
+      "mean_abs_err": 0.0007701034191995859
+    },
+    {
+      "node": "/model.21/m.0/cv2/conv/Conv",
+      "weight_tensor": "model.21.m.0.cv2.conv.weight",
+      "shape": [
+        128,
+        128,
+        3,
+        3
+      ],
+      "cout": 128,
+      "params": 147456,
+      "int8_bytes": 147456,
+      "scale_min": 0.001726294867694378,
+      "scale_max": 0.013795270584523678,
+      "scale_mean": 0.004973557777702808,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.0039370181038975716,
+      "mean_abs_err": 0.0012434902600944042
+    },
+    {
+      "node": "/model.22/cv2.2/cv2.2.0/conv/Conv",
+      "weight_tensor": "model.22.cv2.2.0.conv.weight",
+      "shape": [
+        64,
+        256,
+        3,
+        3
+      ],
+      "cout": 64,
+      "params": 147456,
+      "int8_bytes": 147456,
+      "scale_min": 0.0024986458010971546,
+      "scale_max": 0.008555267937481403,
+      "scale_mean": 0.004662405699491501,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.0039369952864944935,
+      "mean_abs_err": 0.001162311527878046
+    },
+    {
+      "node": "/model.9/cv2/conv/Conv",
+      "weight_tensor": "model.9.cv2.conv.weight",
+      "shape": [
+        256,
+        512,
+        1,
+        1
+      ],
+      "cout": 256,
+      "params": 131072,
+      "int8_bytes": 131072,
+      "scale_min": 0.0005428920849226415,
+      "scale_max": 0.007058576215058565,
+      "scale_mean": 0.0016914294101297855,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937014378607273,
+      "mean_abs_err": 0.0004221041454002261
+    },
+    {
+      "node": "/model.8/cv2/conv/Conv",
+      "weight_tensor": "model.8.cv2.conv.weight",
+      "shape": [
+        256,
+        384,
+        1,
+        1
+      ],
+      "cout": 256,
+      "params": 98304,
+      "int8_bytes": 98304,
+      "scale_min": 0.001136432751081884,
+      "scale_max": 0.004965711385011673,
+      "scale_mean": 0.0019387057982385159,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937022294849157,
+      "mean_abs_err": 0.0004841318295802921
+    },
+    {
+      "node": "/model.21/cv1/conv/Conv",
+      "weight_tensor": "model.21.cv1.conv.weight",
+      "shape": [
+        256,
+        384,
+        1,
+        1
+      ],
+      "cout": 256,
+      "params": 98304,
+      "int8_bytes": 98304,
+      "scale_min": 0.002195336390286684,
+      "scale_max": 0.012017262168228626,
+      "scale_mean": 0.005331431515514851,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937020897865295,
+      "mean_abs_err": 0.0013287930050864816
+    },
+    {
+      "node": "/model.21/cv2/conv/Conv",
+      "weight_tensor": "model.21.cv2.conv.weight",
+      "shape": [
+        256,
+        384,
+        1,
+        1
+      ],
+      "cout": 256,
+      "params": 98304,
+      "int8_bytes": 98304,
+      "scale_min": 0.001421012100763619,
+      "scale_max": 0.018241271376609802,
+      "scale_mean": 0.004439579322934151,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937038592994213,
+      "mean_abs_err": 0.0011060984106734395
+    },
+    {
+      "node": "/model.22/cv3.1/cv3.1.0/conv/Conv",
+      "weight_tensor": "model.22.cv3.1.0.conv.weight",
+      "shape": [
+        80,
+        128,
+        3,
+        3
+      ],
+      "cout": 80,
+      "params": 92160,
+      "int8_bytes": 92160,
+      "scale_min": 0.0005416905623860657,
+      "scale_max": 0.014957194216549397,
+      "scale_mean": 0.0030266602989286184,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937022294849157,
+      "mean_abs_err": 0.0007545436383225024
+    },
+    {
+      "node": "/model.5/conv/Conv",
+      "weight_tensor": "model.5.conv.weight",
+      "shape": [
+        128,
+        64,
+        3,
+        3
+      ],
+      "cout": 128,
+      "params": 73728,
+      "int8_bytes": 73728,
+      "scale_min": 0.0008440103847533464,
+      "scale_max": 0.005256039090454578,
+      "scale_mean": 0.0022660410031676292,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.00393699062988162,
+      "mean_abs_err": 0.0005663983756676316
+    },
+    {
+      "node": "/model.22/cv2.1/cv2.1.0/conv/Conv",
+      "weight_tensor": "model.22.cv2.1.0.conv.weight",
+      "shape": [
+        64,
+        128,
+        3,
+        3
+      ],
+      "cout": 64,
+      "params": 73728,
+      "int8_bytes": 73728,
+      "scale_min": 0.0009593687718734145,
+      "scale_max": 0.015697287395596504,
+      "scale_mean": 0.006023607216775417,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937002271413803,
+      "mean_abs_err": 0.0015031328657642007
+    },
+    {
+      "node": "/model.8/cv1/conv/Conv",
+      "weight_tensor": "model.8.cv1.conv.weight",
+      "shape": [
+        256,
+        256,
+        1,
+        1
+      ],
+      "cout": 256,
+      "params": 65536,
+      "int8_bytes": 65536,
+      "scale_min": 0.0005510156624950469,
+      "scale_max": 0.01178281381726265,
+      "scale_mean": 0.00447073532268405,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.00393704604357481,
+      "mean_abs_err": 0.0011142715811729431
+    },
+    {
+      "node": "/model.22/cv3.0/cv3.0.1/conv/Conv",
+      "weight_tensor": "model.22.cv3.0.1.conv.weight",
+      "shape": [
+        80,
+        80,
+        3,
+        3
+      ],
+      "cout": 80,
+      "params": 57600,
+      "int8_bytes": 57600,
+      "scale_min": 0.004251204431056976,
+      "scale_max": 0.08831193298101425,
+      "scale_mean": 0.010633672587573528,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937022294849157,
+      "mean_abs_err": 0.002665372332558036
+    },
+    {
+      "node": "/model.22/cv3.1/cv3.1.1/conv/Conv",
+      "weight_tensor": "model.22.cv3.1.1.conv.weight",
+      "shape": [
+        80,
+        80,
+        3,
+        3
+      ],
+      "cout": 80,
+      "params": 57600,
+      "int8_bytes": 57600,
+      "scale_min": 0.0032239744905382395,
+      "scale_max": 0.10520666837692261,
+      "scale_mean": 0.007928187027573586,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937015309929848,
+      "mean_abs_err": 0.0019808814395219088
+    },
+    {
+      "node": "/model.22/cv3.2/cv3.2.1/conv/Conv",
+      "weight_tensor": "model.22.cv3.2.1.conv.weight",
+      "shape": [
+        80,
+        80,
+        3,
+        3
+      ],
+      "cout": 80,
+      "params": 57600,
+      "int8_bytes": 57600,
+      "scale_min": 0.002342845080420375,
+      "scale_max": 0.08042965829372406,
+      "scale_mean": 0.00587730947881937,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937020432204008,
+      "mean_abs_err": 0.0014659939333796501
+    },
+    {
+      "node": "/model.12/cv1/conv/Conv",
+      "weight_tensor": "model.12.cv1.conv.weight",
+      "shape": [
+        128,
+        384,
+        1,
+        1
+      ],
+      "cout": 128,
+      "params": 49152,
+      "int8_bytes": 49152,
+      "scale_min": 0.0016086731338873506,
+      "scale_max": 0.013160989619791508,
+      "scale_mean": 0.004311250522732735,
+      "zero_scale_channels": 0,
+      "max_rel_err": 0.003937022760510445,
+      "mean_abs_err": 0.0010823733173310757
+    }
+  ],
+  "npz": "yolov8n_320_wq.npz"
+}

@@ -1,0 +1,103 @@
+{
+  "tool": "tools/pynq_net.py",
+  "mode": "check",
+  "model": "yolov8n_320.onnx",
+  "backend": "numpy",
+  "input": "真实图片 match_005.jpg",
+  "input_shape": [
+    1,
+    3,
+    320,
+    320
+  ],
+  "scales_source": "多图标定 36 张（data/samples/calib_real/frames/match_001.jpg,data/samples/calib_real/frames/match_002.jpg,data/samples/calib_real/frames/match_003.jpg,data/samples/calib_real/frames/match_004.jpg,data/samples/calib_real/frames/match_006.jpg,data/samples/calib_real/frames/match_007.jpg,data/samples/calib_real/frames/match_008.jpg,data/samples/calib_real/frames/match_009.jpg,data/samples/calib_real/frames/match_010.jpg,data/samples/calib_real/frames/match_011.jpg,data/samples/calib_real/frames/match_012.jpg,data/samples/calib_real/frames/match_014.jpg,data/samples/calib_real/frames/match_015.jpg,data/samples/calib_real/frames/match_016.jpg,data/samples/calib_real/frames/match_017.jpg,data/samples/calib_real/frames/match_018.jpg,data/samples/calib_real/frames/match_019.jpg,data/samples/calib_real/frames/match_020.jpg,data/samples/calib_real/frames/match_022.jpg,data/samples/calib_real/frames/match_023.jpg,data/samples/calib_real/frames/match_024.jpg,data/samples/calib_real/frames/match_025.jpg,data/samples/calib_real/frames/match_026.jpg,data/samples/calib_real/frames/match_027.jpg,data/samples/calib_real/frames/match_028.jpg,data/samples/calib_real/frames/match_029.jpg,data/samples/calib_real/frames/match_030.jpg,data/samples/calib_real/frames/match_031.jpg,data/samples/calib_real/frames/match_032.jpg,data/samples/calib_real/frames/match_034.jpg,data/samples/calib_real/frames/match_035.jpg,data/samples/calib_real/frames/match_036.jpg,data/samples/calib_real/frames/match_037.jpg,data/samples/calib_real/frames/match_038.jpg,data/samples/calib_real/frames/match_039.jpg,data/samples/calib_real/frames/match_040.jpg；真实范围取 min/max 包络）",
+  "nodes_executed": 262,
+  "op_counts": {
+    "Conv": 64,
+    "Sigmoid": 58,
+    "Mul": 60,
+    "Split": 8,
+    "Add": 9,
+    "Concat": 17,
+    "MaxPool": 3,
+    "Constant": 22,
+    "Resize": 2,
+    "Reshape": 8,
+    "Transpose": 2,
+    "Softmax": 1,
+    "Shape": 1,
+    "Gather": 1,
+    "Div": 2,
+    "Slice": 2,
+    "Sub": 2
+  },
+  "conv_layers": 64,
+  "total_macs": 1092998400,
+  "total_gop": 2.1859968,
+  "plan_time_s": 0.04738099999667611,
+  "wall_time_s": 0.8243046999996295,
+  "output_shape": [
+    1,
+    84,
+    2100
+  ],
+  "vs_ort_float32": {
+    "max_abs_err": 89.50480651855469,
+    "mean_abs_err": 0.07684353292862921,
+    "max_err_over_maxabs": 0.28058335713866145,
+    "mean_err_over_maxabs": 0.00024089227475219868,
+    "cosine": 0.9996456544465416,
+    "rel_err_p50": 0.01958715440818948,
+    "rel_err_p99": 0.6780785843855827
+  },
+  "detections": {
+    "conf_thr": 0.25,
+    "iou_thr": 0.45,
+    "n_anchor_ref": 77,
+    "n_anchor_sim": 82,
+    "n_nms_ref": 16,
+    "n_nms_sim": 17,
+    "match_raw": {
+      "matched": 75,
+      "n_ref": 77,
+      "n_sim": 82,
+      "max_corner_err_px": 4.15802001953125,
+      "max_score_err": 0.25190508365631104,
+      "unmatched_ref": 2,
+      "unmatched_sim": 7
+    },
+    "match_nms": {
+      "matched": 16,
+      "n_ref": 16,
+      "n_sim": 17,
+      "max_corner_err_px": 1.2801437377929688,
+      "max_score_err": 0.21627700328826904,
+      "unmatched_ref": 0,
+      "unmatched_sim": 1
+    }
+  },
+  "criteria": {
+    "cosine_min": 0.999,
+    "box_px_max": 3.0,
+    "score_max": 0.01,
+    "ok": false,
+    "failed": [
+      "NMS 后检测框数不等 16 vs 17",
+      "分数最大差 0.2163 > 0.010"
+    ]
+  },
+  "pl_split": {
+    "pl_eligible": 63,
+    "numpy_fallback": 1,
+    "fallback_detail": [
+      {
+        "layer": "/model.22/dfl/conv/Conv",
+        "reasons": [
+          "C_OUT=1 不在 (16, 256)",
+          "H_IN=4 不在 (10, 320)",
+          "W_IN=2100 不在 (10, 320)（DFL 的 2100 就栽在这）"
+        ]
+      }
+    ]
+  }
+}

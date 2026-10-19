@@ -12,7 +12,16 @@
 判据（承 docs/repo_spec.md §6「数字必须标来源」）：
     本脚本输出的每个数字都来自**模型本身**，可重跑 ⇒ 可直接写进报告。
 """
+
 from __future__ import annotations
+
+import sys
+
+# 不生成 __pycache__：本仓库的 tools/check_repo.py 检查 d) 是**扫盘**的，不看 .gitignore，
+# 留下 .pyc 会直接判 FAIL。实测语义（勿想当然）：模块**自身体内**置位拦不住自己的 .pyc
+# （CPython 先编译并写缓存，再执行模块体），只有在本模块 import 别的本地模块**之前**
+# 置位才有效。所以这段必须放在所有 import 之前。
+sys.dont_write_bytecode = True
 
 import argparse
 import json
@@ -25,7 +34,6 @@ try:
     from onnx import TensorProto
 except ImportError:
     sys.exit("需要 onnx： D:\\python\\python.exe -m pip install onnx")
-
 
 # 每元素字节数（用于估权重体积）
 BYTES = {

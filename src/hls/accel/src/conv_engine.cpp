@@ -87,11 +87,16 @@ void conv_engine(const ap_uint<8> *in,
                  int zp_in, int zp_pre,
                  int H_OUT, int W_OUT)
 {
-#pragma HLS INTERFACE m_axi port=in     offset=slave bundle=gmem0 depth=4194304
-#pragma HLS INTERFACE m_axi port=w      offset=slave bundle=gmem1 depth=4194304
-#pragma HLS INTERFACE m_axi port=params offset=slave bundle=gmem2 depth=8192
-#pragma HLS INTERFACE m_axi port=lut    offset=slave bundle=gmem3 depth=256
-#pragma HLS INTERFACE m_axi port=out    offset=slave bundle=gmem4 depth=4194304
+    // ★ 只保留**两个** AXI 主口：一个读、一个写。
+    //   为什么不按语义分五个口：Zynq-7020 只有 4 个 AXI HP 口（+1 个 ACP），
+    //   五个 m_axi 口就得五个从口 ⇒ **接不上**，而且 BD 里要塞五组互联，
+    //   读/写分离已经能拿到大部分收益（读与写可并发），再拆只会增加布线。
+    //   注意：`params` 与 `lut` 都很小（8 KB / 256 B），挂读口即可。
+    #pragma HLS INTERFACE m_axi port=in     offset=slave bundle=gmem_r depth=4194304
+    #pragma HLS INTERFACE m_axi port=w      offset=slave bundle=gmem_r depth=4194304
+    #pragma HLS INTERFACE m_axi port=params offset=slave bundle=gmem_r depth=8192
+    #pragma HLS INTERFACE m_axi port=lut    offset=slave bundle=gmem_r depth=256
+    #pragma HLS INTERFACE m_axi port=out    offset=slave bundle=gmem_w depth=4194304
 #pragma HLS INTERFACE s_axilite port=C_IN     bundle=control
 #pragma HLS INTERFACE s_axilite port=C_OUT    bundle=control
 #pragma HLS INTERFACE s_axilite port=H_IN     bundle=control

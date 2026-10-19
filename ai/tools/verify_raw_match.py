@@ -228,7 +228,7 @@ def inbound_from_records(records: List[Dict[str, Any]]) -> List[Tuple[str, str]]
 
 
 def _read_text_verbatim(path: Path) -> str:
-    """按**原始字节**解码读取，并断言其中没有 CR（否则抛错，不静默翻译）。
+    """按**原始字节**解码读取，并断言**围栏之外**没有 CR（否则抛错，不静默翻译）。
 
     ⚠️ 不能用裸 `path.read_text(encoding="utf-8")` 然后声称"逐字节"：它的默认
        `newline=None` 会开**通用换行**，把磁盘上的 `\\r\\n` **翻译成** `\\n`。
@@ -236,27 +236,59 @@ def _read_text_verbatim(path: Path) -> str:
        ⇒ 行尾是否符合 `.gitattributes` **不可能**由这种读法发现，必须单独审原始字节
        （`audit_line_endings()`，且在比对之前先跑，见 `main()`）。
 
-    本函数的做法：读 bytes → 断言无 CR → 解码。因为调用方已先通过行尾审计，
-    所以此刻「解码后的字符串」与「磁盘字节」是等价的，后续比对才是真的逐字节。
+    ★ 为什么只查「围栏之外」：围栏里是**逐字原文**（用户在对话里粘贴过 CRLF 的 CSV），
+      改写它就等于破坏「逐字节等于原文」这条承诺；而工具自己写的标题/时间戳/围栏
+      必须全是 LF。两个口径必须与本脚本的 `audit_line_endings()`、
+      `prompts_index.read_text_lf()` **完全一致** —— 否则会出现
+      「写出侧保留、读回侧拒绝」的死锁（本仓库真实发生过：`--all` 必失败）。
     """
     b = path.read_bytes()
-    if b"\r" in b:
-        raise AssertionError("%s 含 CR，但行尾审计未先拦截 —— 这是调用顺序错误" % path.name)
+    n = sum(c + l for (_n, c, l, _p) in _eol_counts(b, path.name))
+    if n:
+        raise AssertionError(
+            "%s 围栏之外含 CR（%d 个），但行尾审计未先拦截 —— 这不是调用顺序错误，"
+            "就是结构行真的不合规" % (path.name, n))
     return b.decode("utf-8", errors="replace")
 
 
-def audit_line_endings(raw_dir: Path) -> List[Tuple[str, int, int]]:
-    """审计 `raw_dir` 下每个 `*.md` 的行尾，返回 [(文件名, CRLF 数, 裸 CR 数)]。
+def _eol_counts(b: bytes, name: str = "") -> List[Tuple[str, int, int, int]]:
+    """统计一份分片的行尾：[(名字, 结构行 CRLF, 结构行裸 CR, 围栏内 CRLF)]。
+
+    围栏的判定与写出侧同规则：行首（允许前导空白）以 ``` 开头即翻转围栏状态；
+    围栏标记行**本身算结构行**（它出现 CR 也是写出点 bug）。
+    """
+    s_crlf = s_lone = p_crlf = 0
+    in_fence = False
+    for line in b.split(b"\n"):
+        crlf = line.count(b"\r\n")
+        lone = line.count(b"\r") - crlf
+        if line.lstrip().startswith(b"```"):
+            s_crlf += crlf
+            s_lone += lone
+            in_fence = not in_fence
+        elif in_fence:
+            p_crlf += crlf
+        else:
+            s_crlf += crlf
+            s_lone += lone
+    return [(name, s_crlf, s_lone, p_crlf)]
+
+
+def audit_line_endings(raw_dir: Path) -> List[Tuple[str, int, int, int]]:
+    """审计 `raw_dir` 下每个 `*.md` 的行尾，返回 [(文件名, 结构行 CRLF, 结构行裸 CR, 围栏内 CRLF)]。
 
     为什么把行尾单独审：`.gitattributes` 声明 `* text=auto eol=lf`，`git add` 会把 CRLF
     规范化成 LF ⇒ 一旦磁盘是 CRLF，「仓库里存档的副本」与「导出器写的文件」就不再逐字节相等，
     而**逐字节比对本身发现不了**（通用换行会把两边都翻译成一样的 \\n）。故必须独立成一条判据。
+
+    ★ 但只有**结构行**的 CR 才作数：围栏内是用户粘贴的 CRLF 原文，它**必须**原样保留。
+      把围栏内 CR 也算失败，就会把「忠实的逐字存档」判成缺陷 —— 而写出侧已经采纳了
+      「原样保留」的口径（`export_transcript_dsh.py` 只打印提示）。两侧口径不一致时，
+      导出器会卡在自己刚写的产物上（`--all` 抛 `RuntimeError: ...含 CR（12 个）`）。
     """
-    out: List[Tuple[str, int, int]] = []
+    out: List[Tuple[str, int, int, int]] = []
     for p in sorted(raw_dir.glob("*.md")):
-        b = p.read_bytes()
-        crlf = b.count(b"\r\n")
-        out.append((p.name, crlf, b.count(b"\r") - crlf))
+        out.extend(_eol_counts(p.read_bytes(), p.name))
     return out
 
 
@@ -328,7 +360,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         except Exception:
             pass
 
-    ap = argparse.ArgumentParser(description="核对 ai/raw 的入站发言与会话原文逐字一致")
+    ap = argparse.ArgumentParser(
+        description="核对 ai/raw 的入站发言与会话原文逐字一致",
+        allow_abbrev=False)  # 见 export_transcript_dsh.py：缩写会让 --all 静默变成 --all-projects
     ap.add_argument("--raw", default=None, help="raw 目录（默认 <repo>/ai/raw）")
     ap.add_argument("--session", default=None, help="只核对短 ID 以该前缀开头的分片")
     ap.add_argument("--show", action="store_true", help="打印比对内容的前 120 字符预览")
@@ -356,17 +390,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     #    而 CRLF 文本里的 \r 也会让下面那些以 `\n` 收尾的正则匹配不上 —— 于是症状会表现成
     #    「0 条可核对」而不是「行尾不合规」，把一个明确的失败伪装成"没东西可比"。
     eol_rows = audit_line_endings(raw_dir)
-    bad_eol = [(n, c, d) for (n, c, d) in eol_rows if c or d]
+    bad_eol = [(n, c, d) for (n, c, d, _p) in eol_rows if c or d]
+    payload_files = [(n, p) for (n, _c, _d, p) in eol_rows if p]
     print("")
-    print("行尾审计（.gitattributes 要求 eol=lf，故应全为 0）：")
-    for name, crlf, lone in eol_rows:
-        print("   %-30s CRLF=%-5d 裸CR=%-3d %s"
-              % (name, crlf, lone, "OK" if not (crlf or lone) else "← 不合规"))
-    print("行尾汇总：%d 个文件，%d 个含 CRLF，合计 %d 个 CRLF / %d 个裸 CR"
+    print("行尾审计（.gitattributes 要求 eol=lf；**只算结构行**，围栏内的 CR 是逐字内容）：")
+    for name, crlf, lone, pay in eol_rows:
+        print("   %-30s 结构行CRLF=%-5d 结构行裸CR=%-3d 围栏内CRLF=%-5d %s"
+              % (name, crlf, lone, pay, "OK" if not (crlf or lone) else "← 不合规"))
+    print("行尾汇总：%d 个文件，%d 个结构行不合规，合计 %d 个 CRLF / %d 个裸 CR"
           % (len(eol_rows), len(bad_eol),
              sum(c for (_n, c, _d) in bad_eol), sum(d for (_n, _c, d) in bad_eol)))
+    if payload_files:
+        print("          另有 %d 个分片围栏内共 %d 个 CRLF —— 那是**用户粘贴的 CRLF 原文**，"
+              "按逐字存档口径**原样保留**，不算缺陷"
+              % (len(payload_files), sum(p for (_n, p) in payload_files)))
     if bad_eol:
-        print("VERIFY_EOL_FAIL —— 行尾不合规：git 会把这些 CRLF 规范化成 LF，")
+        print("VERIFY_EOL_FAIL —— 结构行行尾不合规：git 会把这些 CRLF 规范化成 LF，")
         print("                 于是 clone 后「仓库副本 == 导出文件」的逐字节主张失效。")
         print("                 修法：`python ai/tools/export_transcript_dsh.py` 重导出（脚本已强制 LF）。")
         return 1

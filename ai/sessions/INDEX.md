@@ -41,8 +41,8 @@
 ## 怎么加一条记录
 
 ```powershell
-# 1) 复制模板，编号取本表 max+1
-Copy-Item D:\zynq-yolo\ai\sessions\_TEMPLATE.md D:\zynq-yolo\ai\sessions\002_<slug>.md
+# 1) 复制模板，编号取本表 max+1（当前 max=002 ⇒ 下一个是 003）
+Copy-Item D:\zynq-yolo\ai\sessions\_TEMPLATE.md D:\zynq-yolo\ai\sessions\003_<slug>.md
 # 2) 逐项填写（字段不得删；「原文位置」必须真实）
 # 3) 回到本文件，在上表追加一行（顺序不可反）
 # 4) 问一句：「这次有什么是换个题目也能用的？」→ 有则去 ../../skill/ 建包

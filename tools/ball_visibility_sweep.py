@@ -46,16 +46,17 @@ D004 要在「输入分辨率 / 用哪个模型 / 要不要自己训」之间定
 末行令牌：`SWEEP_DONE <配置数>`；出错 `SWEEP_FAIL <原因>`。
 """
 
+import sys
+
+# 先关掉 .pyc 写入（tools/check_repo.py 的 check d) 会扫盘找 __pycache__ 并 FAIL）
+sys.dont_write_bytecode = True
+sys.stdout.reconfigure(encoding="utf-8")  # 控制台是 GBK，日志里有中文
+
 import argparse
 import hashlib
 import json
 import shutil
 import subprocess
-import sys
-
-sys.dont_write_bytecode = True
-sys.stdout.reconfigure(encoding="utf-8")
-
 import time
 from pathlib import Path
 
@@ -679,6 +680,51 @@ def draw_frame(img, det, conf, title, grid=None, zoom_at=None, scale=1):
 
 # ------------------------------------------------------------------ 主流程
 
+def plot_visibility(visibility, path):
+    """把可见性曲线画成一张散点图：横轴=球在网络输入里的像素，纵轴=检出帧率。
+
+    这张图是本工具的结论载体：所有配置（不同模型、不同分辨率、切图或全图）都落在
+    同一条曲线上，说明决定"能不能看见球"的只有一个变量——球在输入里占多少像素。
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    cols = ["ball_px_in_input", "id", "ball_frames", "n_frames", "ms_per_frame"]
+    rows = [list(r) for r in visibility]
+    fig, ax = plt.subplots(figsize=(9, 5.2), dpi=140)
+    styles = {"tiles": ("s", "#d62728", "tiled (overlap 25%, NMS merged)"),
+              "full": ("o", "#1f77b4", "single full frame")}
+    seen = set()
+    for px, cid, bf, nf, _ms in rows:
+        mode = "tiles" if "_tile" in cid else "full"
+        mk, c, lbl = styles[mode]
+        ax.scatter(px, bf / float(max(nf, 1)) * 100, marker=mk,
+                   s=46 if mode == "tiles" else 34, color=c, alpha=0.85, zorder=3,
+                   label=lbl if mode not in seen else None)
+        seen.add(mode)
+        if bf / float(max(nf, 1)) >= 0.5 or px <= 4.1:
+            ax.annotate(cid.replace("yolov8n_", "n_").replace("yolov8s_", "s_"),
+                        (px, bf / float(max(nf, 1)) * 100), fontsize=5.4, rotation=12,
+                        xytext=(3, -7), textcoords="offset points", color="#333")
+    ax.axvline(BALL_PX_NATIVE, ls="--", lw=1.0, color="#888")
+    ax.text(BALL_PX_NATIVE + 0.3, 4, "ball = %.0f px in input\n(= %.0f px on the 1280x720 frame)"
+            % (BALL_PX_NATIVE, BALL_PX_NATIVE), fontsize=7, color="#555")
+    ax.axhline(90, ls=":", lw=1.0, color="#bbb")
+    ax.text(2.1, 91, "90% (never reached at conf>=0.25)", fontsize=6.5, color="#999")
+    ax.set_xlabel("ball size in the network input (px)")
+    ax.set_ylabel("frames with a sports-ball detection, % (conf >= 0.25)")
+    ax.set_title("COCO YOLOv8 on real broadcast frames: only the ball's size in the input matters\n"
+                 "circle = single full frame, square = tiled", fontsize=10)
+    ax.set_xlim(0, max(34.0, max(r[0] for r in rows) * 1.05))
+    ax.set_ylim(-3, 100)
+    ax.grid(alpha=0.25)
+    ax.legend(fontsize=7, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(str(path))
+    plt.close(fig)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", default="data/models/yolov8n.pt,data/models/yolov8s.pt")
@@ -749,11 +795,17 @@ def main(argv=None):
         print("SWEEP_FAIL 没有可用模型")
         return 1
 
+    # 类别名称全表存档 + 模型间一致性（用户要求：证明查的确实是 sports ball，不是别的类）
+    first = models[list(models)[0]]
+    class_names = {str(k): v for k, v in first.names.items()}
+    names_same = all({str(k): v for k, v in m.names.items()} == class_names
+                     for m in models.values())
+    print("类别自检: names[%d] = %r | names 共 %d 类 | 两模型名称一致=%s"
+          % (SPORTS_BALL, class_names.get(str(SPORTS_BALL)), len(class_names), names_same))
+
     print("=" * 92)
     print("ball_visibility_sweep: %d 帧 %dx%d | 模型 %s | conf 下限 %.2f | NMS IoU %.2f"
           % (n, w0, h0, ",".join(models), CONF_FLOOR, NMS_IOU))
-    print("类别自检: names[32] = %r  (names 共 %d 类)"
-          % (model_meta[0]["names_32"], model_meta[0]["names_count"]))
     print("=" * 92)
 
     # --- 原生帧 ---
@@ -884,6 +936,12 @@ def main(argv=None):
             rec, pos_dets = run_config(models[list(models)[0]], pf, "full", 640, confs)
             rec["id"] = "pos_%s_640" % Path(args.pos_dir).name
             rec["source"] = "positive_control"
+            rec["model"] = list(models)[0]
+            # 阳性对照的球是几十像素的大目标，BALL_PX_NATIVE(8px) 这个假设对它不成立，
+            # 所以把「球在输入里多少像素」清空，避免它被误读成能和主表比的横坐标。
+            for _k, _v in rec["by_conf"].items():
+                if isinstance(_v, dict) and "ball_px_in_input" in _v:
+                    _v["ball_px_in_input"] = None
             pos = rec
             print("  ball@0.25: %d/%d 帧, %d 框, 最大分 %.3f, 框中位宽 %s px"
                   % (rec["by_conf"]["0.25"]["ball_frames"], rec["n_frames"],
@@ -977,6 +1035,11 @@ def main(argv=None):
             "device": "cpu",
         },
         "models": model_meta,
+        # 类别名称全表存档：证明 conf/统计查的是 sports ball(id=32)，而不是别的类。
+        # 这是"判据本身算错"的历史教训的直接防线——改天有人换了模型/换了类 id，
+        # 打开这个 JSON 就能核对当时到底按哪个类统计的。
+        "class_names": class_names,
+        "class_names_same_across_models": bool(names_same),
         "decoding": {
             "conf_floor": CONF_FLOOR, "nms_iou": NMS_IOU, "max_det": MAX_DET,
             "confs": confs, "class_id_checked": SPORTS_BALL,
@@ -1082,6 +1145,14 @@ def main(argv=None):
             n_written += 1
     if n_written:
         print("复核图 -> %s (%d 张)" % (vizdir.relative_to(REPO), n_written))
+
+    # 可见性曲线图（可选：matplotlib 装了才画，缺了不影响结论）
+    try:
+        plot_visibility(visibility, vizdir / "visibility_curve.png")
+        n_written += 1
+        print("曲线图 -> %s" % (vizdir / "visibility_curve.png").relative_to(REPO))
+    except Exception as e:  # pragma: no cover - 只影响一张图
+        print("  [skip] 曲线图未生成: %s" % e)
 
     # --- 控制台主表 ---
     print("")

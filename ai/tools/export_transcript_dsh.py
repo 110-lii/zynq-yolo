@@ -893,7 +893,16 @@ def _round_flags(info: List[Dict[str, Any]], current: str,
 
 def main(argv: Optional[List[str]] = None) -> int:
     _force_utf8()
-    ap = argparse.ArgumentParser(description="把 DSH（DeepSeek Harness）会话导出为 ai/raw/*.md")
+    # ★ `allow_abbrev=False` 是**必须的**，不是洁癖：argparse 默认允许前缀缩写，
+    #   于是 `--all` 会被**静默**解析成 `--all-projects`（"不按工作目录过滤"）。
+    #   本仓库真实踩过：一条 `--all` 把旧项目 `--D-FPGA-oi--`、`--D-weixin-bot--`、
+    #   默认工作区等**其他工作区**的会话全文导进了本仓库 `ai/raw/`
+    #   （分片 9 → 63、唯一会话 id 59 个，而本工作区只有 19 个会话）。
+    #   这些分片当时还是 untracked，差一步就会被提交到公开仓库。
+    #   关掉缩写后，拼错的选项会**报错退出**，而不是变成另一个选项。
+    ap = argparse.ArgumentParser(
+        description="把 DSH（DeepSeek Harness）会话导出为 ai/raw/*.md",
+        allow_abbrev=False)
     ap.add_argument("--out", default=None, help="输出目录（默认 <repo>/ai/raw）")
     ap.add_argument("--list", action="store_true",
                     help="只列出会话，不写文件（含 本轮/非本轮 标记、角色 label、首句）")

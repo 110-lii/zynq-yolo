@@ -30,7 +30,7 @@ PYTHON   ?= python
 #     （覆盖示例：mingw32-make sim SIM_SCRIPT=sim/scripts/run_xsim.py）
 CHECK_SCRIPT  ?= tools/check_repo.py
 SIM_SCRIPT    ?= sim/scripts/run_sim.py
-BIT_SCRIPT    ?= build/scripts/build_bitstream.tcl
+BIT_SCRIPT    ?= build/scripts/bd_conv_engine.tcl
 REPORT_SCRIPT ?= tools/md_to_docx.py
 CLEAN_SCRIPT  ?= build/scripts/clean.py
 

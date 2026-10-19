@@ -16,15 +16,17 @@
 | `models/` | 模型权重与网络定义（`.pt` / `.onnx` 等）。★ **D004 已裁定走 YOLO**（2026-10-19），故本目录现放 YOLOv8n 权重；**权重本体不入 git**（见下「大文件」） | 外部下载 + 本地导出 | ❌ 权重本体；✅ 目录 `.gitkeep` |
 | `calib/` | 标定数据：摄像头/传感器标定参数、色彩与坐标换算系数 | 手写 + 工具产生 | ✅ |
 | `samples/` | 测试样本：单帧图片、视频片段、输入激励 | 手写 / 外部采集 | 小样本 ✅；大样本 ❌ |
-| `golden/` | 金标准：参考输出、逐样本期望结果，用于比对与回归 | 手写 + 工具产生 | ✅ |
+| `golden/` | ★ **金标准**：ONNX 逐层中间张量。`*_golden.json`（118 KB，**入库**）记 270 个张量的 shape/dtype/统计量/哈希；`*_golden.npz`（320=23 MB / 640=91 MB，**不入库**）存实际数值，由 `tools/make_golden.py` 确定性重建 | 工具产生 | json ✅；npz ❌ |
 | `results/` | 结果产物：推理输出、评测指标、对比表数据 | 工具产生 | 择优 ✅（摘要/指标进，原始大文件不进） |
 | `download/` | ★ **外部下载脚本 + `SHA256SUMS.txt`**（大文件替代方案 1 的落点，**已实现**：`fetch_models.py`） | 手写 | ✅ **必须入库**（它是可复现的凭据） |
 
 > 当前磁盘事实（2026-10-19）：
 > `data/models/` 有 `yolov8n.pt`（6.25 MB）+ `yolov8n_{640,320}.onnx`（各 ≈12 MB）—— **三者都被 `.gitignore` 排除**，
 > 靠 [`download/fetch_models.py`](download/fetch_models.py) + [`download/SHA256SUMS.txt`](download/SHA256SUMS.txt) 复现；
+> `data/golden/` 有 **两份逐层 golden**：`yolov8n_{320,640}_golden.json`（**入库**，各 118 KB / 270 个张量）
+> + `.npz`（**不入库**，320=23 MB / 640=91 MB），由 [`../tools/make_golden.py`](../tools/make_golden.py) 以固定种子重建；
 > `data/results/` 有 `probe_yolov8n_*.json`（**几 KB 的指标，入库**，是报告里 MAC/权重的数字来源）；
-> `calib/` `samples/` `golden/` **仍为空**（金标准链路见 M1 计划）。
+> `calib/` `samples/` **仍为空**（要等摄像头/数据裁定后才填）。
 > ⚠️ **`models/` 这个目录名是骨架沿用的**；方案在 D004 裁定前曾长期未定，现已定为 YOLO。
 
 ## 规则

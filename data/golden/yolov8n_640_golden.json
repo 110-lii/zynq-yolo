@@ -1,0 +1,4779 @@
+{
+  "model": "yolov8n_640.onnx",
+  "model_sha256": "719ccd64cac19104f60b365b44a1dfbcc33a940c959763d139756af9547184b7",
+  "input_name": "images",
+  "input_shape": [
+    1,
+    3,
+    640,
+    640
+  ],
+  "input_dtype": "float32",
+  "input_seed": 20261019,
+  "input_note": "确定性伪随机（default_rng(20261019)），非零输入 —— 全零输入会让 ReLU/BN 退化、金标准失去区分力",
+  "stored_dtype": "float16",
+  "ort_version": "1.31.0",
+  "tensor_count": 270,
+  "npz_sha256": "e3542b6d371c443f9bb58d7c1d32674caab4b2c0bccf5dc39100c4c9d5c977d8",
+  "tensors": {
+    "output0": {
+      "onnx_name": "output0",
+      "is_graph_output": true,
+      "shape": [
+        1,
+        84,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 640.8828125,
+      "mean": 9.765531885127903,
+      "std": 59.51929975364184,
+      "nonzero_frac": 0.900328798185941
+    },
+    "_model.0_conv_Conv_output_0": {
+      "onnx_name": "/model.0/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        320,
+        320
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -144.3415985107422,
+      "max": 146.69241333007812,
+      "mean": 1.9665450949006118,
+      "std": 18.627788278305825,
+      "nonzero_frac": 1.0
+    },
+    "_model.0_act_Sigmoid_output_0": {
+      "onnx_name": "/model.0/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        320,
+        320
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 1.0000001192092896,
+      "mean": 0.5553510228667801,
+      "std": 0.46573352416761,
+      "nonzero_frac": 0.886009521484375
+    },
+    "_model.0_act_Mul_output_0": {
+      "onnx_name": "/model.0/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        320,
+        320
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 146.69241333007812,
+      "mean": 7.687841088675925,
+      "std": 11.989992836905888,
+      "nonzero_frac": 0.886009521484375
+    },
+    "_model.1_conv_Conv_output_0": {
+      "onnx_name": "/model.1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -300.329833984375,
+      "max": 331.74365234375,
+      "mean": 1.676950423418457,
+      "std": 47.57781213155476,
+      "nonzero_frac": 1.0
+    },
+    "_model.1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 1.0000001192092896,
+      "mean": 0.5318388299093203,
+      "std": 0.4874303941691318,
+      "nonzero_frac": 0.7103369140625
+    },
+    "_model.1_act_Mul_output_0": {
+      "onnx_name": "/model.1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 331.74365234375,
+      "mean": 18.329274210086304,
+      "std": 28.76294721377202,
+      "nonzero_frac": 0.7103369140625
+    },
+    "_model.2_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.2/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -224.36782836914062,
+      "max": 87.0053939819336,
+      "mean": -10.102012341690509,
+      "std": 22.116907742836723,
+      "nonzero_frac": 1.0
+    },
+    "_model.2_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.2/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 1.0000001192092896,
+      "mean": 0.37925435264427504,
+      "std": 0.4485027936335866,
+      "nonzero_frac": 0.752061767578125
+    },
+    "_model.2_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.2/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 87.0053939819336,
+      "mean": 2.650776142543149,
+      "std": 5.187325612692872,
+      "nonzero_frac": 0.752061767578125
+    },
+    "_model.2_Split_output_0": {
+      "onnx_name": "/model.2/Split_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 87.0053939819336,
+      "mean": 2.283759828890295,
+      "std": 5.659569094490563,
+      "nonzero_frac": 0.66887939453125
+    },
+    "_model.2_Split_output_1": {
+      "onnx_name": "/model.2/Split_output_1",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 36.14423370361328,
+      "mean": 3.017792456196003,
+      "std": 4.638595664628635,
+      "nonzero_frac": 0.835244140625
+    },
+    "_model.2_m.0_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.2/m.0/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -76.8199691772461,
+      "max": 69.7427978515625,
+      "mean": -3.29431768771934,
+      "std": 13.399495832794715,
+      "nonzero_frac": 1.0
+    },
+    "_model.2_m.0_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.2/m.0/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.39081268965644994,
+      "std": 0.4570459036607495,
+      "nonzero_frac": 0.86882568359375
+    },
+    "_model.2_m.0_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.2/m.0/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 69.7427978515625,
+      "mean": 3.7377692840241266,
+      "std": 6.905138873038459,
+      "nonzero_frac": 0.86882568359375
+    },
+    "_model.2_m.0_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.2/m.0/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -76.17816162109375,
+      "max": 64.07765197753906,
+      "mean": -0.34299954796835663,
+      "std": 11.477238964066308,
+      "nonzero_frac": 1.0
+    },
+    "_model.2_m.0_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.2/m.0/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.5476717665651085,
+      "std": 0.4528592672098142,
+      "nonzero_frac": 0.92251953125
+    },
+    "_model.2_m.0_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.2/m.0/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 64.07765197753906,
+      "mean": 3.9600523777827386,
+      "std": 5.951740618351356,
+      "nonzero_frac": 0.92251953125
+    },
+    "_model.2_m.0_Add_output_0": {
+      "onnx_name": "/model.2/m.0/Add_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.5568227171897888,
+      "max": 74.83631896972656,
+      "mean": 6.977844833374238,
+      "std": 7.607188764350335,
+      "nonzero_frac": 0.99721435546875
+    },
+    "_model.2_Concat_output_0": {
+      "onnx_name": "/model.2/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        48,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.5568227171897888,
+      "max": 87.0053939819336,
+      "mean": 4.093132372820178,
+      "std": 6.433463657335518,
+      "nonzero_frac": 0.833779296875
+    },
+    "_model.2_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.2/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -43.83141326904297,
+      "max": 18.1087646484375,
+      "mean": -1.9784009019157383,
+      "std": 5.864008553131053,
+      "nonzero_frac": 1.0
+    },
+    "_model.2_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.2/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.40482491777278484,
+      "std": 0.39869753829489923,
+      "nonzero_frac": 0.98366455078125
+    },
+    "_model.2_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.2/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        160,
+        160
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 18.1087646484375,
+      "mean": 1.1300946034287205,
+      "std": 2.2715350004071926,
+      "nonzero_frac": 0.98366455078125
+    },
+    "_model.3_conv_Conv_output_0": {
+      "onnx_name": "/model.3/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -13.063819885253906,
+      "max": 7.739109992980957,
+      "mean": -0.4697755345856558,
+      "std": 2.383472539797515,
+      "nonzero_frac": 1.0
+    },
+    "_model.3_act_Sigmoid_output_0": {
+      "onnx_name": "/model.3/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 2.115964889526367e-06,
+      "max": 0.9995647072792053,
+      "mean": 0.4308005238354235,
+      "std": 0.33089418257598785,
+      "nonzero_frac": 1.0
+    },
+    "_model.3_act_Mul_output_0": {
+      "onnx_name": "/model.3/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 7.735741138458252,
+      "mean": 0.5466078033523588,
+      "std": 1.2790011684358051,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.4/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -16.181026458740234,
+      "max": 9.570612907409668,
+      "mean": -0.20830867805460457,
+      "std": 2.020078500660527,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.4/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 5.960464477539063e-08,
+      "max": 0.9999302625656128,
+      "mean": 0.4939885901559319,
+      "std": 0.3005130729116909,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.4/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 9.569945335388184,
+      "mean": 0.46018684955929773,
+      "std": 0.8724566979596319,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_Split_output_0": {
+      "onnx_name": "/model.4/Split_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 9.569945335388184,
+      "mean": 0.4591679631558052,
+      "std": 1.0144177543679942,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_Split_output_1": {
+      "onnx_name": "/model.4/Split_output_1",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.75,
+      "mean": 0.46120573596279013,
+      "std": 0.7023645228748658,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.0_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.4/m.0/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.522855758666992,
+      "max": 3.373124361038208,
+      "mean": -0.27484568584239244,
+      "std": 0.9642922114665196,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.0_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.4/m.0/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.003978520631790161,
+      "max": 0.9668539762496948,
+      "mean": 0.44209583937525165,
+      "std": 0.2002442506892149,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.0_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.4/m.0/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.2613186836242676,
+      "mean": 0.06968435987658167,
+      "std": 0.4621982013185493,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.0_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.4/m.0/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.93490743637085,
+      "max": 4.042550086975098,
+      "mean": 0.27630580247854597,
+      "std": 1.052491695870984,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.0_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.4/m.0/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.007139772176742554,
+      "max": 0.9827501773834229,
+      "mean": 0.5567875999111856,
+      "std": 0.21674741171752107,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.0_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.4/m.0/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.9728167057037354,
+      "mean": 0.3803154435845154,
+      "std": 0.6622486870970312,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.0_Add_output_0": {
+      "onnx_name": "/model.4/m.0/Add_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.5569202303886414,
+      "max": 5.1572771072387695,
+      "mean": 0.8415211795937176,
+      "std": 0.8199082035969808,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.1_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.4/m.1/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.585809707641602,
+      "max": 2.105699062347412,
+      "mean": -0.7792447724599242,
+      "std": 0.7995344646482601,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.1_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.4/m.1/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.010092616081237793,
+      "max": 0.891455888748169,
+      "mean": 0.3363939673276036,
+      "std": 0.1578556459427632,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.1_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.4/m.1/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 1.8771377801895142,
+      "mean": -0.1379569494294441,
+      "std": 0.19603407527879851,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.1_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.4/m.1/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -6.8627705574035645,
+      "max": 4.982357025146484,
+      "mean": 0.5052003032928587,
+      "std": 1.221419218817328,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.1_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.4/m.1/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0010448992252349854,
+      "max": 0.9931887984275818,
+      "mean": 0.601239831346029,
+      "std": 0.2386407370991812,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.1_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.4/m.1/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 4.948421001434326,
+      "mean": 0.5916160299071113,
+      "std": 0.7984347202792544,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_m.1_Add_output_0": {
+      "onnx_name": "/model.4/m.1/Add_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.8346490859985352,
+      "max": 7.579292297363281,
+      "mean": 1.4331372093186598,
+      "std": 1.0794888557335784,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_Concat_output_0": {
+      "onnx_name": "/model.4/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.8346490859985352,
+      "max": 9.569945335388184,
+      "mean": 0.7987580220077433,
+      "std": 0.9991788566335458,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.4/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -8.145340919494629,
+      "max": 4.4349517822265625,
+      "mean": -0.06613746251992011,
+      "std": 1.0941077290215229,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.4/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0002900660037994385,
+      "max": 0.9882832765579224,
+      "mean": 0.4948033907977515,
+      "std": 0.2119753195214735,
+      "nonzero_frac": 1.0
+    },
+    "_model.4_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.4/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 4.382988452911377,
+      "mean": 0.19370276565006128,
+      "std": 0.5063305462897008,
+      "nonzero_frac": 1.0
+    },
+    "_model.5_conv_Conv_output_0": {
+      "onnx_name": "/model.5/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -6.112312316894531,
+      "max": 3.490553379058838,
+      "mean": -0.28494544825555296,
+      "std": 1.1092726659171785,
+      "nonzero_frac": 1.0
+    },
+    "_model.5_act_Sigmoid_output_0": {
+      "onnx_name": "/model.5/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.002210557460784912,
+      "max": 0.970417857170105,
+      "mean": 0.4479546501416189,
+      "std": 0.2149483469745612,
+      "nonzero_frac": 1.0
+    },
+    "_model.5_act_Mul_output_0": {
+      "onnx_name": "/model.5/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.3872952461242676,
+      "mean": 0.10585391909380029,
+      "std": 0.48098039134879705,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.6/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -11.570666313171387,
+      "max": 5.526339530944824,
+      "mean": -0.3358442881034625,
+      "std": 1.425944607523521,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.6/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 9.447336196899414e-06,
+      "max": 0.9960352182388306,
+      "mean": 0.45107771883544046,
+      "std": 0.2319336323718648,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.6/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 5.504428863525391,
+      "mean": 0.1521110619033074,
+      "std": 0.5487852758817493,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_Split_output_0": {
+      "onnx_name": "/model.6/Split_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 5.504428863525391,
+      "mean": 0.12672007449005462,
+      "std": 0.6249171964841007,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_Split_output_1": {
+      "onnx_name": "/model.6/Split_output_1",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.809471607208252,
+      "mean": 0.17750204931656013,
+      "std": 0.4588242050110557,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.0_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.6/m.0/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -7.739664077758789,
+      "max": 3.1589245796203613,
+      "mean": -0.6811420096859001,
+      "std": 0.8924486638505411,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.0_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.6/m.0/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0004350244998931885,
+      "max": 0.9592589139938354,
+      "mean": 0.35845377475663553,
+      "std": 0.17683990560643933,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.0_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.6/m.0/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.030226469039917,
+      "mean": -0.0897246055178682,
+      "std": 0.2884233910993066,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.0_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.6/m.0/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -3.662710189819336,
+      "max": 2.2366116046905518,
+      "mean": 0.11172235958984857,
+      "std": 0.7015086828344179,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.0_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.6/m.0/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0250207781791687,
+      "max": 0.9034894704818726,
+      "mean": 0.5273840127259609,
+      "std": 0.15891170085938705,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.0_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.6/m.0/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.0207550525665283,
+      "mean": 0.17012782575784818,
+      "std": 0.36741065588143607,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.0_Add_output_0": {
+      "onnx_name": "/model.6/m.0/Add_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.5569074153900146,
+      "max": 3.5882956981658936,
+      "mean": 0.34762987506415016,
+      "std": 0.6029047631477493,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.1_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.6/m.1/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.080847263336182,
+      "max": 1.8770108222961426,
+      "mean": -0.7971787657596724,
+      "std": 0.9156243603106388,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.1_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.6/m.1/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.016612529754638672,
+      "max": 0.867267370223999,
+      "mean": 0.3371479185603675,
+      "std": 0.17937301257892754,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.1_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.6/m.1/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 1.6278702020645142,
+      "mean": -0.10703604923953292,
+      "std": 0.2680307269207638,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.1_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.6/m.1/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -3.879483699798584,
+      "max": 3.7543444633483887,
+      "mean": 0.46103183777180673,
+      "std": 0.9668770925954784,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.1_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.6/m.1/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.02024322748184204,
+      "max": 0.9771199226379395,
+      "mean": 0.596497350493446,
+      "std": 0.1999818016342602,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.1_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.6/m.1/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 3.668444871902466,
+      "mean": 0.466663510788463,
+      "std": 0.6574177610140856,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_m.1_Add_output_0": {
+      "onnx_name": "/model.6/m.1/Add_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.835189700126648,
+      "max": 4.486920356750488,
+      "mean": 0.8142933858198353,
+      "std": 0.8671898564946946,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_Concat_output_0": {
+      "onnx_name": "/model.6/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.835189700126648,
+      "max": 5.504428863525391,
+      "mean": 0.3665363461726501,
+      "std": 0.7089857517880935,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.6/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.710259914398193,
+      "max": 2.7093491554260254,
+      "mean": -0.5353860342525558,
+      "std": 0.9733267569086387,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.6/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.008922159671783447,
+      "max": 0.9375760555267334,
+      "mean": 0.39512510901098724,
+      "std": 0.1916555423464364,
+      "nonzero_frac": 1.0
+    },
+    "_model.6_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.6/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.5402209758758545,
+      "mean": -0.028102051377283124,
+      "std": 0.29803342409839517,
+      "nonzero_frac": 1.0
+    },
+    "_model.7_conv_Conv_output_0": {
+      "onnx_name": "/model.7/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.138816833496094,
+      "max": 3.192777633666992,
+      "mean": -0.6576564404494638,
+      "std": 1.0286308668401594,
+      "nonzero_frac": 1.0
+    },
+    "_model.7_act_Sigmoid_output_0": {
+      "onnx_name": "/model.7/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.00583040714263916,
+      "max": 0.9605616331100464,
+      "mean": 0.3695041247614427,
+      "std": 0.19982130489159047,
+      "nonzero_frac": 1.0
+    },
+    "_model.7_act_Mul_output_0": {
+      "onnx_name": "/model.7/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.066859722137451,
+      "mean": -0.041613649052734306,
+      "std": 0.3485835059120607,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.8/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -6.69814920425415,
+      "max": 8.0277681350708,
+      "mean": -0.7951065841548279,
+      "std": 1.3844752662231776,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.8/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0012317001819610596,
+      "max": 0.9996737837791443,
+      "mean": 0.3458180749922758,
+      "std": 0.23619954932458795,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.8/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 8.02514934539795,
+      "mean": 0.04101083310083767,
+      "std": 0.6906136134252034,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_Split_output_0": {
+      "onnx_name": "/model.8/Split_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 8.02514934539795,
+      "mean": 0.2255376260942375,
+      "std": 0.9105348076512269,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_Split_output_1": {
+      "onnx_name": "/model.8/Split_output_1",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.0229382514953613,
+      "mean": -0.14351595989256216,
+      "std": 0.2381604826311827,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_m.0_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.8/m.0/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.483503341674805,
+      "max": 3.120649814605713,
+      "mean": -0.5423237862524547,
+      "std": 1.0956886868464308,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_m.0_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.8/m.0/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.011167705059051514,
+      "max": 0.9577365517616272,
+      "mean": 0.3966698477830505,
+      "std": 0.21186885107160858,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_m.0_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.8/m.0/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.988760471343994,
+      "mean": 0.01323252248272107,
+      "std": 0.39222325098661037,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_m.0_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.8/m.0/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -8.031526565551758,
+      "max": 4.713396072387695,
+      "mean": -0.2748102899129299,
+      "std": 1.4946262449473877,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_m.0_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.8/m.0/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0003249049186706543,
+      "max": 0.9911055564880371,
+      "mean": 0.45311366171634293,
+      "std": 0.26348986345068526,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_m.0_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.8/m.0/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 4.671473026275635,
+      "mean": 0.25804893441280735,
+      "std": 0.751861285713825,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_m.0_Add_output_0": {
+      "onnx_name": "/model.8/m.0/Add_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.5569057464599609,
+      "max": 4.440528869628906,
+      "mean": 0.11453297443028078,
+      "std": 0.7802228272462145,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_Concat_output_0": {
+      "onnx_name": "/model.8/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        384,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.5569057464599609,
+      "max": 8.02514934539795,
+      "mean": 0.06551821354398538,
+      "std": 0.7225523409944362,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.8/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.54901123046875,
+      "max": 3.118028402328491,
+      "mean": -0.564919089056657,
+      "std": 1.122856761613684,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.8/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.010466903448104858,
+      "max": 0.9576302766799927,
+      "mean": 0.3886047135392437,
+      "std": 0.21784730915486372,
+      "nonzero_frac": 1.0
+    },
+    "_model.8_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.8/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.9859182834625244,
+      "mean": 0.021065200658358627,
+      "std": 0.4605251454776573,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.9/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -3.5956313610076904,
+      "max": 4.9299163818359375,
+      "mean": 1.5765323911819724,
+      "std": 1.0008770011058659,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.9/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.026710301637649536,
+      "max": 0.9928247928619385,
+      "mean": 0.7901621096860617,
+      "std": 0.15767118986638387,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.9/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 4.894543170928955,
+      "mean": 1.3964635391657145,
+      "std": 0.9376194455340567,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_m_MaxPool_output_0": {
+      "onnx_name": "/model.9/m/MaxPool_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.26741984486579895,
+      "max": 4.894543170928955,
+      "mean": 1.857704009571503,
+      "std": 0.9922445471178633,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_m_1_MaxPool_output_0": {
+      "onnx_name": "/model.9/m_1/MaxPool_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.2597973942756653,
+      "max": 4.894543170928955,
+      "mean": 2.022322684689648,
+      "std": 1.0097868732631405,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_m_2_MaxPool_output_0": {
+      "onnx_name": "/model.9/m_2/MaxPool_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.24346813559532166,
+      "max": 4.894543170928955,
+      "mean": 2.1273883566906946,
+      "std": 1.021144292517996,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_Concat_output_0": {
+      "onnx_name": "/model.9/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        512,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 4.894543170928955,
+      "mean": 1.8509696475293902,
+      "std": 1.0293778438668435,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.9/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.660558223724365,
+      "max": 3.086745262145996,
+      "mean": -1.1268923365008414,
+      "std": 1.3250304225769944,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.9/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0034685134887695312,
+      "max": 0.9563426971435547,
+      "mean": 0.3017255163943628,
+      "std": 0.22441912361494895,
+      "nonzero_frac": 1.0
+    },
+    "_model.9_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.9/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.951986312866211,
+      "mean": -0.05332671355401012,
+      "std": 0.3670602609760979,
+      "nonzero_frac": 1.0
+    },
+    "_model.10_Constant_output_0": {
+      "onnx_name": "/model.10/Constant_output_0",
+      "is_graph_output": false,
+      "shape": [
+        4
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.0,
+      "max": 2.0,
+      "mean": 1.5,
+      "std": 0.5,
+      "nonzero_frac": 1.0
+    },
+    "_model.10_Constant_1_output_0": {
+      "onnx_name": "/model.10/Constant_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        0
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": true,
+      "min": null,
+      "max": null,
+      "mean": null,
+      "std": null,
+      "nonzero_frac": 0.0
+    },
+    "_model.10_Resize_output_0": {
+      "onnx_name": "/model.10/Resize_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.951986312866211,
+      "mean": -0.05332671355401012,
+      "std": 0.3670602609760979,
+      "nonzero_frac": 1.0
+    },
+    "_model.11_Concat_output_0": {
+      "onnx_name": "/model.11/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        384,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.951986312866211,
+      "mean": -0.04491849282843446,
+      "std": 0.3457911611122702,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.12/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -6.196325778961182,
+      "max": 3.3675549030303955,
+      "mean": -0.5619802076980978,
+      "std": 1.3187626064651135,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.12/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.002032756805419922,
+      "max": 0.9666749835014343,
+      "mean": 0.3992981800572306,
+      "std": 0.2421833467412001,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.12/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.255331039428711,
+      "mean": 0.08647631959906253,
+      "std": 0.5222410703352968,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_Split_output_0": {
+      "onnx_name": "/model.12/Split_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.255331039428711,
+      "mean": 0.000931195819925339,
+      "std": 0.40771450798616155,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_Split_output_1": {
+      "onnx_name": "/model.12/Split_output_1",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.9827957153320312,
+      "mean": 0.17202144337819975,
+      "std": 0.6038248211714548,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_m.0_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.12/m.0/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.8502583503723145,
+      "max": 2.5507731437683105,
+      "mean": -0.9517201898337043,
+      "std": 1.1392306177960732,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_m.0_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.12/m.0/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.002870917320251465,
+      "max": 0.9276254177093506,
+      "mean": 0.32486346369201785,
+      "std": 0.19025264550950888,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_m.0_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.12/m.0/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.366162061691284,
+      "mean": -0.10144739453641254,
+      "std": 0.23053411545976385,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_m.0_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.12/m.0/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -3.9677202701568604,
+      "max": 3.137524366378784,
+      "mean": -0.10419492103595986,
+      "std": 0.8868829879320008,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_m.0_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.12/m.0/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.018565326929092407,
+      "max": 0.9584143161773682,
+      "mean": 0.47802849429135674,
+      "std": 0.195110876536912,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_m.0_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.12/m.0/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.0070483684539795,
+      "mean": 0.1225515664439734,
+      "std": 0.4429874021933402,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_Concat_output_0": {
+      "onnx_name": "/model.12/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        192,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.255331039428711,
+      "mean": 0.09850140188069949,
+      "std": 0.49751948880259883,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.12/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.432210922241211,
+      "max": 2.928816318511963,
+      "mean": -0.14920436806102316,
+      "std": 0.881694879698052,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.12/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.011748522520065308,
+      "max": 0.949252724647522,
+      "mean": 0.4698494744479831,
+      "std": 0.1926774694961924,
+      "nonzero_frac": 1.0
+    },
+    "_model.12_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.12/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.780186891555786,
+      "mean": 0.09894370824942632,
+      "std": 0.40783806968866054,
+      "nonzero_frac": 1.0
+    },
+    "_model.13_Constant_output_0": {
+      "onnx_name": "/model.13/Constant_output_0",
+      "is_graph_output": false,
+      "shape": [
+        4
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.0,
+      "max": 2.0,
+      "mean": 1.5,
+      "std": 0.5,
+      "nonzero_frac": 1.0
+    },
+    "_model.13_Constant_1_output_0": {
+      "onnx_name": "/model.13/Constant_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        0
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": true,
+      "min": null,
+      "max": null,
+      "mean": null,
+      "std": null,
+      "nonzero_frac": 0.0
+    },
+    "_model.13_Resize_output_0": {
+      "onnx_name": "/model.13/Resize_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.780186891555786,
+      "mean": 0.09894370824942632,
+      "std": 0.40783806968866054,
+      "nonzero_frac": 1.0
+    },
+    "_model.14_Concat_output_0": {
+      "onnx_name": "/model.14/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        192,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 4.382988452911377,
+      "mean": 0.13053006071630463,
+      "std": 0.4453540128383799,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.15/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.927016258239746,
+      "max": 3.046077251434326,
+      "mean": 0.0065435274355331785,
+      "std": 1.2444344907339848,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.15/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.002659350633621216,
+      "max": 0.9546129107475281,
+      "mean": 0.5159821720264881,
+      "std": 0.235665261185006,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.15/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.907824754714966,
+      "mean": 0.2911159682461946,
+      "std": 0.556223492213941,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_Split_output_0": {
+      "onnx_name": "/model.15/Split_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.5923638343811035,
+      "mean": 0.23669017062466266,
+      "std": 0.4191406993452567,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_Split_output_1": {
+      "onnx_name": "/model.15/Split_output_1",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.907824754714966,
+      "mean": 0.34554176586772656,
+      "std": 0.6611852129624748,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_m.0_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.15/m.0/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.074477195739746,
+      "max": 2.275777816772461,
+      "mean": -0.4669663961015976,
+      "std": 0.7397618064938192,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_m.0_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.15/m.0/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.01671689748764038,
+      "max": 0.906851053237915,
+      "mean": 0.3946773213954293,
+      "std": 0.15943199312405804,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_m.0_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.15/m.0/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.063791513442993,
+      "mean": -0.0670903124839119,
+      "std": 0.3286109613291414,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_m.0_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.15/m.0/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -3.4182770252227783,
+      "max": 4.501789093017578,
+      "mean": 0.25749532342713793,
+      "std": 0.9637742571401083,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_m.0_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.15/m.0/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.03172913193702698,
+      "max": 0.989032506942749,
+      "mean": 0.5450289171350596,
+      "std": 0.18440088058896356,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_m.0_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.15/m.0/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        32,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 4.452415943145752,
+      "mean": 0.31438375704429616,
+      "std": 0.7411709690544726,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_Concat_output_0": {
+      "onnx_name": "/model.15/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        96,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 4.452415943145752,
+      "mean": 0.2988718978455618,
+      "std": 0.6240898649538094,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.15/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.24882173538208,
+      "max": 3.3794844150543213,
+      "mean": 0.14493592935853286,
+      "std": 1.0610830114973349,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.15/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0052262842655181885,
+      "max": 0.9670572280883789,
+      "mean": 0.5373961254085589,
+      "std": 0.21499616187455092,
+      "nonzero_frac": 1.0
+    },
+    "_model.15_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.15/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.2681548595428467,
+      "mean": 0.3031434176399208,
+      "std": 0.5471678298103269,
+      "nonzero_frac": 1.0
+    },
+    "_model.16_conv_Conv_output_0": {
+      "onnx_name": "/model.16/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.021156311035156,
+      "max": 3.839405059814453,
+      "mean": -0.4697451243039177,
+      "std": 1.0382721931083736,
+      "nonzero_frac": 1.0
+    },
+    "_model.16_act_Sigmoid_output_0": {
+      "onnx_name": "/model.16/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.017616301774978638,
+      "max": 0.9789463877677917,
+      "mean": 0.4091225311224116,
+      "std": 0.20631291779553518,
+      "nonzero_frac": 1.0
+    },
+    "_model.16_act_Mul_output_0": {
+      "onnx_name": "/model.16/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.7585716247558594,
+      "mean": 0.01923741551161757,
+      "std": 0.3794395927877636,
+      "nonzero_frac": 1.0
+    },
+    "_model.17_Concat_output_0": {
+      "onnx_name": "/model.17/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        192,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.7585716247558594,
+      "mean": 0.07237494400349007,
+      "std": 0.400363827100229,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.18/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.917908191680908,
+      "max": 3.5282480716705322,
+      "mean": -0.3638982992997205,
+      "std": 0.9718435903314556,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.18/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0072612762451171875,
+      "max": 0.9714809656143188,
+      "mean": 0.4246764616864675,
+      "std": 0.19889186596301828,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.18/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.427625894546509,
+      "mean": 0.03644055663395461,
+      "std": 0.43190827206658994,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_Split_output_0": {
+      "onnx_name": "/model.18/Split_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.206308603286743,
+      "mean": -0.02076266089637753,
+      "std": 0.3041226477267243,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_Split_output_1": {
+      "onnx_name": "/model.18/Split_output_1",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.427625894546509,
+      "mean": 0.09364377416428676,
+      "std": 0.5235021584550886,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_m.0_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.18/m.0/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -4.21689510345459,
+      "max": 2.4136126041412354,
+      "mean": -0.49180282360640376,
+      "std": 0.7455434969503858,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_m.0_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.18/m.0/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.014530152082443237,
+      "max": 0.9178594350814819,
+      "mean": 0.39149919299467,
+      "std": 0.1559040088583963,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_m.0_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.18/m.0/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.2153570652008057,
+      "mean": -0.07726247731201656,
+      "std": 0.29832903935783084,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_m.0_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.18/m.0/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.70969295501709,
+      "max": 5.070129871368408,
+      "mean": 0.10103594458383668,
+      "std": 1.1193490109320783,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_m.0_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.18/m.0/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0033028125762939453,
+      "max": 0.9937576055526733,
+      "mean": 0.5264390975720016,
+      "std": 0.22495882454464605,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_m.0_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.18/m.0/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 5.038480281829834,
+      "mean": 0.3018580644036854,
+      "std": 0.5935558147106059,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_Concat_output_0": {
+      "onnx_name": "/model.18/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        192,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 5.038480281829834,
+      "mean": 0.1249130592238649,
+      "std": 0.5073993556765704,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.18/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -7.886437892913818,
+      "max": 2.6338155269622803,
+      "mean": -0.3599423304144011,
+      "std": 1.0074462332286027,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.18/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0003756582736968994,
+      "max": 0.9330064654350281,
+      "mean": 0.43027094061864773,
+      "std": 0.19222182018053766,
+      "nonzero_frac": 1.0
+    },
+    "_model.18_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.18/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.457366943359375,
+      "mean": 0.031736785361228585,
+      "std": 0.3941410727740082,
+      "nonzero_frac": 1.0
+    },
+    "_model.19_conv_Conv_output_0": {
+      "onnx_name": "/model.19/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -6.2187089920043945,
+      "max": 2.690685987472534,
+      "mean": -0.7130415172073845,
+      "std": 0.9205893855811063,
+      "nonzero_frac": 1.0
+    },
+    "_model.19_act_Sigmoid_output_0": {
+      "onnx_name": "/model.19/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0019878745079040527,
+      "max": 0.9364748001098633,
+      "mean": 0.35309988525987135,
+      "std": 0.1788735304828119,
+      "nonzero_frac": 1.0
+    },
+    "_model.19_act_Mul_output_0": {
+      "onnx_name": "/model.19/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.5197596549987793,
+      "mean": -0.09065228410844263,
+      "std": 0.30272801559027857,
+      "nonzero_frac": 1.0
+    },
+    "_model.20_Concat_output_0": {
+      "onnx_name": "/model.20/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        384,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.951986312866211,
+      "mean": -0.06576857040548761,
+      "std": 0.3473900404494378,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.21/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.731642723083496,
+      "max": 3.760890483856201,
+      "mean": -0.7889661432535467,
+      "std": 1.2917816693555348,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.21/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.003231257200241089,
+      "max": 0.9772658348083496,
+      "mean": 0.35713700963999145,
+      "std": 0.23448738766490596,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.21/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 3.6753897666931152,
+      "mean": 0.013081566947345823,
+      "std": 0.4422920462857974,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_Split_output_0": {
+      "onnx_name": "/model.21/Split_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 3.3286044597625732,
+      "mean": -0.0682651241096932,
+      "std": 0.36450639497527537,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_Split_output_1": {
+      "onnx_name": "/model.21/Split_output_1",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 3.6753897666931152,
+      "mean": 0.09442825800438484,
+      "std": 0.49512122570702394,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_m.0_cv1_conv_Conv_output_0": {
+      "onnx_name": "/model.21/m.0/cv1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -6.628368377685547,
+      "max": 2.920750379562378,
+      "mean": -1.0968870793373207,
+      "std": 1.3006453967239648,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_m.0_cv1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.21/m.0/cv1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0013206005096435547,
+      "max": 0.9488626718521118,
+      "mean": 0.30569773935421835,
+      "std": 0.21631003308077687,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_m.0_cv1_act_Mul_output_0": {
+      "onnx_name": "/model.21/m.0/cv1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.771390914916992,
+      "mean": -0.06577328589926111,
+      "std": 0.3475737486142174,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_m.0_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.21/m.0/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -7.038344860076904,
+      "max": 4.857360363006592,
+      "mean": -0.45599675361303527,
+      "std": 1.4357088042131638,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_m.0_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.21/m.0/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0008768439292907715,
+      "max": 0.9922889471054077,
+      "mean": 0.42305335340090094,
+      "std": 0.2508420630164865,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_m.0_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.21/m.0/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        128,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 4.819904804229736,
+      "mean": 0.15561500516221524,
+      "std": 0.627733638081661,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_Concat_output_0": {
+      "onnx_name": "/model.21/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        384,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 4.819904804229736,
+      "mean": 0.06059271301896897,
+      "std": 0.5160225714704182,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_cv2_conv_Conv_output_0": {
+      "onnx_name": "/model.21/cv2/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -14.757143020629883,
+      "max": 4.067732334136963,
+      "mean": -0.9067846715911037,
+      "std": 1.1797867672116116,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_cv2_act_Sigmoid_output_0": {
+      "onnx_name": "/model.21/cv2/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 3.5762786865234375e-07,
+      "max": 0.9831718802452087,
+      "mean": 0.32841197370464215,
+      "std": 0.1870150973254288,
+      "nonzero_frac": 1.0
+    },
+    "_model.21_cv2_act_Mul_output_0": {
+      "onnx_name": "/model.21/cv2/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        256,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.9992799758911133,
+      "mean": -0.10046752645304405,
+      "std": 0.2904622647937383,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.0_cv2.0.0_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.0/cv2.0.0/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -7.247541427612305,
+      "max": 3.903846263885498,
+      "mean": -0.34894687366775995,
+      "std": 0.8548269014617439,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.0_cv2.0.0_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv2.0/cv2.0.0/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0007113516330718994,
+      "max": 0.9802343249320984,
+      "mean": 0.42531351340723633,
+      "std": 0.17975143242125238,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.0_cv2.0.0_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv2.0/cv2.0.0/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 3.82668399810791,
+      "mean": 0.003408693050981202,
+      "std": 0.368756187503714,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.0_cv2.0.1_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.0/cv2.0.1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -12.895137786865234,
+      "max": 21.527925491333008,
+      "mean": 0.8903227946111929,
+      "std": 1.9007237869873947,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.0_cv2.0.1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv2.0/cv2.0.1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 2.5033950805664062e-06,
+      "max": 1.0,
+      "mean": 0.6518738847313216,
+      "std": 0.2669337641559977,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.0_cv2.0.1_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv2.0/cv2.0.1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 21.527925491333008,
+      "mean": 1.0404531729816648,
+      "std": 1.4137056221751154,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.0_cv2.0.2_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.0/cv2.0.2/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -3.0486035346984863,
+      "max": 12.976127624511719,
+      "mean": 0.9997169287714166,
+      "std": 2.010645256380952,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_output_0": {
+      "onnx_name": "/model.22/Constant_output_0",
+      "is_graph_output": false,
+      "shape": [
+        3
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -1.0,
+      "max": 64.0,
+      "mean": 21.333333333333332,
+      "std": 30.180935851773864,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_1_output_0": {
+      "onnx_name": "/model.22/Constant_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        3
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -1.0,
+      "max": 64.0,
+      "mean": 21.333333333333332,
+      "std": 30.180935851773864,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_2_output_0": {
+      "onnx_name": "/model.22/Constant_2_output_0",
+      "is_graph_output": false,
+      "shape": [
+        3
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -1.0,
+      "max": 64.0,
+      "mean": 21.333333333333332,
+      "std": 30.180935851773864,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Reshape_output_0": {
+      "onnx_name": "/model.22/Reshape_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        6400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -3.0486035346984863,
+      "max": 12.976127624511719,
+      "mean": 0.9997169287714166,
+      "std": 2.010645256380952,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.1_cv2.1.0_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.1/cv2.1.0/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -7.5956525802612305,
+      "max": 5.419977188110352,
+      "mean": -0.2688309457705509,
+      "std": 1.1267956744589913,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.1_cv2.1.0_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv2.1/cv2.1.0/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0005024075508117676,
+      "max": 0.9955923557281494,
+      "mean": 0.4514293500161148,
+      "std": 0.2147392753089675,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.1_cv2.1.0_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv2.1/cv2.1.0/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 5.396087646484375,
+      "mean": 0.11324371887799956,
+      "std": 0.4971125910838192,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.1_cv2.1.1_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.1/cv2.1.1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -9.141212463378906,
+      "max": 21.49315643310547,
+      "mean": 0.5463380678136309,
+      "std": 1.922853173665124,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.1_cv2.1.1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv2.1/cv2.1.1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.00010716915130615234,
+      "max": 1.0,
+      "mean": 0.5791378786321729,
+      "std": 0.26495055540724494,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.1_cv2.1.1_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv2.1/cv2.1.1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 21.49315643310547,
+      "mean": 0.7700151494853739,
+      "std": 1.5031571227716927,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.1_cv2.1.2_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.1/cv2.1.2/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -2.7091994285583496,
+      "max": 9.3673095703125,
+      "mean": 0.998931642960315,
+      "std": 1.6587575606185119,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Reshape_1_output_0": {
+      "onnx_name": "/model.22/Reshape_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        1600
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -2.7091994285583496,
+      "max": 9.3673095703125,
+      "mean": 0.998931642960315,
+      "std": 1.6587575606185119,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.2_cv2.2.0_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.2/cv2.2.0/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -8.312143325805664,
+      "max": 8.863743782043457,
+      "mean": 0.05869298593053827,
+      "std": 1.542608704588519,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.2_cv2.2.0_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv2.2/cv2.2.0/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0002454817295074463,
+      "max": 0.999858558177948,
+      "mean": 0.5119162323127966,
+      "std": 0.2572680755367614,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.2_cv2.2.0_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv2.2/cv2.2.0/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846452593803406,
+      "max": 8.862489700317383,
+      "mean": 0.40800431020344574,
+      "std": 0.9421293089591304,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.2_cv2.2.1_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.2/cv2.2.1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -10.126160621643066,
+      "max": 37.56244659423828,
+      "mean": 1.4182713752215204,
+      "std": 3.7605275764669677,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.2_cv2.2.1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv2.2/cv2.2.1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 4.00543212890625e-05,
+      "max": 1.0,
+      "mean": 0.6188624823268037,
+      "std": 0.31315183189389134,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.2_cv2.2.1_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv2.2/cv2.2.1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 37.56244659423828,
+      "mean": 1.75808887213878,
+      "std": 3.3834361974644023,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv2.2_cv2.2.2_Conv_output_0": {
+      "onnx_name": "/model.22/cv2.2/cv2.2.2/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.2654032707214355,
+      "max": 8.983657836914062,
+      "mean": 1.0003322932575247,
+      "std": 2.1949350492995037,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Reshape_2_output_0": {
+      "onnx_name": "/model.22/Reshape_2_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.2654032707214355,
+      "max": 8.983657836914062,
+      "mean": 1.0003322932575247,
+      "std": 2.1949350492995037,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Concat_output_0": {
+      "onnx_name": "/model.22/Concat_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        64,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.2654032707214355,
+      "max": 12.976127624511719,
+      "mean": 0.9995966535924501,
+      "std": 1.957972208372922,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.0_cv3.0.0_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.0/cv3.0.0/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -7.133739471435547,
+      "max": 2.4534456729888916,
+      "mean": -0.5802856798060421,
+      "std": 0.956092220942803,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.0_cv3.0.0_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv3.0/cv3.0.0/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0007971227169036865,
+      "max": 0.9208130836486816,
+      "mean": 0.38285525793686975,
+      "std": 0.1891294314969954,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.0_cv3.0.0_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv3.0/cv3.0.0/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.259164810180664,
+      "mean": -0.04588933079445954,
+      "std": 0.30991611564517746,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.0_cv3.0.1_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.0/cv3.0.1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -14.978607177734375,
+      "max": 14.835559844970703,
+      "mean": 0.6191691675223702,
+      "std": 3.37528654783954,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.0_cv3.0.1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv3.0/cv3.0.1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 2.682209014892578e-07,
+      "max": 0.9999996423721313,
+      "mean": 0.5488180708014406,
+      "std": 0.3731088410701496,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.0_cv3.0.1_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv3.0/cv3.0.1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 14.835554122924805,
+      "mean": 1.493945798110125,
+      "std": 2.387178216464379,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.0_cv3.0.2_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.0/cv3.0.2/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        80,
+        80
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -20.13899040222168,
+      "max": -7.576828956604004,
+      "mean": -16.24219297513459,
+      "std": 1.1536434120912638,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_3_output_0": {
+      "onnx_name": "/model.22/Constant_3_output_0",
+      "is_graph_output": false,
+      "shape": [
+        3
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -1.0,
+      "max": 80.0,
+      "mean": 26.666666666666668,
+      "std": 37.72119946248911,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_4_output_0": {
+      "onnx_name": "/model.22/Constant_4_output_0",
+      "is_graph_output": false,
+      "shape": [
+        3
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -1.0,
+      "max": 80.0,
+      "mean": 26.666666666666668,
+      "std": 37.72119946248911,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_5_output_0": {
+      "onnx_name": "/model.22/Constant_5_output_0",
+      "is_graph_output": false,
+      "shape": [
+        3
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -1.0,
+      "max": 80.0,
+      "mean": 26.666666666666668,
+      "std": 37.72119946248911,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Reshape_3_output_0": {
+      "onnx_name": "/model.22/Reshape_3_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        6400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -20.13899040222168,
+      "max": -7.576828956604004,
+      "mean": -16.24219297513459,
+      "std": 1.1536434120912638,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.1_cv3.1.0_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.1/cv3.1.0/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -7.444092750549316,
+      "max": 3.000332832336426,
+      "mean": -0.44142585650546246,
+      "std": 1.0715992165395871,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.1_cv3.1.0_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv3.1/cv3.1.0/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0005845427513122559,
+      "max": 0.952589213848114,
+      "mean": 0.4166073402503971,
+      "std": 0.20554725476978938,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.1_cv3.1.0_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv3.1/cv3.1.0/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 2.8580846786499023,
+      "mean": 0.031116233648453638,
+      "std": 0.3967272010775422,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.1_cv3.1.1_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.1/cv3.1.1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -22.620101928710938,
+      "max": 13.119012832641602,
+      "mean": 0.9141875238527136,
+      "std": 2.960973387816347,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.1_cv3.1.1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv3.1/cv3.1.1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 0.9999979734420776,
+      "mean": 0.5726584684213157,
+      "std": 0.3354889081970489,
+      "nonzero_frac": 0.9998984375
+    },
+    "_model.22_cv3.1_cv3.1.1_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv3.1/cv3.1.1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 13.118986129760742,
+      "mean": 1.402284025644145,
+      "std": 2.3940100751031967,
+      "nonzero_frac": 0.9998984375
+    },
+    "_model.22_cv3.1_cv3.1.2_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.1/cv3.1.2/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        40,
+        40
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -18.014265060424805,
+      "max": -6.788388252258301,
+      "mean": -14.715500358521938,
+      "std": 1.1684783649094819,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Reshape_4_output_0": {
+      "onnx_name": "/model.22/Reshape_4_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        1600
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -18.014265060424805,
+      "max": -6.788388252258301,
+      "mean": -14.715500358521938,
+      "std": 1.1684783649094819,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.2_cv3.2.0_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.2/cv3.2.0/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -6.577569961547852,
+      "max": 4.455850601196289,
+      "mean": -0.20725559067016003,
+      "std": 1.1450414295381586,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.2_cv3.2.0_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv3.2/cv3.2.0/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.00138932466506958,
+      "max": 0.9885228276252747,
+      "mean": 0.4614402290713042,
+      "std": 0.2169274073219294,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.2_cv3.2.0_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv3.2/cv3.2.0/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846458554267883,
+      "max": 4.404709815979004,
+      "mean": 0.14779209998837262,
+      "std": 0.5742639498755425,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.2_cv3.2.1_conv_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.2/cv3.2.1/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -53.454410552978516,
+      "max": 41.97600173950195,
+      "mean": 1.1966005113907159,
+      "std": 3.5204142077809077,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_cv3.2_cv3.2.1_act_Sigmoid_output_0": {
+      "onnx_name": "/model.22/cv3.2/cv3.2.1/act/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.5988555068392306,
+      "std": 0.33833931458908106,
+      "nonzero_frac": 0.999625
+    },
+    "_model.22_cv3.2_cv3.2.1_act_Mul_output_0": {
+      "onnx_name": "/model.22/cv3.2/cv3.2.1/act/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -0.27846455574035645,
+      "max": 41.97600173950195,
+      "mean": 1.703779968544096,
+      "std": 2.8870468047191187,
+      "nonzero_frac": 0.999625
+    },
+    "_model.22_cv3.2_cv3.2.2_Conv_output_0": {
+      "onnx_name": "/model.22/cv3.2/cv3.2.2/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        20,
+        20
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -29.446094512939453,
+      "max": -2.1174774169921875,
+      "mean": -13.101638059668243,
+      "std": 1.8343146777394288,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Reshape_5_output_0": {
+      "onnx_name": "/model.22/Reshape_5_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -29.446094512939453,
+      "max": -2.1174774169921875,
+      "mean": -13.101638059668243,
+      "std": 1.8343146777394288,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Concat_1_output_0": {
+      "onnx_name": "/model.22/Concat_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -29.446094512939453,
+      "max": -2.1174774169921875,
+      "mean": -15.801844147424259,
+      "std": 1.4676603460441102,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_dfl_Constant_output_0": {
+      "onnx_name": "/model.22/dfl/Constant_output_0",
+      "is_graph_output": false,
+      "shape": [
+        4
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.0,
+      "max": 8400.0,
+      "mean": 2105.25,
+      "std": 3634.2799407172806,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_dfl_Reshape_output_0": {
+      "onnx_name": "/model.22/dfl/Reshape_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        4,
+        16,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.2654032707214355,
+      "max": 12.976127624511719,
+      "mean": 0.9995966535924501,
+      "std": 1.957972208372922,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_dfl_Transpose_output_0": {
+      "onnx_name": "/model.22/dfl/Transpose_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        8400,
+        4,
+        16
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -5.2654032707214355,
+      "max": 12.976127624511719,
+      "mean": 0.9995966535924501,
+      "std": 1.9579722083729219,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_dfl_Softmax_output_0": {
+      "onnx_name": "/model.22/dfl/Softmax_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        8400,
+        4,
+        16
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.2011643946152617e-07,
+      "max": 0.7187641859054565,
+      "mean": 0.06250000000396028,
+      "std": 0.09430701032121996,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_dfl_Transpose_1_output_0": {
+      "onnx_name": "/model.22/dfl/Transpose_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        16,
+        4,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.2011643946152617e-07,
+      "max": 0.7187641859054565,
+      "mean": 0.06250000000396028,
+      "std": 0.09430701032121996,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_dfl_conv_Conv_output_0": {
+      "onnx_name": "/model.22/dfl/conv/Conv_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        1,
+        4,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.30841484665870667,
+      "max": 12.568994522094727,
+      "mean": 3.8554135247169152,
+      "std": 1.7044008319898047,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_dfl_Constant_1_output_0": {
+      "onnx_name": "/model.22/dfl/Constant_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        3
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.0,
+      "max": 8400.0,
+      "mean": 2801.6666666666665,
+      "std": 3958.6196528026735,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_dfl_Reshape_1_output_0": {
+      "onnx_name": "/model.22/dfl/Reshape_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        4,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.30841484665870667,
+      "max": 12.568994522094727,
+      "mean": 3.8554135247169152,
+      "std": 1.7044008319898047,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Shape_output_0": {
+      "onnx_name": "/model.22/Shape_output_0",
+      "is_graph_output": false,
+      "shape": [
+        3
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.0,
+      "max": 8400.0,
+      "mean": 2801.6666666666665,
+      "std": 3958.6196528026735,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_6_output_0": {
+      "onnx_name": "/model.22/Constant_6_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.0,
+      "max": 1.0,
+      "mean": 1.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Gather_output_0": {
+      "onnx_name": "/model.22/Gather_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 4.0,
+      "max": 4.0,
+      "mean": 4.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_7_output_0": {
+      "onnx_name": "/model.22/Constant_7_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0,
+      "std": 0.0,
+      "nonzero_frac": 0.0
+    },
+    "_model.22_Constant_8_output_0": {
+      "onnx_name": "/model.22/Constant_8_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.0,
+      "max": 1.0,
+      "mean": 1.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Add_output_0": {
+      "onnx_name": "/model.22/Add_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 5.0,
+      "max": 5.0,
+      "mean": 5.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_9_output_0": {
+      "onnx_name": "/model.22/Constant_9_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 2.0,
+      "max": 2.0,
+      "mean": 2.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Div_output_0": {
+      "onnx_name": "/model.22/Div_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 2.0,
+      "max": 2.0,
+      "mean": 2.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_10_output_0": {
+      "onnx_name": "/model.22/Constant_10_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 1.0,
+      "max": 1.0,
+      "mean": 1.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Mul_output_0": {
+      "onnx_name": "/model.22/Mul_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 2.0,
+      "max": 2.0,
+      "mean": 2.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Slice_output_0": {
+      "onnx_name": "/model.22/Slice_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.3782895803451538,
+      "max": 12.22854232788086,
+      "mean": 3.6640233186224385,
+      "std": 1.6693855245081632,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_11_output_0": {
+      "onnx_name": "/model.22/Constant_11_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 2.0,
+      "max": 2.0,
+      "mean": 2.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Mul_1_output_0": {
+      "onnx_name": "/model.22/Mul_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1
+      ],
+      "dtype_src": "int64",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 4.0,
+      "max": 4.0,
+      "mean": 4.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Slice_1_output_0": {
+      "onnx_name": "/model.22/Slice_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.30841484665870667,
+      "max": 12.568994522094727,
+      "mean": 4.0468037308113916,
+      "std": 1.7175144659536086,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_12_output_0": {
+      "onnx_name": "/model.22/Constant_12_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.5,
+      "max": 79.5,
+      "mean": 34.76190476190476,
+      "std": 22.90982272572756,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Sub_output_0": {
+      "onnx_name": "/model.22/Sub_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": -1.1282672882080078,
+      "max": 79.12171173095703,
+      "mean": 31.09788143769971,
+      "std": 23.412057488511497,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_13_output_0": {
+      "onnx_name": "/model.22/Constant_13_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.5,
+      "max": 79.5,
+      "mean": 34.76190476190476,
+      "std": 22.90982272572756,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Add_1_output_0": {
+      "onnx_name": "/model.22/Add_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.8084148168563843,
+      "max": 81.00190734863281,
+      "mean": 38.80870849088899,
+      "std": 22.826426280709846,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Add_2_output_0": {
+      "onnx_name": "/model.22/Add_2_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.8141270875930786,
+      "max": 159.093994140625,
+      "mean": 69.9065899502486,
+      "std": 46.13514486744322,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_14_output_0": {
+      "onnx_name": "/model.22/Constant_14_output_0",
+      "is_graph_output": false,
+      "shape": [],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 2.0,
+      "max": 2.0,
+      "mean": 2.0,
+      "std": 0.0,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Div_1_output_0": {
+      "onnx_name": "/model.22/Div_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.4070635437965393,
+      "max": 79.5469970703125,
+      "mean": 34.9532949751243,
+      "std": 23.06757243372161,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Sub_1_output_0": {
+      "onnx_name": "/model.22/Sub_1_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        2,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.8027025461196899,
+      "max": 21.79244613647461,
+      "mean": 7.71082705515836,
+      "std": 3.144639140544754,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Concat_2_output_0": {
+      "onnx_name": "/model.22/Concat_2_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        4,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.4070635437965393,
+      "max": 79.5469970703125,
+      "mean": 21.33206101514133,
+      "std": 21.366769555719294,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Constant_15_output_0": {
+      "onnx_name": "/model.22/Constant_15_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 8.0,
+      "max": 32.0,
+      "mean": 10.666666666666666,
+      "std": 5.701573160798388,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Mul_2_output_0": {
+      "onnx_name": "/model.22/Mul_2_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        4,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 3.2565083503723145,
+      "max": 640.8828125,
+      "mean": 205.07608014569396,
+      "std": 185.31046146501606,
+      "nonzero_frac": 1.0
+    },
+    "_model.22_Sigmoid_output_0": {
+      "onnx_name": "/model.22/Sigmoid_output_0",
+      "is_graph_output": false,
+      "shape": [
+        1,
+        80,
+        8400
+      ],
+      "dtype_src": "float32",
+      "dtype_stored": "float16",
+      "empty": false,
+      "min": 0.0,
+      "max": 0.10740965604782104,
+      "mean": 4.472099599384126e-06,
+      "std": 0.00039553882461944875,
+      "nonzero_frac": 0.8953452380952381
+    }
+  }
+}

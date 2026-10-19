@@ -1,0 +1,24 @@
+{
+  "model": "build\\onnx_opset21_conv_yolov8n_320.onnx",
+  "input": "确定性伪随机 default_rng(20261019)（与 data/golden 同款）",
+  "input_shape": [
+    1,
+    3,
+    320,
+    320
+  ],
+  "outputs": {
+    "output0": {
+      "max_abs_err": 57.596290588378906,
+      "mean_abs_err": 0.15770163680792126,
+      "max_err_over_maxabs": 0.180077023262027,
+      "mean_err_over_maxabs": 0.00049306024797454,
+      "cosine": 0.9992814091711172,
+      "nonzero_frac": 0.0494047619047619,
+      "rel_err_p50": 0.021228518954818795,
+      "rel_err_p99": 0.48099517154254473,
+      "rel_err_max": 20.178638070187272
+    }
+  },
+  "quantize_node_count": 123
+}

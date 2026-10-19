@@ -110,9 +110,17 @@ data/models/*.ckpt
 data/models/*.h5
 data/models/*.tflite
 #     data/results 里的探针 JSON（几 KB）是**指标来源**，必须入库；只排除原始大输出
+#     ★ 实测：*.onnx 每个 ≈3.5 MB（int8 QDQ 中间图，可由 tools/*.py 重建）⇒ 一并排除。
 data/results/*.npy
 data/results/*.bin
 data/results/*.raw
+data/results/*.onnx
+
+# --- 逐层导出产物：bin/ 实测 12.1 MB（320 个裸张量，可由 tools/export_layers.py 重建）---
+#     ★ yolov8n_320_layers.json（145 KB）是**层清单/接口契约**，必须入库；
+#       cases/（259 KB，36 个文件）是 HLS 的测试向量，体积小且是仿真证据，也入库。
+data/layers/bin/
+data/layers/scratch/
 
 # --- 金标准张量：npz 体积大（实测 320=23 MB / 640=91 MB），json 只有 118 KB -----------
 #     ★ 只排除 .npz 本体；同名 .json 记录了**每个张量的 shape/dtype/统计量/哈希**，
@@ -120,6 +128,42 @@ data/results/*.raw
 #       需要用 npz 时跑 `python tools/make_golden.py --model ...` 重建（确定性：固定种子）。
 data/golden/*.npz
 data/golden/*.npy
+
+# --- HLS/Vivado 综合产物：可重建，且体积极大（实测 hls_probe 2.4 GB / hls_engine 1.0 GB /
+#     hls_csim 21 MB）------------------------------------------------------------------
+#     ★ 只排除产物；`src/hls/accel/{src,tb,scripts}/` 下的源码、testbench 与脚本必须入库
+#       —— 它们是构建真源（见 docs/repo_spec.md §4）。build/hls* 只是**运行结果**。
+#     ★ 用 `build/hls*/` 一次覆盖 hls、hls_probe、hls_engine、hls_csim（以及以后新增的），
+#       避免每加一条流程就要回来补一行（本轮就漏了两行，害得 1 GB 目录进了 git status）。
+#     ★ `build/*.onnx`：中转 ONNX（实测 12.7 MB），可由 tools/*.py 重建。
+build/hls*/
+build/vivado/
+build/*.onnx
+
+# --- Python 字节码：tools/check_repo.py 检查 d) 是**扫盘**的，不入 gitignore 也会 FAIL --
+#     这里加进来是双保险（万一手滑 commit -f）；根治办法是脚本里前置
+#     `sys.dont_write_bytecode = True`，见 tools/README.md 与 ai/tools/README.md。
+__pycache__/
+*.pyc
+
+# --- 量化中间产物：npz 实测 2.6 MB（可重建）；json 是量化参数摘要，必须入库 --------
+data/models/quant/*.npz
+data/models/quant/*.npy
+
+# --- 第三方样例图像：许可不属于本项目，只作本地标定/回归，**不入库** ----------------
+#     ★ 为什么必须排除：这些图不是本队拍的（`zidane.jpg` 来自 ultralytics 包，
+#       该包是 AGPL-3.0；`data/samples/calib/` 是对它的派生增广；`calib_real/`
+#       来自 Wikimedia Commons，多半是 CC-BY-SA / CC-BY / 公有领域）。
+#       把别人的许可物提交进公开参赛仓库是实打实的许可风险，必须挡在仓库外。
+#     ★ 但 `data/samples/**/MANIFEST.csv` **必须入库** —— 它逐张记录来源 URL、
+#       作者、许可简称、许可 URL 与 SHA256，是「标定集到底是什么、能否合法复现」
+#       的唯一凭据。删了它，标定集就变成来路不明的黑盒。
+#     ★ 注意 git 语义：按后缀排除图像本体，CSV 不在后缀内 ⇒ 自然保留，无需 `!` 放回。
+data/samples/**/*.jpg
+data/samples/**/*.jpeg
+data/samples/**/*.png
+data/samples/**/*.webp
+data/samples/**/*.bmp
 
 # --- 训练/推理产生的临时目录 ---------------------------------------------------
 runs/

@@ -1,0 +1,103 @@
+{
+  "tool": "tools/pynq_net.py",
+  "mode": "check",
+  "model": "yolov8n_320.onnx",
+  "backend": "numpy",
+  "input": "真实图片 zidane.jpg",
+  "input_shape": [
+    1,
+    3,
+    320,
+    320
+  ],
+  "scales_source": "本图自身前向实测（--input 非 normal：标定集=该图，单图上限已注明）",
+  "nodes_executed": 262,
+  "op_counts": {
+    "Conv": 64,
+    "Sigmoid": 58,
+    "Mul": 60,
+    "Split": 8,
+    "Add": 9,
+    "Concat": 17,
+    "MaxPool": 3,
+    "Constant": 22,
+    "Resize": 2,
+    "Reshape": 8,
+    "Transpose": 2,
+    "Softmax": 1,
+    "Shape": 1,
+    "Gather": 1,
+    "Div": 2,
+    "Slice": 2,
+    "Sub": 2
+  },
+  "conv_layers": 64,
+  "total_macs": 1092998400,
+  "total_gop": 2.1859968,
+  "plan_time_s": 0.03450620000148774,
+  "wall_time_s": 0.8591352999992523,
+  "output_shape": [
+    1,
+    84,
+    2100
+  ],
+  "vs_ort_float32": {
+    "max_abs_err": 88.39053344726562,
+    "mean_abs_err": 0.1410754741048208,
+    "max_err_over_maxabs": 0.2785949580368641,
+    "mean_err_over_maxabs": 0.00044465073640167184,
+    "cosine": 0.9992353255820727,
+    "rel_err_p50": 0.022331686196968514,
+    "rel_err_p99": 1.3156745911176762
+  },
+  "detections": {
+    "conf_thr": 0.25,
+    "iou_thr": 0.45,
+    "n_anchor_ref": 21,
+    "n_anchor_sim": 22,
+    "n_nms_ref": 2,
+    "n_nms_sim": 2,
+    "match_raw": {
+      "matched": 21,
+      "n_ref": 21,
+      "n_sim": 22,
+      "max_corner_err_px": 7.12310791015625,
+      "max_score_err": 0.23313838243484497,
+      "unmatched_ref": 0,
+      "unmatched_sim": 1
+    },
+    "match_nms": {
+      "matched": 2,
+      "n_ref": 2,
+      "n_sim": 2,
+      "max_corner_err_px": 3.7184371948242188,
+      "max_score_err": 0.056143879890441895,
+      "unmatched_ref": 0,
+      "unmatched_sim": 0
+    }
+  },
+  "criteria": {
+    "cosine_min": 0.999,
+    "box_px_max": 3.0,
+    "score_max": 0.01,
+    "ok": false,
+    "failed": [
+      "框角最大差 3.718 px > 3.0",
+      "分数最大差 0.0561 > 0.010"
+    ]
+  },
+  "pl_split": {
+    "pl_eligible": 63,
+    "numpy_fallback": 1,
+    "fallback_detail": [
+      {
+        "layer": "/model.22/dfl/conv/Conv",
+        "reasons": [
+          "C_OUT=1 不在 (16, 256)",
+          "H_IN=4 不在 (10, 320)",
+          "W_IN=2100 不在 (10, 320)（DFL 的 2100 就栽在这）"
+        ]
+      }
+    ]
+  }
+}

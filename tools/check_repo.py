@@ -17,7 +17,7 @@
     末行 CHECK_REPO_WARN                  # 无 FAIL 但有 WARN
     末行 CHECK_REPO_FAIL                  # 有 FAIL
 
-实现的 5 项检查（承 docs/repo_spec.md §1/§2 与指南 3.3.5.4/3.3.5.5）::
+实现的 6 项检查（承 docs/repo_spec.md §1/§2 与指南 3.3.5.4/3.3.5.5）::
 
     a) 命名规则   : 遍历仓库（剪掉 .git/.research/ref/build/reports/board/logs 与
                     .venv/__pycache__），目录名/文件名含非 [A-Za-z0-9_.-] 字符 => FAIL
@@ -27,9 +27,20 @@
     d) 禁入文件   : *.jou *.str / .Xil 目录 / __pycache__ 目录 / vivado*.log /
                     根目录 build*.log，命中 => FAIL
     e) 权重一致性 : report/README.md 必须含指南 3.3.5.5 的 30/20/20/15/15，缺 => WARN（不 FAIL）
+    f) Python 语法: 自有 .py（tools/ sim/ src/ ai/tools/）必须能被 AST 解析，命中 => FAIL
+                    ★ 补这条的原因见 check_f_py_syntax 的 docstring：曾出现「4 个脚本语法
+                    错误、而 a)–e) 全绿」——**门禁绿灯不等于代码能跑**。
 
 设计约束：仓库尚未填满时必须**正常运行**，对缺失项报 FAIL 而不是崩溃。
 """
+
+import sys
+
+# 不生成 __pycache__：本仓库的 tools/check_repo.py 检查 d) 是**扫盘**的，不看 .gitignore，
+# 留下 .pyc 会直接判 FAIL。实测语义（勿想当然）：模块**自身体内**置位拦不住自己的 .pyc
+# （CPython 先编译并写缓存，再执行模块体），只有在本模块 import 别的本地模块**之前**
+# 置位才有效。所以这段必须放在所有 import 之前。
+sys.dont_write_bytecode = True
 
 import os
 import re
@@ -225,12 +236,47 @@ def check_e_weights(root):
     return WARN, "权重表：%s 权重不全（%d 项缺失）" % (WEIGHT_FILE, len(missing)), missing
 
 
+def check_f_py_syntax(root):
+    """f) 本仓库自己的 .py 必须能被 CPython 解析（只做 compile，不写 .pyc）。
+
+    为什么需要这一条：2026-10-19 一次批量编辑把 `sys.dont_write_bytecode` 插到了
+    `from __future__ import annotations` **之前**，4 个 tools/ 脚本直接语法错误，
+    而当时的 check a)–e) 全部报 PASS —— 因为没有任何一条检查会去读源码内容。
+    **门禁绿灯不等于代码能跑**，所以补上这条。
+
+    只扫自有源码目录（不含 ref/ 第三方资料、不含 build/ 生成物）。
+    """
+    import ast as _ast
+
+    src_roots = [root / p for p in ("tools", "sim", "src", "ai/tools")]
+    bad = []
+    n = 0
+    for sr in src_roots:
+        if not sr.is_dir():
+            continue
+        for p in sorted(sr.rglob("*.py")):
+            if "__pycache__" in p.parts:
+                continue
+            n += 1
+            try:
+                _ast.parse(p.read_text(encoding="utf-8"), filename=str(p))
+            except SyntaxError as e:
+                bad.append("%s:%s: %s" % (p.relative_to(root).as_posix(), e.lineno, e.msg))
+            except UnicodeDecodeError as e:
+                bad.append("%s: 不是 UTF-8（%s）" % (p.relative_to(root).as_posix(), e))
+    if not bad:
+        return PASS, "Python 语法：%d 个自有 .py 全部可解析" % n, []
+    detail = ["%d 个文件语法错误:" % len(bad)] + ["    - " + b for b in bad]
+    return FAIL, "Python 语法：%d 个文件解析失败" % len(bad), detail
+
+
 CHECKS = [
     ("a", "命名规则（纯 ASCII: [A-Za-z0-9_.-]）", check_a_naming),
     ("b", "必需目录 / 必需根文件存在", check_b_required_paths),
     ("c", "每个必需目录有 README.md", check_c_dir_readmes),
     ("d", "无禁入文件（.jou/.str/.Xil/__pycache__/vivado*.log/build*.log）", check_d_forbidden),
     ("e", "指南 3.3.5.5 权重一致性（report/README.md）", check_e_weights),
+    ("f", "自有 .py 语法可解析（AST parse，不写 .pyc）", check_f_py_syntax),
 ]
 
 

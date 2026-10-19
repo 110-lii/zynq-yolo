@@ -1,0 +1,24 @@
+{
+  "model": "build\\onnx_opset21_conv_yolov8n_320.onnx",
+  "input": "真实图片 zidane.jpg",
+  "input_shape": [
+    1,
+    3,
+    320,
+    320
+  ],
+  "outputs": {
+    "output0": {
+      "max_abs_err": 106.09869384765625,
+      "mean_abs_err": 0.13746998950602515,
+      "max_err_over_maxabs": 0.3344086426939818,
+      "mean_err_over_maxabs": 0.0004332866968925585,
+      "cosine": 0.9992487160965436,
+      "nonzero_frac": 0.05418367346938775,
+      "rel_err_p50": 0.021862438454756005,
+      "rel_err_p99": 1.378976542703659,
+      "rel_err_max": 43.253619197482294
+    }
+  },
+  "quantize_node_count": 123
+}

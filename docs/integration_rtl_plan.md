@@ -204,5 +204,21 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 10. **试跑桩（stub）必须与真实结果隔开**：`stub_jtag_capture_dryrun.tcl` 会伪造 dump 与
     结果 JSON，所以 `jtag_capture_test.tcl` 的结果路径支持 `RESULT_JSON` 环境变量覆盖，
-    并且桩只写 `build/` 下自己的临时文件——**不能让一次假跑在 `data/results/` 里留下
-    "板上通过"的证据**（本轮实际误写过一个 `data/results/jtag_capture_test.json`，已删）。
+    并且桩只写 `build/stub/` 下的临时文件——**不能让一次假跑在 `data/results/` 里留下
+    "板上通过"的证据**（本轮实际误写过一个 `data/results/jtag_capture_test.json`，已删；
+    桩产物也误落过 `board/scripts/`，已改到 `build/stub/`）。
+
+11. **★ 图样周期性导致的判据盲区（已知、已缓解但不能消除）**：`vid_test_pattern` 的
+    `R5=x&0x1F`、`G6=y&0x3F` ⇒ 水平周期 **32 px**、垂直周期 **64 行**。因此
+    「整 32 px / 整 64 行」的错位与正确帧**不可区分**。缓解：`tools/capture_golden.py`
+    在比对失败时会**枚举这些等价平移**并输出 `CAPTURE_SHIFT_DETECTED offset_px=<d>`——
+    把「看不出来」变成「能说出平移了多少」。彻底消除需要把 x/y 高位编进图样（改公式 +
+    改 TB + 改黄金模型 + 重出 bit），本轮**未做**，因为整周期错位不是当前路径的实际故障模式。
+
+12. **★ 板级致命状态：`fpga` 失败会把 DAP 弄进 wedge**（2026-10-20 实测）：
+    `fpga capture_chain.bit` 报 `fpga configuration failed. DONE PIN is not HIGH`；
+    紧接着 DAP 变成 `Cannot open JTAG port: AP transaction error, DAP status 0x30000021`，
+    连 `rst -system` 都报 `Cannot reset DAP`，`targets` 里 APU 消失。**软件侧无法恢复**
+    （重启 hw_server 无效），只能**断电重启板子**（或按 PS 复位键）。
+    脚本已改成：`fpga` 失败 → 降 JTAG 频率到 1.5 MHz + 重做 `rst -system`/`ps7_init` 再试一次，
+    仍失败则**立刻** `JTAG_CAPTURE_FAIL` 并提示断电，不再继续往下跑把板子带进更差的状态。

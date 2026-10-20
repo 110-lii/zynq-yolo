@@ -18,6 +18,8 @@
 | `jtag_layer_test.tcl` | **PC（XSCT）** | **无操作系统路径**：`rst -system` → `ps7_init` → 停 A9 核 → `fpga` 烧 PL → `dow -data` 灌向量 → `mwr` 寄存器 → 轮询 `ap_done` → `mrd` 读回比对。用于 JTAG 模式（PS 不启动 Linux）时验证**字节正确性** | ✅ **已实跑通过**（2026-10-20）：`JTAG_TEST_OK 6 / 6`，0 / 54 784 字节不符，**连续 3 次复现**。证据见 [`../logs/board_jtag_bringup_20261020.md`](../logs/board_jtag_bringup_20261020.md) 与 [`../logs/board_jtag_layer_test_20261020.md`](../logs/board_jtag_layer_test_20261020.md) |
 | `jtag_capture_test.tcl` | **PC（XSCT）** | **M1 采集链**无 OS 验收：`ps7_init` → 停核 → `fpga` 烧 `capture_chain.bit` → `ps7_post_config` → 按 `capture_chain_addr.txt` 找 DMA/GPIO 基址 → **先武装 DMA S2MM（DA/LENGTH/DMACR）再放图样（GPIO bit0=1）** → 轮询 `DMASR.IOC` → 查 `GPIO2.bit0`（采集 FIFO 溢出粘滞）→ `mrd -bin` dump DDR → 交 `tools/capture_golden.py --compare` | ⬜ 已创建，**待上板实跑**（判据 `JTAG_CAPTURE_OK` / `JTAG_CAPTURE_FAIL`；与 `sim` 的 `vid_capture_chain` 用**同一份黄金模型**） |
 | `stub_jtag_capture_dryrun.tcl` | **PC（XSCT，无板）** | `jtag_capture_test.tcl` 的**假硬件试跑**：把 `mwr/mrd/connect` 换成 Tcl 桩，DMA 立即完成、DDR dump 由黄金 bin 生成（`pass`）或翻一个字节（`corrupt`）。用途是证明**判据能失败**，并让脚本改动不必每次都上板 | ✅ 已跑：`pass` → `JTAG_CAPTURE_OK`；`corrupt` → `JTAG_CAPTURE_FAIL`（并定位到 `(x=360,y=1)`） |
+| `deploy_capture_pynq.ps1` | **PC** | **PYNQ 路径的部署入口**（M1 现在走这条）：`scp` `capture_chain.bit/.hwh` → `board/overlay/`、`src/ps/host/run_capture_test.py` → `src/ps/host/`、`run_capture_test.sh` → `board/scripts/`，`-Run` 时接着远程跑后者。参数：`-BoardHost 192.168.2.99 [-Run] [-TestArgs '--check'\|'--bench 20']` | ✅ 已实跑（2026-10-20 多轮）：`DEPLOY_CAPTURE_OK <n> <remote_dir>` / `DEPLOY_CAPTURE_FAIL` |
+| `run_capture_test.sh` | **板** | 板上包一层 **`sudo -S bash -lc`** 再跑 `src/ps/host/run_capture_test.py`（`-lc` 不是多余：sudo 重置环境后只有 login shell 才 source 到 `pynq_venv.sh` / `xrt_setup.sh`） | ✅ 已实跑（2026-10-20） |
 
 > ⚠️ 板上/SCP 两个脚本**从未在真实板子上执行过**（截至 2026-10-20）；`jtag_layer_test.tcl` **已实跑通过 6/6 并三次复现**。
 > 三个脚本的判据都以**令牌**为准（`DEPLOY_OK` / `BOARD_LAYER_OK` / `JTAG_LAYER_OK`），**不看退出码**。
@@ -26,15 +28,26 @@
 
 | 板子状态 | 用哪个 | 能回答什么 |
 |---|---|---|
-| SD 启动 PYNQ（Linux 在跑） | `deploy_to_board.ps1` + `run_board_test.sh` | 字节对不对 **＋ 多快（GOPS/fps）** |
-| **JTAG 模式（本文件记录的场景）** | `jtag_layer_test.tcl` | 只回答**字节对不对**；吞吐测不了 |
+| SD 启动 PYNQ（Linux 在跑） | `deploy_capture_pynq.ps1` + `run_capture_test.sh`（**M1 采集链现在走这条**） | 采集链字节对不对 ＋ fps/MBps |
+| SD 启动 PYNQ、跑旧卷积层验收 | `deploy_to_board.ps1` + `run_board_test.sh` | 卷积层字节对不对 ＋ 多快（GOPS） |
+| **JTAG 模式（无 OS）** | `jtag_layer_test.tcl`（层验收，**已 6/6 通过**）、`jtag_capture_test.tcl`（采集链，**未跑**） | 只回答**字节对不对**；吞吐测不了 |
 | 裸板无 OS、要看波形 | 见技能包 `vivado-cli-bringup`（ILA 抓波形） | 时序/协议波形 |
-| JTAG 模式、要复核字节 | `jtag_layer_test.tcl`（**已 6/6 通过**） | 与 PYNQ 路径交叉验证同一批用例 |
 
-> ⚠️ 两个脚本都**从未在真实板子上执行过**（截至 2026-10-20）。它们按
-> [`../../src/ps/pynq_driver/README.md`](../../src/ps/pynq_driver/README.md) 的既有约定
-> （仓库放 `/home/xilinx/zynq-yolo`、PYNQ 2.7、`sudo python3`）写成，第一次实跑后按
-> 实际情况修偏并**在此处把状态改为"已实跑"**。
+### PYNQ 路径实测到的环境硬约束（2026-10-20，全是踩过以后写下的）
+
+1. **必须 `sudo -S bash -lc`**：`sudo` 会重置环境，只有 login shell 才 source 到
+   `/etc/profile.d/pynq_venv.sh` 与 `xrt_setup.sh`；否则分别报 `No module named 'pynq'`
+   和 `No devices found, is the XRT environment sourced?`。
+2. **必须 `cd` 到仓库根**：`run_capture_test.py` 的 `--bitfile` 默认是相对路径，而 ssh
+   登录的 cwd 是 `/home/xilinx`，否则 `CAPTURE_BOARD_FAIL bitfile_missing`。
+3. **PC 侧免密**：本机只有 OpenSSH（无 sshpass/pscp）。用 `SSH_ASKPASS` +
+   `SSH_ASKPASS_REQUIRE=force` + `DISPLAY=localhost:0` 指向一个只输出密码的 `.cmd` 即可
+   （脚本里已封装）。Jupyter REST API 写 `~/.ssh` 走不通（XSRF + contents root 限制）。
+4. **`.ps1` 必须存成 UTF-8 带 BOM**：PS 5.1 对无 BOM + 中文注释的文件会报出与内容不符的
+   语法错（例如 `[switch]$Run,` 处「,后面缺少表达式」）。
+5. **改板上 `.py` 的字符串别用 PowerShell `Get-Content | Set-Content`**：PS 5.1 默认按
+   ANSI(936) 读，会把 UTF-8 中文读成乱码再写回，**整个文件的注释就毁了**；用 `edit` 工具
+   或 `[System.IO.File]::WriteAllText` + `UTF8Encoding($false)`。
 
 ## 搬运清单（deploy 脚本实际打包的内容）
 

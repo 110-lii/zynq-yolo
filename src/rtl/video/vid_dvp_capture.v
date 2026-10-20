@@ -11,10 +11,18 @@
 //       G8 = {G6, G6[5:4]} G6 = {b0[2:0], b1[7:5]}
 //       B8 = {B5, B5[4:2]}
 //
-// 输出流（AXI4-Stream，视频惯例）：
+// 输出流（AXI4-Stream，**一个 packet = 一整帧**）：
 //   * tuser = 1 只出现于每场第一个像素（SOF）；
-//   * tlast = 1 于每行最后一个像素（EOL）；
+//   * tlast = 1 只出现于每场最后一个像素（EOF，最后一行最后一个像素）；
 //   * tdata = **32 位**，高 8 位恒 0，低 24 位 = {R,G,B}。
+//     ★ 为什么 tlast 是 EOF 而不是行末 EOL（2026-10-20 上板实测踩出来的）：
+//       下游 AXI DMA 用 **simple（无 SG）模式**，它要求 tlast 恰好落在 length 结尾；
+//       tlast 提前到达（例如每行末一个）会被判为 Internal Error（DMASR bit4=1），
+//       DMA 随即停住不再收数，表现为「FIFO 写满、DMA 看着还在跑但一个字节都不进
+//       DDR」。板上实测证据：写 LENGTH=1024 字后读 DMASR=0x00005011
+//       （Halted + Int_Err + IOC），第 640 个字（第一行末）就 tlast 了。
+//       代价：行边界不再从流里体现 —— 我们不需要（分辨率固定，PS 按 frame_bytes
+//       切片），需要时由 PS 用 H_ACTIVE 自行换算。
 //     ★ 为什么是 32 位而不是 24 位：下游要接 AXI DMA（S2MM），而 DMA 的
 //       stream data width 只支持 8/16/32/64/128…（不支持 24），Xilinx 的
 //       axis_dwidth_converter 也不做 24→32。所以在这里补零到 32 位，
@@ -76,12 +84,12 @@ module vid_dvp_capture #(
     wire [23:0] rgb888 = {r8, g8, b8};
 
     wire eol = (x_cnt == H_ACTIVE[XW-1:0] - 1'b1);
-    wire eof = eol && (y_cnt == V_ACTIVE[YW-1:0] - 1'b1);
+    wire eof = eol && (y_cnt == V_ACTIVE[YW-1:0] - 1'b1);   // 整帧最后一个像素
 
     // ---------------------------------------------------------------- 像素 FIFO
     localparam integer FIFO_DEPTH = 16;
     localparam integer FIFO_AW    = 4;
-    reg  [25:0] fifo [0:FIFO_DEPTH-1];  // {user, last, data[23:0]}
+    reg  [25:0] fifo [0:FIFO_DEPTH-1];  // {user(SOF), last(EOF), data[23:0]}
     reg  [FIFO_AW:0] wptr, rptr;
     wire [FIFO_AW:0] wptr_inc = wptr + 1'b1;
     wire [FIFO_AW:0] rptr_inc = rptr + 1'b1;
@@ -98,7 +106,7 @@ module vid_dvp_capture #(
             rptr <= {(FIFO_AW+1){1'b0}};
         end else begin
             if (wr_en) begin
-                fifo[wptr[FIFO_AW-1:0]] <= {sof_pending, eol, rgb888};
+                fifo[wptr[FIFO_AW-1:0]] <= {sof_pending, eof, rgb888};
                 wptr <= wptr_inc;
             end
             if (rd_pop) begin

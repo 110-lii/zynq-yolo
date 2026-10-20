@@ -167,7 +167,7 @@ module vid_capture_chain_tb;
                              words, x_cnt, y_cnt, m_tdata, exp_w);
                 end
             end
-            // 帧结构：首字 tuser=1，行末 tlast=1，其余拍 tuser=0
+            // 帧结构：首字 tuser=1，**整帧最后一个字** tlast=1，其余 tuser=0/tlast=0
             if (x_cnt == 0 && y_cnt == 0) begin
                 if (m_tuser !== 1'b1) begin
                     errors = errors + 1;
@@ -177,7 +177,7 @@ module vid_capture_chain_tb;
                 errors = errors + 1;
                 if (errors <= 5) $display("MISMATCH tuser word=%0d got=%b expect=0", words, m_tuser);
             end
-            if (x_cnt == H_ACTIVE - 1) begin
+            if (x_cnt == H_ACTIVE - 1 && y_cnt == V_ACTIVE - 1) begin
                 if (m_tlast !== 1'b1) begin
                     errors = errors + 1;
                     if (errors <= 5) $display("MISMATCH tlast word=%0d got=%b expect=1", words, m_tlast);

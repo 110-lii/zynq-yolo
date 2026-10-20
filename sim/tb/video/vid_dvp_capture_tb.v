@@ -6,7 +6,8 @@
 // 检查项：
 //   1. 像素搬运：H*V 个像素一个不少、顺序对；
 //   2. RGB565→RGB888 的位复制直译与独立公式一致（四种颜色：红/绿/蓝/白）；
-//   3. tuser 只出现在每场第一个像素；tlast 出现在每行最后一个像素；
+//   3. tuser 只出现在每场第一个像素；tlast 只出现在每场最后一个像素（EOF，
+//      因为下游 AXI DMA simple 模式要求 tlast 落在 length 结尾，见 DUT 文件头）；
 //   4. 背压：整行不 ready 时像素先攒 FIFO（16 深），松手后不丢不乱；
 //   5. 溢出：送 V+2 行（像素数 > FIFO 深度）且整场不 ready ⇒ stat_overflow=1
 //      （粘滞位，不静默丢）。
@@ -100,8 +101,10 @@ module vid_dvp_capture_tb;
                 $display("FAIL tuser@%0d 只该在帧首", pix_total);
                 errors = errors + 1;
             end
-            if (tlast != ((pix_in_frame % H) == H-1)) begin
-                $display("FAIL tlast@%0d", pix_total);
+            // tlast 只在整帧最后一个像素（packet = 一帧）
+            if (tlast != (pix_in_frame == H*V-1)) begin
+                $display("FAIL tlast@%0d 帧内位置=%0d 期望 %b",
+                         pix_total, pix_in_frame, pix_in_frame == H*V-1);
                 errors = errors + 1;
             end
             if (chk_expected) begin

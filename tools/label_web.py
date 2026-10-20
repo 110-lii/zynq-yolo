@@ -42,53 +42,129 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 REPO = Path(__file__).resolve().parents[1]
-LABELS = REPO / "data" / "annot" / "labels.csv"
+ANNOT = REPO / "data" / "annot"
 
-FIELDS = ["id", "stratum", "clip", "frame", "box_idx", "conf", "h_px",
-          "color_role", "color_dist", "img", "label", "note"]
+# 多批次：每批一套 (CSV / 帧目录 / 评分文件)，互不覆盖。
+#   1 = 第一批 73 框（分层：hi / lo_kept / lo_drop），已完成
+#   2 = 第二批 159 框（hi 层颜色 unknown 按失败原因分层），见 docs/hi_layer_color_gate.md §4
+# 人工标注不可重建，所以批次之间**不做任何自动迁移或覆盖**。
+BATCHES = {
+    1: {"name": "第一批 · 分层样本",
+        "csv": ANNOT / "labels.csv",
+        "frames": ANNOT / "frames",
+        "score": ANNOT / "scores.json"},
+    2: {"name": "第二批 · hi 层颜色失败",
+        "csv": ANNOT / "labels2.csv",
+        "frames": ANNOT / "frames2",
+        "score": ANNOT / "scores2.json"},
+}
+DEFAULT_BATCH = 2
+
+FIELDS_V1 = ["id", "stratum", "clip", "frame", "box_idx", "conf", "h_px",
+             "color_role", "color_dist", "img", "label", "note"]
+FIELDS_V2 = ["id", "stratum", "fail_reason", "clip", "frame", "box_idx", "conf",
+             "h_px", "purity", "color_role", "color_dist", "img", "label", "note"]
 VALID = ("P", "N", "U")
 
 _lock = threading.Lock()
 
 
-def load_rows():
-    if not LABELS.exists():
+def load_rows(batch):
+    p = BATCHES[batch]["csv"]
+    if not p.exists():
         return []
-    with open(LABELS, encoding="utf-8", newline="") as fh:
+    with open(p, encoding="utf-8", newline="") as fh:
         return list(csv.DictReader(fh))
 
 
-def save_rows(rows):
-    tmp = LABELS.with_suffix(".csv.tmp")
+def save_rows(batch, rows, fields):
+    p = BATCHES[batch]["csv"]
+    tmp = p.with_suffix(".csv.tmp")
     with open(tmp, "w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=FIELDS)
+        w = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
         w.writeheader()
         for r in rows:
-            w.writerow({k: r.get(k, "") for k in FIELDS})
-    tmp.replace(LABELS)
+            w.writerow({k: r.get(k, "") for k in fields})
+    tmp.replace(p)
 
 
-def score(rows):
-    """分层加权的 precision 对比（与 make_player_labels.py --score 同口径）。"""
+def _band(rows):
+    """按框高分档的球员占比 —— 两批都用得上，且是第二批的主判决线索。"""
+    bands = ((0, 30, "0-30"), (30, 50, "30-50"), (50, 100, "50-100"),
+             (100, 150, "100-150"), (150, 1e9, "150+"))
+    out = {}
+    for lo, hi, name in bands:
+        sub = [r for r in rows if lo <= float(r["h_px"]) < hi]
+        if not sub:
+            continue
+        n_p = sum(1 for r in sub if r["label"] == "P")
+        out[name] = {"n": len(sub), "n_player": n_p,
+                     "pct_player": round(100.0 * n_p / len(sub))}
+    return out
+
+
+def score(batch, rows):
+    """两套评分口径分开写，避免把不同问题的数字混在一张表里。"""
     def pr(sel, name):
         s = [r for r in rows if sel(r)]
         lab = [r["label"] for r in s if r["label"] in VALID]
         n_lab = len(lab)
         n_pos = sum(1 for x in lab if x == "P")
-        return {
-            "strategy": name,
-            "n_kept": len(s),
-            "n_labeled": n_lab,
-            "n_player": n_pos,
-            "precision": (n_pos / n_lab) if n_lab else None,
-        }
+        return {"strategy": name, "n_kept": len(s), "n_labeled": n_lab,
+                "n_player": n_pos,
+                "precision": (n_pos / n_lab) if n_lab else None}
 
-    hi = lambda r: r["stratum"] == "hi"
-    kept = lambda r: r["stratum"] in ("hi", "lo_kept")
-    allb = lambda r: r["stratum"] in ("hi", "lo_kept", "lo_drop")
-    with_col = pr(kept, "有颜色先验（hi + lo_kept）")
-    without = pr(allb, "无颜色先验（hi + 全部 lo）")
-    return {"with_color": with_col, "without_color": without}
+    if batch == 1:
+        # 第一批：颜色先验有/无 的对照
+        with_col = pr(lambda r: r["stratum"] in ("hi", "lo_kept"),
+                      "有颜色先验（hi + lo_kept）")
+        without = pr(lambda r: r["stratum"] in ("hi", "lo_kept", "lo_drop"),
+                     "无颜色先验（hi + 全部 lo）")
+        return {"batch": 1, "kind": "color_prior_ab",
+                "with_color": with_col, "without_color": without}
+
+    # 第二批：只问一件事 —— 颜色判不出的框里，非球员是不是更多？
+    #   参照：第一批标注的 hi 层整体（24 个里 6 个非球员 = 25%）
+    ref = {"n": 24, "n_nonplayer": 6, "nonplayer_rate": 0.25,
+           "source": "第一批 data/annot/labels.csv 的 hi 层"}
+
+    def rate(sel, name):
+        s = [r for r in rows if sel(r)]
+        lab = [r["label"] for r in s if r["label"] in VALID]
+        n_lab = len(lab)
+        n_np = sum(1 for x in lab if x == "N")
+        n_p = sum(1 for x in lab if x == "P")
+        return {"stratum": name, "n": len(s), "n_labeled": n_lab,
+                "n_player": n_p, "n_nonplayer": n_np,
+                "nonplayer_rate": (n_np / n_lab) if n_lab else None,
+                "precision_if_kept": (n_p / n_lab) if n_lab else None}
+
+    by_stratum = {s: rate(lambda r, s=s: r["stratum"] == s, s)
+                  for s in ("hi_unk_purity", "hi_unk_color",
+                            "hi_unk_toosmall", "hi_unk_rect")}
+    overall = rate(lambda r: True, "全部颜色-unknown")
+    gap = None
+    if overall["n_labeled"]:
+        gap = round(overall["nonplayer_rate"] - ref["nonplayer_rate"], 3)
+    verdict = None
+    if gap is not None:
+        if gap >= 0.10:
+            verdict = ("颜色判不出的框里非球员占 %.0f%%，明显高于 hi 层整体的 25%% "
+                       "⇒ 「颜色判不出」本身就是非球员信号，不必去救颜色"
+                       % (100 * overall["nonplayer_rate"]))
+        elif gap <= -0.10:
+            verdict = ("颜色判不出的框里非球员只占 %.0f%%，低于 hi 层整体的 25%% "
+                       "⇒ 这些框更像球员，丢掉会伤 recall，颜色在 hi 层没有信息量"
+                       % (100 * overall["nonplayer_rate"]))
+        else:
+            verdict = ("颜色判不出的框里非球员占 %.0f%%，与 hi 层整体 25%% 无显著差异 "
+                       "⇒ 颜色在 hi 层没有信息量，这条路应放弃"
+                       % (100 * overall["nonplayer_rate"]))
+    return {"batch": 2, "kind": "hi_unknown_verdict",
+            "reference_hi_layer": ref, "unknown_overall": overall,
+            "by_stratum": by_stratum, "gap_vs_hi_layer": gap,
+            "by_box_height": _band([r for r in rows if r["label"] in VALID]),
+            "verdict": verdict}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -109,21 +185,39 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urlparse(self.path)
+        qs = parse_qs(u.query)
+        try:
+            batch = int((qs.get("batch") or [DEFAULT_BATCH])[0])
+        except (TypeError, ValueError):
+            batch = DEFAULT_BATCH
+        if batch not in BATCHES:
+            batch = DEFAULT_BATCH
         if u.path in ("/", "/index.html"):
             self._send(200, PAGE, "text/html; charset=utf-8")
             return
         if u.path.startswith("/frames/"):
             name = Path(u.path[len("/frames/"):]).name
-            p = REPO / "data" / "annot" / "frames" / name
+            p = BATCHES[batch]["frames"] / name
             if not p.exists():
                 self._send(404, {"err": "no_such_frame"}, "application/json")
                 return
             self._send(200, p.read_bytes(), "image/jpeg")
             return
+        if u.path == "/api/batches":
+            out = []
+            for b, cfg in BATCHES.items():
+                rows = load_rows(b)
+                out.append({"batch": b, "name": cfg["name"],
+                            "n_total": len(rows),
+                            "n_labeled": sum(1 for r in rows if r["label"] in VALID)})
+            self._send(200, {"batches": out, "default": DEFAULT_BATCH})
+            return
         if u.path == "/api/state":
             with _lock:
-                rows = load_rows()
+                rows = load_rows(batch)
             self._send(200, {
+                "batch": batch,
+                "batch_name": BATCHES[batch]["name"],
                 "rows": rows,
                 "n_total": len(rows),
                 "n_labeled": sum(1 for r in rows if r["label"] in VALID),
@@ -131,13 +225,21 @@ class Handler(BaseHTTPRequestHandler):
             return
         if u.path == "/api/score":
             with _lock:
-                rows = load_rows()
-            self._send(200, score(rows))
+                rows = load_rows(batch)
+            self._send(200, score(batch, rows))
             return
         self._send(404, {"err": "not_found"})
 
     def do_POST(self):
         u = urlparse(self.path)
+        qs = parse_qs(u.query)
+        try:
+            batch = int((qs.get("batch") or [DEFAULT_BATCH])[0])
+        except (TypeError, ValueError):
+            batch = DEFAULT_BATCH
+        if batch not in BATCHES:
+            self._send(400, {"err": "bad_batch"})
+            return
         n = int(self.headers.get("Content-Length") or 0)
         try:
             payload = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
@@ -151,7 +253,11 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(400, {"err": "bad_label"})
                 return
             with _lock:
-                rows = load_rows()
+                rows = load_rows(batch)
+                if not rows:
+                    self._send(409, {"err": "empty_batch"})
+                    return
+                fields = list(rows[0].keys())
                 hit = None
                 for r in rows:
                     if r["id"] == rid:
@@ -163,7 +269,7 @@ class Handler(BaseHTTPRequestHandler):
                 if hit is None:
                     self._send(404, {"err": "bad_id"})
                     return
-                save_rows(rows)
+                save_rows(batch, rows, fields)
                 n_lab = sum(1 for x in rows if x["label"] in VALID)
             self._send(200, {"ok": True, "id": rid, "label": lab,
                              "n_labeled": n_lab, "n_total": len(rows)})
@@ -208,6 +314,7 @@ PAGE = r"""<!doctype html>
 <body>
 <header>
   <h1>球员 / 非球员 标注</h1>
+  <span class="prog" id="bname"></span>
   <span class="prog" id="prog">…</span>
   <div class="bar"><i id="bar"></i></div>
   <span class="prog" id="sid"></span>
@@ -236,23 +343,26 @@ PAGE = r"""<!doctype html>
   <div style="text-align:right;margin-top:14px"><button onclick="dlg.close()" style="background:#2c3037;font-size:13px;padding:8px 16px">关闭</button></div>
 </dialog>
 <script>
-let rows=[], idx=0, rowsById={};
+let rows=[], idx=0, BATCH=1;
 const $=id=>document.getElementById(id);
 const VALID=["P","N","U"];
+const api=(p)=>p+(p.includes("?")?"&":"?")+"batch="+BATCH;
 
 function done(){return rows.filter(r=>VALID.includes(r.label)).length;}
 function render(){
   if(!rows.length){$("meta").textContent="没有数据";return;}
   idx=Math.max(0,Math.min(rows.length-1,idx));
   const r=rows[idx];
-  $("im").src="/frames/"+r.img.split("/").pop();
+  $("im").src=api("/frames/"+r.img.split("/").pop());
+  let extra="";
+  if(r.fail_reason) extra="取色失败 <b>"+r.fail_reason+"</b>　纯度 <b>"+r.purity+"</b><br>";
   $("meta").innerHTML =
     "编号 <b>"+r.id+"</b> / "+rows.length+"<br>"+
     "分层 <b>"+r.stratum+"</b><br>"+
+    extra+
     "检测置信度 <b>"+r.conf+"</b>　框高 <b>"+r.h_px+" px</b><br>"+
     "颜色判定 <b>"+r.color_role+"</b>（距离 "+r.color_dist+"）<br>"+
     "是球员吗？当前：<b>"+(r.label||"—")+"</b>";
-  $("sid").textContent="";
   const n=done();
   $("prog").textContent=n+" / "+rows.length+" 已标";
   $("bar").style.width=(rows.length?100*n/rows.length:0)+"%";
@@ -264,7 +374,7 @@ function flash(msg){const f=$("flash");f.textContent=msg;f.classList.add("on");
 async function setLabel(lab){
   if(!rows.length)return;
   const r=rows[idx];
-  const res=await fetch("/api/label",{method:"POST",headers:{"Content-Type":"application/json"},
+  const res=await fetch(api("/api/label"),{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({id:r.id,label:lab})});
   if(!res.ok){flash("保存失败");return;}
   r.label=lab;
@@ -276,18 +386,41 @@ async function setLabel(lab){
 let endShown=false;
 function toastEnd(){ if(!endShown){endShown=true; showScore();} }
 async function showScore(){
-  const r=await (await fetch("/api/score")).json();
-  const fmt=x=>(x.precision==null?"—":(100*x.precision).toFixed(1)+"%");
-  $("dlgBody").innerHTML =
-    "<h3 style='margin:0 0 10px'>颜色先验有没有让球员识别变好</h3>"+
-    "<table><tr><th>策略</th><th>保留框</th><th>已标注</th><th>球员数</th><th>precision</th></tr>"+
-    "<tr><td>有颜色先验（hi + lo_kept）</td><td>"+r.with_color.n_kept+"</td><td>"+
-      r.with_color.n_labeled+"</td><td>"+r.with_color.n_player+"</td><td><b>"+fmt(r.with_color)+"</b></td></tr>"+
-    "<tr><td>无颜色先验（hi + 全部 lo）</td><td>"+r.without_color.n_kept+"</td><td>"+
-      r.without_color.n_labeled+"</td><td>"+r.without_color.n_player+"</td><td><b>"+fmt(r.without_color)+"</b></td></tr>"+
-    "</table>"+
-    "<p style='color:#9aa0a6;font-size:12px;line-height:1.7'>样本是分层抽的，不是随机抽 ⇒ 这是<b>样本内</b>精确率，不能外推到全体。<br>"+
-    "未标完时数字会变，标满 73 个才最终。</p>";
+  const s=await (await fetch(api("/api/score"))).json();
+  const d=$("dlgBody");
+  const f=x=>(x==null?"—":(100*x).toFixed(1)+"%");
+  if(s.kind==="color_prior_ab"){
+    d.innerHTML =
+      "<h3 style='margin:0 0 10px'>第一批：颜色先验有没有让球员识别变好</h3>"+
+      "<table><tr><th>策略</th><th>保留框</th><th>已标注</th><th>球员数</th><th>precision</th></tr>"+
+      "<tr><td>有颜色先验（hi + lo_kept）</td><td>"+s.with_color.n_kept+"</td><td>"+
+        s.with_color.n_labeled+"</td><td>"+s.with_color.n_player+"</td><td><b>"+f(s.with_color.precision)+"</b></td></tr>"+
+      "<tr><td>无颜色先验（hi + 全部 lo）</td><td>"+s.without_color.n_kept+"</td><td>"+
+        s.without_color.n_labeled+"</td><td>"+s.without_color.n_player+"</td><td><b>"+f(s.without_color.precision)+"</b></td></tr>"+
+      "</table><p style='color:#9aa0a6;font-size:12px'>样本是分层抽的 ⇒ 样本内精确率</p>";
+  } else {
+    const o=s.unknown_overall, ref=s.reference_hi_layer;
+    let tr="";
+    for(const k in s.by_stratum){
+      const v=s.by_stratum[k];
+      if(!v.n_labeled) continue;
+      tr+="<tr><td>"+k+"</td><td>"+v.n_labeled+"</td><td>"+v.n_player+"</td><td>"+v.n_nonplayer+
+          "</td><td><b>"+f(v.nonplayer_rate)+"</b></td><td>"+f(v.precision_if_kept)+"</td></tr>";
+    }
+    d.innerHTML =
+      "<h3 style='margin:0 0 10px'>第二批：颜色判不出的框里，非球员是不是更多？</h3>"+
+      "<p style='font-size:13px;color:#9aa0a6;margin:0 0 8px'>参照：hi 层整体（第一批 24 个）非球员占 <b>"+
+        f(ref.nonplayer_rate)+"</b></p>"+
+      "<table><tr><th>失败原因</th><th>已标注</th><th>球员</th><th>非球员</th><th>非球员率</th><th>保留时精度</th></tr>"+
+      tr+
+      "<tr><td><b>合计</b></td><td>"+o.n_labeled+"</td><td>"+o.n_player+"</td><td>"+o.n_nonplayer+
+        "</td><td><b>"+f(o.nonplayer_rate)+"</b></td><td>"+f(o.precision_if_kept)+"</td></tr>"+
+      "</table>"+
+      "<p style='margin:12px 0 0;font-size:14px;line-height:1.7'><b>判决：</b>"+(s.verdict||"未标完，暂不判决")+"</p>"+
+      "<p style='color:#9aa0a6;font-size:12px;line-height:1.7;margin:8px 0 0'>"+
+      "非球员率明显高于 25% ⇒ 「颜色判不出」本身是信号；与 25% 无差异 ⇒ 颜色在 hi 层没信息量，放弃这条路。<br>"+
+      "样本是分层抽的（按失败原因），样本内比例，不能外推。</p>";
+  }
   $("dlg").showModal();
 }
 document.addEventListener("keydown",e=>{
@@ -307,9 +440,14 @@ $("next").onclick=()=>{idx++;render();};
 $("btnScore").onclick=showScore;
 const dlg=$("dlg");
 (async()=>{
-  const st=await (await fetch("/api/state")).json();
+  // 批次从 URL 读，默认用服务端给的默认批次
+  const b0=await (await fetch("/api/batches")).json();
+  const want=parseInt(new URLSearchParams(location.search).get("batch")||"",10);
+  BATCH=(Number.isFinite(want)&&b0.batches.some(b=>b.batch===want))?want:b0.default;
+  const info=b0.batches.find(b=>b.batch===BATCH);
+  $("bname").textContent=info?info.name:"";
+  const st=await (await fetch(api("/api/state"))).json();
   rows=st.rows;
-  // 从第一个未标的开始
   const firstOpen=rows.findIndex(r=>!VALID.includes(r.label));
   idx=firstOpen>=0?firstOpen:0;
   render();
@@ -322,19 +460,28 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="球员/非球员标注网页")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--batch", type=int, default=DEFAULT_BATCH,
+                    help="浏览器默认打开的批次（URL 里仍可用 ?batch=N 覆盖）")
     args = ap.parse_args(argv)
 
-    if not LABELS.exists():
-        print("LABEL_WEB_FAIL labels_csv_missing %s" % LABELS)
+    if args.batch not in BATCHES:
+        print("LABEL_WEB_FAIL bad_batch %s" % args.batch)
         return 2
-    rows = load_rows()
+    for b, cfg in BATCHES.items():
+        if not cfg["csv"].exists():
+            continue
+        rows = load_rows(b)
+        n_lab = sum(1 for r in rows if r["label"] in VALID)
+        print("BATCH %d %s %d/%d %s" % (b, cfg["name"], n_lab, len(rows), cfg["csv"]),
+              flush=True)
+    rows = load_rows(args.batch)
     if not rows:
-        print("LABEL_WEB_FAIL no_rows")
+        print("LABEL_WEB_FAIL no_rows batch=%d" % args.batch)
         return 2
     n_lab = sum(1 for r in rows if r["label"] in VALID)
 
     srv = ThreadingHTTPServer((args.host, args.port), Handler)
-    url = "http://%s:%d/" % (args.host, srv.server_address[1])
+    url = "http://%s:%d/?batch=%d" % (args.host, srv.server_address[1], args.batch)
     print("LABEL_WEB_OK %s %d/%d" % (url, n_lab, len(rows)), flush=True)
     print("（浏览器打开上面的地址；Ctrl+C 结束）", flush=True)
     try:

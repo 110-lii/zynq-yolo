@@ -101,7 +101,14 @@ module inf_axis_async_fifo #(
     input  wire              m_tready,
     output wire [DATA_W-1:0] m_tdata,
     output wire [USER_W-1:0] m_tuser,
-    output wire              m_tlast
+    output wire              m_tlast,
+    // ---- 上板排障观测口（悬空不影响功能；2026-10-20 PYNQ 上「FIFO 无输出」用）----
+    output wire              dbg_wfull,   // 写侧已满
+    output wire              dbg_rempty,  // 读侧已空
+    output wire              dbg_wr_hit,  // 写指针动过（|wbin）
+    output wire              dbg_rd_hit,  // 读指针动过（|rbin）
+    output wire              dbg_m_tready,// 下游有没有在拉（= m_tready 直通）
+    output wire [7:0]        dbg_rd_cnt    // 读侧成功握手次数（低 8 位，只看动没动）
 );
 
     // --------------------------------------------------------------- 参数推导
@@ -205,6 +212,29 @@ module inf_axis_async_fifo #(
             rgray <= bin2gray(rbin + 1'b1);
         end
     end
+
+    // ------------------------------------------------------- 调试观测（只读）
+    // 目的：把「有没有写进去」「读侧看见没有」「满/空标志对不对」变成可读位。
+    // 只做观测量，不参与任何控制，悬空也不影响功能。
+    assign dbg_wfull  = wfull;
+    assign dbg_rempty = rempty;
+    assign dbg_wr_hit = |wbin;
+    assign dbg_rd_hit = |rbin;
+
+    // 下游到底有没有在拉：m_tready 直通 + 成功读走的拍数计数。
+    // 2026-10-20 板上现象是「FIFO 满着不动、DMA 说自己在传、却既不完成也不报错」，
+    // 只有把「拉没拉」和「走了几拍」变成可读数字，才能分清
+    //   ① DMA 根本没拉（tready 一直 0）  ② 拉了但 FIFO 不弹（读逻辑问题）。
+    assign dbg_m_tready = m_tready;
+    reg [7:0] rd_cnt;
+    always @(posedge m_clk) begin
+        if (m_rst) begin
+            rd_cnt <= 8'd0;
+        end else if (rd_pop) begin
+            rd_cnt <= rd_cnt + 8'd1;
+        end
+    end
+    assign dbg_rd_cnt = rd_cnt;
 
     // 写指针同步进读域：两级，复位清 0（与 rbin 同域，同属读侧复位）
     always @(posedge m_clk) begin

@@ -213,7 +213,9 @@ YOLOv3-tiny @416 = **2.7825 G MAC = 5.5650 GOP/帧**（本仓库重算，见 §1
 2. 量化一致性：INT8 量化模型 vs 浮点模型 mAP/逐层误差（判据：mAP 掉幅 < 阈值）。
 3. 单层 HLS：一个 3×3 conv 在 PL 上与 golden 逐元素比对（判据：`CONV_LAYER_OK`）。
 4. 全网组装：逐层调度跑通静态图（判据：`E2E_OK` + 与 golden IoU > 阈值）。
-5. 实时闭环：接 OV5640 采集 → 检测 → OSD → LCD（判据：`PROGRAM_OK` + 实测 fps 落 `build/reports/`）。
+5. 实时闭环：接 OV5640 采集 → 检测 → 结果输出（判据：`PROGRAM_OK` + 实测 fps 落 `build/reports/`）。
+   > ⚠️ **2026-10-20 更正**：本行原写「→ OSD → LCD」，但 **D013 已裁定板载 LCD 只作数据输入端、
+   > 本项目不做视频输出**，故显示一段作废。现行通路见 [`integration_rtl_plan.md`](integration_rtl_plan.md)。
 
 ---
 

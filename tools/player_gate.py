@@ -1830,6 +1830,15 @@ def label_free_sanity(records):
     return out
 
 
+def _agree(blk):
+    """本 run 该层实测框数 / 按层占比折算框数。偏离 1 越多，说明两种口径越不是同一批东西。"""
+    n_est = blk.get("n_stratum_boxes_est")
+    n_run = blk.get("n_dropped_by_gate", 0) + (blk.get("n_kept_in_stratum") or 0)
+    if not n_est or not n_run:
+        return None
+    return round(n_run / n_est, 2)
+
+
 def precision_proxy(records):
     """**加权到真实占比**的 precision 代理 —— 不是 precision。
 
@@ -1926,6 +1935,12 @@ def precision_proxy(records):
                 continue
             v["n_stratum_boxes_est"] = round(share[s] * n_hi_unk_run, 1)
             v["n_N_est"] = round(v["N_rate"] * v["n_stratum_boxes_est"], 1)
+            # ★ 拓扑前提：同一层的「保留数」必须 ≤ 「该层盘面总框数」，否则说明
+            #   假设的层占比与本 run 的 reason 命名口径不自洽（例：本 run 的 purity 层
+            #   保留 844 框，而按 share 折算该层只有 785 框 ⇒ 内部矛盾）。
+            #   矛盾时该层**不给区间**，只给这个不等式本身。
+            v["topology_ok"] = bool(v["n_stratum_boxes_est"] is None or
+                                    (v["n_kept_in_stratum"] or 0) <= v["n_stratum_boxes_est"])
             # ★ 比值可能 >1（估计量小于实际丢弃数）⇒ 一旦 clamp 成 1.0，读的人会以为
             #   "全覆盖了"。>1 时**不给数字**，只给数轴（n_est）与丢弃数，让读者自己判断。
             v["real_recall_est"] = (round(v["n_dropped_by_gate"] / v["n_N_est"], 3)
@@ -1939,12 +1954,54 @@ def precision_proxy(records):
         for v in per.values():
             v["n_N_est"] = None
             v["real_recall_est"] = None
+    # ------------------------------------------------------------------
+    # ★ cov_est 的去向（2026-10-20 改）：**不再输出任何精确百分比**。
+    #   这个量的分子分母不同源（分母乘了另一次运行的层占比）、层内 N率 kappa=0.226、
+    #   且 purity 层存在拓扑矛盾（保留 844 > 折算 785）。任何「8%」都会被下游当结论引用，
+    #   而它既不是 precision 也不是 recall。⇒ 只给**保守界限**与不可靠原因。
+    #   保守界限取对「门控覆盖得少」最不利（即让覆盖率看起来最大）的那个口径：
+    #     分子 = 实际丢掉的框数 n_drop（本 run 实测，这是唯一硬数）
+    #     分母 = max(全部折算估计量, 全部本 run 的 hi-unknown 框数)
+    #   ⇒ cov_lo = n_drop / 分母上界；就算每 4 个取色失败框里只有 1 个是非球员，
+    #     这个分母也是它的上界，所以 cov_lo 是「宁可高估覆盖率」的下界。
+    # ------------------------------------------------------------------
+    n_unk_whole = n_hi_unk_run if not over else None
+    denom_lo = None
+    if not over and n_est_tot:
+        denom_lo = max(float(n_est_tot), float(n_unk_whole or 0))
+    cov = {
+        "cov_est_reliable": False,
+        "why_unreliable": [
+            "分母乘了一组来自另一次运行(hi_color_diag)的层占比，与本 run 不是同一批框；"
+            "实测框数/折算框数在 rect 层相差 %.1f 倍" % (_agree(per.get("rect") or {}) or 1.0),
+            "层内 N率来自 kappa=0.226 的标注，只可信层间相对高低",
+            "purity 层存在拓扑矛盾：本 run 保留 %s 框 > 按层占比折算的 %s 框 ⇒ "
+            "『同一层』的两种口径定义的集合不同（本 run 的 geo_rescue_purity/purity_hull_ok "
+            "可能被 diag 那次归到了别层）"
+            % ((per.get("purity") or {}).get("n_kept_in_stratum"),
+               (per.get("purity") or {}).get("n_stratum_boxes_est")),
+            "因此本字段**不给精确百分比**，只给一个对『覆盖率被低估』方向不敏感的界限",
+        ],
+        "bound_kind": ("rate_vs_hi_unknown_boxes（★上限意义上的下界，不是 precision，"
+                       "也不是 recall）" if denom_lo else "n/a"),
+        "bound_lo_from_measured_drops": (round(n_drop / denom_lo, 3) if denom_lo else None),
+        "bound_lo_pct": (round(100.0 * n_drop / denom_lo, 1) if denom_lo else None),
+        "bound_denominator": ({"n_drop_measured": n_drop,
+                               "denom_upper_bound": round(denom_lo, 1),
+                               "why_upper": "取 max(折算估计量, 本 run 的 hi-unknown 框数)，"
+                                            "对『门控覆盖得少』最不利的口径"}
+                              if denom_lo else None),
+        "strength": "weak -> 只能读作『几分之一量级』，不得换算成任何百分比结论",
+        "n_topology_violations": sum(1 for v in per.values() if v.get("topology_ok") is False),
+    }
     return {
         "kind": "precision_proxy_weighted_by_stratum_share（不是 precision）",
         "valid": (not over),
         "invalid_reason": why or (("本次运行 hi 层共 %d 框，与 hi_color_diag.json 的 n_hi=%s 不符；"
                                    "第二批标注的分层比例是从 diag 那次抽样定的，口径不同 ⇒ 代理量作废"
                                    % (n_hi, diag.get("n_hi"))) if over else None),
+        "cov_est_reliable": False,
+        "cov": cov,
         "n_hi_this_run": n_hi,
         "n_hi_unknown_est_from_diag": est_hi_unk,
         "per_stratum": per,
@@ -2092,6 +2149,13 @@ def _agree(v):
         return None
     n_actual = (v.get("n_dropped_by_gate") or 0) + n_kept
     return round(n_actual / n_st, 1)
+
+
+def _agree_kind(v):
+    """`_agree` 的容器包装（早先调用处传的是整个 per 字典，键名不匹配 ⇒ 恒返回 None）。"""
+    if v and "n_stratum_boxes_est" not in v and "purity" in v:
+        v = v.get("purity") or {}
+    return _agree(v)
 
 
 def gate_defects(ref, proxy):
@@ -2372,10 +2436,23 @@ def main(argv=None):
                   % (s, v["n_N_in_sample"], v["n_labeled"], 100 * (v["N_rate"] or 0),
                      v["n_dropped_by_gate"], -1 if n_kept_st is None else n_kept_st,
                      -1 if n_st is None else n_st, v["n_N_est"] or 0,
-                     ("%.1f%%" % (100 * v["real_recall_est"]))
-                     if v["real_recall_est"] is not None else "n/a"))
+                     ("n/a" if v.get("topology_ok") is False
+                      else "n/a（本字段不给精确百分比，见 cov 块）")))
         print("  ★ 口径警告：上面两列**分母不同源**。左列是本 run 实测（丢/留），"
               "右列是用另一次运行的层分布折算的估计量；两者不一致不构成任何一方的证伪。")
+        print("  ★ 覆盖率**不再打印精确百分比**（cov_est_reliable=false）：分子分母不同源 "
+              "+ purity 层拓扑矛盾（本 run 保留 844 框 > 按层占比折算 785 框）。只给保守界限：")
+        _cv = PROXY.get("cov") or {}
+        if _cv.get("bound_lo_pct") is not None:
+            print("    门控丢 %d / 分母上界 %s ⇒ 覆盖率下界 %.1f%%"
+                  "（★只是『上限意义的下界』，用来否定『门控覆盖了大部分』，"
+                  "不能当 precision/recall）"
+                  % (_cv["bound_denominator"]["n_drop_measured"],
+                     _cv["bound_denominator"]["denom_upper_bound"], _cv["bound_lo_pct"]))
+        else:
+            print("    界限不给数：%s" % (_cv.get("strength") or "n/a"))
+        for _w in (_cv.get("why_unreliable") or []):
+            print("    · %s" % _w)
         if not PROXY.get("valid", True):
             print("  ⚠ 口径失效，本块数字**作废**：%s" % PROXY["invalid_reason"])
         elif PROXY.get("coverage_status") == "INCONSISTENT_est_below_drops":
@@ -2383,10 +2460,8 @@ def main(argv=None):
                   "**不给覆盖率**（不是『覆盖得好』）"
                   % (PROXY["n_N_est_total"], PROXY["n_drop_total"]))
         elif PROXY.get("real_recall_est_total_raw") is not None:
-            print("  合计：盘面估计非球员 %s 框，门控丢 %d ⇒ 比值 %s（★不是 precision，"
-                  "分母来自另一次运行的分布）"
-                  % (PROXY["n_N_est_total"], PROXY["n_drop_total"],
-                     "%.1f%%" % (100 * PROXY["real_recall_est_total_raw"])))
+            print("  合计：盘面估计非球员 %s 框（★该估计量与实测不符，见上『分母不同源』警告；"
+                  "**不打印比值**——它会立刻被读成 precision）" % PROXY["n_N_est_total"])
         else:
             print("  合计：**不给数**（缺该层的抽样率/层占比）")
     if defect:
@@ -2457,8 +2532,9 @@ def main(argv=None):
             "hull_purity 用的是「球衣色像素在其凸包面积中的占比」，"
             "阈值 0.60 不是从标注集调的，敏感性见 docs/player_gate_v1.md §5",
             "precision_proxy 只是**层内 N 率 × 层假定占比**的折算（层假定占比来自另一次运行），"
-            "本 run 的估计量(≈57 框)甚至小于实际丢弃数(98) ⇒ coverage_status=INCONSISTENT，"
-            "不得当作覆盖率引用；见 docs/player_gate_v1.md §5.1(b)",
+            "且 purity 层存在**拓扑矛盾**（本 run 保留 844 框 > 按层占比折算的 785 框）⇒ "
+            "cov_est_reliable=false，**不给精确百分比**，令牌里只打 cov_est=unreliable；"
+            "见 docs/player_gate_v1.md §5.1(b)",
             "标注的 (clip,frame,box_idx) 不是框身份（box_idx 是层内 enumerate 下标，"
             "labels.csv 73 行仅 61 个唯一值、labels2.csv 159 行仅 115 个）⇒ 本文件零逐框对齐；"
             "alignment_policy.n_boxes_aligned_one_to_one = 0",
@@ -2477,14 +2553,12 @@ def main(argv=None):
             B["delta_after_minus_legacy"].get("n_tracks", 0),
             B["delta_after_minus_legacy"].get("id_switch", 0),
             B["delta_after_minus_legacy"].get("len_median_of_clips", 0) or 0)
-    if PROXY and PROXY.get("coverage_status") == "ok":
-        metric += " cov_est=%.0f%%" % (100 * (PROXY.get("real_recall_est_total_raw") or 0))
-    elif PROXY and PROXY.get("coverage_status") == "INCONSISTENT_est_below_drops":
-        # 估计非球员量小于实际丢弃数 ⇒ 代理量失效，**不打印百分比**，只标事实
-        metric += " cov_est=INVALID(est%d<drop%d)" % (PROXY.get("n_N_est_total") or 0,
-                                                     PROXY.get("n_drop_total") or 0)
-    elif PROXY and not PROXY.get("valid"):
-        metric += " cov_est=INVALID"
+    # ★ 令牌里**不再打印 cov_est 的精确百分比**：会被下游当结论引用（见 §5.1(b)）。
+    #   只给「不可靠」标签 + 分母上界意义下的下界，且下界也会被读成精度 ⇒ 只给标签。
+    if PROXY is not None:
+        metric += " cov_est=unreliable"
+        if not PROXY.get("valid", True):
+            metric += "(invalid)"
     if defect:
         metric += " DEFECT=%d" % len(defect)
     if conf_list:

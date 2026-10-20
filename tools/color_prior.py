@@ -133,10 +133,11 @@ GateConfig = None
 judge_frame = None
 GateMeter = None
 PRESET_RULES = None
+preset_config = None
 
 
 def _load_gate():
-    global _pg, GateConfig, judge_frame, GateMeter, PRESET_RULES
+    global _pg, GateConfig, judge_frame, GateMeter, PRESET_RULES, preset_config
     if _pg is not None:
         return _pg
     sys.dont_write_bytecode = True
@@ -152,6 +153,7 @@ def _load_gate():
     judge_frame = _mod.judge_frame
     GateMeter = _mod.ColorMeter
     PRESET_RULES = _mod.PRESETS["presets"]["rules"]
+    preset_config = _mod.preset_config
     return _mod
 
 HI_CONF = 0.25          # 常规检测阈值（与全仓库口径一致）
@@ -230,6 +232,8 @@ def process_clip(model, clip_path, palette, use_color, args):
     gate_reason = {}
     gate_drop_reasons = set()
     gate_meter = None
+    gate_matrix = {}
+    gate_matrix_meters = {}
     if gate_mode:
         _load_gate()
         if gate == "presets":                    # 只换规则表，保留 v1 的结构证据
@@ -249,6 +253,15 @@ def process_clip(model, clip_path, palette, use_color, args):
         gate_cfg.use_color = True
         gate_cfg.use_struct = True
         gate_meter = GateMeter(gate_cfg.palette, gate_cfg.use_hull, gate_cfg.hull_purity)
+        # --gate-matrix 时顺便把几套规则的 ② 去留一起数出来（只数，不改变主口径）
+        gate_matrix_meters = {}
+        if getattr(args, "gate_matrix", False):
+            for _k in ("presets", "after", "legacy", "minimal"):
+                try:
+                    gate_matrix_meters[_k] = GateMeter(gate_cfg.palette, gate_cfg.use_hull,
+                                                       gate_cfg.hull_purity)
+                except Exception:
+                    pass
 
     # hi 层取色失败原因分层（给 docs/hi_layer_color_gate.md 提供可复算的数字）
     hi_by_reason = {REASON_TOO_SMALL: 0, REASON_PURITY: 0, REASON_RECT: 0,
@@ -321,6 +334,18 @@ def process_clip(model, clip_path, palette, use_color, args):
                     accept = (d.role != "staff")
                     gate_cnt[d.role] = gate_cnt.get(d.role, 0) + 1
                     gate_reason[d.reason] = gate_reason.get(d.reason, 0) + 1
+                    # 同一批补检框，换规则表后 ② 的去留各是多少（--gate-matrix）
+                    for _mn, _mm in gate_matrix_meters.items():
+                        _mm_cfg = (GateConfig(palette=dict(palette),
+                                              rules=dict(PRESET_RULES))
+                                   if _mn == "presets"
+                                   else preset_config(_mn, palette=palette))
+                        _mm_cfg.use_color = True
+                        _mm_cfg.use_struct = True
+                        _dr = judge_frame(frame, np.asarray([bb], dtype=float),
+                                          np.asarray([float(cf)]), _mm_cfg, meter=_mm)[0]
+                        _g = gate_matrix.setdefault(_mn, {"kept": 0, "dropped": 0})
+                        _g["kept" if _dr.role != "staff" else "dropped"] += 1
                 else:
                     role, dist, purity, col = _classify_box(frame, bb, palette)
                     accept = True
@@ -387,6 +412,9 @@ def process_clip(model, clip_path, palette, use_color, args):
             "gate_role_counts": dict(gate_cnt) if gate_mode else None,
             "gate_reason_counts": dict(sorted(gate_reason.items(),
                                               key=lambda kv: -kv[1])) if gate_mode else None,
+            # 同一批补检框在几套规则表下的 ② 去留（键 = PRESETS 名）
+            "gate_matrix": ({k: dict(v) for k, v in gate_matrix.items()}
+                            if gate_matrix else None),
         },
         # hi 层"判不出颜色"的原因分层 —— 区分「信息不足」与「颜色有歧义」
         "hi_unknown_reason": dict(hi_by_reason),
@@ -423,6 +451,9 @@ def main(argv=None):
     ap.add_argument("--gate-rules", default=None,
                     help="覆盖规则表，格式 reason=action,reason=action，"
                          "如 too_small=keep,purity=drop,rect=drop,color=demote")
+    ap.add_argument("--gate-matrix", action="store_true",
+                    help="额外统计：同一批 ② 补检框在 presets/after/legacy/minimal "
+                         "几套规则下各留多少（只数，不改变 --gate 的主口径）")
     args = ap.parse_args(argv)
 
     mp = Path(args.model)

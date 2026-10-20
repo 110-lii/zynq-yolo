@@ -122,8 +122,20 @@ data/results/viz/
 #     ★ newmatch_frames/ 是「新比赛看片识色」的抽帧证据（ffmpeg -ss 单帧，800 KB 级），
 #       可由视频 + tools/kit_calib.py 重建；色板结论以 kit_calib.json 的**数字**为准。
 data/results/newmatch_frames/
-#     ★ _* 前缀 = 调试/备份中间产物（如 _bak_color_prior.json），不是指标来源。
+#     ★ _* 前缀一般是调试/备份中间产物（如 _bak_color_prior.json、_probe_tmp.json），
+#       不是指标来源 ⇒ 默认排除。
+#     ⚠️ 例外：docs/cross_match_eval.md §13.8 的**证据索引**点名的 _cm_* / _kit_new
+#       是「修前 vs 修后」对照的唯一留档（并发清理已误删过一次），必须入库。
 data/results/_*
+!data/results/_cm_play_v1.json
+!data/results/_cm_rand_v1.json
+!data/results/_kit_new.json
+#     ★ `*.log` 在第 11 行被全局排除，但这两份是**评估运行的原始控制台输出**，
+#       §13.8 索引点名要留（不属 §1.6 禁入的 build*/vivado* 类构建日志）。
+!data/results/_cm_play_v1.log
+!data/results/_cm_rand_v1.log
+!data/results/_cm_rand_v2.log
+!data/results/_cm_play_v2_calib.log
 
 # --- 逐层导出产物：bin/ 实测 12.1 MB（320 个裸张量，可由 tools/export_layers.py 重建）---
 #     ★ yolov8n_320_layers.json（145 KB）是**层清单/接口契约**，必须入库；

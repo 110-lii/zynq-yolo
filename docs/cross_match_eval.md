@@ -3,6 +3,9 @@
 > 结论先说：**现有颜色/门控结论的全部证据只来自 `migu_5106947698` 一场球**。
 > 这个工具把「换一场还剩多少」变成一条可复算的命令 + 一组**能失败的判据**，
 > 而不是跑完让人自己看数字。
+>
+> 📌 **本文讲「框架怎么用、判据怎么定、为什么这么定」；实测跑出来是什么、结论是什么，见
+> [`cross_match_results.md`](cross_match_results.md)**（两者分工，不要混写）。
 
 工具：`tools/cross_match_eval.py`（配套闸门 `tools/palette_probe.py`）
 输出：`data/results/cross_match.json`（**不覆盖** `data/results/hi_color_diag.json`）

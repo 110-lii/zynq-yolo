@@ -236,6 +236,43 @@ def _binop(kind: str, a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return {"Add": np.add, "Sub": np.subtract, "Mul": np.multiply, "Div": np.divide}[kind](a32, b32)
 
 
+def _sliding_window_view(x: np.ndarray, window_shape, axis):
+    """numpy<1.20 compatibility shim for np.lib.stride_tricks.sliding_window_view.
+
+    The board image ships numpy 1.17.4 (Python 3.8), where the native helper does
+    not exist.  The as_strided fallback reproduces the native layout: window axes
+    are moved to the end, followed by the window dimensions.
+    """
+    native = getattr(np.lib.stride_tricks, "sliding_window_view", None)
+    if native is not None:
+        return native(x, window_shape, axis=axis)
+
+    x = np.asarray(x)
+    window_shape = tuple(window_shape) if isinstance(window_shape, (tuple, list)) else (int(window_shape),)
+    axis = tuple(axis) if isinstance(axis, (tuple, list)) else (int(axis),)
+    if len(window_shape) != len(axis):
+        raise ValueError("window_shape and axis must have the same length")
+    axis = tuple(int(a) % x.ndim for a in axis)
+    if len(set(axis)) != len(axis):
+        raise ValueError("duplicate axis")
+    other = [i for i in range(x.ndim) if i not in axis]
+    perm = tuple(other + list(axis))
+    y = np.transpose(x, perm)
+    n_other = len(other)
+    out_shape = list(y.shape[:n_other])
+    strides = list(y.strides[:n_other])
+    for i, win in enumerate(window_shape):
+        dim = y.shape[n_other + i]
+        if win > dim:
+            raise ValueError("window larger than dimension")
+        out_shape.append(dim - win + 1)
+        strides.append(y.strides[n_other + i])
+    out_shape.extend(window_shape)
+    strides.extend(y.strides[n_other + i] for i in range(len(window_shape)))
+    return np.lib.stride_tricks.as_strided(
+        y, shape=tuple(out_shape), strides=tuple(strides), writeable=False)
+
+
 def _op_constant(node: Node, rt: "Runtime") -> np.ndarray:
     return rt.graph.initializers[node.outputs[0]]
 
@@ -268,6 +305,12 @@ def _op_div(node: Node, rt: "Runtime") -> np.ndarray:
     return _binop("Div", rt.get(node.inputs[0]), rt.get(node.inputs[1]))
 
 
+def _op_pow(node: Node, rt: "Runtime") -> np.ndarray:
+    x = _as_f32(rt.get(node.inputs[0]))
+    y = _as_f32(rt.get(node.inputs[1]))
+    return np.power(x, y).astype(F32)
+
+
 def _op_concat(node: Node, rt: "Runtime") -> np.ndarray:
     axis = int(node.attrs.get("axis", 0))
     xs = [rt.get(n) for n in node.inputs]
@@ -282,6 +325,9 @@ def _op_split(node: Node, rt: "Runtime") -> List[np.ndarray]:
     x = rt.get(node.inputs[0])
     axis = int(node.attrs.get("axis", 0))
     split = node.attrs.get("split", None)
+    if split is None and len(node.inputs) > 1:
+        # opset 12: split sizes live in the second input (initializer).
+        split = rt.get(node.inputs[1])
     if split is None:
         n = len(node.outputs)
         if x.shape[axis] % n != 0:
@@ -294,7 +340,7 @@ def _op_split(node: Node, rt: "Runtime") -> List[np.ndarray]:
     sizes = [int(v) for v in split]
     if sum(sizes) != x.shape[axis]:
         raise RuntimeError("Split 长度和 %d != 轴长 %d：%s" % (sum(sizes), x.shape[axis], node.name))
-    return list(np.split(x, list(np.cumsum(sizes)[:-1]), axis=axis))
+    return list(np.split(x, [int(v) for v in np.cumsum(sizes)[:-1]], axis=axis))
 
 
 def _op_reshape(node: Node, rt: "Runtime") -> np.ndarray:
@@ -328,7 +374,7 @@ def _op_maxpool(node: Node, rt: "Runtime") -> np.ndarray:
     pad_width[wax] = (pw, pwe)
     # ONNX MaxPool 越界按 -inf 处理（不能填 0：会吃掉负激活）
     xp = np.pad(x, pad_width, constant_values=F32(-np.inf))
-    v = np.lib.stride_tricks.sliding_window_view(xp, (k[0], k[1]), axis=(hax, wax))
+    v = _sliding_window_view(xp, (k[0], k[1]), axis=(hax, wax))
     ho = (xp.shape[hax] - k[0]) // s[0] + 1
     wo = (xp.shape[wax] - k[1]) // s[1] + 1
     v = v[..., : (ho - 1) * s[0] + 1: s[0], : (wo - 1) * s[1] + 1: s[1], :, :]
@@ -363,8 +409,10 @@ def _op_resize(node: Node, rt: "Runtime") -> np.ndarray:
     if nearest_mode != "floor":
         raise NotImplementedError("Resize nearest_mode=%s 未实现（本模型是 floor）" % nearest_mode)
     # asymmetric + floor: x_orig = x_out / scale, index = floor(x_orig)，再夹到边界
-    ih = np.floor(np.arange(out_h, dtype=np.float64) / sc_h).astype(I64)
-    iw = np.floor(np.arange(out_w, dtype=np.float64) / sc_w).astype(I64)
+    # np.intp, not int64: the 32-bit Zynq ARM has intp=int32 and numpy<1.20
+    # rejects a "safe" int64->int32 cast in np.take().
+    ih = np.floor(np.arange(out_h, dtype=np.float64) / sc_h).astype(np.intp)
+    iw = np.floor(np.arange(out_w, dtype=np.float64) / sc_w).astype(np.intp)
     ih = np.clip(ih, 0, x.shape[hax] - 1)
     iw = np.clip(iw, 0, x.shape[wax] - 1)
     return np.take(np.take(x, ih, axis=hax), iw, axis=wax)
@@ -391,7 +439,7 @@ def _op_shape(node: Node, rt: "Runtime") -> np.ndarray:
 
 def _op_gather(node: Node, rt: "Runtime") -> np.ndarray:
     x = rt.get(node.inputs[0])
-    idx = np.atleast_1d(rt.get(node.inputs[1])).astype(I64)
+    idx = np.atleast_1d(rt.get(node.inputs[1])).astype(np.intp)
     axis = int(node.attrs.get("axis", 0))
     return np.take(x, idx, axis=axis)
 
@@ -430,6 +478,7 @@ OP_IMPL = {
     "Sub": _op_sub,
     "Mul": _op_mul,
     "Div": _op_div,
+    "Pow": _op_pow,
     "Concat": _op_concat,
     "Split": _op_split,
     "Reshape": _op_reshape,
@@ -454,7 +503,7 @@ def _im2col(x: np.ndarray, k: int, sh: int, sw: int,
     xp = np.pad(x, ((0, 0), (phb, phe), (pw, pwe)), constant_values=pad_value)
     ho = (xp.shape[1] - k) // sh + 1
     wo = (xp.shape[2] - k) // sw + 1
-    v = np.lib.stride_tricks.sliding_window_view(xp, (k, k), axis=(1, 2))
+    v = _sliding_window_view(xp, (k, k), axis=(1, 2))
     v = v[:, : (ho - 1) * sh + 1: sh, : (wo - 1) * sw + 1: sw, :, :]
     cols = np.ascontiguousarray(np.transpose(v, (0, 3, 4, 1, 2)), dtype=dtype)
     return cols.reshape(c * k * k, ho * wo), ho, wo
@@ -1225,6 +1274,15 @@ def _write_json(path: Path, obj: Any) -> None:
                     encoding="utf-8", newline="\n")
 
 
+def _is_relative_to(path: Path, base: Path) -> bool:
+    """Python 3.8 compatibility (Path.is_relative_to is 3.9+)."""
+    try:
+        path.relative_to(base)
+        return True
+    except ValueError:
+        return False
+
+
 def make_input(args, graph: Graph) -> Tuple[np.ndarray, str, str]:
     shape = graph.input_shape
     if args.input == "normal":
@@ -1416,7 +1474,7 @@ def cmd_check(args) -> int:
         out_path = REPO / out_path
     _write_json(out_path, report)
     print("")
-    shown = out_path.relative_to(REPO) if out_path.is_relative_to(REPO) else out_path
+    shown = out_path.relative_to(REPO) if _is_relative_to(out_path, REPO) else out_path
     print("明细 -> %s" % shown)
     print("PYNQ_NET_OK" if ok else "PYNQ_NET_FAIL")
     return 0 if ok else 1

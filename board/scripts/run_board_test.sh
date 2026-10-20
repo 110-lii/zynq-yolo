@@ -21,6 +21,17 @@ set -u
 
 REPEAT="${REPEAT:-3}"
 
+# ---- PYNQ / XRT 环境（sudo 会清环境，必须显式 source；2026-10-20 板上实测）----
+# 不 source 时表现为 `UserWarning: No devices found, is the XRT environment sourced?`
+# 随后 Overlay 加载失败 ⇒ BOARD_LAYER_FAIL overlay_load_error。
+if [ -f /etc/profile.d/xrt_setup.sh ]; then
+    . /etc/profile.d/xrt_setup.sh
+fi
+if [ -f /etc/profile.d/pynq_venv.sh ]; then
+    . /etc/profile.d/pynq_venv.sh
+fi
+export PYTHONPATH="/home/xilinx${PYTHONPATH:+:$PYTHONPATH}"
+
 # ---- 定位仓库根（脚本在 <root>/board/scripts/ 下） ---------------------------
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"

@@ -15,6 +15,19 @@
 |---|---|---|---|
 | `deploy_to_board.ps1` | **PC** | 检查本地产物齐全 → 打 tar 包（只带真源 + 数据，不带 `.git`/产物）→ `scp` 到板 → 远程解包到 `/home/xilinx/zynq-yolo` | ✅ 已创建（2026-10-20，**尚未实跑**） |
 | `run_board_test.sh` | **板** | 板上跑 `src/ps/host/run_layer_test.py`，stdout 存 `board/logs/`，回传 JSON 里的关键摘要 | ✅ 已创建（2026-10-20，**尚未实跑**） |
+| `jtag_layer_test.tcl` | **PC（XSCT）** | **无操作系统路径**：`rst -system` → `ps7_init` → 停 A9 核 → `fpga` 烧 PL → `dow -data` 灌向量 → `mwr` 寄存器 → 轮询 `ap_done` → `mrd` 读回比对。用于 JTAG 模式（PS 不启动 Linux）时验证**字节正确性** | ✅ **已实跑通过**（2026-10-20）：`JTAG_TEST_OK 6 / 6`，0 / 54 784 字节不符，**连续 3 次复现**。证据见 [`../logs/board_jtag_bringup_20261020.md`](../logs/board_jtag_bringup_20261020.md) 与 [`../logs/board_jtag_layer_test_20261020.md`](../logs/board_jtag_layer_test_20261020.md) |
+
+> ⚠️ 板上/SCP 两个脚本**从未在真实板子上执行过**（截至 2026-10-20）；`jtag_layer_test.tcl` **已实跑通过 6/6 并三次复现**。
+> 三个脚本的判据都以**令牌**为准（`DEPLOY_OK` / `BOARD_LAYER_OK` / `JTAG_LAYER_OK`），**不看退出码**。
+
+## 三条路径怎么选
+
+| 板子状态 | 用哪个 | 能回答什么 |
+|---|---|---|
+| SD 启动 PYNQ（Linux 在跑） | `deploy_to_board.ps1` + `run_board_test.sh` | 字节对不对 **＋ 多快（GOPS/fps）** |
+| **JTAG 模式（本文件记录的场景）** | `jtag_layer_test.tcl` | 只回答**字节对不对**；吞吐测不了 |
+| 裸板无 OS、要看波形 | 见技能包 `vivado-cli-bringup`（ILA 抓波形） | 时序/协议波形 |
+| JTAG 模式、要复核字节 | `jtag_layer_test.tcl`（**已 6/6 通过**） | 与 PYNQ 路径交叉验证同一批用例 |
 
 > ⚠️ 两个脚本都**从未在真实板子上执行过**（截至 2026-10-20）。它们按
 > [`../../src/ps/pynq_driver/README.md`](../../src/ps/pynq_driver/README.md) 的既有约定

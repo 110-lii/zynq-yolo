@@ -22,8 +22,10 @@
 | [002](002_yolo_survey_intake.md) | 2026-10-19 | 接收侧会话的 YOLO 调研：定位、独立核验、迁入 `docs/` ★ | `group/1101`（客户端 `dsh`） | ① **不采信报告自述**：论文锚点 `532ms / 1.88 fps / 160 DSP / 185 BRAM18 / 25.9k LUT / 46.7k FF / 10.45 GOPS / 3.36W` 逐行核到 `.research/arc2020_paper.txt` 第 591–592、675、697–698 行；② `7020 上无 DPU` 由 `dpu_pynq_readme.md` 第 6 行「PYNQ-enabled Zynq **Ultrascale+**」+ 支持表 **21 块板全无 7000 系**证成；③ 抓出并**撤回**1 处无出处数字（`5.6 MB`：同值两单位 ⇒ 疑单位串用，论文全文无此字节数）；④ 迁移对账走**机械判据**而非肉眼 —— 链接 `broken=0`、URL 集合差恰好 1 条、数值 token **无净减少**；⑤ 入库提交 `fb079c5` 已推 `origin/main` | 
 | [003](003_conv_engine_bitstream.md) | 2026-10-19（整理于 10-20） | conv_engine HLS 内核落地、INT8 量化验证与出片（单路主线）★ | `group/1101`（客户端 `dsh`） | ① 资源收敛由对照实验逼出：`p8_1_40_a0` LUT 66.5% / DSP 58.6%，`ACC_FULL=1` 假设被 `p8_1_40_a1`（LUT 70 928）**实测证伪**；② 时序教训硬证据：100 MHz WNS **−1.247 ns** → 83.33 MHz 复跑 **+0.025 ns**（`build/reports/timing/conv_engine_bd_timing.rpt`）；③ HLS Estimated Fmax 136.99 vs 实现 88.5 MHz（差 55%）口径纪律；④ 测试向量 M/S 随手取 ⇒ 钳位假绿、差点掩盖真 bias bug —— 改为由 acc 量级反推后 csim 6 用例全绿（`CSIM_ALL_OK`）；⑤ 原文位置：`ai/raw/2026-10-19_8160c00c.md`（主会话 46 条提示词，`_prompts_all.md` P8–P53） |
 
-> **统计**：共 **3** 条记录；带自我纠错轨迹（★）**3** 条。
-> 编号连续、不复用；下一条应为 `004_<slug>.md`。
+| [004](004_jtag_bringup.md) | 2026-10-20 | JTAG 模式（无操作系统）下 conv_engine 首次真机验证 ★ | `group/1101`（客户端 `dsh`） | ① 判据令牌 `JTAG_TEST_OK 6 / 6`、**0 / 54 784 字节不符**、连续 3 次复现（`board/logs/board_jtag_layer_test_20261020.md` 原文 + `data/results/jtag_layer_test.json`）；② 四次「像硬件坏了」的现象**全部定位到测量侧**：`memmap` 访问许可 → `mrd` 输出无 `0x` 前缀 → `ps7_init` 不停 A9 核导致核跑垃圾代码抢内存 → 前序会话遗留 PS wedge 需 `rst -system`；③ **误判「板子掉电」的自我纠正**：`targets` 全空但 Windows 设备树里 Digilent `C3059298ABCD` 在位、重扫链上器件都在 ⇒ 是 hw_server 状态问题；④ 明确划界：JTAG 路径**刻意不测**吞吐，GOPS/fps 仍为 `null`，需 PYNQ 启动后测 |
+
+> **统计**：共 **4** 条记录；带自我纠错轨迹（★）**4** 条。
+> 编号连续、不复用；下一条应为 `005_<slug>.md`。
 
 ---
 
@@ -42,8 +44,8 @@
 ## 怎么加一条记录
 
 ```powershell
-# 1) 复制模板，编号取本表 max+1（当前 max=003 ⇒ 下一个是 004）
-Copy-Item D:\zynq-yolo\ai\sessions\_TEMPLATE.md D:\zynq-yolo\ai\sessions\004_<slug>.md
+# 1) 复制模板，编号取本表 max+1（当前 max=004 ⇒ 下一个是 005）
+Copy-Item D:\zynq-yolo\ai\sessions\_TEMPLATE.md D:\zynq-yolo\ai\sessions\005_<slug>.md
 # 2) 逐项填写（字段不得删；「原文位置」必须真实）
 # 3) 回到本文件，在上表追加一行（顺序不可反）
 # 4) 问一句：「这次有什么是换个题目也能用的？」→ 有则去 ../../skill/ 建包

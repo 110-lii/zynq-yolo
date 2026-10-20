@@ -257,10 +257,40 @@ def distance_to_ref(col, ref):
     return 0.8 * dh + 0.2 * ds, "hue"
 
 
+def ref_of(value):
+    """色板条目 -> 解析后的 (h01|None, s, v)。**唯一解析入口**。
+
+    `palette` 的值允许三种形态（向后兼容 + 支持按场校准）：
+      1. 颜色名（字符串，如 "white"/"blue"）—— 走 `color_of_name()` 查 PALETTE_REF；
+      2. 已解析的元组 `(h01|None, s, v)` —— 直接使用（h01 用 None 表示无彩色）；
+      3. kit_calib 的实测结构 `{"kind": "achromatic"|"hue", "h01"/"s"/"v"}` ——
+         由 `tools/kit_calib.py` 产出，用于「按场校准」。
+    ★ 为什么要有这一层：PALETTE_REF 是**按旧比赛素材标定**的常数，跨场会偏；
+      实测新比赛深蓝球衣 S=0.298/V=0.435 而预置 blue 是 S=0.70/V=0.70，
+      直接比会让 30 pt 的像素落到 0.16 门外判 unknown（见 docs/cross_match_eval.md §12.3）。
+      允许实测参考色进来，但**不改变任何阈值**，也不改全局 PALETTE_REF。
+    """
+    if isinstance(value, str):
+        return color_of_name(value)
+    if isinstance(value, dict):
+        kind = value.get("kind")
+        if kind == "achromatic" or value.get("h01") is None:
+            return (None, float(value["s"]), float(value["v"]))
+        return (float(value["h01"]), float(value["s"]), float(value["v"]))
+    if isinstance(value, (tuple, list)):
+        if len(value) == 2:                       # (s, v) 视为无彩色
+            return (None, float(value[0]), float(value[1]))
+        if len(value) == 3:                       # (h01|None, s, v)
+            h = value[0]
+            return (None if h is None else float(h), float(value[1]), float(value[2]))
+    raise SystemExit("bad palette entry: %r（只接受颜色名 / (h01,s,v) / kit_calib 结构）"
+                     % (value,))
+
+
 def classify(col, palette):
     """把躯干颜色分配到最接近的预设色；超过阈值 -> unknown。
 
-    palette: dict  role -> colour_name   （role 形如 "A"/"B"/"ref"）
+    palette: dict  role -> 颜色名 / 已解析参考色（见 `ref_of`）
     返回 (role or "unknown", best_dist, scores)
 
     ★ 这里有个**已修的 bug**（2026-10-20）：第一版把 `color_of_name()` 的**解析结果**
@@ -268,12 +298,12 @@ def classify(col, palette):
       「已解析的元组」再次解析 -> `SystemExit("unknown palette colour: (0.0, 170, 0.75)")`。
       而调用处包在 try 里，异常被吞掉后**静默退化成"全部判 white"**（实测 3 段 6506 帧
       红色 0 次、全白）。这是本仓库又一次「判据假绿」：没有崩溃，但结果毫无意义。
-      ⇒ 现在 `distance_to_ref` 只接受**原始 PALETTE_REF 元组**，解析在 classify 里做一次。
+      ⇒ 现在 `distance_to_ref` 只接受**解析后的参考色**，解析只在 `ref_of()` 做一次。
     """
-    # ★ 必须经过 color_of_name() 解析：PALETTE_REF 里是 h(0-179) 原始量纲，
+    # ★ 必须经过 ref_of() 解析：PALETTE_REF 里是 h(0-179) 原始量纲，
     #   只有 color_of_name() 会把它换算成 h01(0..1)，与 torso_color 对齐。
     #   直接 .get() 拿到原始元组会让白色/黑色走错分支（实测白色距离恒 0.80）。
-    refs = {role: color_of_name(cn) for role, cn in palette.items()}
+    refs = {role: ref_of(cn) for role, cn in palette.items()}
     scores = {}
     for role, ref in refs.items():
         d, _kind = distance_to_ref(col, ref)

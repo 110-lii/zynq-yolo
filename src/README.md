@@ -46,11 +46,17 @@ RTL 模块名以**子系统前缀**开头，前缀与目录一一对应，便于
 | `rtl/ip/` | IP 配置引脚/约束（`.xci`） | 不适用（IP 自带命名） |
 | `ps/pynq_driver/`、`ps/host/` | PS 侧 Python | 不适用（Python 命名） |
 
-> ⚠️ **当前磁盘事实**：`src/` 下全部子目录（`rtl/{common,video,accel,io,ip}`、`hls/accel/{src,include,tb,scripts}`、`ps/{pynq_driver,host}`）
-> **均已存在但为空**，仓库内尚**没有任何 `.v` / `.cpp` / `.py` 设计文件**。下文出现的具体模块文件名（如 `inf_reset_sync.v`）只是**命名示例**，**不是磁盘上已存在的文件**。
+> ⚠️ **当前磁盘事实（2026-10-20 更新）**：`src/` 下已有**设计真源**落地 ——
+> - `src/hls/accel/`：`conv_engine.cpp`（通用 INT8 卷积引擎，契约 [`../docs/accel_interface.md`](../docs/accel_interface.md)）
+>   + `acc_conv3x3.cpp`（早期探针）+ `tb/tb_conv_engine.cpp` + 7 个构建/导出脚本；
+>   已出片 `board/overlay/conv_engine.bit`（83.33 MHz 时序收敛，见该契约 §7.4）。
+> - `src/ps/`：`pynq_driver/conv_engine.py`（PYNQ 驱动，**未上板**）+ `host/run_layer_test.py`（板上验收脚本，**未上板**）。
+> - `src/rtl/` 各子目录**仍为空**：尚无任何 `.v` 手写 Verilog。
+>
+> 下文出现的 `inf_reset_sync.v`、`vid_dvp_capture.v` 等 RTL 文件名仍是**命名示例**（文件不存在）。
 >
 > 例（示例，非现有文件）：`src/rtl/common/inf_reset_sync.v` 必须在 `rtl/common/`；`src/rtl/video/vid_dvp_capture.v` 必须在 `rtl/video/`。
-> **跨目录放错 = 违反 §2.2**，`tools/check_repo.py`（**TODO：尚未创建**）应能检出。
+> **跨目录放错 = 违反 §2.2**，`tools/check_repo.py` 应能检出（该脚本已创建，`CHECK_REPO_OK`）。
 
 ## 规则
 
@@ -61,7 +67,11 @@ RTL 模块名以**子系统前缀**开头，前缀与目录一一对应，便于
 - 对应 testbench **不放这里**：`x.v` 的 testbench 命名为 `x_tb.v`，放 `sim/`（见 [`../sim/README.md`](../sim/README.md)）。
 - `src/rtl/ip/*.xci` 为 Vivado 生成配置，**只读、勿手改**。
 - 禁止把 `build/` 产物、`.bit`、`.dcp`、`__pycache__/`、`.venv/` 放进本目录（见根 `.gitignore`）。
-- **待裁定项**：核心加速器实现方式（HLS / RTL / 混合）、**核心算法的具体形态**（含是否采用学习模型）与输入规格、数据集来源与许可、软硬件划分边界与 AXI 接口契约具体数值、与旧项目资产的具体复用范围 —— 全部写上 `<待用户裁定：见 docs/repo_spec.md §7>`，**不得擅自填入**。★ 目录名 `accel/`、`hls/` 是骨架预留，**不代表加速器或模型方案已定**。
+- **待裁定项**：核心加速器实现方式（HLS / RTL / 混合）、核心算法的具体形态与输入规格、数据集来源与许可、软硬件划分边界与 AXI 接口契约具体数值、与旧项目资产的具体复用范围 —— 全部写上 `<待用户裁定：见 docs/repo_spec.md §7>`，**不得擅自填入**。
+  > ★ 事实进展（2026-10-20，**不是状态变更**，见 [`../ai/coordination/DECISIONS.md`](../ai/coordination/DECISIONS.md) 汇总段）：
+  > D003 已按 **HLS 单内核路线**落地出片、D006 的 AXI 数值已冻结（`docs/accel_interface.md` §4），
+  > 但两者都是 Lead 的工程选择、**未经用户裁定**，台账状态仍为 `discussing`。
+  > D004 原则已裁定（YOLO 出人），参数待细化；D010 已把题目收窄到「看得见的目标」（球员位置/队形/越位线/区域人数）。
 
 ## 怎么用
 
@@ -74,9 +84,10 @@ Get-ChildItem -Recurse -Directory D:\zynq-yolo\src
 #    例：新建 DVP 采集   -> src/rtl/video/vid_dvp_capture.v
 #    对应 tb 放 sim/tb/ 下同名镜像路径：sim/tb/common/inf_reset_sync_tb.v
 
-# 3. 新增一个 HLS 算子
-#    src/hls/accel/src/*.cpp + src/hls/accel/include/*.h + src/hls/accel/tb/*.cpp
-#    构建脚本 src/hls/accel/scripts/csynth.tcl（判据见 docs/repo_spec.md §5）
+# 3. ✅ 已有的 HLS 内核：src/hls/accel/
+#    csim 判据（6 用例逐位比对）: python src/hls/accel/scripts/run_csim.py --par 8
+#    csynth（出片口径 p8_1_40）: python src/hls/accel/scripts/run_engine.py / export_engine.py
+#    设计变更后必须重跑 csim（契约 §8 变更纪律）
 
 # 4. 设计定稿后由 build/scripts/ 的脚本综合实现（见 ../build/README.md）
 ```
@@ -87,4 +98,6 @@ Get-ChildItem -Recurse -Directory D:\zynq-yolo\src
 > 旧项目结论**中文一手原文**（`D:\FPGA\oi\CLAUDE.md:206`，逐字含表格管道符）`| DSP 仅 220 个 | 不做大算力 CNN |`。
 > ⚠️ 英文形式「DSP only 220 — 不做大算力 CNN」是**转述**，不是一手原文，报告里请用中文原文。
 
-> **待裁定的加速器/算法形态细节** `<待用户裁定：见 docs/repo_spec.md §7>`。
+> **待裁定的加速器/算法形态细节** `<待用户裁定：见 docs/repo_spec.md §7>`
+> ★ 已落地部分不受此约束：`conv_engine` HLS 内核是按 D003 的**工程选择**（Lead，非用户裁定）
+> 实现的，接口契约见 [`../docs/accel_interface.md`](../docs/accel_interface.md)。

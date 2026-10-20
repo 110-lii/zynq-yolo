@@ -46,6 +46,9 @@
 //   * 乘法位宽是 DSP 用量的直接决定者。v1 把 int8 强转 int16 再乘 ⇒ 16×16 乘法器，
 //     LUT 冲到 334%。这里用 9 位（激活 0..255）⇒ 9×9，一个 DSP48E1 装得下。
 //   * 输入**不能**整层进片：早期层 409 600 B > BRAM 总量 612 500 B 的 67%。
+//   * ★★ 任何修改后的「裸 csynth」必须与出片配置对齐：PAR_OUT=8 / TILE_H=1 /
+//     TILE_W=40 / ACC_FULL=0（即 export_engine.py 的默认 tag p8_1_40）。改了这里
+//     的默认值却不出片，报告里的资源表就会与板上的 .bit 脱钩。
 // ============================================================================
 #include <ap_int.h>
 
@@ -54,18 +57,25 @@
 #define PAR_OUT 8          // 输出通道并行度：决定 DSP 用量与吞吐，实测见 docs/accel_interface.md §7
 #endif
 #ifndef TILE_H
-#define TILE_H 4           // 每次算几行输出
+// ★ 当前出片配置是 TILE_H=1（见下条注释）；这里若不改默认值，裸 csynth 会综合出
+//   TILE_H=4 的另一套硬件。脚本（export_engine.py / csynth_engine.tcl）一律显式
+//   传 -DTILE_H=1，故两条路径都能对上；此默认值只为「裸跑也能复现出片配置」。
+#define TILE_H 1           // 每次算几行输出；选定 1（docs/accel_interface.md §7.2：
+                           // TILE_H=4 会把行缓冲/requant 副本各复制 4 份，LUT 138% 装不下）
 #endif
 #ifndef TILE_W
 #define TILE_W 40          // 每次算几列输出（最宽 W=320 靠列分块覆盖）
 #endif
 
 // ---- 实验开关：累加器分区维度 ------------------------------------------------
-//   ACC_FULL=0（当前基线）：`acc` 只按 PAR_OUT 分区 ⇒ 每个通道槽是一块 [TILE_H][TILE_W]
+//   ★ 当前出片配置是 ACC_FULL=0（p8_1_40_a0，docs/accel_interface.md §7.2 选定行）。
+//   ACC_FULL=0：`acc` 只按 PAR_OUT 分区 ⇒ 每个通道槽是一块 [TILE_H][TILE_W]
 //       的**存储器**，综合报告里出现 16 个地址端口，每个 403 LUT ⇒ 合计 6 448 LUT。
 //   ACC_FULL=1：三维修全展开 ⇒ 全部落寄存器，地址变常量、理论上消掉这些 mux，
-//       代价是 PAR_OUT*TILE_H*TILE_W*32 bit 的触发器（8*4*40*32 = 40 960 FF）。
-//   为什么做成开关而不是直接改：这是**用 FF 换 LUT** 的交易，两侧都是硬上限
+//       代价是 PAR_OUT*TILE_H*TILE_W*32 bit 的触发器（8*1*40*32 = 10 240 FF）。
+//       实测反直觉（§6 教训）：全展开 LUT 反而从 35 385 涨到 70 928 —— 真正的成本
+//       是副本数，不是分区方式 ⇒ 保持 0。
+//   为什么做成开关而不是直接删：这是**用 FF 换 LUT** 的交易，两侧都是硬上限
 //   （LUT 53 200 / FF 106 400），必须实测才知道哪边先撞墙。
 #ifndef ACC_FULL
 #define ACC_FULL 0

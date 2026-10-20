@@ -1,0 +1,154 @@
+{
+  "bitfile": "/home/xilinx/zynq-yolo/board/overlay/conv_engine.bit",
+  "buffers": {
+    "in": 692224,
+    "lut": 256,
+    "out": 692224,
+    "params": 3072,
+    "total": 1682688,
+    "w": 294912
+  },
+  "clients": [
+    "192.168.2.100:58716"
+  ],
+  "conf": 0.25,
+  "conv_layers": 60,
+  "detail": "",
+  "frames": [
+    {
+      "detections": {
+        "boxes": [
+          [
+            224.24472045898438,
+            309.2292175292969,
+            255.0675048828125,
+            346.7707824707031
+          ],
+          [
+            372.19720458984375,
+            73.11300659179688,
+            404.962646484375,
+            172.38958740234375
+          ],
+          [
+            43.40679168701172,
+            91.60015869140625,
+            72.7381591796875,
+            200.49664306640625
+          ],
+          [
+            170.98104858398438,
+            91.78337860107422,
+            194.24700927734375,
+            173.37646484375
+          ],
+          [
+            199.519775390625,
+            88.3673095703125,
+            246.47299194335938,
+            194.2235107421875
+          ],
+          [
+            46.00816345214844,
+            64.51547241210938,
+            152.3943634033203,
+            369.9245910644531
+          ],
+          [
+            253.96243286132812,
+            78.93867492675781,
+            369.9624328613281,
+            342.47052001953125
+          ],
+          [
+            164.43276977539062,
+            125.76219177246094,
+            272.46185302734375,
+            340.88165283203125
+          ]
+        ],
+        "cls": [
+          32,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "names": [
+          "sports_ball",
+          "person",
+          "person",
+          "person",
+          "person",
+          "person",
+          "person",
+          "person"
+        ],
+        "scores": [
+          0.8318775296211243,
+          0.8241310715675354,
+          0.663970947265625,
+          0.7207819819450378,
+          0.3159750699996948,
+          0.8434548377990723,
+          0.8908054828643799,
+          0.8200644254684448
+        ]
+      },
+      "frame_id": 0,
+      "n_det": 8,
+      "output": {
+        "dtype": "float32",
+        "shape": [
+          1,
+          10647,
+          85
+        ]
+      },
+      "timings_ms": {
+        "conv": 39093.69125500024,
+        "other": 2211.5897989997393,
+        "total": 41407.23685299997
+      }
+    }
+  ],
+  "frames_done": 1,
+  "frames_requested": 1,
+  "generated_utc": "2021-11-18T05:21:58Z",
+  "input_shape": [
+    1,
+    3,
+    416,
+    416
+  ],
+  "iou": 0.45,
+  "ip_dict_keys": [
+    "conv_engine_0/s_axi_control",
+    "conv_engine_0/s_axi_control_r",
+    "processing_system7_0"
+  ],
+  "layers": 60,
+  "layers_dir": "/home/xilinx/zynq-yolo/data/layers",
+  "listen": "0.0.0.0:5000",
+  "mean_total_ms": 41407.23685299997,
+  "notes": [
+    "total_ms is measured around one whole frame (preprocess + network + decode + NMS).",
+    "conv/other timings come from pynq_net.run_network stats.",
+    "Reply carries output0 as base64 little-endian float32; the saved JSON keeps only its shape to stay small.",
+    "Unsupported conv layers fall back to pynq_net.NumpyBackend.",
+    "One reusable max-size PYNQ buffer set is used because CmaFree on the running board is only about 1.4 MB.",
+    "If PYNQ allocation fails, the exact exception is printed after STREAM_BOARD_FAIL and stored verbatim in this JSON."
+  ],
+  "output_name": "output0",
+  "plan": "data/layers/board_net_plan_v5_fb.json",
+  "platform": "linux",
+  "python": "3.8.2",
+  "reason": "",
+  "repo_root": "/home/xilinx/zynq-yolo",
+  "status": "STREAM_BOARD_OK",
+  "tool": "src/ps/host/run_stream_test.py",
+  "windows": "conv_engine windows: s_axi_control=conv_engine_0/s_axi_control @0x40000000  s_axi_control_r=conv_engine_0/s_axi_control_r @0x40010000"
+}

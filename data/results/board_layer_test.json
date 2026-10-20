@@ -1,235 +1,280 @@
 {
-  "bitfile": "board/overlay/conv_engine.bit",
-  "bitfile_present": false,
-  "cases": [],
+  "aggregate": {
+    "elapsed_ns": 222029174,
+    "gops": 0.0505199195129195,
+    "macs": 11216896
+  },
+  "bitfile": "/home/xilinx/zynq-yolo/board/overlay/conv_engine.bit",
+  "cases": [
+    {
+      "ap_done": true,
+      "bytes_bad": 0,
+      "bytes_total": 1600,
+      "case": "k1s1_smallw",
+      "elapsed_ns": 7827812,
+      "elapsed_ns_max": 7993734,
+      "elapsed_ns_min": 7827812,
+      "elapsed_ns_runs": [
+        7992649,
+        7832622,
+        7827812,
+        7858845,
+        7975842,
+        7833047,
+        7975346,
+        7843881,
+        7993734,
+        7922742
+      ],
+      "gops": 0.006540780488851801,
+      "macs": 51200,
+      "meta": {
+        "C_IN": 32,
+        "C_OUT": 16,
+        "H_IN": 10,
+        "H_OUT": 10,
+        "K": 1,
+        "W_IN": 10,
+        "W_OUT": 10,
+        "name": "k1s1_smallw",
+        "pad": 0,
+        "stride": 1,
+        "zp_in": 100,
+        "zp_pre": 101
+      },
+      "mismatch": null,
+      "ok": true,
+      "reason": "",
+      "sentinel_intact": false
+    },
+    {
+      "ap_done": true,
+      "bytes_bad": 0,
+      "bytes_total": 8000,
+      "case": "k1s1_tailcout",
+      "elapsed_ns": 43427255,
+      "elapsed_ns_max": 43553396,
+      "elapsed_ns_min": 43427255,
+      "elapsed_ns_runs": [
+        43461486,
+        43505359,
+        43451917,
+        43443282,
+        43553396,
+        43427255,
+        43434154,
+        43450727,
+        43451813,
+        43500021
+      ],
+      "gops": 0.011789831063464635,
+      "macs": 512000,
+      "meta": {
+        "C_IN": 64,
+        "C_OUT": 20,
+        "H_IN": 20,
+        "H_OUT": 20,
+        "K": 1,
+        "W_IN": 20,
+        "W_OUT": 20,
+        "name": "k1s1_tailcout",
+        "pad": 0,
+        "stride": 1,
+        "zp_in": 141,
+        "zp_pre": 115
+      },
+      "mismatch": null,
+      "ok": true,
+      "reason": "",
+      "sentinel_intact": false
+    },
+    {
+      "ap_done": true,
+      "bytes_bad": 0,
+      "bytes_total": 25600,
+      "case": "k3s1_c3_40",
+      "elapsed_ns": 5882948,
+      "elapsed_ns_max": 5956455,
+      "elapsed_ns_min": 5882948,
+      "elapsed_ns_runs": [
+        5956455,
+        5938255,
+        5897794,
+        5914669,
+        5946715,
+        5911158,
+        5899438,
+        5928736,
+        5882948,
+        5894679
+      ],
+      "gops": 0.11749211449769739,
+      "macs": 691200,
+      "meta": {
+        "C_IN": 3,
+        "C_OUT": 16,
+        "H_IN": 40,
+        "H_OUT": 40,
+        "K": 3,
+        "W_IN": 40,
+        "W_OUT": 40,
+        "name": "k3s1_c3_40",
+        "pad": 1,
+        "stride": 1,
+        "zp_in": 223,
+        "zp_pre": 187
+      },
+      "mismatch": null,
+      "ok": true,
+      "reason": "",
+      "sentinel_intact": false
+    },
+    {
+      "ap_done": true,
+      "bytes_bad": 0,
+      "bytes_total": 1600,
+      "case": "k3s1_cin512",
+      "elapsed_ns": 133452268,
+      "elapsed_ns_max": 133764380,
+      "elapsed_ns_min": 133452268,
+      "elapsed_ns_runs": [
+        133502144,
+        133500477,
+        133543191,
+        133452268,
+        133764380,
+        133587560,
+        133483721,
+        133500803,
+        133593993,
+        133625444
+      ],
+      "gops": 0.05524671937385133,
+      "macs": 7372800,
+      "meta": {
+        "C_IN": 512,
+        "C_OUT": 16,
+        "H_IN": 10,
+        "H_OUT": 10,
+        "K": 3,
+        "W_IN": 10,
+        "W_OUT": 10,
+        "name": "k3s1_cin512",
+        "pad": 1,
+        "stride": 1,
+        "zp_in": 177,
+        "zp_pre": 95
+      },
+      "mismatch": null,
+      "ok": true,
+      "reason": "",
+      "sentinel_intact": false
+    },
+    {
+      "ap_done": true,
+      "bytes_bad": 0,
+      "bytes_total": 5184,
+      "case": "k3s1_pad0",
+      "elapsed_ns": 8653471,
+      "elapsed_ns_max": 8814162,
+      "elapsed_ns_min": 8653471,
+      "elapsed_ns_runs": [
+        8814162,
+        8780969,
+        8743871,
+        8753552,
+        8684977,
+        8657234,
+        8810724,
+        8653471,
+        8780142,
+        8784688
+      ],
+      "gops": 0.08626549970526276,
+      "macs": 746496,
+      "meta": {
+        "C_IN": 16,
+        "C_OUT": 16,
+        "H_IN": 20,
+        "H_OUT": 18,
+        "K": 3,
+        "W_IN": 20,
+        "W_OUT": 18,
+        "name": "k3s1_pad0",
+        "pad": 0,
+        "stride": 1,
+        "zp_in": 80,
+        "zp_pre": 110
+      },
+      "mismatch": null,
+      "ok": true,
+      "reason": "",
+      "sentinel_intact": false
+    },
+    {
+      "ap_done": true,
+      "bytes_bad": 0,
+      "bytes_total": 12800,
+      "case": "k3s2_c16_40",
+      "elapsed_ns": 22785420,
+      "elapsed_ns_max": 23971892,
+      "elapsed_ns_min": 22785420,
+      "elapsed_ns_runs": [
+        22785420,
+        22788376,
+        22838849,
+        22863689,
+        22883403,
+        22893172,
+        22874056,
+        22846858,
+        23971892,
+        23349183
+      ],
+      "gops": 0.08089383474169008,
+      "macs": 1843200,
+      "meta": {
+        "C_IN": 16,
+        "C_OUT": 32,
+        "H_IN": 40,
+        "H_OUT": 20,
+        "K": 3,
+        "W_IN": 40,
+        "W_OUT": 20,
+        "name": "k3s2_c16_40",
+        "pad": 1,
+        "stride": 2,
+        "zp_in": 191,
+        "zp_pre": 182
+      },
+      "mismatch": null,
+      "ok": true,
+      "reason": "",
+      "sentinel_intact": false
+    }
+  ],
   "cases_fail": 0,
-  "cases_ok": 0,
-  "elapsed_ns": null,
-  "generated_by": "PC side (Windows build host), not by a board run",
-  "generated_utc": "2026-10-19T14:37:56Z",
-  "gops": null,
-  "hwh_path": "board/overlay/conv_engine.hwh",
-  "hwh_present": true,
-  "next_steps": [
-    "Wait for board/overlay/conv_engine.bit (Vivado run in progress).",
-    "Copy src/ps, data/layers/cases and board/overlay to the board.",
-    "Run: sudo python3 src/ps/host/run_layer_test.py --repeat 3",
-    "Commit the overwritten data/results/board_layer_test.json and quote the BOARD_LAYER_OK token in the report."
+  "cases_ok": 6,
+  "downloaded": true,
+  "generated_utc": "2021-11-18T04:52:50Z",
+  "ip_dict_keys": [
+    "conv_engine_0/s_axi_control",
+    "conv_engine_0/s_axi_control_r",
+    "processing_system7_0"
   ],
   "notes": [
-    "NO board run happened. This file records the attempt state, not a result.",
-    "board/overlay/conv_engine.bit did not exist at 2026-10-19T14:37:56Z (only conv_engine.hwh was present, 285782 bytes).",
-    "The build host is Windows with no Zynq board, no /dev/mem and no PYNQ, so run_layer_test.py cannot execute here.",
-    "elapsed_ns and gops are null on purpose: nothing was measured. Do not fill in estimates, and do not reuse numbers from other engines (the 15.30 GOPS probe figure does not apply to conv_engine).",
-    "A real board run overwrites this file; its last stdout line is BOARD_LAYER_OK <case> <elapsed_ns> <gops> or BOARD_LAYER_FAIL <reason>.",
-    "A real run must do: load conv_engine.bit, write 11 scalar regs + 5 pointer regs, write AP_CTRL=0x01, poll ap_done, invalidate the out buffer, compare byte-for-byte with out_ref.bin."
+    "elapsed_ns is perf_counter(ap_start write -> ap_done observed).",
+    "gops = MACs / elapsed; MACs = C_OUT*C_IN*K*K*H_OUT*W_OUT.",
+    "bytes compared against out_ref.bin (PC golden, little-endian raw)."
   ],
-  "pc_side_checks": {
-    "comparator": {
-      "mutated_byte_detected": true,
-      "reports_first_index_and_both_values": true,
-      "self_compare_bad": 0
-    },
-    "meta_and_case_parsing": {
-      "all_file_sizes_match_meta": true,
-      "cases_found": 6,
-      "per_case": [
-        {
-          "case": "k1s1_smallw",
-          "in": [
-            32,
-            10,
-            10
-          ],
-          "macs": 51200,
-          "mutated_compare_bad": 1,
-          "mutated_first_index": [
-            15,
-            9,
-            9
-          ],
-          "out": [
-            16,
-            10,
-            10
-          ],
-          "ref_bytes": 1600,
-          "self_compare_bad": 0,
-          "w": [
-            16,
-            32,
-            1,
-            1
-          ]
-        },
-        {
-          "case": "k1s1_tailcout",
-          "in": [
-            64,
-            20,
-            20
-          ],
-          "macs": 512000,
-          "mutated_compare_bad": 1,
-          "mutated_first_index": [
-            19,
-            19,
-            19
-          ],
-          "out": [
-            20,
-            20,
-            20
-          ],
-          "ref_bytes": 8000,
-          "self_compare_bad": 0,
-          "w": [
-            20,
-            64,
-            1,
-            1
-          ]
-        },
-        {
-          "case": "k3s1_c3_40",
-          "in": [
-            3,
-            40,
-            40
-          ],
-          "macs": 691200,
-          "mutated_compare_bad": 1,
-          "mutated_first_index": [
-            15,
-            39,
-            39
-          ],
-          "out": [
-            16,
-            40,
-            40
-          ],
-          "ref_bytes": 25600,
-          "self_compare_bad": 0,
-          "w": [
-            16,
-            3,
-            3,
-            3
-          ]
-        },
-        {
-          "case": "k3s1_cin512",
-          "in": [
-            512,
-            10,
-            10
-          ],
-          "macs": 7372800,
-          "mutated_compare_bad": 1,
-          "mutated_first_index": [
-            15,
-            9,
-            9
-          ],
-          "out": [
-            16,
-            10,
-            10
-          ],
-          "ref_bytes": 1600,
-          "self_compare_bad": 0,
-          "w": [
-            16,
-            512,
-            3,
-            3
-          ]
-        },
-        {
-          "case": "k3s1_pad0",
-          "in": [
-            16,
-            20,
-            20
-          ],
-          "macs": 746496,
-          "mutated_compare_bad": 1,
-          "mutated_first_index": [
-            15,
-            17,
-            17
-          ],
-          "out": [
-            16,
-            18,
-            18
-          ],
-          "ref_bytes": 5184,
-          "self_compare_bad": 0,
-          "w": [
-            16,
-            16,
-            3,
-            3
-          ]
-        },
-        {
-          "case": "k3s2_c16_40",
-          "in": [
-            16,
-            40,
-            40
-          ],
-          "macs": 1843200,
-          "mutated_compare_bad": 1,
-          "mutated_first_index": [
-            31,
-            19,
-            19
-          ],
-          "out": [
-            32,
-            20,
-            20
-          ],
-          "ref_bytes": 12800,
-          "self_compare_bad": 0,
-          "w": [
-            32,
-            16,
-            3,
-            3
-          ]
-        }
-      ]
-    },
-    "note": "Executed on the Windows PC. These validate parsing/compare logic and the register protocol against a fake Overlay + fake MMIO. They are NOT board measurements and do not prove the IP works.",
-    "register_protocol_sim": {
-      "ap_ctrl_start_value": "0x01",
-      "get_out_invalidates_before_copy": true,
-      "missing_window_refused": true,
-      "non_idle_start_refused": true,
-      "pointer_regs_written": [
-        "0x10",
-        "0x14",
-        "0x1c",
-        "0x20",
-        "0x28",
-        "0x2c",
-        "0x34",
-        "0x38",
-        "0x40",
-        "0x44"
-      ],
-      "pointer_split_64bit_low_high": true,
-      "scalar_regs_written": 11,
-      "window_lookup_by_mem_id": "conv_engine_0/s_axi_control + conv_engine_0/s_axi_control_r"
-    }
-  },
-  "reason": "not_on_board",
-  "repo_root": "D:\\zynq-yolo",
-  "status": "BOARD_LAYER_FAIL",
+  "overlay_load_s": 0.885853,
+  "platform": "linux",
+  "python": "3.8.2",
+  "reason": "",
+  "repeat": 10,
+  "repo_root": "/home/xilinx/zynq-yolo",
+  "status": "BOARD_LAYER_OK",
+  "timeout_s": 10.0,
   "tool": "src/ps/host/run_layer_test.py",
-  "verified_on_board": false
+  "windows": "conv_engine windows: s_axi_control=conv_engine_0/s_axi_control @0x40000000  s_axi_control_r=conv_engine_0/s_axi_control_r @0x40010000"
 }

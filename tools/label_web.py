@@ -64,6 +64,14 @@ BATCHES = {
         "csv": ANNOT / "labels3.csv",
         "frames": ANNOT / "frames3",
         "score": ANNOT / "scores3.json"},
+    # 4 = 第四批（新比赛 · 跨场）：由 tools/make_newmatch_labels.py --build 出图，
+    #     每层（purity/color/too_small/rect/colored）抽 20 个，验「旧场层内非球员率
+    #     能不能搬到另一场球」。判据不在网页里算 —— 它要跟旧场四层并排，
+    #     请跑 tools/make_newmatch_labels.py --score。
+    4: {"name": "第四批 · 新比赛（跨场）",
+        "csv": ANNOT / "labels4.csv",
+        "frames": ANNOT / "frames4",
+        "score": ANNOT / "scores4.json"},
 }
 DEFAULT_BATCH = 2
 
@@ -147,6 +155,25 @@ def score(batch, rows):
                 "verdict": ("本批是重复标注批次，进度 %d/%d；"
                             "一致性与冲突率请跑 tools/repeat_agreement.py"
                             % (len(lab), len(rows)))}
+
+    if batch == 4:
+        # 第四批（跨场）：网页只报进度。分层判决必须与**旧场四层并排**才有意义，
+        # 那是 tools/make_newmatch_labels.py --score 的活（它带 Wilson CI 与保序检验）。
+        lab = [r["label"] for r in rows if r["label"] in VALID]
+        by_s = {}
+        for s in ("hi_unk_purity", "hi_unk_color", "hi_unk_toosmall",
+                  "hi_unk_rect", "hi_colored"):
+            sub = [r for r in rows if r["stratum"] == s]
+            by_s[s] = {"n": len(sub),
+                       "n_labeled": sum(1 for r in sub if r["label"] in VALID)}
+        return {"batch": 4, "kind": "pack_progress",
+                "title": "第四批：新比赛（跨场）标注进度",
+                "n_total": len(rows), "n_labeled": len(lab),
+                "done": len(rows) > 0 and len(lab) == len(rows),
+                "by_stratum": by_s,
+                "after_done": "python tools\\make_newmatch_labels.py --score",
+                "verdict": ("本批是跨场分层样本，进度 %d/%d；分层判决请跑 "
+                            "tools/make_newmatch_labels.py --score" % (len(lab), len(rows)))}
 
     # 第二批：只问一件事 —— 颜色判不出的框里，非球员是不是更多？
     #   参照：第一批标注的 hi 层整体（24 个里 6 个非球员 = 25%）
@@ -423,20 +450,26 @@ async function showScore(){
       "<tr><td>无颜色先验（hi + 全部 lo）</td><td>"+s.without_color.n_kept+"</td><td>"+
         s.without_color.n_labeled+"</td><td>"+s.without_color.n_player+"</td><td><b>"+f(s.without_color.precision)+"</b></td></tr>"+
       "</table><p style='color:#9aa0a6;font-size:12px'>样本是分层抽的 ⇒ 样本内精确率</p>";
-  } else if(s.kind==="repeat_progress"){
+  } else if(s.kind==="repeat_progress"||s.kind==="pack_progress"){
     let tr="";
     for(const k in s.by_stratum){
       const v=s.by_stratum[k];
       tr+="<tr><td>"+k+"</td><td>"+v.n+"</td><td>"+v.n_labeled+"</td></tr>";
     }
+    const title = s.title || "第三批：重复标注进度";
+    const tail = s.after_done
+      ? ("<code>"+s.after_done.replace(/\\\\/g,"\\\\")+"</code>")
+      : ("<code>python tools\\repeat_agreement.py</code>");
+    const tailNote = s.after_done
+      ? "分层判决（层内非球员率 + Wilson CI + 与旧场保序检验）要标完才算，请跑：<br>"
+      : "本页只报进度。一致性（Cohen's kappa、P/N 冲突率、按层拆分）要三批对齐才能算，请跑：<br>";
     d.innerHTML =
-      "<h3 style='margin:0 0 10px'>第三批：重复标注进度</h3>"+
+      "<h3 style='margin:0 0 10px'>"+title+"</h3>"+
       "<p style='font-size:13px;margin:0 0 8px'>已标 <b>"+s.n_labeled+"</b> / "+s.n_total+
         (s.done?"　<b style='color:#81c995'>已标完</b>":"　<span style='color:#9aa0a6'>（未标完）</span>")+"</p>"+
       "<table><tr><th>层</th><th>框数</th><th>已标</th></tr>"+tr+"</table>"+
       "<p style='color:#9aa0a6;font-size:12px;line-height:1.7;margin:8px 0 0'>"+
-      "本页只报进度。一致性（Cohen's kappa、P/N 冲突率、按层拆分）要三批对齐才能算，请跑：<br>"+
-      "<code>python tools\\repeat_agreement.py</code></p>";
+      tailNote+tail+"</p>";
   } else {
     const o=s.unknown_overall, ref=s.reference_hi_layer;
     let tr="";

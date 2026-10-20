@@ -199,3 +199,6 @@ runs/
 data/annot/frames/
 data/annot/frames2/
 data/annot/frames3/
+#     ★ frames4 = 第四批（新比赛 · 跨场）由 tools/make_newmatch_labels.py --build 出图，
+#       重建依据是 MANIFEST4.json + 新比赛视频（后者不进 git）。
+data/annot/frames4/

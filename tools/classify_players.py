@@ -236,6 +236,12 @@ def distance_to_ref(col, ref):
       white : 低饱和 + 高亮度 -> 用 (1-S) 与 |V-Vref| 的加权
       black : 低亮度         -> 用 |V-Vref|
       彩色  : 以色相为主（权重 0.8），饱和度为辅（0.2）
+
+    ★ 这是 **v1**（CLASSIFY_METRIC="v1"，默认）。v2 见 `distance_to_ref_v2`。
+      两套口径并存的原因见 v2 的注释：v1 的 0.16 对色相只剩 0.16/0.8=0.2 的配额
+      （色相差 ≤36°）且完全没有亮度项 —— 换一场球、队服深浅一变就整队判 unknown。
+      默认仍走 v1 ⇒ 旧比赛（red/white）的结论逐字节不变（回归表见
+      docs/cross_match_eval.md §12.4）。
     """
     if col is None:
         return 9.9, "none"
@@ -255,6 +261,117 @@ def distance_to_ref(col, ref):
     dh = hue_dist(h01, href) / 0.5                        # 归一到 0..1
     ds = abs(s - sref)
     return 0.8 * dh + 0.2 * ds, "hue"
+
+
+# ---------------------------------------------------------------- v2 口径
+# 为什么要有 v2（2026-10-20，跨比赛评估暴露）
+#   1. v1 彩色分支 `0.8*dh + 0.2*|Δs|` 的**最大距离约 1.0**（dh 项最大 0.8，
+#      |Δs| 项最大 0.2），所以 MAX_COLOR_DIST=0.16 在色相上只给了
+#      0.16/0.8 = 0.2 的相对配额 ⇒ 色相差 ≤ 36°（且饱和度还要几乎相等）。
+#      实测新比赛深蓝球衣（S 中位 0.298 vs 预置 blue 0.70）单这一项就吃掉 0.08。
+#   2. v1 彩色分支**完全没有亮度 V**：深蓝 S=0.30/V=0.43 与浅蓝 S=0.30/V=0.52
+#      距离完全相同 —— 而真实球衣像素的亮度跨度就有 0.36~0.62。
+#   3. 两队的**色相间隔**是 60° 量级，不是"一格预设色"，用固定 36° 窗口去卡
+#      本质上是把"色板网格"当成了"队服色"。
+# v2 的换法（**不是**把阈值调大）：
+#   - 彩色分支改成「**角度配额**」： hue_rel = 色相差 / MAX_HUE_DEG，与亮度/饱和度
+#     放在同一 0~1 刻度里；亮度 V 正式进入（v1 没有这一项）。
+#   - 门限改成 `MAX_COLOR_DIST_V2 = 0.70`，但语义是「允许多大**相对色相偏离**」，
+#     不是放宽绝对阈值 —— 由 tools/kit_calib.py 采的真实队服样本标定（见文档）。
+#   - 新增**草坪/非球衣守卫** `grass_like()`：放宽色相窗口后，草坪绿到预置 blue
+#     的 v1 距离只有 0.36（= 0.8*(155-115)/180/0.5），上限一旦 >0.36 整片草坪都会
+#     被判成蓝队。所以守卫与放宽必须同时做，否则只是把 unknown 换成假蓝。
+CLASSIFY_METRIC = "v1"      # "v1" | "v2"；v1 是默认（旧结论逐字节不变）
+MAX_COLOR_DIST_V2 = 0.70    # v2 门限（相对刻度，= 允许 70% 的 MAX_HUE_DEG 偏离）
+MAX_HUE_DEG_V2 = 50.0       # v2 彩色分支的色相窗口（度，单边）
+SAT_DEFICIT_K_V2 = 0.08     # v2 彩色分支：饱和度不足的补偿项（只对深色队服生效）
+# ★ 亮度下限（v2 新加，**理由见文档 §12.5 的误判表**）：白衣在草反射 / 阴影 / 深处
+#   压缩下会出现 h01≈0.58-0.65、S 0.07-0.24、V 0.59-0.80 的样本 —— 色相容完全落进
+#   深蓝队的窗口，与真深蓝**只靠亮度分得开**（真深蓝 V 0.36-0.62、白队 V 0.63-0.80）。
+#   把「彩色分支要求 V >= 0.65 的像素必须有足够饱和度」写成一条显式门槛，而不是让
+#   0.70/0.08 这组常数去隐式兜底（那样随角度/饱和度换一下就重新开始误判）。
+BRIGHT_S_MIN_V2 = 0.35      # V>=0.65 时，S 低于此值的像素不许进彩色分支
+BRIGHT_V_REF_V2 = 0.65
+MIN_MARGIN_V2 = 0.04        # v2 的 two-best 最小间隔（沿用 v1 的量纲：0~1 刻度）
+GRASS_H01 = 0.2333          # 草绿色相（84°，4 帧真帧实测圆中位 0.233~0.244）
+GRASS_HUE_TOL_DEG = 20.0    # 草绿窗口半宽
+GRASS_S_MIN_V2 = 0.25       # 饱和度下限：低于它的灰/白像素不算"草坪"
+GRASS_V_MIN_V2 = 0.30       # 亮度下限：暗到看不清的绿也不算（避免吞掉深色队服）
+
+
+def grass_like(col):
+    """v2 的草坪守卫：这一段像素主体是不是草。**只对彩色 + 高饱和生效**。
+
+    ★ 为什么必须有（而不是"顺手加一条"）：放宽带内配额到 50° 后，
+      草绿(0.233 一圈，实测 S 0.53-0.60 / V 0.59-0.66)与深蓝球衣(0.598 附近，
+      S 0.30 / V 0.44)在**色相**上差 ~130°，但体素被草反射污染成 0.55-0.60、
+      S≈0.30、V≈0.70 的"病态白衣"会落在两者之间。判据实测：
+        - 草坪真像素质心 → 必须 unknown（4/4 帧）
+        - 病态白衣（草反射）→ 不能判成深蓝队（这是 v2 预置口径下的 5 个 W→B 误判）
+      同时 torso_color 已有 `_is_grass_like`（像素级、S 0.22-0.85 / V<=0.92 的草绿剔除），
+      但它是"剔像素"不是"判整框"，两者互补。
+    """
+    if col is None:
+        return False
+    h01, s, v = col[0], col[1], col[2]
+    if s < GRASS_S_MIN_V2 or v < GRASS_V_MIN_V2:
+        return False
+    return hue_dist(h01, GRASS_H01) * 360.0 <= GRASS_HUE_TOL_DEG
+
+
+def distance_to_ref_v2(col, ref):
+    """v2 距离（0=完全一致）。返回 (dist, kind)。**不读阈值，只管刻度**。
+
+    彩色分支：dist = hue_rel + SAT_DEFICIT_K_V2 * max(0, sref-s) * (vref<0.60)
+              其中 hue_rel = 色相差(度) / MAX_HUE_DEG_V2
+              色相超出窗口 ⇒ 直接 2.0（不可判，与"很远"等价，比任何门限都大）
+      为什么加"深色补偿"项：深藏青/深蓝队的**饱和度天然低**（草反射 + 传感器噪声
+      把暗部饱和度拉平，实测 S 中位 0.298 而预置 blue 写的是 0.70）。它不是"更不像蓝"，
+      是"更暗的蓝"。所以只在参考色本身偏暗（vref<0.60）时，允许用"色相到位"抵掉一部分
+      饱和度不足。反过来，浅色队服（白）**不**享受这个补偿 —— 否则灰色会被判成白。
+    无彩色分支（白/黑）：**与 v1 逐字节相同**。
+      ★ 这里踩过坑：第一版 v2 把 white 分支的 ds 分母从 0.70 改成 0.50、dv 分母从 0.25
+        改成 0.30，结果口罩（s=0.60/v=0.80）从 0.286 变成 0.26，**增幅 0.08 的
+        "深色补偿"抵不过降幅** ⇒ 口罩被判成白衣。白/黑的判据 v1 本来就是对的
+        （旧场白队距离 0.030、误判率 0/4 帧草坪），没有理由动它。
+    """
+    if col is None:
+        return 9.9, "none"
+    h01, s, v = col[0], col[1], col[2]
+    href, sref, vref = ref
+    if href is None:
+        if sref <= 0.35 and vref >= 0.8:                 # white —— 与 v1 逐字节相同
+            ds = max(0.0, s - 0.30) / 0.70
+            dv = abs(v - vref) / 0.25
+            return 0.5 * min(1.0, ds) + 0.5 * min(1.0, dv), "white"
+        return min(1.0, abs(v - vref) / 0.30), "black"   # black —— 与 v1 逐字节相同
+    hd = hue_dist(h01, href) * 360.0
+    if hd > MAX_HUE_DEG_V2:
+        return 2.0, "hue"                                # 色相窗外：不可判
+    if v >= BRIGHT_V_REF_V2 and s < BRIGHT_S_MIN_V2:
+        # 亮而不饱和 ⇒ 是"被环境色染了的白/灰"，不是"深色队服"。推回不可判。
+        return 2.0, "hue"
+    rel = hd / MAX_HUE_DEG_V2
+    if vref < 0.60:                                      # 深色队服：允许色相补偿饱和度
+        rel += SAT_DEFICIT_K_V2 * max(0.0, sref - s)
+    return rel, "hue"
+
+
+def _dist_metric(metric=None):
+    """当前生效的距离函数（不传就用模块级 CLASSIFY_METRIC）。"""
+    m = metric if metric is not None else CLASSIFY_METRIC
+    return distance_to_ref_v2 if m == "v2" else distance_to_ref
+
+
+def _limit(metric=None):
+    """当前生效的门限（与距离函数配套，不要混搭）。"""
+    m = metric if metric is not None else CLASSIFY_METRIC
+    return MAX_COLOR_DIST_V2 if m == "v2" else MAX_COLOR_DIST
+
+
+def _margin(metric=None):
+    m = metric if metric is not None else CLASSIFY_METRIC
+    return MIN_MARGIN_V2 if m == "v2" else MIN_MARGIN
 
 
 def ref_of(value):
@@ -287,10 +404,12 @@ def ref_of(value):
                      % (value,))
 
 
-def classify(col, palette):
+def classify(col, palette, metric=None):
     """把躯干颜色分配到最接近的预设色；超过阈值 -> unknown。
 
     palette: dict  role -> 颜色名 / 已解析参考色（见 `ref_of`）
+    metric:  None = 用模块级 `CLASSIFY_METRIC`（默认 "v1"）；"v1"/"v2" 可显式指定。
+             距离函数与门限**成对切换**（`_dist_metric` + `_limit`），不允许混搭。
     返回 (role or "unknown", best_dist, scores)
 
     ★ 这里有个**已修的 bug**（2026-10-20）：第一版把 `color_of_name()` 的**解析结果**
@@ -299,22 +418,31 @@ def classify(col, palette):
       而调用处包在 try 里，异常被吞掉后**静默退化成"全部判 white"**（实测 3 段 6506 帧
       红色 0 次、全白）。这是本仓库又一次「判据假绿」：没有崩溃，但结果毫无意义。
       ⇒ 现在 `distance_to_ref` 只接受**解析后的参考色**，解析只在 `ref_of()` 做一次。
+
+    ★ v2（2026-10-20）额外加两道门，**只在 metric="v2" 时生效**：
+      1. 草坪守卫：`grass_like(col)` 为真直接 unknown（理由见 `grass_like`）；
+      2. 门限/间隔换成 v2 的一套（`_limit` / `_margin`）。
+      它们**不改** `_classify_box` 的签名与 REASON_* 语义 —— 那是对外接口。
     """
     # ★ 必须经过 ref_of() 解析：PALETTE_REF 里是 h(0-179) 原始量纲，
     #   只有 color_of_name() 会把它换算成 h01(0..1)，与 torso_color 对齐。
     #   直接 .get() 拿到原始元组会让白色/黑色走错分支（实测白色距离恒 0.80）。
+    use_v2 = (metric if metric is not None else CLASSIFY_METRIC) == "v2"
+    if use_v2 and grass_like(col):
+        return "unknown", 9.9, {}
+    dist_fn = _dist_metric(metric)
     refs = {role: ref_of(cn) for role, cn in palette.items()}
     scores = {}
     for role, ref in refs.items():
-        d, _kind = distance_to_ref(col, ref)
+        d, _kind = dist_fn(col, ref)
         scores[role] = round(float(d), 4)
     if not scores:
         return "unknown", 9.9, scores
     order = sorted(scores, key=scores.get)
     best = order[0]
-    if scores[best] > MAX_COLOR_DIST:
+    if scores[best] > _limit(metric):
         return "unknown", scores[best], scores
-    if len(order) > 1 and (scores[order[1]] - scores[best]) < MIN_MARGIN:
+    if len(order) > 1 and (scores[order[1]] - scores[best]) < _margin(metric):
         return "unknown", scores[best], scores      # 两色几乎一样近 -> 不判
     return best, scores[best], scores
 

@@ -1022,6 +1022,13 @@ def _stat(vals):
     }
 
 
+def _fmt_med(blk):
+    """打印用：空集（某些规则表下丢弃集合可以真的是 0 个框）也必须能打印，
+    不能 KeyError —— 「没有任何框被丢」本身就是一个合法结果。"""
+    m = (blk or {}).get("median")
+    return "n/a" if m is None else "%.3f" % m
+
+
 def mann_whitney(a, b):
     """Mann-Whitney U 的**正态近似**双尾 p（不打平手校正以外的花活）。
 
@@ -1217,6 +1224,10 @@ def collect(clips, model, cfg_base, stride, imgsz, hi_conf, do_track, max_clips=
             progress=True):
     """跑全量：逐帧检测 -> 五个配置各判一次 -> 收集 BoxRecord + 轨迹指标。"""
     cfgs = _configs(cfg_base)
+    # ★ "after" 必须是**用户配置**(cfg_base)跑出来的，不能是 PRESETS["after"] 那个固定预设。
+    #   否则 --gate-rules 会「在对照表上看着生效、在核心统计里完全不生效」—— 静默假绿。
+    #   当 cfg_base == 默认推荐配置时两者等价，所以默认行为不变。
+    cfgs["after"] = cfg_base
     meters = {k: ColorMeter(c.palette if c.use_color else {}, use_hull=c.use_hull,
                             hull_purity=c.hull_purity)
               for k, c in cfgs.items()}
@@ -1844,7 +1855,7 @@ def precision_proxy(records):
     fmap = {"purity": "purity", "rect": "rect",
             "color": "color", "too_small": "toosmall"}
     out = {}
-    share = {s: (strata.get(k) or {}).get("share_in_this_run") for s, k in fmap.items()}
+    share = {s: (strata.get(k) or {}).get("share_assumed_from_cp") for s, k in fmap.items()}
     for s, key in fmap.items():
         v = strata.get(key)
         if not v:
@@ -1872,21 +1883,58 @@ def precision_proxy(records):
                   "n_labeled": v["n_labeled"],
                   "N_rate": v["N_rate"],
                   "n_N_in_sample": v["n_N"],
+                  "share_assumed_from_cp": share.get(s),
+                  "n_kept_in_stratum": None,
                   "n_N_est": None, "real_recall_est": None}
     n_drop = sum(v["n_dropped_by_gate"] for v in per.values())
+    # 本 run 里每个 reason 的**保留**框数（含 player 与 unknown），用于「标注说该丢、
+    # 门控却留着多少」这条对照；与 n_dropped_by_gate 同源，读者可自行核算。
+    # ★ 按 **color_<动作>_<原因>** 的**后两段**归 key：丢的是 color_drop_purity（87），
+    #   留的是 geo_rescue_purity（802）+ purity_hull_ok（42）—— 三者同属 purity 层。
+    #   早先只用 r.reason_after 直接查，geo_rescue_*/purity_hull_ok 全查不到 ⇒ 保留数恒为 0，
+    #   导致 §5.1(a) 的对照被读成「该层框全被丢了」。
+    keep_by = {}
+    for r in records:
+        if r.role_after == "staff":
+            continue
+        parts = r.reason_after.rsplit("_", 1)
+        if len(parts) == 2 and parts[1] in FAIL_REASONS:
+            keep_by[parts[1]] = keep_by.get(parts[1], 0) + 1
+    for s, v in per.items():
+        v["n_kept_in_stratum"] = keep_by.get(v["reason"], 0)
     # ★ 覆盖率 >100% 是**不可能**的（门控不可能丢掉比"存在的非球员"更多的框）
     #   ⇒ 一旦超过，说明这次运行的 hi-unknown 盘面量与第二批标注那次不同。
     #   直接标为口径失效，不给数字，免得被当成结论引用。
     n_est_tot = sum(v["n_N_est"] or 0 for v in per.values())
     # ★ 前提检查：本 run 的 hi 层框数必须与 diag（分层比例的来源）一致
     over = diag.get("n_hi") is not None and n_hi != int(diag["n_hi"])
+    why = None
     if not over and all(share.get(s) for s in per):
+        # 盘面该层框数 = (本 run 的 hi 框数 × 该层假定占比)；
+        # 盘面该层非球员数 = 盘面该层框数 × 层内 N率（= 样本 N 数 / 样本数）。
+        # 化简后 = (样本 N 数 / 样本数) × 本 run 的 hi 框数 —— **不含**抽样率的倒数。
+        # （旧实现写成「样本 N 数 / 抽样率」，抽样率≈0.084 时把估计量放大约 12 倍，
+        #   于是覆盖率恒 >100% 而被判作废。这里按定义重算。）
+        # ★ 「本 run 的 hi-unknown 框数」必须用**全量** hi-unknown（即取色失败的全部框），
+        #   不是「丢掉的 + 留下的」。用 latter 会把丢弃数重复计入、把估计量撑到就把
+        #   coverage 压成 100%（旧实现就是这么"通过"的）。全量 = 每个 reason 的 (丢 + 留)。
+        n_hi_unk_run = sum(v["n_dropped_by_gate"] + (v["n_kept_in_stratum"] or 0)
+                           for v in per.values())
         for s, v in per.items():
-            v["n_N_est"] = round(v["n_N_in_sample"] / share[s], 1)
+            n_lab = v["n_labeled"] or 0
+            if not n_lab or v["N_rate"] is None:
+                continue
+            v["n_stratum_boxes_est"] = round(share[s] * n_hi_unk_run, 1)
+            v["n_N_est"] = round(v["N_rate"] * v["n_stratum_boxes_est"], 1)
+            # ★ 比值可能 >1（估计量小于实际丢弃数）⇒ 一旦 clamp 成 1.0，读的人会以为
+            #   "全覆盖了"。>1 时**不给数字**，只给数轴（n_est）与丢弃数，让读者自己判断。
             v["real_recall_est"] = (round(v["n_dropped_by_gate"] / v["n_N_est"], 3)
                                     if v["n_N_est"] else None)
+            v["recall_est_clamped"] = bool(v["real_recall_est"] and v["real_recall_est"] > 1.0)
         n_est_tot = sum(v["n_N_est"] or 0 for v in per.values())
-        over = n_est_tot > 0 and n_drop / n_est_tot > 1.0
+        # 只保留一种失效判据：**不可能性**（丢掉的框比盘面上的框还多）
+        if n_hi_unk_run and n_drop > n_hi_unk_run:
+            over, why = True, "门控丢的框(%d)比本 run 的 hi 层框(%d)还多" % (n_drop, n_hi_unk_run)
     if over:
         for v in per.values():
             v["n_N_est"] = None
@@ -1894,9 +1942,9 @@ def precision_proxy(records):
     return {
         "kind": "precision_proxy_weighted_by_stratum_share（不是 precision）",
         "valid": (not over),
-        "invalid_reason": ("本次运行 hi 层共 %d 框，与 hi_color_diag.json 的 n_hi=%s 不符；"
-                           "第二批标注的分层比例是从 diag 那次抽样定的，口径不同 ⇒ 代理量作废"
-                           % (n_hi, diag.get("n_hi"))) if over else None,
+        "invalid_reason": why or (("本次运行 hi 层共 %d 框，与 hi_color_diag.json 的 n_hi=%s 不符；"
+                                   "第二批标注的分层比例是从 diag 那次抽样定的，口径不同 ⇒ 代理量作废"
+                                   % (n_hi, diag.get("n_hi"))) if over else None),
         "n_hi_this_run": n_hi,
         "n_hi_unknown_est_from_diag": est_hi_unk,
         "per_stratum": per,
@@ -1905,7 +1953,13 @@ def precision_proxy(records):
         "sample_N_rate_weighted": round(tot_N / tot_lab, 3) if tot_lab else None,
         "n_drop_total": n_drop,
         "n_N_est_total": round(sum(v["n_N_est"] or 0 for v in per.values()), 1),
-        "real_recall_est_total": round(n_drop / tot_N, 3) if tot_N else None,
+        # ★ 不再 clamp：>1 说明估计量比实际丢弃数还小 ⇒ 这个代理量**失效**，
+        #   不是"覆盖得很好"。见 docs/player_gate_v1.md §5.1(b)。
+        "real_recall_est_total_raw": (round(n_drop / n_est_tot, 3) if n_est_tot else None),
+        "real_recall_est_total": None,   # 故意留空：这个数字只要出现就会被误读成覆盖率
+        "coverage_status": ("n/a" if not n_est_tot else
+                            ("INCONSISTENT_est_below_drops" if n_drop > n_est_tot else "ok")),
+        "n_hi_unknown_run": n_hi_unk_run if not over else None,
         "biggest_gap": max(per.items(), key=lambda kv: (kv[1]["n_N_est"] or 0)
                            - kv[1]["n_dropped_by_gate"])[0] if per else None,
         "caveats": [
@@ -1936,11 +1990,12 @@ def label_reference():
             "N_rate_pct": (round(100 * v["N_rate"], 1) if v.get("N_rate") is not None else None),
             "ci95": v.get("N_rate_ci95")}
         n_total += v.get("n", 0)
-        # 盘面上该层有多少框 = 本 run 的框数(估算) × 该层的真实占比
+        # 该层在**抽样那次运行**里有多少框 = 样本数 n / 抽样率
         share = shares.get(k)
-        out["by_stratum"][key]["share_in_this_run"] = round(float(share), 6) if share else None
-        out["by_stratum"][key]["n_stratum_est_on_disk"] = (
+        out["by_stratum"][key]["n_stratum_est_on_diag_run"] = (
             round(float(v["n"]) / float(share), 1) if share else None)
+        # 该层占 hi 层的**假定占比**（= 抽样率）：按抽样率加权时必须乘它，不是乘 1
+        out["by_stratum"][key]["share_assumed_from_cp"] = round(float(share), 6) if share else None
     out["_source"] = ("data/annot/scores2.json（第二批 %d 框人工标注；kappa=0.226 ⇒ 只用相对高低）"
                       % n_total)
     # 第一批（labels.csv 73 框）：hi 层与补检层的样本内精确率，以及"大框=非球员"的切片
@@ -2026,13 +2081,26 @@ def conflicts(A, C, v1v2, ref):
     return out
 
 
+def _agree(v):
+    """实测该层框数 ÷ 按层占比折算的框数。差得越多，说明两把尺子越不同源。
+    返回 None 表示缺少任一侧，调用方必须自己处理（不要用 1.0 冒充"一致"）。"""
+    if not v:
+        return None
+    n_st = v.get("n_stratum_boxes_est")
+    n_kept = v.get("n_kept_in_stratum")
+    if n_st is None or n_kept is None or not n_st:
+        return None
+    n_actual = (v.get("n_dropped_by_gate") or 0) + n_kept
+    return round(n_actual / n_st, 1)
+
+
 def gate_defects(ref, proxy):
     """标注驱动的**门控缺陷**清单：用分层 N率（相对高低可信）× 归一化后的框量。
 
     ★ 这是本文件与 data/annot 唯一的接触面。对齐方式：
        **零逐框对齐**。只读两样东西 ——
          (a) 第二批 159 框按 fail_reason 分层的 N率（层内比例，kappa=0.226 ⇒ 只信高低）
-         (b) 第一批 73 框的 hi 层 / 补检层样本内精确率，以及「大框»小框」切片
+         (b) 第一批 73 框的 hi 层 / 补检层样本内精确率，以及「大框 vs 小框」切片
        **不用** (clip, frame, box_idx) 去和检测框相认 —— 那个键不是身份：
        两批各自 (clip,frame,box_idx) 只有 61 / 115 个唯一值（73 / 159 行），
        而 (clip,frame,conf,h_px) 在各自批内是 73 / 159 个唯一值，两批严格同框只有 5 个。
@@ -2051,13 +2119,23 @@ def gate_defects(ref, proxy):
             "label_nonplayer_pct": r.get("N_rate_pct"),
             "n_labeled": r.get("n_labeled"),
             "n_N_est": rp.get("n_N_est"),
+            "n_stratum_boxes_est": rp.get("n_stratum_boxes_est"),
             "n_dropped_by_gate": rp.get("n_dropped_by_gate"),
-            "text": ("标注：rect 层 %.1f%% 非球员（n=%s）；按抽样率折回盘面约 %.0f 个非球员框，"
-                     "而门控只丢了其中 %s 个 ⇒ 门控在 rect 层几乎没起作用。"
-                     "这是 precision 上最大的漏网点，不是 recall 问题。"
-                     % (r.get("N_rate_pct") or 0, r.get("n_labeled"),
-                        rp.get("n_N_est") or 0,
-                        rp.get("n_dropped_by_gate"))),
+            "n_kept_by_gate": rp.get("n_kept_in_stratum"),
+            # ★ 自洽性：实测框数 vs 折算框数 是两把不同的尺，差 ≥5 倍就说明
+            #   「本 run 的 hi-unknown 构成」与「第二批标注那次运行的层分布」已经不同源。
+            "measure_source_agreement": _agree(rp),
+            "text": ("本 run 落在 rect 失败桶的框 **%s 个（实测：丢 %s + 留 %s）**；"
+                     "按第二批标注那次运行的层占比折算应约 %s 个（%.1f 倍差）。"
+                     "标注层内 N 率 %.1f%%（n=%s）⇒ 若按标注，这桶里约 %s 个是非球员，"
+                     "而门控只丢了 %s 个。两把尺子差这么多 ⇒ 缺口大小无法定论，"
+                     "只能把「rect 层门控几乎不下手」当成**待测事实**（见文档 §5.1(a)）。"
+                     % (rp.get("n_kept_in_stratum") is not None and
+                        (rp["n_dropped_by_gate"] + rp["n_kept_in_stratum"]) or "?",
+                        rp.get("n_dropped_by_gate"), rp.get("n_kept_in_stratum"),
+                        rp.get("n_stratum_boxes_est"), _agree(rp) or 1.0,
+                        r.get("N_rate_pct") or 0, r.get("n_labeled"),
+                        rp.get("n_N_est") or 0, rp.get("n_dropped_by_gate"))),
             "falsifiable_prediction": ("在这些框里抽 K 个上看，门控判 player/unknown 的比例"
                                        "应接近 1 − 标注 N率；若实测显著更低，说明 rect 层的"
                                        "颜色兜底（整框取色 / hull 复检）确实救回了球员"),
@@ -2072,13 +2150,21 @@ def gate_defects(ref, proxy):
             "label_nonplayer_pct": p.get("N_rate_pct"),
             "n_labeled": p.get("n_labeled"),
             "n_N_est": pp.get("n_N_est"),
+            "n_stratum_boxes_est": pp.get("n_stratum_boxes_est"),
             "n_dropped_by_gate": pp.get("n_dropped_by_gate"),
-            "text": ("标注：purity 层 %.1f%% 非球员（n=%s，几乎是纯净的非球员层）；"
-                     "按抽样率折回盘面约 %.0f 个非球员框，门控只丢了 %s 个。"
-                     "场内率那一条（对照 A）不能反驳它 —— 场内有裁判、教练、场边工作人员。"
-                     % (p.get("N_rate_pct") or 0, p.get("n_labeled"),
-                        pp.get("n_N_est") or 0,
-                        pp.get("n_dropped_by_gate"))),
+            "n_kept_by_gate": pp.get("n_kept_in_stratum"),
+            "measure_source_agreement": _agree(pp),
+            "text": ("purity 层是全案最大的分歧点。本 run 落在该桶的框 **%s 个"
+                     "（实测：丢 %s + 留 %s）**，留下的 %s 个场内率 100%%、h 中位 37.8 px；"
+                     "而标注说这层 97.4%% 非球员（n=%s，按那次运行的层占比只折算得出约 %s 个框，"
+                     "与实测差 %s 倍）。两者无法同时成立，本轮**不裁决**（见文档 §5.1(a)）："
+                     "场内率那一条不能单独反驳标注（场内有裁判/教练/工作人员）；"
+                     "标注也不能单独推翻 800+ 个场内正常尺度的框。"
+                     % (pp.get("n_kept_in_stratum") is not None and
+                        (pp["n_dropped_by_gate"] + pp["n_kept_in_stratum"]) or "?",
+                        pp.get("n_dropped_by_gate"), pp.get("n_kept_in_stratum"),
+                        pp.get("n_kept_in_stratum"),
+                        p.get("n_labeled"), pp.get("n_N_est") or 0, _agree(pp) or 1.0)),
             "falsifiable_prediction": ("若这一层真是非球员，它们应当**跨帧不稳定**："
                                        "同一人被检出的帧占比应低于球员层。抽 20 个测一下即可证伪"),
         })
@@ -2231,12 +2317,12 @@ def main(argv=None):
     print("  丢弃集合的规模（不同配置下的丢弃集合不是同一批框）：%s"
           % json.dumps(_sizes, ensure_ascii=False))
     print("\n== 对照 C：conf / h_px ==")
-    print("  kept    n=%5d conf中位 %.3f h中位 %.1f"
-          % (C["kept"]["n"], C["kept"]["conf"]["median"], C["kept"]["h_px"]["median"]))
-    print("  dropped n=%5d conf中位 %.3f h中位 %.1f | Mann-Whitney p=%s (%s)"
-          % (C["dropped"]["n"], C["dropped"]["conf"]["median"],
-             C["dropped"]["h_px"]["median"], C["conf_dropped_vs_kept"]["p_two_sided"],
-             C["conf_dropped_vs_kept"]["direction"]))
+    print("  kept    n=%5d conf中位 %s h中位 %s"
+          % (C["kept"]["n"], _fmt_med(C["kept"]["conf"]), _fmt_med(C["kept"]["h_px"])))
+    print("  dropped n=%5d conf中位 %s h中位 %s | Mann-Whitney p=%s (%s)"
+          % (C["dropped"]["n"], _fmt_med(C["dropped"]["conf"]), _fmt_med(C["dropped"]["h_px"]),
+             C["conf_dropped_vs_kept"].get("p_two_sided"),
+             C["conf_dropped_vs_kept"].get("direction") or "n/a(空集)"))
     hb = C["high_conf_big"]
     print("  高置信大框（%s, n=%d）丢弃率：after %.1f%% | noprior %.1f%% | legacy %.1f%% | v1 %.1f%%"
           % (hb["def"], hb["n"], hb["drop_rate_after_pct"] or 0,
@@ -2271,21 +2357,38 @@ def main(argv=None):
                          v["sign_test_p_two_sided"]))
             print("    判定方向计数：%s" % json.dumps(pp.get("verdict"), ensure_ascii=False))
     if PROXY:
-        print("\n== 精度代理（★不是 precision；按抽样率加权到盘面量）==")
+        print("\n== 精度代理（★不是 precision；按 层内N率 × 层假定占比 × 本run的hi-unknown框数 折到盘面量）==")
+        print("  每个 reason 的框数（丢+留）：%s"
+              % json.dumps({s: v["n_dropped_by_gate"] + (v.get("n_kept_in_stratum") or 0)
+                            for s, v in (PROXY.get("per_stratum") or {}).items()},
+                           ensure_ascii=False))
         for s, v in (PROXY.get("per_stratum") or {}).items():
-            print("  %-10s 层内标注 非球员 %2d/%2d=%.1f%% | 盘面该层非球员估计 %7.1f | 门控丢 %3d | 覆盖率 %s"
-                  % (s, v["n_N_in_sample"], v["n_labeled"],
-                     100 * (v["N_rate"] or 0), v["n_N_est"] or 0, v["n_dropped_by_gate"],
+            # ★ 别把局部变量叫 n_kept：令牌里的 n_kept 是 ABL["after"]["n_kept"]，
+            #   同名覆盖会让故令牌打出最后一层的数（曾打出 1017 而不是 12487）。
+            n_kept_st = v.get("n_kept_in_stratum")
+            n_st = v.get("n_stratum_boxes_est")
+            print("  %-10s 层内标注 非球员 %2d/%2d=%.1f%% | 本run该层 丢 %3d / 留 %3d | "
+                  "按层占比折算盘面 %.1f 框 ⇒ 其中非球员估计 %.1f | 丢中覆盖 %s"
+                  % (s, v["n_N_in_sample"], v["n_labeled"], 100 * (v["N_rate"] or 0),
+                     v["n_dropped_by_gate"], -1 if n_kept_st is None else n_kept_st,
+                     -1 if n_st is None else n_st, v["n_N_est"] or 0,
                      ("%.1f%%" % (100 * v["real_recall_est"]))
                      if v["real_recall_est"] is not None else "n/a"))
+        print("  ★ 口径警告：上面两列**分母不同源**。左列是本 run 实测（丢/留），"
+              "右列是用另一次运行的层分布折算的估计量；两者不一致不构成任何一方的证伪。")
         if not PROXY.get("valid", True):
             print("  ⚠ 口径失效，本块数字**作废**：%s" % PROXY["invalid_reason"])
-        elif PROXY.get("real_recall_est_total") is not None:
-            print("  合计：盘面估计非球员 %s 框，门控丢 %d ⇒ 覆盖率 %s（★不是 precision）"
+        elif PROXY.get("coverage_status") == "INCONSISTENT_est_below_drops":
+            print("  合计：估计非球员量 %s 框 **小于** 实际丢弃数 %d ⇒ 代理量自相矛盾，"
+                  "**不给覆盖率**（不是『覆盖得好』）"
+                  % (PROXY["n_N_est_total"], PROXY["n_drop_total"]))
+        elif PROXY.get("real_recall_est_total_raw") is not None:
+            print("  合计：盘面估计非球员 %s 框，门控丢 %d ⇒ 比值 %s（★不是 precision，"
+                  "分母来自另一次运行的分布）"
                   % (PROXY["n_N_est_total"], PROXY["n_drop_total"],
-                     "%.1f%%" % (100 * PROXY["real_recall_est_total"])))
+                     "%.1f%%" % (100 * PROXY["real_recall_est_total_raw"])))
         else:
-            print("  合计：本块数字**作废**（缺该层的抽样率）")
+            print("  合计：**不给数**（缺该层的抽样率/层占比）")
     if defect:
         print("\n== 门控缺陷 / 标注旁证（零逐框对齐，只用层内 N率 × 抽样率）==")
         for d in defect:
@@ -2353,6 +2456,12 @@ def main(argv=None):
             "不与本文件的绝对数字做交叉验证",
             "hull_purity 用的是「球衣色像素在其凸包面积中的占比」，"
             "阈值 0.60 不是从标注集调的，敏感性见 docs/player_gate_v1.md §5",
+            "precision_proxy 只是**层内 N 率 × 层假定占比**的折算（层假定占比来自另一次运行），"
+            "本 run 的估计量(≈57 框)甚至小于实际丢弃数(98) ⇒ coverage_status=INCONSISTENT，"
+            "不得当作覆盖率引用；见 docs/player_gate_v1.md §5.1(b)",
+            "标注的 (clip,frame,box_idx) 不是框身份（box_idx 是层内 enumerate 下标，"
+            "labels.csv 73 行仅 61 个唯一值、labels2.csv 159 行仅 115 个）⇒ 本文件零逐框对齐；"
+            "alignment_policy.n_boxes_aligned_one_to_one = 0",
         ],
     }
     if args.write:
@@ -2368,8 +2477,12 @@ def main(argv=None):
             B["delta_after_minus_legacy"].get("n_tracks", 0),
             B["delta_after_minus_legacy"].get("id_switch", 0),
             B["delta_after_minus_legacy"].get("len_median_of_clips", 0) or 0)
-    if PROXY and PROXY.get("valid") and PROXY.get("real_recall_est_total") is not None:
-        metric += " cov_est=%.0f%%" % (100 * PROXY["real_recall_est_total"])
+    if PROXY and PROXY.get("coverage_status") == "ok":
+        metric += " cov_est=%.0f%%" % (100 * (PROXY.get("real_recall_est_total_raw") or 0))
+    elif PROXY and PROXY.get("coverage_status") == "INCONSISTENT_est_below_drops":
+        # 估计非球员量小于实际丢弃数 ⇒ 代理量失效，**不打印百分比**，只标事实
+        metric += " cov_est=INVALID(est%d<drop%d)" % (PROXY.get("n_N_est_total") or 0,
+                                                     PROXY.get("n_drop_total") or 0)
     elif PROXY and not PROXY.get("valid"):
         metric += " cov_est=INVALID"
     if defect:

@@ -513,3 +513,49 @@ D:\python\python.exe tools\cross_match_eval.py `
 - 校准参考色仍来自 `kit_calib.py` 的「离谁近就归谁」初判（§12.3 的诚实边界不变）。
   真正产品化要用 D013 的 LCD 人工确认像素样本；本 A/B 证明的是**这条路值得走**，
   而不是「校准已完成」。
+
+### 12.7 第四批标注包（新比赛 · 跨场）已生成，等人工标
+
+§12.2/§12.6 量到的都是**取色失败原因的构成**，没有真值。要回答「门控在新场还成不成立」，
+必须在新场上人工标一批**同样按原因分层**的框 —— 工具 `tools/make_newmatch_labels.py`：
+
+```powershell
+D:\python\python.exe tools\make_newmatch_labels.py --build `
+  --video "<全场 mp4>" --palette white,blue `
+  --palette-refs data\results\kit_calib.json --slug migu968460165
+# => NEWLABEL_PACK_OK 83 20 20 20 3 20
+
+# 标（网页，键盘 p/n/u；这批约 5 分钟）
+D:\python\python.exe tools\label_web.py --port 8765 --batch 4
+# 标完：
+D:\python\python.exe tools\make_newmatch_labels.py --score
+```
+
+候选框分布（12 窗 × stride 12，共 5 316 个框；**与跨场评估逐框等价的分层口径**）：
+
+| 层 | 候选数 | 占比 | 抽了几个 | 旧场同层占比（§12.2 基线） |
+|---|---|---|---|---|
+| `colored` | 3 258 | 61.3% | 20 | 79.4% |
+| `purity` | 968 | 18.2% | 20 | 7.6% |
+| `color` | 1 055 | 19.8% | 20 | 9.1% |
+| `too_small` | 32 | 0.6% | 20 | 3.0% |
+| `rect` | **3** | 0.06% | **3** | 0.8% |
+
+> 口径说明：候选列是「占全部检测框的百分比」；旧场列**换算过**才有可比性——
+> 基线的四层占比（37.10 / 44.41 / 14.68 / 3.81）是**在 unknown 里**分的，
+> 乘上 unknown_rate 20.6% 才变成「占全部 hi 框」（7.6 / 9.1 / 3.0 / 0.8），
+> `colored` 则是 100% − 20.6% = 79.4%。直接拿 37.1% 与本表 18.2% 比是错的。
+
+两件值得记的事：
+
+1. **交叉验证对上了**：候选框里 unknown 合计 2 058/5 316 = **38.7%**，
+   与 §12.6 按场校准评估的 38.2% 基本一致（两个工具 stride 不同、实现独立）
+   ⇒ 说明 calibration 的结果不是单点偶然。
+2. **新场的 `rect` 层几乎没有样本**（候选只有 3 个）：`rect` = 躯干矩形切不出来
+   （框太小/太扁）。旧场 rect 层占 0.8%，新场 0.06% —— 这不是抽样不够，而是
+   **854×480 的原生画面里框高更大、躯干矩形更容易切出来**。所以第四批**无法**估计
+   新场 rect 层的非球员率（n=3），只能给 purity / color / too_small / colored 四层。
+
+`--score` 的判据写在工具里：**层间保序**（旧场 purity > rect > color > too_small，
+新场若是 purity > color > too_small 即保序）+ 每层 N 率与 Wilson 95% CI 并排。
+未标完时它明确报 `not_all_labeled 0/83` 而**不给数字**（`docs/repo_spec.md` §5）。

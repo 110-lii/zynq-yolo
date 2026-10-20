@@ -16,6 +16,8 @@
 | `deploy_to_board.ps1` | **PC** | 检查本地产物齐全 → 打 tar 包（只带真源 + 数据，不带 `.git`/产物）→ `scp` 到板 → 远程解包到 `/home/xilinx/zynq-yolo` | ✅ 已创建（2026-10-20，**尚未实跑**） |
 | `run_board_test.sh` | **板** | 板上跑 `src/ps/host/run_layer_test.py`，stdout 存 `board/logs/`，回传 JSON 里的关键摘要 | ✅ 已创建（2026-10-20，**尚未实跑**） |
 | `jtag_layer_test.tcl` | **PC（XSCT）** | **无操作系统路径**：`rst -system` → `ps7_init` → 停 A9 核 → `fpga` 烧 PL → `dow -data` 灌向量 → `mwr` 寄存器 → 轮询 `ap_done` → `mrd` 读回比对。用于 JTAG 模式（PS 不启动 Linux）时验证**字节正确性** | ✅ **已实跑通过**（2026-10-20）：`JTAG_TEST_OK 6 / 6`，0 / 54 784 字节不符，**连续 3 次复现**。证据见 [`../logs/board_jtag_bringup_20261020.md`](../logs/board_jtag_bringup_20261020.md) 与 [`../logs/board_jtag_layer_test_20261020.md`](../logs/board_jtag_layer_test_20261020.md) |
+| `jtag_capture_test.tcl` | **PC（XSCT）** | **M1 采集链**无 OS 验收：`ps7_init` → 停核 → `fpga` 烧 `capture_chain.bit` → `ps7_post_config` → 按 `capture_chain_addr.txt` 找 DMA/GPIO 基址 → **先武装 DMA S2MM（DA/LENGTH/DMACR）再放图样（GPIO bit0=1）** → 轮询 `DMASR.IOC` → 查 `GPIO2.bit0`（采集 FIFO 溢出粘滞）→ `mrd -bin` dump DDR → 交 `tools/capture_golden.py --compare` | ⬜ 已创建，**待上板实跑**（判据 `JTAG_CAPTURE_OK` / `JTAG_CAPTURE_FAIL`；与 `sim` 的 `vid_capture_chain` 用**同一份黄金模型**） |
+| `stub_jtag_capture_dryrun.tcl` | **PC（XSCT，无板）** | `jtag_capture_test.tcl` 的**假硬件试跑**：把 `mwr/mrd/connect` 换成 Tcl 桩，DMA 立即完成、DDR dump 由黄金 bin 生成（`pass`）或翻一个字节（`corrupt`）。用途是证明**判据能失败**，并让脚本改动不必每次都上板 | ✅ 已跑：`pass` → `JTAG_CAPTURE_OK`；`corrupt` → `JTAG_CAPTURE_FAIL`（并定位到 `(x=360,y=1)`） |
 
 > ⚠️ 板上/SCP 两个脚本**从未在真实板子上执行过**（截至 2026-10-20）；`jtag_layer_test.tcl` **已实跑通过 6/6 并三次复现**。
 > 三个脚本的判据都以**令牌**为准（`DEPLOY_OK` / `BOARD_LAYER_OK` / `JTAG_LAYER_OK`），**不看退出码**。

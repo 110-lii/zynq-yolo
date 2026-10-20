@@ -40,7 +40,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BUILD = ROOT / "build" / "sim"
 
-#: (用例名, TB 相对路径, [RTL 源相对路径...], TB 自报的成功令牌, xsim 顶层名)
+#: (用例名, TB 相对路径, [RTL 源相对路径...], TB 自报的成功令牌, xsim 顶层名[, 后置校验])
+#: 后置校验 = (脚本相对路径, [参数...], 期望令牌)：TB 通过后再拿 TB 的产物去打第二把尺子。
+#: 采集链就是这样把「仿真输出」直接喂给上板用的同一个比对器（tools/capture_golden.py），
+#: 于是「仿真对得上黄金模型」和「板上对得上黄金模型」是同一份判据。
 CASES = [
     (
         "vid_dvp_capture",
@@ -48,6 +51,32 @@ CASES = [
         ["src/rtl/video/vid_dvp_capture.v"],
         "VID_DVP_CAPTURE_TB_PASS",
         "vid_dvp_capture_tb",
+    ),
+    (
+        "vid_test_pattern",
+        "sim/tb/video/vid_test_pattern_tb.v",
+        ["src/rtl/video/vid_test_pattern.v"],
+        "VID_TEST_PATTERN_TB_PASS",
+        "vid_test_pattern_tb",
+    ),
+    (
+        "fifo_async",
+        "sim/tb/common/inf_axis_async_fifo_tb.v",
+        ["src/rtl/common/inf_axis_async_fifo.v"],
+        "INF_AXIS_ASYNC_FIFO_TB_PASS",
+        "inf_axis_async_fifo_tb",
+    ),
+    (
+        "vid_capture_chain",
+        "sim/tb/video/vid_capture_chain_tb.v",
+        [
+            "src/rtl/video/vid_test_pattern.v",
+            "src/rtl/video/vid_dvp_capture.v",
+            "src/rtl/common/inf_axis_async_fifo.v",
+        ],
+        "VID_CAPTURE_CHAIN_TB_PASS",
+        "vid_capture_chain_tb",
+        ("tools/capture_golden.py", ["--compare", "build/sim/chain_frame.bin"], "CAPTURE_MATCH_OK"),
     ),
 ]
 
@@ -135,8 +164,9 @@ def main(argv: list[str] | None = None) -> int:
 
     cases = [c for c in CASES if not args.only or args.only in c[0]]
     if args.list:
-        for name, tb, srcs, token, _ in cases:
-            print("%-24s %s  token=%s" % (name, tb, token))
+        for c in cases:
+            print("%-24s %s  token=%s%s"
+                  % (c[0], c[1], c[3], "  +post:" + c[5][0] if len(c) > 5 else ""))
         return 0
     if not cases:
         print("SIM_FAIL no_case_matched --only=%s" % args.only)
@@ -159,7 +189,9 @@ def main(argv: list[str] | None = None) -> int:
     print("engine=%s  cases=%d  build=%s" % (engine, len(cases), BUILD))
     passed = 0
     failed: list[str] = []
-    for name, tb_rel, src_rels, token, top in cases:
+    for c in cases:
+        name, tb_rel, src_rels, token, top = c[0], c[1], c[2], c[3], c[4]
+        post = c[5] if len(c) > 5 else None
         tb = ROOT / tb_rel
         srcs = [ROOT / s for s in src_rels]
         missing = [str(p) for p in [tb, *srcs] if not p.is_file()]
@@ -171,6 +203,15 @@ def main(argv: list[str] | None = None) -> int:
             ok, text = run_case_iverilog(tools, tb, srcs, token, args.trace)
         else:
             ok, text = run_case_xsim(tools, tb, srcs, token)
+        if ok and post:
+            # 后置校验：拿 TB 产物去跑第二个工具（例如黄金模型比对）
+            script, pargs, ptoken = post
+            code, ptext = run([sys.executable, str(ROOT / script)] + list(pargs), ROOT)
+            if ptoken not in ptext:
+                ok = False
+                text = "后置校验 %s 未给出令牌 %s\n%s" % (script, ptoken, tail(ptext))
+            else:
+                print("     POST %-19s %s -> %s" % (name, script, ptoken))
         if ok:
             passed += 1
             n_fail = 0

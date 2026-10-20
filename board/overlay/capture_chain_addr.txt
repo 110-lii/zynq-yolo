@@ -1,0 +1,9 @@
+# 自动生成：build/scripts/bd_capture_chain.tcl（改了 BD 必须重新生成）
+# 注：2026-10-20 这一版 BD 脚本按名字匹配 addr seg 失败，dma/gpio 两行为空，
+#     已按 board/overlay/capture_chain.hwh 的 MEMRANGE 补齐；BASE 以 hwh 为准。
+dma_base=0x40400000
+gpio_base=0x41200000
+h_active=640
+v_active=480
+pixel_bytes=4
+frame_bytes=1228800

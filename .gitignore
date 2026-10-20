@@ -215,5 +215,12 @@ data/annot/frames3/
 #       重建依据是 MANIFEST4.json + 新比赛视频（后者不进 git）。
 data/annot/frames4/
 
-# --- ������sim/scripts/run_sim.py ÿ���ر����ܣ�ֻ���̲����� ---
+# --- ������sim/scripts/run_sim.py ÿ���ر����ܣ�ֻ���̲���� ---
 build/sim/
+
+# --- 上板测试的本地产物：黄金 bin / DDR dump / 试跑桩（均可由工具重建，不进 git）---
+#     ★ build/board/capture_golden.bin 由 tools/capture_golden.py --out 生成；
+#       build/board/capture_dump.bin 是 JTAG 拉回来的实测 dump（1.2 MB 级）；
+#       build/stub/ 是 stub_jtag_capture_dryrun.tcl 的假硬件产物（更不该入库）。
+build/board/
+build/stub/

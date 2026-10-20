@@ -74,10 +74,13 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 | 模块 | 目录 | 状态 | 判据 |
 |---|---|---|---|
-| `vid_dvp_capture` | `src/rtl/video/` | ✅ 已实现 + TB 通过 | 令牌 `VID_DVP_CAPTURE_TB_PASS`（`make sim`） |
-| `inf_axis_async_fifo` | `src/rtl/common/` | ⬜ 下一个 | 跨时钟往返、满/空、复位不丢标志 |
-| `inf_clk_wiz` / `inf_reset_sync` | `src/rtl/common/` | ⬜ | 各域复位释放顺序正确（异步断言、同步释放） |
-| BD 集成（PS7 + AXI DMA + `conv_engine` + 采集链） | `build/scripts/` | ⬜ | 综合/实现日志 `DONE_OK`，JTAG 下载 `PROGRAM_OK` |
+| `vid_dvp_capture` | `src/rtl/video/` | ✅ 已实现 + TB 通过（出口 32 位、高 8 位补零） | `VID_DVP_CAPTURE_TB_PASS`（`make sim`） |
+| `vid_test_pattern` | `src/rtl/video/` | ✅ 已实现 + TB 通过（闭式图样，M1 的假摄像头） | `VID_TEST_PATTERN_TB_PASS` |
+| `inf_axis_async_fifo` | `src/rtl/common/` | ✅ 已实现 + TB 通过（FWFT、格雷码 CDC、单侧复位；含 6 个变异自检） | `INF_AXIS_ASYNC_FIFO_TB_PASS` |
+| 采集链整链（pattern→capture→FIFO，25→100 MHz） | `sim/tb/video/` | ✅ 已实现 + TB 通过 + **黄金模型后置比对** | `VID_CAPTURE_CHAIN_TB_PASS` + `CAPTURE_MATCH_OK` |
+| 黄金模型 / 比对器 | `tools/capture_golden.py` | ✅ 已实现（`--out` 生成、`--compare` 比对；自测：改 1 字节必 FAIL） | `CAPTURE_GOLDEN_OK` / `CAPTURE_MATCH_OK` / `CAPTURE_MATCH_FAIL` |
+| BD 集成（PS7 + AXI DMA + 采集链） | `build/scripts/bd_capture_chain.tcl` | 🟨 **建设中**：BD 已 validate 通过，综合实现出片中；产物 `board/overlay/capture_chain.{bit,hwh}` + `capture_chain_addr.txt` | 综合/实现日志 `BD_DONE_OK`，下载 `PROGRAM_OK` |
+| 上板验收（M1） | `board/scripts/jtag_capture_test.tcl` | 🟨 已写 + 假硬件试跑通过（`stub_jtag_capture_dryrun.tcl`：pass→OK / corrupt→FAIL），**待真板实跑** | `JTAG_CAPTURE_OK` + `CAPTURE_MATCH_OK` |
 | 触屏 UI 的 LCD 时序核 + 触摸读取 | — | ⏸ **挂起**（硬件资料已齐：`ref/hardware.md` §G；等 D013 的 UI 形态） | 立项后再定（先定判据再写 RTL） |
 
 **明确不做**（记录以免再被当成待办）：HDMI/TMDS 输出、OSD 框图元、PL 侧帧读回与缩放。
@@ -88,10 +91,12 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 | 域 | 频率 | 用途 |
 |---|---|---|
-| `pclk` | 24 MHz（随 OV5640 XVCLK 分频） | DVP 采集 |
-| `axi_clk` | 100 MHz | AXI HP0 / DMA / `conv_engine` 的 `m_axi` |
+| `pclk` | 24 MHz（真机：随 OV5640 XVCLK 分频）／**M1 用 25 MHz**（PS `FCLK_CLK1`，假 pclk） | DVP 采集 + 图样发生器 |
+| `axi_clk` | 100 MHz（PS `FCLK_CLK0`） | AXI HP0 / DMA / `ctrl_smc` / `data_smc` / FIFO 读侧 |
 
-- 复位：PS `fclk_reset0_n` 异步进 PL → `inf_reset_sync` 按域同步释放。
+- 复位：PS `FCLK_RESET0_N`（低有效）分两路进 `proc_sys_reset`（100M / 25M 各一个），
+  其 `peripheral_aresetn` 经 `util_vector_logic` **取反**后喂给自研 RTL 的高有效同步复位
+  （`cap_0/rst`、`pat_0/rst`、`fifo_0/s_rst`、`fifo_0/m_rst`）——不改被 TB 验证过的复位语义。
 - CDC 只允许经 `inf_axis_async_fifo`（AXIS 语义）或 Xilinx IP；**禁止手写打两拍传多比特**。
 
 ---
@@ -148,9 +153,56 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 ## 8. 下一步（按序）
 
-1. `inf_axis_async_fifo` + TB（CDC 往返、满/空、复位）；
-2. BD 集成采集链（DMA 落 DDR）+ M1 上板实测；
+1. ~~`inf_axis_async_fifo` + TB~~ ✅ 完成（2026-10-20，含 6 个变异自检）；
+2. ~~BD 集成采集链（DMA 落 DDR）~~ ✅ BD 已 validate，出片与**上板 M1**进行中；
 3. BD 集成 `conv_engine` + M3（先单层，再整网 416，含 §7-4 行带拆分）；
-4. M4 端到端实时性与结果流。
+4. M4 端到端实时性与结果流（D014 双通道）。
 
 > 顺序理由：先把「每个模块单独可验」打通，最后才做 BD 集成——BD 出问题时的定位成本最高。
+
+---
+
+## 9. 实现记录（2026-10-20，M1 落地时踩到的坑）
+
+> 只记**实测撞到并已修**的，不写猜测。每条都给了报错原文或现象，便于下次一眼认出来。
+
+1. **`axi_dma` 的 M_AXI 与 PS7 `S_AXI_HP0` 协议不同 ⇒ 必须过 SmartConnect**
+   报错原文：`[BD 41-1285] The protocols of the interfaces '/axi_dma_0/M_AXI_S2MM'(AXI4)
+   and '/processing_system7_0/S_AXI_HP0'(AXI3) are incompatible.`
+   ⇒ BD 里加 1×1 `data_smc`（SmartConnect）做 AXI4→AXI3 转换，再连 HP0。
+
+2. **PS7 的 `FCLK_CLK1` 默认不存在**：只写 `PCW_FPGA1_PERIPHERAL_FREQMHZ` 不够，必须同时
+   `PCW_EN_CLK1_PORT=1`（且依赖 `PCW_USE_CR_FABRIC=1`），否则 `get_bd_pins .../FCLK_CLK1`
+   返回空，`connect_bd_net` 报 `[BD 41-701]`。
+
+3. **`get_bd_intf_pins -of_objects` 只接受单元对象**：把 `"fifo_0"` 当名字传会报
+   `[Common 17-161] Invalid option value 'fifo_0' specified for 'of_objects'`；
+   要传 `$fifo`（create_bd_cell 的返回值）。
+
+4. **自研 RTL 进 BD 会自动推断 AXIS 接口**（实测：`create_bd_cell -type module -reference
+   vid_dvp_capture` 后出现接口引脚 `/cap_0/m_axis`），标量端口仍是普通 pin ⇒ 不需要
+   把模块打包成 IP 就能连 `S_AXIS_S2MM`。但**命名必须遵守** `*_tdata/tvalid/tready/tlast/tuser`。
+
+5. **DMA 内存侧位宽会被上游传播覆盖**：`CONFIG.c_m_axi_s2mm_data_width=64` 被
+   SmartConnect 按 32 位流传播覆盖，日志 `[BD 41-702] ... ignored`。直接写 32 位，
+   不留「以为设了 64」的假象；带宽核算 37 MB/s ≪ 400 MB/s，够用。
+
+6. **DMA 不能吃 24 位流**：AXI DMA 的 stream width 只支持 8/16/32/64/128，
+   `axis_dwidth_converter` 也不做 24→32 ⇒ 采集模块出口改成 32 位、高 8 位补零
+   （见 `src/rtl/video/vid_dvp_capture.v` 文件头）。
+
+7. **TB 不能靠"停 ready 但 href 挂着"来测反压**：DVP 每拍是 1 个字节，href 不动等于
+   继续灌"幽灵字节"，会把字节配对整体错位（本次表现为颜色从第 3 个像素起全错、
+   多出 4 个像素）。正确做法是**照常按节奏打像素**，由 FIFO 吸收。
+
+8. **FIFO 指针必须有复位初值**：无复位时 `x` 会顺着格雷码比较传播成恒 `x` 的
+   `tvalid/tready`（首次仿真 0 像素）。两侧复位都要清本域指针 + 本域同步链。
+
+9. **`mrd -bin -file` 是本轮的关键工具**：XSCT 支持 `mrd -bin -file <f> <addr> <count>`，
+   1.2 MB 一帧可以一次性 dump 成二进制，直接喂 `tools/capture_golden.py --compare`；
+   比在 Tcl 里解析文本 mrd 快且不丢格式。
+
+10. **试跑桩（stub）必须与真实结果隔开**：`stub_jtag_capture_dryrun.tcl` 会伪造 dump 与
+    结果 JSON，所以 `jtag_capture_test.tcl` 的结果路径支持 `RESULT_JSON` 环境变量覆盖，
+    并且桩只写 `build/` 下自己的临时文件——**不能让一次假跑在 `data/results/` 里留下
+    "板上通过"的证据**（本轮实际误写过一个 `data/results/jtag_capture_test.json`，已删）。

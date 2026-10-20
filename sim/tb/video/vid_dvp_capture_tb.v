@@ -32,7 +32,7 @@ module vid_dvp_capture_tb;
     reg  [7:0]  dvp_d   = 8'd0;
     reg         tready  = 1'b0;
 
-    wire [23:0] tdata;
+    wire [31:0] tdata;          // 高 8 位恒 0，低 24 位 = RGB888
     wire        tvalid;
     wire        tlast;
     wire        tuser;
@@ -107,9 +107,14 @@ module vid_dvp_capture_tb;
             if (chk_expected) begin
                 exp_idx = pix_in_frame % 4;      // H=4 时行内位置 %4 即图案序号
                 exp_rgb = ref_rgb(pat_hi(exp_idx), pat_lo(exp_idx));
-                if (tdata !== exp_rgb) begin
+                if (tdata[23:0] !== exp_rgb) begin
                     $display("FAIL 颜色@%0d 得到 %06h 期望 %06h",
-                             pix_total, tdata, exp_rgb);
+                             pix_total, tdata[23:0], exp_rgb);
+                    errors = errors + 1;
+                end
+                // 出口是 32 位、高 8 位补零（为了接只支持 8/16/32/64 的 AXI DMA）
+                if (tdata[31:24] !== 8'h00) begin
+                    $display("FAIL 高字节@%0d 得到 %02h 期望 00", pix_total, tdata[31:24]);
                     errors = errors + 1;
                 end
             end

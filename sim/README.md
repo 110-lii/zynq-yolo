@@ -20,9 +20,12 @@
 
 ### 现有用例
 
-| 用例 | testbench | 被测 RTL | 成功令牌 |
-|---|---|---|---|
-| `vid_dvp_capture` | `sim/tb/video/vid_dvp_capture_tb.v` | `src/rtl/video/vid_dvp_capture.v` | `VID_DVP_CAPTURE_TB_PASS` |
+| 用例 | testbench | 被测 RTL | 成功令牌 | 备注 |
+|---|---|---|---|---|
+| `vid_dvp_capture` | `sim/tb/video/vid_dvp_capture_tb.v` | `src/rtl/video/vid_dvp_capture.v` | `VID_DVP_CAPTURE_TB_PASS` | DVP→AXIS、tuser/tlast、背压、溢出粘滞位 |
+| `vid_test_pattern` | `sim/tb/video/vid_test_pattern_tb.v` | `src/rtl/video/vid_test_pattern.v` | `VID_TEST_PATTERN_TB_PASS` | 闭式图样（无摄像头时的上板激励源） |
+| `fifo_async` | `sim/tb/common/inf_axis_async_fifo_tb.v` | `src/rtl/common/inf_axis_async_fifo.v` | `INF_AXIS_ASYNC_FIFO_TB_PASS` | 跨时钟 FWFT、随机反压、满/空、单侧复位；附带 6 个变异自检（判据能失败） |
+| `vid_capture_chain` | `sim/tb/video/vid_capture_chain_tb.v` | pattern + capture + 异步 FIFO | `VID_CAPTURE_CHAIN_TB_PASS` | **整链**：640×480 一帧、25 MHz→100 MHz 跨域、25% 反压；TB 把收到的字节 dump 成 `build/sim/chain_frame.bin`，再由 `tools/capture_golden.py --compare` 与**上板用的同一份黄金模型**对拍（`run_sim.py` 的后置校验，成功时另打 `CAPTURE_MATCH_OK`） |
 
 ### `sim/tb/` 镜像 `src/rtl/` 子目录结构
 
@@ -76,5 +79,11 @@ mingw32-make sim                     # 等价（Makefile 转发）
 Vivado 2020.2 的 `xvlog/xelab/xsim`。**官方工具链是 Vivado xsim**；iverilog 只是
 本机快检，RTL 统一按 Verilog-2001 可综合子集写。产物（`.vvp`/日志）只落
 `build/sim/`，不进 git。
+
+**后置校验**：`run_sim.py` 的 `CASES` 第 6 项可以挂一个「拿 TB 产物再打第二把尺子」的
+校验。采集链就靠它把仿真 dump 直接交给上板用的同一个比对器
+（`tools/capture_golden.py`），所以「仿真过」与「板上过」用的是**同一份黄金模型**，
+不是两套各自为政的判断。跑通时日志里会多一行
+`POST vid_capture_chain tools/capture_golden.py -> CAPTURE_MATCH_OK`。
 
 > 依赖的本机环境事实见 [`../docs/repo_spec.md`](../docs/repo_spec.md) §6：器件 `xc7z020clg400-2`，工具链 **2020.2**。

@@ -14,7 +14,13 @@
 // 输出流（AXI4-Stream，视频惯例）：
 //   * tuser = 1 只出现于每场第一个像素（SOF）；
 //   * tlast = 1 于每行最后一个像素（EOL）；
-//   * tdata = {R,G,B} 24 位。
+//   * tdata = **32 位**，高 8 位恒 0，低 24 位 = {R,G,B}。
+//     ★ 为什么是 32 位而不是 24 位：下游要接 AXI DMA（S2MM），而 DMA 的
+//       stream data width 只支持 8/16/32/64/128…（不支持 24），Xilinx 的
+//       axis_dwidth_converter 也不做 24→32。所以在这里补零到 32 位，
+//       比在 BD 里塞一个位宽转换器少一级流水、也少一处 CDC 风险。
+//       代价：DDR 里每像素占 4 字节（高字节恒 0），PS 侧丢掉高字节即可；
+//       黄金模型判定时**只比低 24 位**，并断言高 8 位为 0（多一条自检）。
 //
 // 背压：DVP 口没有反压能力，所以内部放 16 深像素 FIFO；FIFO 满时置
 // `stat_overflow`（粘滞位），**不静默丢**——上板看到 overflow=1 就说明下游慢了。
@@ -35,7 +41,7 @@ module vid_dvp_capture #(
     input  wire        href,            // 高有效
     input  wire [7:0]  dvp_d,           // RGB565 字节流，高字节先到
     // AXI4-Stream 输出（视频流）
-    output wire [23:0] m_axis_tdata,
+    output wire [31:0] m_axis_tdata,    // 高 8 位恒 0，低 24 位 = {R,G,B}
     output wire        m_axis_tvalid,
     output wire        m_axis_tlast,
     output wire        m_axis_tuser,
@@ -102,7 +108,9 @@ module vid_dvp_capture #(
     end
 
     assign m_axis_tvalid = !empty;
-    assign {m_axis_tuser, m_axis_tlast, m_axis_tdata} = fifo[rptr[FIFO_AW-1:0]];
+    // {user, last, rgb888} 在 FIFO 里按 26 位存；出口补零到 32 位（见文件头说明）
+    assign {m_axis_tuser, m_axis_tlast} = fifo[rptr[FIFO_AW-1:0]][25:24];
+    assign m_axis_tdata = {8'h00, fifo[rptr[FIFO_AW-1:0]][23:0]};
 
     // ------------------------------------------------------------- 控制/计数
     // 注意：FIFO 满时像素仍要「消费」——降配第二字节、推进 x/y、只丢数据。

@@ -1,0 +1,138 @@
+{
+ "batch": 2,
+ "kind": "hi_unknown_verdict_v2",
+ "generated_by": "tools/hi_unknown_analysis.py",
+ "labels_source": "data\\annot\\labels2.csv",
+ "n_boxes": 159,
+ "n_labeled": 159,
+ "reference_hi_layer": {
+  "n": 24,
+  "n_nonplayer": 6,
+  "nonplayer_rate": 0.25,
+  "source": "data/annot/labels.csv 的 hi 层（第一批，n=24）"
+ },
+ "by_stratum": {
+  "hi_unk_purity": {
+   "n": 40,
+   "n_P": 1,
+   "n_N": 38,
+   "n_U": 1,
+   "n_labeled": 39,
+   "N_rate": 0.9743589743589743,
+   "P_rate_if_kept": 0.02564102564102564,
+   "N_rate_ci95": [
+    86.8,
+    99.5
+   ]
+  },
+  "hi_unk_color": {
+   "n": 40,
+   "n_P": 22,
+   "n_N": 17,
+   "n_U": 1,
+   "n_labeled": 39,
+   "N_rate": 0.4358974358974359,
+   "P_rate_if_kept": 0.5641025641025641,
+   "N_rate_ci95": [
+    29.3,
+    59.0
+   ]
+  },
+  "hi_unk_toosmall": {
+   "n": 40,
+   "n_P": 27,
+   "n_N": 4,
+   "n_U": 9,
+   "n_labeled": 31,
+   "N_rate": 0.12903225806451613,
+   "P_rate_if_kept": 0.8709677419354839,
+   "N_rate_ci95": [
+    5.1,
+    28.9
+   ]
+  },
+  "hi_unk_rect": {
+   "n": 39,
+   "n_P": 12,
+   "n_N": 25,
+   "n_U": 2,
+   "n_labeled": 37,
+   "N_rate": 0.6756756756756757,
+   "P_rate_if_kept": 0.32432432432432434,
+   "N_rate_ci95": [
+    51.5,
+    80.4
+   ]
+  }
+ },
+ "overall": {
+  "n": 159,
+  "n_P": 62,
+  "n_N": 84,
+  "n_U": 13,
+  "n_labeled": 146,
+  "N_rate": 0.5753424657534246,
+  "P_rate_if_kept": 0.4246575342465753,
+  "N_rate_ci95": [
+   49.4,
+   65.3
+  ]
+ },
+ "population_estimate_nonplayer_rate": 0.599754409496345,
+ "stratum_true_share": {
+  "hi_unk_purity": 0.371,
+  "hi_unk_color": 0.44409999999999994,
+  "hi_unk_toosmall": 0.14679999999999999,
+  "hi_unk_rect": 0.0381
+ },
+ "verdicts": {
+  "hi_unk_purity": {
+   "code": "signal",
+   "N_rate": 0.9743589743589743
+  },
+  "hi_unk_color": {
+   "code": "signal",
+   "N_rate": 0.4358974358974359
+  },
+  "hi_unk_toosmall": {
+   "code": "noise",
+   "N_rate": 0.12903225806451613
+  },
+  "hi_unk_rect": {
+   "code": "signal",
+   "N_rate": 0.6756756756756757
+  }
+ },
+ "color_dist_slice": {
+  "split": 0.5,
+  "ge": {
+   "n": 18,
+   "n_P": 4,
+   "n_N": 13,
+   "n_U": 1,
+   "n_labeled": 17,
+   "N_rate": 0.7647058823529411,
+   "P_rate_if_kept": 0.23529411764705882
+  },
+  "lt": {
+   "n": 22,
+   "n_P": 18,
+   "n_N": 4,
+   "n_U": 0,
+   "n_labeled": 22,
+   "N_rate": 0.18181818181818182,
+   "P_rate_if_kept": 0.8181818181818182
+  }
+ },
+ "label_consistency": {
+  "n_overlap": 37,
+  "n_agree": 16,
+  "n_conflict_pn": 10
+ },
+ "limitations": [
+  "分层采样（每层约 40 个），层内比例可信、总体比例需按 diag 的真实占比加权后才能说",
+  "总体估计假设 data/results/hi_color_diag.json 的占比在整段素材上成立（同一场比赛）",
+  "U（看不清）不计入 P/N，比例的分母是 P+N",
+  "与第一批重叠 37 框的冲突率说明标注有噪声，N率 数字应带 ±数 pt 的不确定度"
+ ]
+}

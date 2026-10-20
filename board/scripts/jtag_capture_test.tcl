@@ -239,7 +239,32 @@ if {!$skip_program} {
     halt_cores
 
     puts "programming PL: $BITFILE"
-    fpga $BITFILE
+    # ★ 2026-10-20 实测踩到：`fpga` 报 "fpga configuration failed. DONE PIN is not HIGH"。
+    #   之后 DAP 直接进 "AP transaction error, DAP status 0x30000021"（`rst -system`
+    #   也报 "Cannot reset DAP"），只能断电重启 —— 所以**失败后不要继续往下跑**，
+    #   而是降 JTAG 频率、重做一次 PS 复位+init 后再试一次；再失败就明确报错退出。
+    set prog_ok 0
+    for {set try 1} {$try <= 2} {incr try} {
+        if {[catch {fpga $BITFILE} ferr]} {
+            puts "WARN fpga attempt $try failed: $ferr"
+            if {$try == 1} {
+                catch {jtag frequency 1500000}
+                puts "   降 JTAG 时钟到 1.5 MHz，重做 rst -system + ps7_init 后重试"
+                catch {rst -system}
+                after 2000
+                catch {source $PS7_INIT}
+                catch {ps7_init}
+                after 500
+                halt_cores
+            }
+        } else {
+            set prog_ok 1
+            break
+        }
+    }
+    if {!$prog_ok} {
+        fail "fpga configuration failed twice (DONE PIN not HIGH) —— 板子需断电重启；见 docs/integration_rtl_plan.md §9-12"
+    }
     puts "PROGRAM_OK"
 
     if {[catch {ps7_post_config} pcerr]} {

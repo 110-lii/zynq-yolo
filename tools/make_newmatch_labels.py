@@ -309,18 +309,23 @@ def score_pack():
     """标完后的分层判决：每层 N 率 + Wilson CI，并与旧场层内 N 率并排。"""
     if not LABELS4.exists():
         return None, "labels4_missing（先 --build 再标）"
-    rows = list(csv.DictReader(LABELS4.open(encoding="utf-8")))
+    with LABELS4.open(encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
     valid = {"P", "N", "U"}
     labeled = [r for r in rows if (r.get("label") or "").strip() in valid]
     if len(labeled) < len(rows) or not rows:
         return None, "not_all_labeled %d/%d（未标完不给数字，docs/repo_spec.md §5）" % (
             len(labeled), len(rows))
-    inv = {v: k for k, v in STRATUM_CSV.items()}
     out = {"tool": "tools/make_newmatch_labels.py --score",
            "generated": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
            "n_labeled": len(labeled), "layers": {}, "thresholds": {"z": 1.96}}
     for key in STRATA:
-        s = [r for r in labeled if r["stratum"] == inv[key]]
+        # ★ 已修 bug（2026-10-20，用户标完 83 框后首次实跑暴露）：
+        #   原写法 `inv = {v: k for k, v in STRATUM_CSV.items()}` 后再 `inv[key]`，
+        #   而 `inv` 的键是 **CSV 名**（hi_unk_purity …）、`key` 是**逻辑名**（purity）⇒
+        #   必 KeyError。映射方向用反了，且这个分支在"未标完"时永远走不到，所以
+        #   `--build`、负例测试全绿也发现不了（又一次"判据只能判出绿"）。
+        s = [r for r in labeled if r["stratum"] == STRATUM_CSV[key]]
         n = len(s)
         nP = sum(1 for r in s if r["label"] == "P")
         nN = sum(1 for r in s if r["label"] == "N")
@@ -333,9 +338,12 @@ def score_pack():
             "old_match_N_rate": OLD_LAYER_NRATE.get(key),
         }
     # 判据：只看「层间相对高低」是否保序（旧场 purity > rect > color > too_small）
+    # ★ 已修 bug（2026-10-20）：`OLD_LAYER_NRATE` 不含 `colored`，而 `STRATA` 含它，
+    #   原写法 `out["layers"][k]["N_rate_pn"]` 遍历 order_old 看似安全，但只要
+    #   OLD_LAYER_NRATE 被补进 colored 就会 KeyError。改为显式只用两层都有的键。
     order_old = [k for k in sorted(OLD_LAYER_NRATE, key=lambda k: -OLD_LAYER_NRATE[k])]
     got = [(k, out["layers"][k]["N_rate_pn"]) for k in order_old
-           if out["layers"][k]["N_rate_pn"] is not None]
+           if k in out["layers"] and out["layers"][k]["N_rate_pn"] is not None]
     order_got = [k for k, _v in sorted(got, key=lambda kv: -kv[1])]
     out["order_old"] = order_old
     out["order_new"] = order_got

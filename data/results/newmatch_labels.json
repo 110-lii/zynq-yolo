@@ -1,0 +1,83 @@
+{
+ "tool": "tools/make_newmatch_labels.py --score",
+ "generated": "2026-10-20T16:32:24+0800",
+ "n_labeled": 83,
+ "layers": {
+  "purity": {
+   "n_labeled": 20,
+   "n_P": 15,
+   "n_N": 5,
+   "n_U": 0,
+   "N_rate_pn": 0.25,
+   "N_rate_pn_ci95": [
+    0.1119,
+    0.4687
+   ],
+   "old_match_N_rate": 0.974
+  },
+  "color": {
+   "n_labeled": 20,
+   "n_P": 5,
+   "n_N": 14,
+   "n_U": 1,
+   "N_rate_pn": 0.7368,
+   "N_rate_pn_ci95": [
+    0.5121,
+    0.8819
+   ],
+   "old_match_N_rate": 0.436
+  },
+  "too_small": {
+   "n_labeled": 20,
+   "n_P": 10,
+   "n_N": 1,
+   "n_U": 9,
+   "N_rate_pn": 0.0909,
+   "N_rate_pn_ci95": [
+    0.0162,
+    0.3774
+   ],
+   "old_match_N_rate": 0.129
+  },
+  "rect": {
+   "n_labeled": 3,
+   "n_P": 2,
+   "n_N": 0,
+   "n_U": 1,
+   "N_rate_pn": 0.0,
+   "N_rate_pn_ci95": [
+    0.0,
+    0.6576
+   ],
+   "old_match_N_rate": 0.676
+  },
+  "colored": {
+   "n_labeled": 20,
+   "n_P": 20,
+   "n_N": 0,
+   "n_U": 0,
+   "N_rate_pn": 0.0,
+   "N_rate_pn_ci95": [
+    -0.0,
+    0.1611
+   ],
+   "old_match_N_rate": null
+  }
+ },
+ "thresholds": {
+  "z": 1.96
+ },
+ "order_old": [
+  "purity",
+  "rect",
+  "color",
+  "too_small"
+ ],
+ "order_new": [
+  "color",
+  "purity",
+  "too_small",
+  "rect"
+ ],
+ "order_preserved": false
+}

@@ -88,6 +88,16 @@ too_small 14.7% / rect 3.8%）和「按取色失败原因门控」的结论，**
     #   （默认 20 s 粗扫一档，>=0.25 判为比赛画面，连续 >=120 s 才算一段）。
     #   它是**采样级**判据、不是逐帧真值：JSON 里如实带 step_s / 命中率 / 区间表。
 
+    # 按场校准参考色（先跑 tools/kit_calib.py 得到实测色度，再喂回来做 A/B）
+    & D:\\python\\python.exe tools\\kit_calib.py --video "<全场 mp4>" --palette white,blue
+    & D:\\python\\python.exe tools\\cross_match_eval.py `
+        --video-dir "<全场 mp4>" --palette white,blue `
+        --palette-refs data\\results\\kit_calib.json `
+        --n-clips 12 --play-windows --max-total-s 0 `
+        --out data\\results\\cross_match_calibrated.json
+    # ★ --palette-refs **只替换参考色**，不动 MAX_COLOR_DIST / MIN_MARGIN。
+    #   否则「校准」和「放宽阈值」两个变量混在一起，A/B 说不清是哪一项起了作用。
+
 产物
 ----
     data/results/cross_match.json
@@ -221,6 +231,36 @@ def parse_palette(text):
     if names[0] == names[1]:
         return None, "palette_duplicate '%s'" % names[0]
     return {"A": names[0], "B": names[1]}, None
+
+
+def load_measured_refs(path):
+    """读「按场校准」的实测参考色，返回 ({颜色名: 结构}, err)。
+
+    接受的输入（顺序：先看 `measured_refs` 段，再退回把整个文件当映射）：
+      1. `tools/kit_calib.py` 的产物 `data/results/kit_calib.json`
+         → 取 `measured_refs`（每项 {"kind": "achromatic"|"hue", "s","v","h01"}）；
+      2. 直接给映射 `{"white": {"kind": "achromatic", "s":…, "v":…}, …}`。
+
+    ★ 只替换**参考色**，不动任何阈值（MAX_COLOR_DIST / MIN_MARGIN 原样）——
+      否则「校准」会变成「顺手放宽判据」，两个变量混在一起就说不清是哪一项起了作用。
+    """
+    import json as _json
+    p = Path(path)
+    if not p.exists():
+        return None, "palette_refs_missing %s" % p
+    try:
+        raw = _json.loads(p.read_text(encoding="utf-8"))
+    except Exception as exc:                       # noqa: BLE001 - 解析失败一律降级为 FAIL
+        return None, "palette_refs_unreadable %s: %s" % (p.name, exc)
+    refs = raw.get("measured_refs") if isinstance(raw, dict) and "measured_refs" in raw else raw
+    if not isinstance(refs, dict) or not refs:
+        return None, "palette_refs_empty %s" % p.name
+    out = {}
+    for name, item in refs.items():
+        if not isinstance(item, dict) or "s" not in item or "v" not in item:
+            return None, "palette_refs_bad_entry %s=%r" % (name, item)
+        out[name] = item
+    return {"source": str(p), "refs": out}, None
 
 
 def load_palette_probe():
@@ -808,6 +848,9 @@ def main(argv=None):
                     help="新比赛视频目录（大 mp4 或一堆小 mp4 均可）；留空 = 自检模式")
     ap.add_argument("--palette", default="red,white",
                     help="双方队服颜色（人工录入，D013 LCD 方案）。默认只对旧比赛成立")
+    ap.add_argument("--palette-refs", default="",
+                    help="按场校准：给 tools/kit_calib.py 的 kit_calib.json"
+                         "（或 {颜色名:{kind,s,v[,h01]}} 映射），只替换参考色、不动阈值")
     ap.add_argument("--self-check", action="store_true",
                     help="用 data/samples/incidents 的前 2 段自检（无 --video-dir 时默认开启）")
     ap.add_argument("--n-clips", type=int, default=2,
@@ -851,6 +894,28 @@ def main(argv=None):
     if err:
         print("CROSS_MATCH_FAIL %s" % err)
         return 2
+
+    # ---- 按场校准（可选）：只换参考色，不动阈值 ----
+    # 为什么要它：PALETTE_REF 是按旧场素材标定的常数；新场深蓝球衣实测 S=0.298/V=0.435
+    # 而预置 blue 是 S=0.70/V=0.70，差 0.40 的饱和度会在 0.16 闸门里直接吃掉一半预算。
+    refs_info, palette_measure = None, palette
+    if args.palette_refs:
+        refs_info, err = load_measured_refs(args.palette_refs)
+        if err:
+            print("CROSS_MATCH_FAIL %s" % err)
+            return 2
+        missing = [n for n in (palette["A"], palette["B"]) if n not in refs_info["refs"]]
+        if missing:
+            print("CROSS_MATCH_FAIL palette_refs_missing_colour %s（文件里有 %s）"
+                  % (",".join(missing), ",".join(sorted(refs_info["refs"]))))
+            return 2
+        palette_measure = {role: refs_info["refs"][name] for role, name in palette.items()}
+        refs_info["applied"] = {"A": palette["A"], "B": palette["B"]}
+        refs_info["note"] = ("按场校准：只替换参考色，MAX_COLOR_DIST / MIN_MARGIN 未改动")
+        print("  按场校准参考色来自 %s（%s）"
+              % (refs_info["source"],
+                 "; ".join("%s=%s" % (r, json.dumps(refs_info["refs"][n], ensure_ascii=False))
+                           for r, n in palette.items())))
 
     baseline, err = load_baseline(BASELINE_JSON, [palette["A"], palette["B"]])
     if err:
@@ -922,7 +987,7 @@ def main(argv=None):
 
     measured = []
     for i, item in enumerate(plan, 1):
-        r = measure(model, item, palette, args)
+        r = measure(model, item, palette_measure, args)
         if r is None:
             print("  [%d/%d] %s 打不开，跳过" % (i, len(plan), item["label"]))
             continue
@@ -939,7 +1004,7 @@ def main(argv=None):
     if args.native:
         print("  -- 原生路径（缩放到 %d 宽后重新检测/取色）--" % NATIVE_OUT_WIDTH)
         for i, item in enumerate(plan, 1):
-            r = scale_frames(item, palette, model, args)
+            r = scale_frames(item, palette_measure, model, args)
             if r is None:
                 continue
             scaled.append(r)
@@ -964,7 +1029,7 @@ def main(argv=None):
             "totals_scaled_640": tbl_scaled, "verdict_native": verdict_native})
         payload = assemble(args, palette, baseline, layout, self_check, measured, probe,
                            tbl_windowed, tbl_scaled, verdict_native, verdict_scaled,
-                           [], pipe, t0, out_path, windows=windows)
+                           [], pipe, t0, out_path, windows=windows, refs=refs_info)
         _write(out_path, payload)
         print("RESULT_JSON %s" % out_path)
         if isinstance(pipe, list):
@@ -980,7 +1045,8 @@ def main(argv=None):
     if reasons:          # 判据失败也要落盘：失败现场是最该留证据的东西
         payload = assemble(args, palette, baseline, layout, self_check, measured, probe,
                            tbl_windowed, tbl_scaled, verdict_native, verdict_scaled,
-                           warns + warns_s, reasons, t0, out_path, windows=windows)
+                           warns + warns_s, reasons, t0, out_path, windows=windows,
+                           refs=refs_info)
         _write(out_path, payload)
         print("RESULT_JSON %s" % out_path)
         print("CROSS_MATCH_FAIL %s" % reasons[0])
@@ -991,7 +1057,7 @@ def main(argv=None):
     all_warns = warns + warns_s
     payload = assemble(args, palette, baseline, layout, self_check, measured, probe,
                        tbl_windowed, tbl_scaled, verdict_native, verdict_scaled,
-                       all_warns, reasons, t0, out_path, windows=windows)
+                       all_warns, reasons, t0, out_path, windows=windows, refs=refs_info)
     _write(out_path, payload)
     print("RESULT_JSON %s" % out_path)
 
@@ -1069,7 +1135,7 @@ def cross_match_self_check(payload):
 
 def assemble(args, palette, baseline, layout, self_check, clips, probe,
              tbl_native, tbl_scaled, verdict_native, verdict_scaled, warns, reasons,
-             t0, out_path, windows=None):
+             t0, out_path, windows=None, refs=None):
     native_land = aggregate_landscape(clips)
     out = {
         "tool": "tools/cross_match_eval.py",
@@ -1079,6 +1145,7 @@ def assemble(args, palette, baseline, layout, self_check, clips, probe,
         "contract": CONTRACT_DOC,
         "palette_input": {"palette": palette, "given_by": "human",
                           "note": "队服颜色必须人工录入（D013 LCD 方案），默认 red,white 只对旧比赛成立"},
+        "measured_refs": refs,
         "params": {"n_clips": len(clips), "clip_len": args.clip_len, "stride": args.stride,
                    "imgsz": args.imgsz, "model": Path(args.model).name,
                    "hi_conf": cp.HI_CONF, "min_h_px": cp.MIN_H_PX,

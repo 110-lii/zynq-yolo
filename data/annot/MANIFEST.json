@@ -1,0 +1,29 @@
+{
+ "tool": "tools/make_player_labels.py",
+ "generated": "2026-10-20T11:36:00+0800",
+ "purpose": "球员/非球员人工标注，用于评估颜色先验是否提升识别（D013-a）",
+ "label_scheme": {
+  "P": "球员（含守门员）",
+  "N": "非球员（裁判/教练/替补/观众/球童/摄像师）",
+  "U": "看不清"
+ },
+ "strata": {
+  "hi": "conf>=0.25",
+  "lo_kept": "0.08<=conf<0.25 且颜色判明属某队",
+  "lo_drop": "0.08<=conf<0.25 且颜色判不明"
+ },
+ "sampling": {
+  "per_stratum": 25,
+  "stride": 2,
+  "every_frame": 25,
+  "imgsz": 640
+ },
+ "counts": {
+  "hi": 25,
+  "lo_kept": 25,
+  "lo_drop": 23
+ },
+ "n_boxes": 73,
+ "n_labeled": 0,
+ "note": "n_labeled=0 时禁止声称任何 precision/recall；填完 CSV 再跑 --score"
+}

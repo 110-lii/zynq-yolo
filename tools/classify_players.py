@@ -180,11 +180,25 @@ def torso_color(bgr, rect):
     if not_grass.sum() < 6:
         return None
     h2, s2, v2 = h[not_grass], s[not_grass], v[not_grass]
-    purity = float(not_grass.sum()) / total
-    rad = np.deg2rad(h2)
+
+    # ★ 广告牌 / 背景抑制（2026-10-20 增）：实测有框取到 h=188°、s=0.19、v=0.75
+    #   的"蓝绿色" —— 那是场边广告牌，不是球衣。球衣的两个特征是：
+    #     (a) 饱和度高（真队服 S 通常 > 0.25；广告牌多为低饱和印刷色）
+    #     (b) 亮度不过曝（V < 0.95；白色广告牌/灯箱会接近 1.0）
+    #   于是再加两道过滤，并用**过滤后的剩余比例**当 purity。
+    #   注意白色的队服 S 很低（实测 0.05），所以 (a) 只对**彩色**候选生效：
+    #   这里先把"高饱和"与"低饱和但高亮且非草"两类都留下，再交给判定器裁决。
+    colorful = (s2 >= 0.22) & (v2 <= 0.95)
+    achromatic_bright = (s2 < 0.22) & (v2 >= 0.62)      # 白色球衣候选
+    jersy_like = colorful | achromatic_bright
+    if jersy_like.sum() < 6:
+        return None
+    h3, s3, v3 = h2[jersy_like], s2[jersy_like], v2[jersy_like]
+    purity = float(jersy_like.sum()) / total
+    rad = np.deg2rad(h3)
     mx, my = np.median(np.cos(rad)), np.median(np.sin(rad))
     hm = (math.degrees(math.atan2(my, mx)) % 360.0)
-    return hm / 360.0, float(np.median(s2)), float(np.median(v2)), int(not_grass.sum()), purity
+    return hm / 360.0, float(np.median(s3)), float(np.median(v3)), int(jersy_like.sum()), purity
 
 
 def color_of_name(name):

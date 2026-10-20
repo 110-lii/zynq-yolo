@@ -185,3 +185,7 @@ data/samples/**/_cuts_scan.json
 runs/
 *.pt.tmp
 *.onnx.part
+
+# --- 人工标注包里的帧裁剪图：可由 tools/make_player_labels.py 重建，不入库 --------
+#     只保留 labels.csv（人工标注结果，不可重建）与 MANIFEST.json。
+data/annot/frames/

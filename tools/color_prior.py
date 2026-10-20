@@ -79,6 +79,10 @@ import importlib.util as _ilu
 
 _cp_spec = _ilu.spec_from_file_location("_cp", str(REPO / "tools" / "classify_players.py"))
 _cp = _ilu.module_from_spec(_cp_spec)
+# ★ 必须先登记到 sys.modules 再 exec：classify_players.py 里若有 @dataclass，
+#   dataclasses 会去 sys.modules 找 cls.__module__ 对应的模块，找不到就
+#   AttributeError: 'NoneType' object has no attribute '__dict__'。
+sys.modules.setdefault("_cp", _cp)
 _cp_spec.loader.exec_module(_cp)
 
 PALETTE_REF = _cp.PALETTE_REF
@@ -91,6 +95,37 @@ classify = _cp.classify
 torso_color = _cp.torso_color
 torso_rect = _cp.torso_rect
 distance_to_ref = _cp.distance_to_ref
+
+# ②b 统一门控（--gate）：加载 tools/player_gate.py。
+# ★ 与上面同一纪律：importlib 按路径加载 + 加载前设 dont_write_bytecode。
+#   代价是 player_gate.py 里 `import classify_players` 会拿到**另一份模块对象**，
+#   所以下面显式把它的 PALETTE_REF / color_of_name / torso_rect / classify 换成
+#   本文件用的这一份 —— 两套阈值口径必须物理上是同一个对象，不能只是"数值相等"。
+_pg = None
+GateConfig = None
+judge_frame = None
+GateMeter = None
+PRESET_RULES = None
+
+
+def _load_gate():
+    global _pg, GateConfig, judge_frame, GateMeter, PRESET_RULES
+    if _pg is not None:
+        return _pg
+    sys.dont_write_bytecode = True
+    _spec = _ilu.spec_from_file_location("_pg", str(REPO / "tools" / "player_gate.py"))
+    _mod = _ilu.module_from_spec(_spec)
+    # 同上：exec 之前就要登记，player_gate.py 顶层有 @dataclass GateConfig。
+    sys.modules.setdefault("_pg", _mod)
+    _spec.loader.exec_module(_mod)
+    for k in ("PALETTE_REF", "color_of_name", "torso_rect", "classify"):
+        setattr(_mod, k, globals()[k])
+    _pg = _mod
+    GateConfig = _mod.GateConfig
+    judge_frame = _mod.judge_frame
+    GateMeter = _mod.ColorMeter
+    PRESET_RULES = _mod.PRESETS["presets"]["rules"]
+    return _mod
 
 HI_CONF = 0.25          # 常规检测阈值（与全仓库口径一致）
 LO_CONF = 0.08          # 补检时的下限
@@ -159,6 +194,35 @@ def process_clip(model, clip_path, palette, use_color, args):
     dist_kept = []
     dist_dropped = []
 
+    # ②b 统一门控（D013-a 的收口点）：--gate 时把 ② 的去留交给 tools/player_gate.py
+    #     两者对"什么叫球员"必须只有一套说法，否则下游无从解释。
+    gate = getattr(args, "gate", None)
+    gate_mode = bool(gate) and use_color
+    gate_cfg = None
+    gate_cnt = {"player": 0, "unknown": 0, "staff": 0}
+    gate_reason = {}
+    gate_drop_reasons = set()
+    gate_meter = None
+    if gate_mode:
+        _load_gate()
+        if gate == "presets":                    # 只换规则表，保留 v1 的结构证据
+            gate_cfg = GateConfig(palette=dict(palette), rules=dict(PRESET_RULES))
+            gate_cfg.check()
+            gate_drop_reasons = set(k for k, v in PRESET_RULES.items() if v == "drop")
+        else:
+            if gate not in _pg.PRESETS:
+                raise SystemExit("--gate 取值只能是 %s，收到 %r"
+                                 % ("/".join(sorted(_pg.PRESETS)), gate))
+            gate_cfg = _pg.preset_config(gate, palette=palette, rules=args.gate_rules)
+            gate_cfg.gate_on = True
+            gate_drop_reasons = set(k for k, v in gate_cfg.resolved_rules().items()
+                                    if v == "drop")
+        # 门控是"判定层"，颜色只作为其中一条证据；几何守卫与结构证据必须同时生效，
+        # 否则 ② 会退化成「取不到色就丢」，正是 v1 被实测推翻的那个错误。
+        gate_cfg.use_color = True
+        gate_cfg.use_struct = True
+        gate_meter = GateMeter(gate_cfg.palette, gate_cfg.use_hull, gate_cfg.hull_purity)
+
     # hi 层取色失败原因分层（给 docs/hi_layer_color_gate.md 提供可复算的数字）
     hi_by_reason = {REASON_TOO_SMALL: 0, REASON_PURITY: 0, REASON_RECT: 0,
                     REASON_COLOR: 0, "colored": 0}
@@ -216,11 +280,28 @@ def process_clip(model, clip_path, palette, use_color, args):
                 if len(hi_bb) and _iou_max(bb, hi_bb) > 0.5:
                     continue
                 n_extra_all += 1
-                role, dist, purity, col = _classify_box(frame, bb, palette)
-                accept = True
-                if use_color:
-                    # 颜色先验：必须明确属于某一队，才认为"这是个被漏掉的球员"
-                    accept = (role in ("A", "B")) and dist < MAX_COLOR_DIST
+                if gate_mode:
+                    d = judge_frame(frame, np.asarray([bb], dtype=float),
+                                    np.asarray([float(cf)]), gate_cfg,
+                                    meter=gate_meter)[0]
+                    role = "unknown" if d.role == "unknown" else "colored"
+                    dist, purity = d.color_dist, d.purity
+                    if dist is not None:
+                        dist = float(dist)
+                    # 补检的语义是「这个框是不是被漏掉的球员」：
+                    # 门控判 staff = 明确不是人 → 丢；其余（player/unknown）→ 留。
+                    # 注意这与 hi 层的处置不同：hi 层已经算进球员集合，unknown 只降权不下场。
+                    accept = (d.role != "staff")
+                    gate_cnt[d.role] = gate_cnt.get(d.role, 0) + 1
+                    gate_reason[d.reason] = gate_reason.get(d.reason, 0) + 1
+                else:
+                    role, dist, purity, col = _classify_box(frame, bb, palette)
+                    accept = True
+                    if use_color:
+                        # v1 行为逐字保留：取不到色的补检框一律丢。
+                        # 标注实证（docs/hi_layer_color_gate.md §6）：这一条会把
+                        # too_small 层（87.1% 是球员）一起扔掉 —— 想改就用 --gate。
+                        accept = (role in ("A", "B")) and dist < MAX_COLOR_DIST
                 if accept:
                     n_extra_kept += 1
                     dist_kept.append(dist if role in ("A", "B") else 9.9)
@@ -274,6 +355,11 @@ def process_clip(model, clip_path, palette, use_color, args):
             "keep_ratio": round(n_extra_kept / n_extra_all, 3) if n_extra_all else None,
             "dist_kept": _stat(dist_kept),
             "dist_dropped": _stat(dist_dropped),
+            "gate": gate if gate_mode else None,
+            # --gate 时：② 的去留不再由"取不到色"决定，而由门控的 role 决定
+            "gate_role_counts": dict(gate_cnt) if gate_mode else None,
+            "gate_reason_counts": dict(sorted(gate_reason.items(),
+                                              key=lambda kv: -kv[1])) if gate_mode else None,
         },
         # hi 层"判不出颜色"的原因分层 —— 区分「信息不足」与「颜色有歧义」
         "hi_unknown_reason": dict(hi_by_reason),
@@ -303,6 +389,13 @@ def main(argv=None):
     ap.add_argument("--model", default=str(MODEL_DEFAULT))
     ap.add_argument("--no-color", action="store_true",
                     help="对照组：补检时不做颜色过滤")
+    ap.add_argument("--gate", default="after",
+                    help="② 补检的去留交给 tools/player_gate.py。" 
+                         "取值：after（默认=v2 门控）/ legacy / noprior / nostruct / "
+                         "norules / nohull / minimal / presets（=只换规则表的 v1 结构证据）")
+    ap.add_argument("--gate-rules", default=None,
+                    help="覆盖规则表，格式 reason=action,reason=action，"
+                         "如 too_small=keep,purity=drop,rect=drop,color=demote")
     args = ap.parse_args(argv)
 
     mp = Path(args.model)
@@ -334,7 +427,9 @@ def main(argv=None):
            "params": {"hi_conf": HI_CONF, "lo_conf": LO_CONF,
                       "stride": args.stride, "imgsz": args.imgsz,
                       "max_color_dist": MAX_COLOR_DIST, "min_margin": MIN_MARGIN,
-                      "min_h_px": MIN_H_PX, "min_purity": MIN_PURITY},
+                      "min_h_px": MIN_H_PX, "min_purity": MIN_PURITY,
+                      "gate": args.gate if not args.no_color else "off",
+                      "gate_rules": args.gate_rules},
            "clips": [],
            "limitations": [
                "① 剔除/④ 分队**没有人工真值**：hue_tightness 与 field_rate 只能证明"
@@ -342,6 +437,10 @@ def main(argv=None):
                "② 补检的 keep_ratio 也**不是** precision：没有标注时无法算准确率；"
                "dist_kept vs dist_dropped 的差距只是必要条件",
                "③ 稳身份（ID switch 减少）需接 track_players.py，本文件未测",
+               "② 的默认判据已经换成门控（--gate after）。旧口径 `--gate presets` "
+               "保留可复算：它把 too_small 层（标注里 87.1% 是球员）一起丢掉，"
+               "见 docs/player_gate_v1.md §4",
+               "门控的 reason/score 只在本文件输出里做计数，不参与 ① ④ 的统计口径",
                "裁判若与某队同色，本方法在原理上无法分开（物理限制）",
            ]}
     n_kept = n_drop = 0

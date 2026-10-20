@@ -12,7 +12,7 @@
 ## 内容
 
 > ⚠️ 本节原写「`tools/` 为空目录、脚本一个都没创建」——**早已过时**（2026-10-20 更正）。
-> 现状：**35 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径）已落地。
+> 现状：**50 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径，2026-10-20 复核）已落地。
 > 下表只列关键脚本；完整清单看目录。状态列**如实**标注，**不要假装已存在/已运行**。
 
 | 路径 | 说明 | 状态 |
@@ -32,9 +32,15 @@
 | `color_prior.py` | **用颜色提升球员识别**（D013-a）：① 剔非球员 ② 低置信补检（带/不带颜色先验对照） ④ 分队；输出结构量（色相紧致度、场地内占比、keep_ratio） | ✅ 已创建（**无人工真值 ⇒ 不产出 precision/recall**；详见 [`../docs/color_prior_v1.md`](../docs/color_prior_v1.md)） |
 | `make_player_labels.py` | **球员/非球员人工标注包**（D013-a 评估用）：第一批分三层（hi / lo_kept / lo_drop）采样出图 → `data/annot/labels.csv`；`--hi-unknown` 生成第二批（hi 层取色失败按原因分层）→ `data/annot/labels2.csv`；`--score` 给出「颜色先验 vs 无颜色先验」的 precision 对比 | ✅ 第一批 73/73 已标（有颜色 85.1% vs 无 71.0%）；第二批 159/159 已标 |
 | `hi_color_diag.py` | **hi 层颜色 unknown 原因诊断**：把 `unknown` 拆成 too_small / purity / rect / color 四类，跑全量 12 段，回答「调颜色阈值到底有没有用」 | ✅ 已跑（12 585 hi 框，2 596 unknown；too_small 仅 14.7% ⇒ 阈值不是白调，见 `docs/hi_layer_color_gate.md`） |
-| `hi_unknown_analysis.py` | **第二批标注判决**：按失败原因给非球员率 + Wilson 95% 区间，按 `hi_color_diag.json` 的真实占比做总体加权，`color_dist` 切片，并用与第一批重叠的 37 框估标注一致性（kappa） | ✅ 已跑（purity 97.4% / rect 67.6% / color 43.6% / too_small 12.9%；总体估计 60% 非球员；kappa 0.226 ⇒ 只用层间相对高低，见 `docs/hi_layer_color_gate.md` §6） |
+| `hi_unknown_analysis.py` | **第二批标注判决**：按失败原因给非球员率 + Wilson 95% 区间，按 `hi_color_diag.json` 的真实占比做总体加权，`color_dist` 切片。（初版曾用「与第一批重叠的 37 框」估 kappa，**该结论已作废** —— `box_idx` 不是框的身份，见 `docs/hi_layer_color_gate.md` §6.4 更正） | ✅ 已跑（purity 97.4% / rect 67.6% / color 43.6% / too_small 12.9%；总体估计 60% 非球员；**仅层间相对高低可用**） |
 | `label_web.py` | **球员/非球员标注网页**（本地 8765，键盘 p/n/u，自动存 `data/annot/labels.csv`，顶部可看分层加权 precision 对比） | ✅ 支持多批次：`?batch=1` 第一批、`?batch=2` 第二批（默认 2），写入各自 CSV；已跑通写入/读回/非法 id 400 |
 | `player_labels_pdf.py` | 把标注包排成 PDF（每页一个框 + 勾选栏） | ✅ 已创建（74 页，`report/player_labels_20261020.pdf`） |
+| `batch3.py` | **第三批标注包（严格重复标注）**：从批1/批2 已标框里按 4 层（hi / lo_kept / lo_drop / hi_unk）各 15 个共 60 个重新出图到 `data/annot/frames3/`，写 `labels3.csv`（label 全空）+ `MANIFEST3.json`（来源只记在这里，CSV 不留痕迹）。框身份用 `(clip, frame, conf, h_px)`，**不用 `box_idx`**（它只是该 stratum 内的枚举下标）。`--audit` 只审计不出图 | ✅ 已创建（60/60 逐像素与原图一致；`REPEAT3_PACK_OK 60 15 15 15 15` / `REPEAT3_PIXELS` / `REPEAT3_AUDIT`） |
+| `repeat_agreement.py` | **重复标注一致性**：按 `(clip, frame, conf, h_px)` 对齐 labels / labels2 / labels3，算三分类 Cohen's kappa、仅 P/N kappa、P/N 真冲突率、U 分歧率，并按 stratum 拆开 + 输出列联表与冲突明细（可查图）；labels3 未标完时明确报「未标完」**不给数字**（`docs/repo_spec.md` §5） | ✅ 已创建 |
+| `player_gate.py` | **球员判定门控层**（D013-a 收口）：把「按取色失败原因分层」的判决落成可测量的规则表（`too_small`→keep / `purity`→drop / `rect`→drop / `color`→demote），叠加几何守卫（场内/远端人群）与 hull 纯度复核；带 v1/v2/legacy/noprior 等 8 组消融对照 | ✅ 已跑 12 段全量（`data/results/player_gate.json`）：v1 丢 834 框 → v2 只丢 98 框且救回 736 个（88.2%，新误杀 0） |
+| `cross_match_eval.py` | **跨比赛可迁移性评估**：给定新比赛视频目录，自动抽 20s 切片 → 跑 hi 层检测 + 取色失败原因分层 → 与旧基线（`hi_color_diag.json`）并排对照；色板必须人工传入（D013 LCD 方案的命令行形态）；`--play-windows` 先在整场录像里按草坪占比检出比赛段，避免抽到广告/演播室/看台特写 | ✅ **已跑真新比赛**（`data/results/cross_match.json`）：12 段 / n_hi 7 886 → `CROSS_MATCH_OK 12 7886 0.371 WARN(G2;G3;G4)`；unknown_rate 20.6%→47.7%。自检产物另存 `cross_match_selfcheck.json`（不再覆盖正式结果） |
+| `palette_probe.py` | **色板可分辨性闸门**（跨比赛评估的前置条件）：两队色的 sibling margin 是否够、草坪/藏青/黄/紫/白球衣真实像素会不会被误判给任一队；`cross_match_eval.py` 开跑前自动调用 | ✅ 已创建（独立可跑：`python tools/palette_probe.py <A> <B>`）。实测白队像素 97% 判成蓝色此类**静默误判**能被挡下（见 `docs/cross_match_eval.md` §9） |
+| `kit_calib.py` | **按场校准球衣色板**：比赛段内取帧 → 取躯干色 → 按「到两队参考色的较近者」粗分两簇 → 输出「预置参考色 vs 实测中位数」下的取色成功率，回答「换场后 unknown_rate 涨的那 30 pt 有多少是色板没校准」 | ✅ 已跑新场（`data/results/kit_calib.json`）：229 样本，colored 61.1%→**74.2%**（+13.1 pt）。结论：色板参考色是**按场**的量，见 `docs/cross_match_eval.md` §12.3 |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |
 
 ## 规则
@@ -65,7 +71,14 @@
 # 3. 【TODO，未创建】渲染报告
 #    python D:\zynq-yolo\tools\md_to_docx.py --src D:\zynq-yolo\report --out D:\zynq-yolo\report\
 
-# 4. 建议节奏：每次改动 src/ 或 build/ 后跑一次 check_repo.py，
+# 4. 第三批重复标注（隔一段时间再标一遍，验「同一张图会不会标出两个答案」）
+#    & D:\python\python.exe D:\zynq-yolo\tools\batch3.py            # 生成 60 框 -> data/annot/frames3/ + labels3.csv
+#    & D:\python\python.exe D:\zynq-yolo\tools\batch3.py --audit    # 只审计已出批次，不出图
+#    & D:\python\python.exe D:\zynq-yolo\tools\label_web.py --port 8765 --batch 3
+#    标完后：& D:\python\python.exe D:\zynq-yolo\tools\repeat_agreement.py
+#    期望末行：REPEAT_AGREE_OK <kappa> <n>；未标完时为 REPEAT_AGREE_FAIL not_all_labeled（不再给数字）
+
+# 5. 建议节奏：每次改动 src/ 或 build/ 后跑一次 check_repo.py，
 #    每轮构建后跑一次 collect_metrics.py（见 ../build/README.md 的报告轮转约定）
 ```
 
@@ -80,3 +93,9 @@
 | `ball_cv.py` | ✅ 已实现（运动残差 + 外观先验 + 时空关联；含 null/static/shuffle/synthetic/ablate 五类对照） | `BALL_CV_DONE`（结果 JSON 内 `verdict_class`） |
 | `pitch_geometry.py` | ✅ 已实现（白线掩膜覆盖率判据 + 阴性/阳性对照） | `PITCH_GEOM_*` |
 | `int8_sim.py` / `pynq_net.py` | ✅ 已实现 | `PYNQ_NET_OK` / `PYNQ_NET_FAIL` 等 |
+| `batch3.py` | ✅ 已实现（60 框 4 层各 15；出图后自检逐像素一致；`box_idx` 不参与框身份） | `REPEAT3_PACK_OK <n> <分层计数>` / `REPEAT3_PIXELS` / `REPEAT3_AUDIT <行数> <唯一键> <共享键> <严格同框>` / `REPEAT3_FAIL <原因>` |
+| `repeat_agreement.py` | ✅ 已实现（三分类 & 仅 P/N 的 Cohen's kappa、P/N 真冲突率、U 分歧率、按 stratum 拆分、列联表、冲突明细；未标完不下结论） | `REPEAT_AGREE_OK <kappa> <n>` / `REPEAT_AGREE_FAIL <reason>`（`not_all_labeled` / `kappa_low` / `no_aligned` / `no_pn_pairs`） |
+| `player_gate.py` | ✅ 已实现（规则表 + 几何守卫 + hull 复核；8 组消融：after/legacy/noprior/nostruct/norules/nohull/v1struct/minimal） | `GATE_OK <n_kept> <n_dropped>` / `GATE_FAIL <原因>`（结果 `data/results/player_gate.json`） |
+| `cross_match_eval.py` | ✅ 已实现（切片抽取 → hi 层分层统计 → 与旧基线并排 + 判据 G1–G5 + 门控一致性反推 + 色板闸门；色板人工传入，不写死） | `CROSS_MATCH_OK <n_clips> <n_hi> <max_drift>` / `CROSS_MATCH_FAIL <reason>`（字符串见下）；自检模式另打一行 `SELF_CHECK_OK pipeline n_clips=<n> n_hi=<n> max_drift=<f>`（同场对基线无判别力，不套 G1–G5） |
+| `palette_probe.py` | ✅ 已实现并接入 `cross_match_eval.py`（兄弟色 margin ≥0.10；草坪/藏青/黄/紫/白球衣真实像素不得被判成 A/B 且离该队参考色 >1.5×MAX_COLOR_DIST） | `PALETTE_PROBE_OK` / `PALETTE_PROBE_FAIL <palette_indistinct ...>`（未过闸门时主脚本 `CROSS_MATCH_FAIL`，可用 `--allow-indistinct-palette` 显式放行） |
+| `kit_calib.py` | ✅ 已实现（比赛段取帧 → 躯干色 → 按最近参考色粗分两簇 → 预置 vs 实测中位数两套参考色下的 colored/unknown） | `KIT_CALIB_OK <n> <colored_before_pct> <colored_after_pct>` / `KIT_CALIB_FAIL <reason>`（结果 `data/results/kit_calib.json`） |

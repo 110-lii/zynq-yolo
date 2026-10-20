@@ -57,6 +57,13 @@ BATCHES = {
         "csv": ANNOT / "labels2.csv",
         "frames": ANNOT / "frames2",
         "score": ANNOT / "scores2.json"},
+    # 3 = 第三批 60 框：**严格重复标注**（同一批框、同一张图，隔一段时间再标一遍）。
+    #     图名与列都不暴露来源，标注者不该知道这是重复框；来源映射只在 MANIFEST3.json，
+    #     本文件**不读**它。一致性用 tools/repeat_agreement.py 算。
+    3: {"name": "第三批 · 重复标注（复检）",
+        "csv": ANNOT / "labels3.csv",
+        "frames": ANNOT / "frames3",
+        "score": ANNOT / "scores3.json"},
 }
 DEFAULT_BATCH = 2
 
@@ -122,6 +129,24 @@ def score(batch, rows):
                      "无颜色先验（hi + 全部 lo）")
         return {"batch": 1, "kind": "color_prior_ab",
                 "with_color": with_col, "without_color": without}
+
+    if batch == 3:
+        # 第三批是重复标注批次：这里**不**报任何"提升/退化"的结论，
+        # 只报进度。一致性/冲突一律交给 tools/repeat_agreement.py
+        # （它要拿三批做对齐，网页只能看到一批，算出来的必然是错的）。
+        lab = [r["label"] for r in rows if r["label"] in VALID]
+        by_s = {}
+        for s in ("hi", "lo_kept", "lo_drop", "hi_unk"):
+            sub = [r for r in rows if r["stratum"] == s]
+            by_s[s] = {"n": len(sub),
+                       "n_labeled": sum(1 for r in sub if r["label"] in VALID)}
+        return {"batch": 3, "kind": "repeat_progress",
+                "n_total": len(rows), "n_labeled": len(lab),
+                "done": len(rows) > 0 and len(lab) == len(rows),
+                "by_stratum": by_s,
+                "verdict": ("本批是重复标注批次，进度 %d/%d；"
+                            "一致性与冲突率请跑 tools/repeat_agreement.py"
+                            % (len(lab), len(rows)))}
 
     # 第二批：只问一件事 —— 颜色判不出的框里，非球员是不是更多？
     #   参照：第一批标注的 hi 层整体（24 个里 6 个非球员 = 25%）
@@ -398,6 +423,20 @@ async function showScore(){
       "<tr><td>无颜色先验（hi + 全部 lo）</td><td>"+s.without_color.n_kept+"</td><td>"+
         s.without_color.n_labeled+"</td><td>"+s.without_color.n_player+"</td><td><b>"+f(s.without_color.precision)+"</b></td></tr>"+
       "</table><p style='color:#9aa0a6;font-size:12px'>样本是分层抽的 ⇒ 样本内精确率</p>";
+  } else if(s.kind==="repeat_progress"){
+    let tr="";
+    for(const k in s.by_stratum){
+      const v=s.by_stratum[k];
+      tr+="<tr><td>"+k+"</td><td>"+v.n+"</td><td>"+v.n_labeled+"</td></tr>";
+    }
+    d.innerHTML =
+      "<h3 style='margin:0 0 10px'>第三批：重复标注进度</h3>"+
+      "<p style='font-size:13px;margin:0 0 8px'>已标 <b>"+s.n_labeled+"</b> / "+s.n_total+
+        (s.done?"　<b style='color:#81c995'>已标完</b>":"　<span style='color:#9aa0a6'>（未标完）</span>")+"</p>"+
+      "<table><tr><th>层</th><th>框数</th><th>已标</th></tr>"+tr+"</table>"+
+      "<p style='color:#9aa0a6;font-size:12px;line-height:1.7;margin:8px 0 0'>"+
+      "本页只报进度。一致性（Cohen's kappa、P/N 冲突率、按层拆分）要三批对齐才能算，请跑：<br>"+
+      "<code>python tools\\repeat_agreement.py</code></p>";
   } else {
     const o=s.unknown_overall, ref=s.reference_hi_layer;
     let tr="";

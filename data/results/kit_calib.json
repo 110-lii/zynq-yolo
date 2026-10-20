@@ -1,0 +1,91 @@
+{
+ "tool": "tools/kit_calib.py",
+ "generated": "2026-10-20T14:02:54+0800",
+ "decision": "D013-a：球衣色板是**按场**校准的量，不是全仓库常数",
+ "video": "D:\\yt-dlp\\downloads\\migu_968460165\\2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+ "palette_input": {
+  "palette": {
+   "A": "white",
+   "B": "blue"
+  },
+  "given_by": "human",
+  "note": "队服颜色名由人输入（D013 LCD 方案）"
+ },
+ "params": {
+  "n_windows": 12,
+  "frames_per_window": 3,
+  "min_h_px": 40.0,
+  "conf": 0.25,
+  "model": "yolov8n.pt",
+  "sampling": "play_windows",
+  "starts": [
+   750.0,
+   1890.0,
+   2130.0,
+   2390.0,
+   2550.0,
+   2810.0,
+   3090.0,
+   3310.0,
+   3730.0,
+   3990.0,
+   4130.0,
+   4510.0
+  ]
+ },
+ "windows": {
+  "n_intervals": 21,
+  "total_play_s": 3680.0,
+  "n_samples": 478,
+  "n_play_samples": 288
+ },
+ "n_torso_samples": 229,
+ "preset_refs": {
+  "white": {
+   "kind": "achromatic",
+   "s": 0.08,
+   "v": 0.95
+  },
+  "blue": {
+   "kind": "hue",
+   "h01": 0.6389,
+   "s": 0.7,
+   "v": 0.7
+  }
+ },
+ "measured_refs": {
+  "white": {
+   "kind": "achromatic",
+   "n": 120,
+   "s": 0.0667,
+   "v": 0.9353,
+   "s_p10": 0.0431,
+   "s_p90": 0.5275,
+   "v_med": 0.9353,
+   "h01_circular_median": 0.25
+  },
+  "blue": {
+   "kind": "hue",
+   "n": 109,
+   "h01": 0.5982,
+   "s": 0.298,
+   "v": 0.4353
+  }
+ },
+ "colored_pct_preset": 61.14,
+ "colored_pct_calibrated": 74.24,
+ "delta_pt": 13.1,
+ "thresholds": {
+  "MAX_COLOR_DIST": 0.16,
+  "MIN_MARGIN": 0.04,
+  "min_samples": 40
+ },
+ "caveats": [
+  "无真值：量的是取色成功率，不是分队正确率；校准后更易取到色也可能更易取错",
+  "簇的中位数来自「离谁近就归谁」的初判，初判偏差会被继承",
+  "真实可用校准应用人工确认的像素样本（D013 LCD 方案），本工具只先把量级量清楚",
+  "取帧在比赛段内抽样，不是全场普查"
+ ],
+ "generated_in_s": 25.1,
+ "output_path": "D:\\zynq-yolo\\data\\results\\kit_calib.json"
+}

@@ -1,0 +1,436 @@
+{
+ "tool": "tools/cross_match_eval.py",
+ "generated": "2026-10-20T14:08:25+0800",
+ "mode": "self_check",
+ "why": "现有颜色/门控结论全部来自 migu_5106947698 一场球；本工具量「换一场还剩多少」",
+ "contract": [
+  "输入 1: --video-dir 新比赛视频目录（大 mp4 或一堆小 mp4 都行）",
+  "输入 2: --palette 双方队服颜色，人工录入（D013 的 LCD 方案；默认 red,white 只对旧比赛成立）",
+  "输入 3: 可选 --model/--imgsz/--stride/--clip-len/--n-clips（默认与旧基线一致）",
+  "输出:   data/results/cross_match.json（含并排对照与判据结论，不覆盖 hi_color_diag.json）"
+ ],
+ "palette_input": {
+  "palette": {
+   "A": "red",
+   "B": "white"
+  },
+  "given_by": "human",
+  "note": "队服颜色必须人工录入（D013 LCD 方案），默认 red,white 只对旧比赛成立"
+ },
+ "params": {
+  "n_clips": 2,
+  "clip_len": 20.0,
+  "stride": 8,
+  "imgsz": 640,
+  "model": "yolov8n.pt",
+  "hi_conf": 0.25,
+  "min_h_px": 22.0,
+  "min_purity": 0.3,
+  "max_color_dist": 0.16,
+  "min_margin": 0.04,
+  "layout": "windowed",
+  "native_width": 640,
+  "input_dir": "D:\\zynq-yolo\\data\\samples\\incidents"
+ },
+ "thresholds": {
+  "MIN_N_HI": 2000,
+  "MAX_ABS_DRIFT_PT": 15.0,
+  "MAX_REL_DRIFT": 0.5,
+  "MAX_UNKNOWN_RATE_DRIFT_PT": 10.0,
+  "MAX_TOO_SMALL_THETA": 0.8,
+  "DEGENERATE_REL": 0.1
+ },
+ "palette_probe": {
+  "palette": {
+   "A": "red",
+   "B": "white"
+  },
+  "siblings": {
+   "A:red|B:white": {
+    "dist_a_in_b": 0.1473,
+    "dist_b_in_a": 0.1473,
+    "margin": 0.1473,
+    "need_ge": 0.1,
+    "status": "PASS"
+   }
+  },
+  "probe_colors": {
+   "grass": [
+    0.25,
+    0.55,
+    0.55
+   ],
+   "kit_navy": [
+    0.583,
+    0.72,
+    0.35
+   ],
+   "kit_yellow": [
+    0.15555555555555556,
+    0.8,
+    0.85
+   ],
+   "kit_purple": [
+    0.7777777777777778,
+    0.35,
+    0.6
+   ],
+   "kit_white_real": [
+    0.5,
+    0.16,
+    0.75
+   ]
+  },
+  "false_assign": {
+   "grass": {
+    "role": "unknown",
+    "dist": 0.3467,
+    "scores": {
+     "A": 0.3467,
+     "B": 0.6786
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   },
+   "kit_navy": {
+    "role": "unknown",
+    "dist": 0.7545,
+    "scores": {
+     "A": 0.7545,
+     "B": 0.8
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   },
+   "kit_yellow": {
+    "role": "unknown",
+    "dist": 0.2456,
+    "scores": {
+     "A": 0.2456,
+     "B": 0.5571
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   },
+   "kit_purple": {
+    "role": "unknown",
+    "dist": 0.4489,
+    "scores": {
+     "A": 0.4489,
+     "B": 0.5357
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   },
+   "kit_white_real": {
+    "role": "unknown",
+    "dist": 0.4,
+    "scores": {
+     "A": 0.8247,
+     "B": 0.4
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   }
+  },
+  "ok": true,
+  "problems": [],
+  "thresholds": {
+   "sibling_margin": 0.1,
+   "probe_tol": 1.5,
+   "max_color_dist": 0.16,
+   "min_margin": 0.04
+  }
+ },
+ "baseline": {
+  "path": "data\\results\\hi_color_diag.json",
+  "generated": "2026-10-20T12:15:03+0800",
+  "n_clips": 12,
+  "n_hi": 12585,
+  "n_unknown": 2596,
+  "unknown_rate": 0.206,
+  "reason_share_pct": {
+   "purity": 37.1,
+   "color": 44.41,
+   "too_small": 14.68,
+   "rect": 3.81
+  },
+  "palette": [
+   "red",
+   "white"
+  ],
+  "source_match": "migu_5106947698"
+ },
+ "clips": [
+  {
+   "clip_id": 1,
+   "label": "inc_01_t01154.9@0.0s",
+   "video": "inc_01_t01154.9.mp4",
+   "start_s": 0.0,
+   "dur_s": 20.0,
+   "src_size": [
+    640,
+    360
+   ],
+   "n_hi": 913,
+   "n_unknown": 156,
+   "unknown_rate": 0.1709,
+   "reason_counts": {
+    "purity": 76,
+    "color": 49,
+    "too_small": 25,
+    "rect": 6,
+    "colored": 757
+   },
+   "reason_share_pct": {
+    "purity": 48.72,
+    "color": 31.41,
+    "too_small": 16.03,
+    "rect": 3.85
+   },
+   "hi_h_px": {
+    "median": 38.0,
+    "p10": 27.2,
+    "p90": 48.5
+   },
+   "elapsed_s": 4.3,
+   "landscape": "on_par"
+  },
+  {
+   "clip_id": 2,
+   "label": "inc_02_t01370.6@0.0s",
+   "video": "inc_02_t01370.6.mp4",
+   "start_s": 0.0,
+   "dur_s": 20.0,
+   "src_size": [
+    640,
+    360
+   ],
+   "n_hi": 712,
+   "n_unknown": 161,
+   "unknown_rate": 0.2261,
+   "reason_counts": {
+    "purity": 67,
+    "color": 71,
+    "too_small": 15,
+    "rect": 8,
+    "colored": 551
+   },
+   "reason_share_pct": {
+    "purity": 41.61,
+    "color": 44.1,
+    "too_small": 9.32,
+    "rect": 4.97
+   },
+   "hi_h_px": {
+    "median": 37.3,
+    "p10": 27.8,
+    "p90": 50.6
+   },
+   "elapsed_s": 2.7,
+   "landscape": "on_par"
+  }
+ ],
+ "totals_native": {
+  "n_clips": 2,
+  "n_hi": 1625,
+  "n_unknown": 317,
+  "unknown_rate": 0.1951,
+  "reason_counts": {
+   "purity": 143,
+   "color": 120,
+   "too_small": 40,
+   "rect": 14,
+   "colored": 1308
+  },
+  "reason_share_pct": {
+   "purity": 45.11,
+   "color": 37.85,
+   "too_small": 12.62,
+   "rect": 4.42
+  },
+  "hi_h_px": {
+   "median": 38.0
+  }
+ },
+ "verdict_native": {
+  "verdict": "FAIL",
+  "gate_fail": "G1",
+  "max_drift": null,
+  "max_abs_drift_pt": null,
+  "n_hi": 1625,
+  "table": {
+   "purity": {
+    "new_pct": 45.11,
+    "base_pct": 37.1,
+    "drift": 8.01,
+    "rel_drift": 0.2159,
+    "status": "PASS"
+   },
+   "color": {
+    "new_pct": 37.85,
+    "base_pct": 44.41,
+    "drift": -6.56,
+    "rel_drift": -0.1477,
+    "status": "PASS"
+   },
+   "too_small": {
+    "new_pct": 12.62,
+    "base_pct": 14.68,
+    "drift": -2.06,
+    "rel_drift": -0.1403,
+    "status": "PASS"
+   },
+   "rect": {
+    "new_pct": 4.42,
+    "base_pct": 3.81,
+    "drift": 0.61,
+    "rel_drift": 0.1601,
+    "status": "PASS"
+   }
+  },
+  "gate_check": {
+   "basis": "docs/hi_layer_color_gate.md §6.1 层内非球员率（点估计）",
+   "layer_nonplayer_rate": {
+    "purity": 0.974,
+    "rect": 0.676,
+    "color": 0.436,
+    "too_small": 0.129
+   },
+   "thresholds": {
+    "max_too_small_theta": 0.8,
+    "ref_layers": [
+     "purity",
+     "rect",
+     "color"
+    ]
+   },
+   "new_est_nonplayer_rate": 0.6506,
+   "base_est_nonplayer_rate": 0.5997,
+   "too_small_pct": 12.62,
+   "implied_too_small_theta": 0.129,
+   "shift_pt": 5.09,
+   "status": "consistent",
+   "note": "反推 too_small 层非球员率 0.13 ≤ 0.80，与旧场 0.129 的定性一致"
+  }
+ },
+ "totals_scaled_640": {
+  "n_clips": 2,
+  "n_hi": 1625,
+  "n_unknown": 317,
+  "unknown_rate": 0.1951,
+  "reason_counts": {
+   "purity": 143,
+   "color": 120,
+   "too_small": 40,
+   "rect": 14,
+   "colored": 1308
+  },
+  "reason_share_pct": {
+   "purity": 45.11,
+   "color": 37.85,
+   "too_small": 12.62,
+   "rect": 4.42
+  },
+  "hi_h_px": {
+   "median": 38.0
+  }
+ },
+ "verdict_scaled_640": {
+  "verdict": "FAIL",
+  "gate_fail": "G1",
+  "max_drift": null,
+  "max_abs_drift_pt": null,
+  "n_hi": 1625,
+  "table": {
+   "purity": {
+    "new_pct": 45.11,
+    "base_pct": 37.1,
+    "drift": 8.01,
+    "rel_drift": 0.2159,
+    "status": "PASS"
+   },
+   "color": {
+    "new_pct": 37.85,
+    "base_pct": 44.41,
+    "drift": -6.56,
+    "rel_drift": -0.1477,
+    "status": "PASS"
+   },
+   "too_small": {
+    "new_pct": 12.62,
+    "base_pct": 14.68,
+    "drift": -2.06,
+    "rel_drift": -0.1403,
+    "status": "PASS"
+   },
+   "rect": {
+    "new_pct": 4.42,
+    "base_pct": 3.81,
+    "drift": 0.61,
+    "rel_drift": 0.1601,
+    "status": "PASS"
+   }
+  },
+  "gate_check": {
+   "basis": "docs/hi_layer_color_gate.md §6.1 层内非球员率（点估计）",
+   "layer_nonplayer_rate": {
+    "purity": 0.974,
+    "rect": 0.676,
+    "color": 0.436,
+    "too_small": 0.129
+   },
+   "thresholds": {
+    "max_too_small_theta": 0.8,
+    "ref_layers": [
+     "purity",
+     "rect",
+     "color"
+    ]
+   },
+   "new_est_nonplayer_rate": 0.6506,
+   "base_est_nonplayer_rate": 0.5997,
+   "too_small_pct": 12.62,
+   "implied_too_small_theta": 0.129,
+   "shift_pt": 5.09,
+   "status": "consistent",
+   "note": "反推 too_small 层非球员率 0.13 ≤ 0.80，与旧场 0.129 的定性一致"
+  },
+  "label": "scaled_640"
+ },
+ "play_windows": null,
+ "landscape": {
+  "per_clip": [
+   {
+    "label": "inc_01_t01154.9@0.0s",
+    "landscape": "on_par",
+    "median_h_px": 38.0
+   },
+   {
+    "label": "inc_02_t01370.6@0.0s",
+    "landscape": "on_par",
+    "median_h_px": 37.3
+   }
+  ],
+  "median_h_px": 37.6,
+  "kinds": {
+   "on_par": 2
+  }
+ },
+ "warns": [],
+ "fails": "pipeline n_clips=2 n_hi=1625 clips_ok=2 reasons_ok=2/2 gate=consistent scale_probe=ok",
+ "elapsed_s": 13.9,
+ "output_path": "D:\\zynq-yolo\\data\\results\\cross_match_selfcheck.json",
+ "conclusion": [
+  "最大单层漂移在 purity：37.1% -> 45.1%（基线 migu_5106947698）",
+  "原生布局 n_hi=1625（h 中位 37.6），缩放至 640 宽后 n_hi=1625（h 中位 38.0）：两者差距就是「画面尺度变了」这一项",
+  "门控检验：consistent（too_small 占比 12.6%，反推层内非球员率 0.129，上限 0.80；旧基线加权 0.5997）",
+  "自检模式：不套用跨场判据（同场对基线没有判别力），只证明管线通"
+ ],
+ "caveats": [
+  "无真值：量的是取色失败原因的**构成**，不是「球员判得准不准」",
+  "层内非球员率取自旧比赛标注（docs/hi_layer_color_gate.md §6.1），跨场能否搬本身是待验问题",
+  "锚点以比赛为单位：事件切片比随机 20s 窗口更「忙」，抽样偏差已知",
+  "两种布局（原生 / 缩放到 640 宽）都要看：原生布局混入了「画面尺度变了」这个因素"
+ ]
+}

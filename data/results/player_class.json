@@ -1,0 +1,131 @@
+{
+ "tool": "tools/classify_players.py",
+ "generated": "2026-10-20T11:27:48+0800",
+ "decision": "D012（球员/非球员）+ D013（触屏录入色板）",
+ "mode": "manual_palette",
+ "params": {
+  "palette_arg": [
+   "red",
+   "white"
+  ],
+  "stride": 4,
+  "imgsz": 640,
+  "conf": 0.25,
+  "min_h_px": 22.0,
+  "max_color_dist": 0.16,
+  "torso": {
+   "top": 0.18,
+   "bot": 0.58,
+   "inset": 0.18
+  }
+ },
+ "clips": [
+  {
+   "clip": "inc_01_t01154.9.mp4",
+   "n_rows": 2395,
+   "counts": {
+    "unknown": 1116,
+    "A": 1006,
+    "B": 273
+   },
+   "left_team": "A",
+   "left_vote_frac": 0.663,
+   "n_vote_frames": 92,
+   "flips": [
+    {
+     "frame": 420,
+     "t_s": 16.8,
+     "left_before": "A",
+     "left_after": "B"
+    },
+    {
+     "frame": 512,
+     "t_s": 20.48,
+     "left_before": "B",
+     "left_after": "A"
+    }
+   ],
+   "palette": {
+    "A": "red",
+    "B": "white"
+   }
+  },
+  {
+   "clip": "inc_02_t01370.6.mp4",
+   "n_rows": 1846,
+   "counts": {
+    "unknown": 847,
+    "B": 254,
+    "A": 745
+   },
+   "left_team": "A",
+   "left_vote_frac": 0.783,
+   "n_vote_frames": 60,
+   "flips": [
+    {
+     "frame": 284,
+     "t_s": 11.36,
+     "left_before": "B",
+     "left_after": "A"
+    },
+    {
+     "frame": 352,
+     "t_s": 14.08,
+     "left_before": "A",
+     "left_after": "B"
+    },
+    {
+     "frame": 380,
+     "t_s": 15.2,
+     "left_before": "B",
+     "left_after": "A"
+    }
+   ],
+   "palette": {
+    "A": "red",
+    "B": "white"
+   }
+  },
+  {
+   "clip": "inc_03_t01508.3.mp4",
+   "n_rows": 2738,
+   "counts": {
+    "unknown": 1361,
+    "A": 1107,
+    "B": 270
+   },
+   "left_team": "A",
+   "left_vote_frac": 0.636,
+   "n_vote_frames": 66,
+   "flips": [
+    {
+     "frame": 492,
+     "t_s": 19.68,
+     "left_before": "A",
+     "left_after": "B"
+    },
+    {
+     "frame": 588,
+     "t_s": 23.52,
+     "left_before": "B",
+     "left_after": "A"
+    }
+   ],
+   "palette": {
+    "A": "red",
+    "B": "white"
+   }
+  }
+ ],
+ "limitations": [
+  "颜色分类**没有人工真值**：本文件不给准确率，只给分类结果与颜色距离",
+  "裁判色若与某队接近会被判成该队（物理限制）",
+  "半场归属是**逐帧投票**结果，不是裁判记录；交换场地时刻需人工核对",
+  "track_id 此处为 -1：本文件不跑跟踪，只做单帧分类（跟踪由 track_players.py 负责）"
+ ],
+ "totals": {
+  "n_clips": 3,
+  "n_player_rows": 3655,
+  "n_staff_rows": 0
+ }
+}

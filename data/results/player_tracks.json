@@ -1,0 +1,424 @@
+{
+ "tool": "tools/track_players.py",
+ "generated": "2026-10-20T10:51:20+0800",
+ "decision": "D011（人+球；简单事件；倒地；可选轨迹）",
+ "params": {
+  "conf": 0.25,
+  "iou": 0.45,
+  "imgsz": 640,
+  "stride": 2,
+  "min_box_px": 6,
+  "fall": {
+   "min_len": 8,
+   "rel_drop": 0.7,
+   "aspect_min_strong": 1.35,
+   "min_h_px_strong": 40.0,
+   "min_frames_strong": 5,
+   "aspect_min_weak": 1.0,
+   "min_frames_weak": 3
+  }
+ },
+ "tracker": "ultralytics ByteTrack（bytetrack.yaml）",
+ "clips": [
+  {
+   "clip": "inc_01_t01154.9.mp4",
+   "frames_used": 373,
+   "n_tracks": 77,
+   "track_len": {
+    "max": 192,
+    "median": 45.0,
+    "n_ge_25": 58,
+    "n_ge_75": 20,
+    "n_short_lt_12": 3
+   },
+   "n_fall_strong": 1,
+   "n_fall_weak": 9,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 284,
+     "trans": 39,
+     "identity": 51
+    },
+    "mean_abs_dx": 3.5,
+    "mean_abs_dy": 0.64,
+    "p95_abs_dx": 12.99,
+    "p95_abs_dy": 2.59,
+    "scale_range": [
+     0.9429,
+     1.0253
+    ],
+    "identity_rate": 0.136
+   },
+   "wall_time_s": 15.36
+  },
+  {
+   "clip": "inc_02_t01370.6.mp4",
+   "frames_used": 353,
+   "n_tracks": 62,
+   "track_len": {
+    "max": 103,
+    "median": 44.0,
+    "n_ge_25": 42,
+    "n_ge_75": 7,
+    "n_short_lt_12": 5
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 11,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "identity": 139,
+     "affine": 194,
+     "trans": 41
+    },
+    "mean_abs_dx": 5.34,
+    "mean_abs_dy": 1.69,
+    "p95_abs_dx": 19.86,
+    "p95_abs_dy": 6.58,
+    "scale_range": [
+     0.9532,
+     1.0314
+    ],
+    "identity_rate": 0.372
+   },
+   "wall_time_s": 14.09
+  },
+  {
+   "clip": "inc_03_t01508.3.mp4",
+   "frames_used": 359,
+   "n_tracks": 80,
+   "track_len": {
+    "max": 227,
+    "median": 39.0,
+    "n_ge_25": 47,
+    "n_ge_75": 19,
+    "n_short_lt_12": 14
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 16,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 258,
+     "trans": 46,
+     "identity": 70
+    },
+    "mean_abs_dx": 3.79,
+    "mean_abs_dy": 1.47,
+    "p95_abs_dx": 11.38,
+    "p95_abs_dy": 4.12,
+    "scale_range": [
+     0.7692,
+     1.2826
+    ],
+    "identity_rate": 0.187
+   },
+   "wall_time_s": 13.23
+  },
+  {
+   "clip": "inc_04_t01697.4.mp4",
+   "frames_used": 373,
+   "n_tracks": 117,
+   "track_len": {
+    "max": 174,
+    "median": 25.0,
+    "n_ge_25": 60,
+    "n_ge_75": 10,
+    "n_short_lt_12": 26
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 11,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "trans": 61,
+     "affine": 231,
+     "identity": 82
+    },
+    "mean_abs_dx": 5.47,
+    "mean_abs_dy": 1.71,
+    "p95_abs_dx": 16.35,
+    "p95_abs_dy": 11.25,
+    "scale_range": [
+     0.9058,
+     1.0371
+    ],
+    "identity_rate": 0.219
+   },
+   "wall_time_s": 14.01
+  },
+  {
+   "clip": "inc_05_t01796.1.mp4",
+   "frames_used": 360,
+   "n_tracks": 42,
+   "track_len": {
+    "max": 214,
+    "median": 31.0,
+    "n_ge_25": 24,
+    "n_ge_75": 9,
+    "n_short_lt_12": 7
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 12,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 256,
+     "trans": 34,
+     "identity": 84
+    },
+    "mean_abs_dx": 5.21,
+    "mean_abs_dy": 1.69,
+    "p95_abs_dx": 26.64,
+    "p95_abs_dy": 4.52,
+    "scale_range": [
+     0.9198,
+     1.3863
+    ],
+    "identity_rate": 0.225
+   },
+   "wall_time_s": 13.83
+  },
+  {
+   "clip": "inc_06_t01901.6.mp4",
+   "frames_used": 369,
+   "n_tracks": 64,
+   "track_len": {
+    "max": 223,
+    "median": 27.0,
+    "n_ge_25": 35,
+    "n_ge_75": 5,
+    "n_short_lt_12": 6
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 10,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 227,
+     "trans": 83,
+     "identity": 64
+    },
+    "mean_abs_dx": 10.59,
+    "mean_abs_dy": 1.73,
+    "p95_abs_dx": 34.69,
+    "p95_abs_dy": 8.34,
+    "scale_range": [
+     0.8895,
+     1.1132
+    ],
+    "identity_rate": 0.171
+   },
+   "wall_time_s": 15.06
+  },
+  {
+   "clip": "inc_07_t02037.9.mp4",
+   "frames_used": 364,
+   "n_tracks": 89,
+   "track_len": {
+    "max": 138,
+    "median": 23.0,
+    "n_ge_25": 41,
+    "n_ge_75": 6,
+    "n_short_lt_12": 14
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 7,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 190,
+     "trans": 83,
+     "identity": 101
+    },
+    "mean_abs_dx": 3.94,
+    "mean_abs_dy": 0.67,
+    "p95_abs_dx": 14.87,
+    "p95_abs_dy": 3.61,
+    "scale_range": [
+     0.9897,
+     1.0044
+    ],
+    "identity_rate": 0.27
+   },
+   "wall_time_s": 13.43
+  },
+  {
+   "clip": "inc_08_t02395.4.mp4",
+   "frames_used": 372,
+   "n_tracks": 81,
+   "track_len": {
+    "max": 189,
+    "median": 34.0,
+    "n_ge_25": 45,
+    "n_ge_75": 20,
+    "n_short_lt_12": 14
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 4,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 211,
+     "trans": 63,
+     "identity": 98,
+     "affine_inv": 2
+    },
+    "mean_abs_dx": 5.8,
+    "mean_abs_dy": 0.57,
+    "p95_abs_dx": 14.25,
+    "p95_abs_dy": 2.0,
+    "scale_range": [
+     0.8535,
+     1.2189
+    ],
+    "identity_rate": 0.262
+   },
+   "wall_time_s": 14.13
+  },
+  {
+   "clip": "inc_09_t03237.3.mp4",
+   "frames_used": 374,
+   "n_tracks": 109,
+   "track_len": {
+    "max": 152,
+    "median": 25.0,
+    "n_ge_25": 55,
+    "n_ge_75": 15,
+    "n_short_lt_12": 17
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 20,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 261,
+     "trans": 74,
+     "identity": 39
+    },
+    "mean_abs_dx": 4.04,
+    "mean_abs_dy": 1.22,
+    "p95_abs_dx": 12.98,
+    "p95_abs_dy": 2.78,
+    "scale_range": [
+     0.9733,
+     1.0665
+    ],
+    "identity_rate": 0.104
+   },
+   "wall_time_s": 14.23
+  },
+  {
+   "clip": "inc_10_t05249.2.mp4",
+   "frames_used": 321,
+   "n_tracks": 19,
+   "track_len": {
+    "max": 126,
+    "median": 22.0,
+    "n_ge_25": 6,
+    "n_ge_75": 2,
+    "n_short_lt_12": 3
+   },
+   "n_fall_strong": 1,
+   "n_fall_weak": 5,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 213,
+     "trans": 83,
+     "identity": 77,
+     "affine_inv": 1
+    },
+    "mean_abs_dx": 9.47,
+    "mean_abs_dy": 3.45,
+    "p95_abs_dx": 35.01,
+    "p95_abs_dy": 12.06,
+    "scale_range": [
+     0.8407,
+     1.3472
+    ],
+    "identity_rate": 0.206
+   },
+   "wall_time_s": 14.37
+  },
+  {
+   "clip": "inc_11_t06345.4.mp4",
+   "frames_used": 364,
+   "n_tracks": 84,
+   "track_len": {
+    "max": 117,
+    "median": 23.5,
+    "n_ge_25": 41,
+    "n_ge_75": 11,
+    "n_short_lt_12": 14
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 10,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "trans": 66,
+     "affine": 208,
+     "identity": 100
+    },
+    "mean_abs_dx": 4.21,
+    "mean_abs_dy": 0.62,
+    "p95_abs_dx": 14.18,
+    "p95_abs_dy": 1.47,
+    "scale_range": [
+     0.7261,
+     1.0152
+    ],
+    "identity_rate": 0.267
+   },
+   "wall_time_s": 13.93
+  },
+  {
+   "clip": "inc_12_t06867.9.mp4",
+   "frames_used": 373,
+   "n_tracks": 118,
+   "track_len": {
+    "max": 167,
+    "median": 25.5,
+    "n_ge_25": 60,
+    "n_ge_75": 9,
+    "n_short_lt_12": 21
+   },
+   "n_fall_strong": 0,
+   "n_fall_weak": 15,
+   "camera_motion": {
+    "n": 374,
+    "kind_hist": {
+     "affine": 234,
+     "identity": 85,
+     "trans": 55
+    },
+    "mean_abs_dx": 6.44,
+    "mean_abs_dy": 2.24,
+    "p95_abs_dx": 28.0,
+    "p95_abs_dy": 8.62,
+    "scale_range": [
+     0.7533,
+     1.111
+    ],
+    "identity_rate": 0.227
+   },
+   "wall_time_s": 14.19
+  }
+ ],
+ "totals": {
+  "n_clips": 12,
+  "frames_used": 4355,
+  "n_tracks": 942,
+  "n_fall_strong": 2,
+  "n_fall_weak": 130,
+  "tracks_per_frame": 0.216
+ },
+ "limitations": [
+  "轨迹坐标已做相机运动补偿（首帧坐标系），但**没有**做球场单应变换 ⇒ 单位仍是像素，不是米",
+  "倒地判据是框几何启发式，**未经人工标注验证**；候选数 != 准确率",
+  "ByteTrack 在剧烈跟拍/遮挡下会 ID switch；本文件只报轨迹长度分布，无法自证 ID 一致性",
+  "队别（哪队）与球权尚未实现，属下一步"
+ ]
+}

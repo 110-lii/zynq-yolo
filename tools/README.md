@@ -26,6 +26,8 @@
 | `person_scale_check.py` | **人可见性 vs 输入分辨率**（D010 收窄后「人看得见」判据） | ✅ 已创建 |
 | `int8_sim.py` / `pynq_net.py` | INT8 量化验证 / 整网 PC 编排（后端可插拔，PL 后端待接） | ✅ 已创建 |
 | `make_calib_from_video.py` / `find_incidents.py` / `log_incident_decisions.py` / `make_incident_review.py` / `conf_calibration.py` / `draw_detections.py` / `eval_calib_set.py` / `class_coverage.py` / `fetch_calib_real.py` / `onnx_probe.py` / `fps_feasibility.py` / `design_tradeoffs.py` / `export_layers.py` / `make_golden.py` / `ref_int8_conv.py` | 数据集 / 标定 / 评测 / 金标准 / 契约参考实现族 | ✅ 已创建 |
+| `track_players.py` | **球员检测/跟踪/轨迹/倒地候选**（D011）：YOLOv8n + ByteTrack + 相机运动补偿（ECC 仿射，落脚点反变换回首帧坐标系）；输出 `data/results/player_tracks.json` 与逐段 `tracks/*.{json,csv}` | ✅ 已创建（12 段实测 942 轨迹；倒地候选分 strong/weak 两级，**未经人工确认**，见 [`../docs/player_tracking_v1.md`](../docs/player_tracking_v1.md)） |
+| `fall_review.py` | **倒地候选人工复核表**：每候选出「前/峰/后」三帧联系表 + CSV 待填 `judgement`；`--decide` 写回后才有「人工确认的倒地数」 | ✅ 已创建（26 张候选图；**刻意不产出 precision/recall**，理由见该文件头注释） |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |
 
 ## 规则

@@ -1,0 +1,29 @@
+{
+ "schema": "zynq-yolo/match-config/1",
+ "match": {
+  "id": "migu968460165",
+  "entered_at": "2026-10-20T15:35:59+0800"
+ },
+ "teams": {
+  "A": {
+   "name": "大连英博海发",
+   "kit_color": "white",
+   "first_half_side": "first_left"
+  },
+  "B": {
+   "name": "深圳新鹏城",
+   "kit_color": "blue",
+   "first_half_side": "first_right"
+  }
+ },
+ "referee": {
+  "kit_color": "red"
+ },
+ "calibration": {
+  "refs_file": "data/results/kit_calib.json",
+  "note": "按场实测参考色（tools/kit_calib.py 产出）；留空则用预置 PALETTE_REF"
+ },
+ "entered_by": "human",
+ "source": "cli",
+ "why": "D013：LCD 触屏作为数据输入端——颜色与半场由人录入，不由算法猜"
+}

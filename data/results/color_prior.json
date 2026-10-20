@@ -1,6 +1,6 @@
 {
  "tool": "tools/color_prior.py",
- "generated": "2026-10-20T14:38:48+0800",
+ "generated": "2026-10-20T15:32:09+0800",
  "decision": "D013-a：颜色是提升球员识别的手段，不是目标",
  "mode": "color_prior",
  "palette": {
@@ -10,1182 +10,1195 @@
  "params": {
   "hi_conf": 0.25,
   "lo_conf": 0.08,
-  "stride": 8,
+  "stride": 4,
   "imgsz": 640,
   "max_color_dist": 0.16,
   "min_margin": 0.04,
   "min_h_px": 22.0,
   "min_purity": 0.3,
-  "gate": "legacy",
+  "gate": "after",
   "gate_rules": null
  },
  "clips": [
   {
    "clip": "inc_01_t01154.9.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 1209,
+   "n_hi_boxes": 2425,
    "team_counts": {
-    "A": 511,
-    "B": 495,
-    "unknown": 203
+    "A": 1016,
+    "B": 983,
+    "unknown": 426
    },
    "team_share": {
-    "A": 0.423,
-    "B": 0.409,
-    "unknown": 0.168
+    "A": 0.419,
+    "B": 0.405,
+    "unknown": 0.176
    },
    "hue_tightness": {
     "A": {
-     "n": 511,
-     "hue_std_deg": 5.76,
+     "n": 1016,
+     "hue_std_deg": 5.57,
      "hue_mean_deg": 9.8
     },
     "B": {
-     "n": 495,
-     "hue_std_deg": 14.4,
-     "hue_mean_deg": 131.3
+     "n": 983,
+     "hue_std_deg": 14.54,
+     "hue_mean_deg": 130.5
     }
    },
    "field_rate": {
     "A": {
-     "inside": 499,
-     "total": 511,
-     "rate": 0.977
+     "inside": 990,
+     "total": 1016,
+     "rate": 0.974
     },
     "B": {
-     "inside": 441,
-     "total": 495,
+     "inside": 876,
+     "total": 983,
      "rate": 0.891
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 511,
-     "median": 0.6488,
-     "mean": 0.6341
+     "n": 1016,
+     "median": 0.647,
+     "mean": 0.6328
     },
     "B": {
-     "n": 495,
-     "median": 0.7006,
-     "mean": 0.6646
+     "n": 983,
+     "median": 0.7015,
+     "mean": 0.6669
     },
     "unknown": {
-     "n": 203,
-     "median": 0.648,
-     "mean": 0.635
+     "n": 426,
+     "median": 0.6346,
+     "mean": 0.6197
     }
    },
    "rescue": {
-    "n_extra_all": 167,
-    "n_extra_kept": 43,
-    "keep_ratio": 0.257,
+    "n_extra_all": 317,
+    "n_extra_kept": 275,
+    "keep_ratio": 0.868,
     "dist_kept": {
-     "n": 43,
+     "n": 275,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 124,
+     "n": 42,
      "median": 9.9,
-     "mean": 7.7612
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 43,
-     "unknown": 0,
-     "staff": 124
+     "player": 213,
+     "unknown": 62,
+     "staff": 42
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 77,
-     "color_drop_color": 28,
-     "colored_A": 24,
-     "colored_B": 19,
-     "color_drop_purity": 13,
-     "color_drop_rect": 6
-    }
+     "color_keep_too_small": 139,
+     "color_demote_color": 62,
+     "colored_A": 37,
+     "colored_B": 37,
+     "color_drop_purity": 21,
+     "color_drop_rect": 21
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 29,
-    "purity": 81,
-    "rect": 15,
-    "color": 78,
-    "colored": 1006
+    "too_small": 68,
+    "purity": 166,
+    "rect": 30,
+    "color": 162,
+    "colored": 1999
    },
    "hi_unknown_h": {
-    "n": 203,
-    "median": 36.609,
-    "mean": 87.3592
+    "n": 426,
+    "median": 35.2656,
+    "mean": 84.0805
    }
   },
   {
    "clip": "inc_02_t01370.6.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 937,
+   "n_hi_boxes": 1860,
    "team_counts": {
-    "A": 371,
-    "B": 367,
-    "unknown": 199
+    "A": 745,
+    "B": 724,
+    "unknown": 391
    },
    "team_share": {
-    "A": 0.396,
-    "B": 0.392,
-    "unknown": 0.212
+    "A": 0.401,
+    "B": 0.389,
+    "unknown": 0.21
    },
    "hue_tightness": {
     "A": {
-     "n": 371,
-     "hue_std_deg": 4.76,
-     "hue_mean_deg": 9.2
+     "n": 745,
+     "hue_std_deg": 4.67,
+     "hue_mean_deg": 9.1
     },
     "B": {
-     "n": 367,
-     "hue_std_deg": 19.55,
-     "hue_mean_deg": 122.9
+     "n": 724,
+     "hue_std_deg": 19.01,
+     "hue_mean_deg": 123.3
     }
    },
    "field_rate": {
     "A": {
-     "inside": 367,
-     "total": 371,
-     "rate": 0.989
+     "inside": 738,
+     "total": 745,
+     "rate": 0.991
     },
     "B": {
-     "inside": 334,
-     "total": 367,
+     "inside": 659,
+     "total": 724,
      "rate": 0.91
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 371,
-     "median": 0.6318,
-     "mean": 0.6147
+     "n": 745,
+     "median": 0.6312,
+     "mean": 0.6168
     },
     "B": {
-     "n": 367,
-     "median": 0.694,
-     "mean": 0.6706
+     "n": 724,
+     "median": 0.6963,
+     "mean": 0.6714
     },
     "unknown": {
-     "n": 199,
-     "median": 0.6683,
-     "mean": 0.6476
+     "n": 391,
+     "median": 0.673,
+     "mean": 0.6519
     }
    },
    "rescue": {
-    "n_extra_all": 92,
-    "n_extra_kept": 27,
-    "keep_ratio": 0.293,
+    "n_extra_all": 185,
+    "n_extra_kept": 148,
+    "keep_ratio": 0.8,
     "dist_kept": {
-     "n": 27,
+     "n": 148,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 65,
+     "n": 37,
      "median": 9.9,
-     "mean": 9.173
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 27,
-     "unknown": 0,
-     "staff": 65
+     "player": 142,
+     "unknown": 6,
+     "staff": 37
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 43,
-     "colored_A": 17,
-     "colored_B": 10,
-     "color_drop_purity": 9,
-     "color_drop_rect": 8,
-     "color_drop_color": 5
-    }
+     "color_keep_too_small": 84,
+     "colored_A": 34,
+     "colored_B": 24,
+     "color_drop_rect": 19,
+     "color_drop_purity": 18,
+     "color_demote_color": 6
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 20,
-    "purity": 84,
-    "rect": 8,
-    "color": 87,
-    "colored": 738
+    "too_small": 38,
+    "purity": 166,
+    "rect": 14,
+    "color": 173,
+    "colored": 1469
    },
    "hi_unknown_h": {
-    "n": 199,
-    "median": 37.6976,
-    "mean": 63.5761
+    "n": 391,
+    "median": 37.7252,
+    "mean": 65.0826
    }
   },
   {
    "clip": "inc_03_t01508.3.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 1388,
+   "n_hi_boxes": 2770,
    "team_counts": {
-    "A": 551,
-    "B": 596,
-    "unknown": 241
+    "A": 1104,
+    "B": 1190,
+    "unknown": 476
    },
    "team_share": {
-    "A": 0.397,
-    "B": 0.429,
-    "unknown": 0.174
+    "A": 0.399,
+    "B": 0.43,
+    "unknown": 0.172
    },
    "hue_tightness": {
     "A": {
-     "n": 551,
-     "hue_std_deg": 4.3,
-     "hue_mean_deg": 10.1
+     "n": 1104,
+     "hue_std_deg": 4.39,
+     "hue_mean_deg": 10.0
     },
     "B": {
-     "n": 596,
-     "hue_std_deg": 26.4,
-     "hue_mean_deg": 124.9
+     "n": 1190,
+     "hue_std_deg": 26.42,
+     "hue_mean_deg": 124.8
     }
    },
    "field_rate": {
     "A": {
-     "inside": 549,
-     "total": 551,
+     "inside": 1100,
+     "total": 1104,
      "rate": 0.996
     },
     "B": {
-     "inside": 588,
-     "total": 596,
-     "rate": 0.987
+     "inside": 1172,
+     "total": 1190,
+     "rate": 0.985
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 551,
-     "median": 0.6159,
-     "mean": 0.6045
+     "n": 1104,
+     "median": 0.6133,
+     "mean": 0.603
     },
     "B": {
-     "n": 596,
-     "median": 0.7024,
-     "mean": 0.6691
+     "n": 1190,
+     "median": 0.7021,
+     "mean": 0.666
     },
     "unknown": {
-     "n": 241,
-     "median": 0.6053,
-     "mean": 0.5816
+     "n": 476,
+     "median": 0.606,
+     "mean": 0.5797
     }
    },
    "rescue": {
-    "n_extra_all": 162,
-    "n_extra_kept": 61,
-    "keep_ratio": 0.377,
+    "n_extra_all": 313,
+    "n_extra_kept": 264,
+    "keep_ratio": 0.843,
     "dist_kept": {
-     "n": 61,
+     "n": 264,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 101,
+     "n": 49,
      "median": 9.9,
-     "mean": 8.7809
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 61,
-     "unknown": 0,
-     "staff": 101
+     "player": 235,
+     "unknown": 29,
+     "staff": 49
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 66,
-     "colored_B": 34,
-     "colored_A": 27,
-     "color_drop_purity": 17,
-     "color_drop_color": 12,
-     "color_drop_rect": 6
-    }
+     "color_keep_too_small": 123,
+     "colored_B": 60,
+     "colored_A": 52,
+     "color_drop_purity": 35,
+     "color_demote_color": 29,
+     "color_drop_rect": 14
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 68,
-    "purity": 75,
-    "rect": 20,
-    "color": 78,
-    "colored": 1147
+    "too_small": 137,
+    "purity": 147,
+    "rect": 32,
+    "color": 160,
+    "colored": 2294
    },
    "hi_unknown_h": {
-    "n": 241,
-    "median": 31.2884,
-    "mean": 36.5728
+    "n": 476,
+    "median": 31.3751,
+    "mean": 38.507
    }
   },
   {
    "clip": "inc_04_t01697.4.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 1351,
+   "n_hi_boxes": 2680,
    "team_counts": {
-    "A": 597,
-    "B": 521,
-    "unknown": 233
+    "A": 1198,
+    "B": 1040,
+    "unknown": 442
    },
    "team_share": {
-    "A": 0.442,
-    "B": 0.386,
-    "unknown": 0.172
+    "A": 0.447,
+    "B": 0.388,
+    "unknown": 0.165
    },
    "hue_tightness": {
     "A": {
-     "n": 597,
-     "hue_std_deg": 5.13,
-     "hue_mean_deg": 9.8
+     "n": 1198,
+     "hue_std_deg": 5.03,
+     "hue_mean_deg": 9.7
     },
     "B": {
-     "n": 521,
-     "hue_std_deg": 13.64,
-     "hue_mean_deg": 130.2
+     "n": 1040,
+     "hue_std_deg": 13.6,
+     "hue_mean_deg": 130.1
     }
    },
    "field_rate": {
     "A": {
-     "inside": 576,
-     "total": 597,
+     "inside": 1156,
+     "total": 1198,
      "rate": 0.965
     },
     "B": {
-     "inside": 520,
-     "total": 521,
+     "inside": 1038,
+     "total": 1040,
      "rate": 0.998
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 597,
-     "median": 0.6286,
-     "mean": 0.6162
+     "n": 1198,
+     "median": 0.6335,
+     "mean": 0.6167
     },
     "B": {
-     "n": 521,
-     "median": 0.6348,
-     "mean": 0.6081
+     "n": 1040,
+     "median": 0.636,
+     "mean": 0.6115
     },
     "unknown": {
-     "n": 233,
-     "median": 0.5969,
-     "mean": 0.5787
+     "n": 442,
+     "median": 0.6044,
+     "mean": 0.5848
     }
    },
    "rescue": {
-    "n_extra_all": 273,
-    "n_extra_kept": 90,
-    "keep_ratio": 0.33,
+    "n_extra_all": 527,
+    "n_extra_kept": 484,
+    "keep_ratio": 0.918,
     "dist_kept": {
-     "n": 90,
+     "n": 484,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 183,
+     "n": 43,
      "median": 9.9,
-     "mean": 7.9338
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 89,
-     "unknown": 1,
-     "staff": 183
+     "player": 406,
+     "unknown": 78,
+     "staff": 43
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 123,
-     "colored_B": 48,
-     "colored_A": 41,
-     "color_drop_color": 38,
-     "color_drop_purity": 13,
-     "color_drop_rect": 9,
-     "purity_hull_ok": 1
-    }
+     "color_keep_too_small": 230,
+     "colored_B": 94,
+     "colored_A": 82,
+     "color_demote_color": 75,
+     "color_drop_purity": 27,
+     "color_drop_rect": 16,
+     "purity_hull_ok": 3
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 43,
-    "purity": 89,
-    "rect": 11,
-    "color": 90,
-    "colored": 1118
+    "too_small": 86,
+    "purity": 178,
+    "rect": 17,
+    "color": 161,
+    "colored": 2238
    },
    "hi_unknown_h": {
-    "n": 233,
-    "median": 36.4307,
-    "mean": 53.9768
+    "n": 442,
+    "median": 36.4083,
+    "mean": 55.7285
    }
   },
   {
    "clip": "inc_05_t01796.1.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 643,
+   "n_hi_boxes": 1288,
    "team_counts": {
-    "A": 251,
-    "B": 156,
-    "unknown": 236
+    "A": 500,
+    "B": 307,
+    "unknown": 481
    },
    "team_share": {
-    "A": 0.39,
-    "B": 0.243,
-    "unknown": 0.367
+    "A": 0.388,
+    "B": 0.238,
+    "unknown": 0.373
    },
    "hue_tightness": {
     "A": {
-     "n": 251,
-     "hue_std_deg": 10.11,
-     "hue_mean_deg": 355.9
+     "n": 500,
+     "hue_std_deg": 10.06,
+     "hue_mean_deg": 356.3
     },
     "B": {
-     "n": 156,
-     "hue_std_deg": 5.85,
-     "hue_mean_deg": 186.7
+     "n": 307,
+     "hue_std_deg": 10.04,
+     "hue_mean_deg": 187.2
     }
    },
    "field_rate": {
     "A": {
-     "inside": 237,
-     "total": 251,
-     "rate": 0.944
+     "inside": 468,
+     "total": 500,
+     "rate": 0.936
     },
     "B": {
-     "inside": 154,
-     "total": 156,
-     "rate": 0.987
+     "inside": 305,
+     "total": 307,
+     "rate": 0.993
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 251,
-     "median": 0.7912,
-     "mean": 0.7095
+     "n": 500,
+     "median": 0.7915,
+     "mean": 0.7044
     },
     "B": {
-     "n": 156,
-     "median": 0.8377,
-     "mean": 0.7852
+     "n": 307,
+     "median": 0.8372,
+     "mean": 0.7806
     },
     "unknown": {
-     "n": 236,
-     "median": 0.6804,
-     "mean": 0.6368
+     "n": 481,
+     "median": 0.6944,
+     "mean": 0.6426
     }
    },
    "rescue": {
-    "n_extra_all": 292,
-    "n_extra_kept": 95,
-    "keep_ratio": 0.325,
+    "n_extra_all": 595,
+    "n_extra_kept": 444,
+    "keep_ratio": 0.746,
     "dist_kept": {
-     "n": 95,
+     "n": 444,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 197,
-     "median": 0.5154,
-     "mean": 3.8785
+     "n": 151,
+     "median": 9.9,
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 84,
-     "unknown": 11,
-     "staff": 197
+     "player": 178,
+     "unknown": 266,
+     "staff": 151
     },
     "gate_reason_counts": {
-     "color_drop_color": 125,
-     "colored_A": 71,
-     "color_drop_purity": 56,
-     "color_drop_rect": 13,
-     "colored_B": 13,
-     "purity_hull_ok": 11,
-     "color_drop_too_small": 3
-    }
+     "color_demote_color": 244,
+     "colored_A": 142,
+     "color_drop_purity": 127,
+     "colored_B": 31,
+     "color_drop_rect": 24,
+     "purity_hull_ok": 22,
+     "color_keep_too_small": 5
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
     "too_small": 1,
-    "purity": 26,
+    "purity": 52,
     "rect": 0,
-    "color": 209,
-    "colored": 407
+    "color": 428,
+    "colored": 807
    },
    "hi_unknown_h": {
-    "n": 236,
-    "median": 274.246,
-    "mean": 219.8818
+    "n": 481,
+    "median": 275.1161,
+    "mean": 221.719
    }
   },
   {
    "clip": "inc_06_t01901.6.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 902,
+   "n_hi_boxes": 1775,
    "team_counts": {
-    "A": 313,
-    "B": 377,
-    "unknown": 212
+    "A": 625,
+    "B": 747,
+    "unknown": 403
    },
    "team_share": {
-    "A": 0.347,
-    "B": 0.418,
-    "unknown": 0.235
+    "A": 0.352,
+    "B": 0.421,
+    "unknown": 0.227
    },
    "hue_tightness": {
     "A": {
-     "n": 313,
-     "hue_std_deg": 5.73,
-     "hue_mean_deg": 13.8
+     "n": 625,
+     "hue_std_deg": 5.61,
+     "hue_mean_deg": 13.9
     },
     "B": {
-     "n": 377,
-     "hue_std_deg": 12.35,
-     "hue_mean_deg": 134.4
+     "n": 747,
+     "hue_std_deg": 13.0,
+     "hue_mean_deg": 134.9
     }
    },
    "field_rate": {
     "A": {
-     "inside": 309,
-     "total": 313,
-     "rate": 0.987
+     "inside": 621,
+     "total": 625,
+     "rate": 0.994
     },
     "B": {
-     "inside": 376,
-     "total": 377,
+     "inside": 745,
+     "total": 747,
      "rate": 0.997
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 313,
-     "median": 0.6243,
-     "mean": 0.5962
+     "n": 625,
+     "median": 0.6124,
+     "mean": 0.5951
     },
     "B": {
-     "n": 377,
-     "median": 0.6357,
-     "mean": 0.6053
+     "n": 747,
+     "median": 0.6378,
+     "mean": 0.6059
     },
     "unknown": {
-     "n": 212,
-     "median": 0.5775,
-     "mean": 0.5635
+     "n": 403,
+     "median": 0.5918,
+     "mean": 0.5756
     }
    },
    "rescue": {
-    "n_extra_all": 248,
-    "n_extra_kept": 79,
-    "keep_ratio": 0.319,
+    "n_extra_all": 501,
+    "n_extra_kept": 469,
+    "keep_ratio": 0.936,
     "dist_kept": {
-     "n": 79,
+     "n": 469,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 169,
+     "n": 32,
      "median": 9.9,
-     "mean": 7.378
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 79,
-     "unknown": 0,
-     "staff": 169
+     "player": 379,
+     "unknown": 90,
+     "staff": 32
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 109,
-     "colored_A": 49,
-     "color_drop_color": 45,
-     "colored_B": 30,
-     "color_drop_purity": 8,
-     "color_drop_rect": 7
-    }
+     "color_keep_too_small": 221,
+     "colored_A": 99,
+     "color_demote_color": 90,
+     "colored_B": 59,
+     "color_drop_purity": 20,
+     "color_drop_rect": 12
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 61,
-    "purity": 46,
-    "rect": 9,
-    "color": 96,
-    "colored": 690
+    "too_small": 104,
+    "purity": 105,
+    "rect": 14,
+    "color": 180,
+    "colored": 1372
    },
    "hi_unknown_h": {
-    "n": 212,
-    "median": 28.8688,
-    "mean": 68.2386
+    "n": 403,
+    "median": 31.9111,
+    "mean": 73.589
    }
   },
   {
    "clip": "inc_07_t02037.9.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 1058,
+   "n_hi_boxes": 2089,
    "team_counts": {
-    "A": 490,
-    "B": 385,
-    "unknown": 183
+    "A": 970,
+    "B": 753,
+    "unknown": 366
    },
    "team_share": {
-    "A": 0.463,
-    "B": 0.364,
-    "unknown": 0.173
+    "A": 0.464,
+    "B": 0.36,
+    "unknown": 0.175
    },
    "hue_tightness": {
     "A": {
-     "n": 490,
-     "hue_std_deg": 4.79,
-     "hue_mean_deg": 11.6
+     "n": 970,
+     "hue_std_deg": 4.72,
+     "hue_mean_deg": 11.5
     },
     "B": {
-     "n": 385,
-     "hue_std_deg": 15.23,
-     "hue_mean_deg": 140.1
+     "n": 753,
+     "hue_std_deg": 16.07,
+     "hue_mean_deg": 140.3
     }
    },
    "field_rate": {
     "A": {
-     "inside": 489,
-     "total": 490,
-     "rate": 0.998
+     "inside": 967,
+     "total": 970,
+     "rate": 0.997
     },
     "B": {
-     "inside": 384,
-     "total": 385,
-     "rate": 0.997
+     "inside": 752,
+     "total": 753,
+     "rate": 0.999
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 490,
-     "median": 0.6088,
-     "mean": 0.5797
+     "n": 970,
+     "median": 0.6085,
+     "mean": 0.5832
     },
     "B": {
-     "n": 385,
-     "median": 0.6574,
-     "mean": 0.6274
+     "n": 753,
+     "median": 0.6541,
+     "mean": 0.6302
     },
     "unknown": {
-     "n": 183,
-     "median": 0.5731,
-     "mean": 0.5554
+     "n": 366,
+     "median": 0.5742,
+     "mean": 0.5588
     }
    },
    "rescue": {
-    "n_extra_all": 275,
-    "n_extra_kept": 73,
-    "keep_ratio": 0.265,
+    "n_extra_all": 555,
+    "n_extra_kept": 514,
+    "keep_ratio": 0.926,
     "dist_kept": {
-     "n": 73,
+     "n": 514,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 202,
+     "n": 41,
      "median": 9.9,
-     "mean": 8.9505
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 72,
-     "unknown": 1,
-     "staff": 202
+     "player": 467,
+     "unknown": 47,
+     "staff": 41
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 159,
-     "colored_A": 50,
-     "colored_B": 22,
-     "color_drop_color": 20,
-     "color_drop_purity": 16,
-     "color_drop_rect": 7,
-     "purity_hull_ok": 1
-    }
+     "color_keep_too_small": 301,
+     "colored_A": 114,
+     "colored_B": 52,
+     "color_demote_color": 45,
+     "color_drop_purity": 31,
+     "color_drop_rect": 10,
+     "purity_hull_ok": 2
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 47,
-    "purity": 98,
-    "rect": 5,
-    "color": 33,
-    "colored": 875
+    "too_small": 83,
+    "purity": 201,
+    "rect": 12,
+    "color": 70,
+    "colored": 1723
    },
    "hi_unknown_h": {
-    "n": 183,
-    "median": 33.0361,
-    "mean": 31.5592
+    "n": 366,
+    "median": 32.8606,
+    "mean": 31.4251
    }
   },
   {
    "clip": "inc_08_t02395.4.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 1216,
+   "n_hi_boxes": 2420,
    "team_counts": {
-    "A": 518,
-    "B": 504,
-    "unknown": 194
+    "A": 1026,
+    "B": 1010,
+    "unknown": 384
    },
    "team_share": {
-    "A": 0.426,
-    "B": 0.414,
-    "unknown": 0.16
+    "A": 0.424,
+    "B": 0.417,
+    "unknown": 0.159
    },
    "hue_tightness": {
     "A": {
-     "n": 518,
-     "hue_std_deg": 5.12,
-     "hue_mean_deg": 8.1
+     "n": 1026,
+     "hue_std_deg": 5.17,
+     "hue_mean_deg": 8.3
     },
     "B": {
-     "n": 504,
-     "hue_std_deg": 23.16,
-     "hue_mean_deg": 136.0
+     "n": 1010,
+     "hue_std_deg": 22.19,
+     "hue_mean_deg": 136.4
     }
    },
    "field_rate": {
     "A": {
-     "inside": 488,
-     "total": 518,
+     "inside": 966,
+     "total": 1026,
      "rate": 0.942
     },
     "B": {
-     "inside": 487,
-     "total": 504,
+     "inside": 976,
+     "total": 1010,
      "rate": 0.966
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 518,
-     "median": 0.6326,
-     "mean": 0.6092
+     "n": 1026,
+     "median": 0.6317,
+     "mean": 0.6121
     },
     "B": {
-     "n": 504,
-     "median": 0.6913,
-     "mean": 0.6405
+     "n": 1010,
+     "median": 0.6875,
+     "mean": 0.6381
     },
     "unknown": {
-     "n": 194,
+     "n": 384,
      "median": 0.6567,
-     "mean": 0.5929
+     "mean": 0.5952
     }
    },
    "rescue": {
-    "n_extra_all": 181,
-    "n_extra_kept": 75,
-    "keep_ratio": 0.414,
+    "n_extra_all": 361,
+    "n_extra_kept": 346,
+    "keep_ratio": 0.958,
     "dist_kept": {
-     "n": 75,
+     "n": 346,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 106,
+     "n": 15,
      "median": 9.9,
-     "mean": 8.189
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 75,
-     "unknown": 0,
-     "staff": 106
+     "player": 306,
+     "unknown": 40,
+     "staff": 15
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 79,
-     "colored_B": 53,
-     "colored_A": 22,
-     "color_drop_color": 19,
-     "color_drop_rect": 7,
-     "color_drop_purity": 1
-    }
+     "color_keep_too_small": 155,
+     "colored_B": 104,
+     "colored_A": 47,
+     "color_demote_color": 40,
+     "color_drop_rect": 10,
+     "color_drop_purity": 5
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 19,
-    "purity": 71,
-    "rect": 11,
-    "color": 93,
-    "colored": 1022
+    "too_small": 36,
+    "purity": 142,
+    "rect": 22,
+    "color": 184,
+    "colored": 2036
    },
    "hi_unknown_h": {
-    "n": 194,
-    "median": 35.9586,
-    "mean": 37.2537
+    "n": 384,
+    "median": 35.9424,
+    "mean": 37.4345
    }
   },
   {
    "clip": "inc_09_t03237.3.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 1383,
+   "n_hi_boxes": 2750,
    "team_counts": {
-    "A": 491,
-    "B": 517,
-    "unknown": 375
+    "A": 972,
+    "B": 1037,
+    "unknown": 741
    },
    "team_share": {
-    "A": 0.355,
-    "B": 0.374,
-    "unknown": 0.271
+    "A": 0.353,
+    "B": 0.377,
+    "unknown": 0.269
    },
    "hue_tightness": {
     "A": {
-     "n": 491,
-     "hue_std_deg": 5.38,
-     "hue_mean_deg": 5.6
+     "n": 972,
+     "hue_std_deg": 5.52,
+     "hue_mean_deg": 5.8
     },
     "B": {
-     "n": 517,
-     "hue_std_deg": 18.37,
-     "hue_mean_deg": 135.0
+     "n": 1037,
+     "hue_std_deg": 17.34,
+     "hue_mean_deg": 134.9
     }
    },
    "field_rate": {
     "A": {
-     "inside": 380,
-     "total": 491,
-     "rate": 0.774
+     "inside": 754,
+     "total": 972,
+     "rate": 0.776
     },
     "B": {
-     "inside": 376,
-     "total": 517,
-     "rate": 0.727
+     "inside": 752,
+     "total": 1037,
+     "rate": 0.725
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 491,
-     "median": 0.6494,
-     "mean": 0.6317
+     "n": 972,
+     "median": 0.6492,
+     "mean": 0.6308
     },
     "B": {
-     "n": 517,
-     "median": 0.6973,
-     "mean": 0.65
+     "n": 1037,
+     "median": 0.6955,
+     "mean": 0.6521
     },
     "unknown": {
-     "n": 375,
-     "median": 0.6742,
-     "mean": 0.6227
+     "n": 741,
+     "median": 0.6792,
+     "mean": 0.6244
     }
    },
    "rescue": {
-    "n_extra_all": 244,
-    "n_extra_kept": 74,
-    "keep_ratio": 0.303,
+    "n_extra_all": 482,
+    "n_extra_kept": 404,
+    "keep_ratio": 0.838,
     "dist_kept": {
-     "n": 74,
+     "n": 404,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 170,
+     "n": 78,
      "median": 9.9,
-     "mean": 7.8395
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 73,
-     "unknown": 1,
-     "staff": 170
+     "player": 328,
+     "unknown": 76,
+     "staff": 78
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 95,
-     "colored_B": 38,
-     "color_drop_color": 37,
-     "colored_A": 35,
-     "color_drop_purity": 22,
-     "color_drop_rect": 16,
-     "purity_hull_ok": 1
-    }
+     "color_keep_too_small": 171,
+     "colored_B": 79,
+     "colored_A": 78,
+     "color_demote_color": 74,
+     "color_drop_purity": 46,
+     "color_drop_rect": 32,
+     "purity_hull_ok": 2
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 32,
-    "purity": 178,
-    "rect": 10,
-    "color": 155,
-    "colored": 1008
+    "too_small": 61,
+    "purity": 353,
+    "rect": 18,
+    "color": 309,
+    "colored": 2009
    },
    "hi_unknown_h": {
-    "n": 375,
-    "median": 39.6903,
-    "mean": 50.4685
+    "n": 741,
+    "median": 40.0461,
+    "mean": 51.1142
    }
   },
   {
    "clip": "inc_10_t05249.2.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 239,
+   "n_hi_boxes": 481,
    "team_counts": {
-    "A": 134,
-    "B": 38,
-    "unknown": 67
+    "A": 264,
+    "B": 80,
+    "unknown": 137
    },
    "team_share": {
-    "A": 0.561,
-    "B": 0.159,
-    "unknown": 0.28
+    "A": 0.549,
+    "B": 0.166,
+    "unknown": 0.285
    },
    "hue_tightness": {
     "A": {
-     "n": 134,
-     "hue_std_deg": 5.82,
-     "hue_mean_deg": 4.0
+     "n": 264,
+     "hue_std_deg": 5.85,
+     "hue_mean_deg": 3.7
     },
     "B": {
-     "n": 38,
-     "hue_std_deg": 32.41,
-     "hue_mean_deg": 154.4
+     "n": 80,
+     "hue_std_deg": 35.45,
+     "hue_mean_deg": 158.9
     }
    },
    "field_rate": {
     "A": {
-     "inside": 126,
-     "total": 134,
-     "rate": 0.94
+     "inside": 250,
+     "total": 264,
+     "rate": 0.947
     },
     "B": {
-     "inside": 37,
-     "total": 38,
-     "rate": 0.974
+     "inside": 77,
+     "total": 80,
+     "rate": 0.963
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 134,
-     "median": 0.585,
-     "mean": 0.5806
+     "n": 264,
+     "median": 0.6286,
+     "mean": 0.5977
     },
     "B": {
-     "n": 38,
-     "median": 0.6316,
-     "mean": 0.5935
+     "n": 80,
+     "median": 0.6342,
+     "mean": 0.5952
     },
     "unknown": {
-     "n": 67,
-     "median": 0.6776,
-     "mean": 0.6226
+     "n": 137,
+     "median": 0.6775,
+     "mean": 0.6253
     }
    },
    "rescue": {
-    "n_extra_all": 97,
-    "n_extra_kept": 50,
-    "keep_ratio": 0.515,
+    "n_extra_all": 184,
+    "n_extra_kept": 164,
+    "keep_ratio": 0.891,
     "dist_kept": {
-     "n": 50,
+     "n": 164,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 47,
-     "median": 0.5,
-     "mean": 4.8158
+     "n": 20,
+     "median": 9.9,
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 50,
-     "unknown": 0,
-     "staff": 47
+     "player": 119,
+     "unknown": 45,
+     "staff": 20
     },
     "gate_reason_counts": {
-     "colored_A": 42,
-     "color_drop_color": 25,
-     "color_drop_too_small": 13,
-     "color_drop_purity": 9,
-     "colored_B": 8
-    }
+     "colored_A": 81,
+     "color_demote_color": 45,
+     "color_keep_too_small": 21,
+     "color_drop_purity": 19,
+     "colored_B": 17,
+     "color_drop_rect": 1
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 2,
-    "purity": 31,
+    "too_small": 3,
+    "purity": 59,
     "rect": 0,
-    "color": 34,
-    "colored": 172
+    "color": 75,
+    "colored": 344
    },
    "hi_unknown_h": {
-    "n": 67,
-    "median": 45.2605,
-    "mean": 134.599
+    "n": 137,
+    "median": 44.1099,
+    "mean": 133.9542
    }
   },
   {
    "clip": "inc_11_t06345.4.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 1004,
+   "n_hi_boxes": 2001,
    "team_counts": {
-    "A": 482,
-    "B": 319,
-    "unknown": 203
+    "A": 949,
+    "B": 647,
+    "unknown": 405
    },
    "team_share": {
-    "A": 0.48,
-    "B": 0.318,
+    "A": 0.474,
+    "B": 0.323,
     "unknown": 0.202
    },
    "hue_tightness": {
     "A": {
-     "n": 482,
-     "hue_std_deg": 4.86,
-     "hue_mean_deg": 7.8
+     "n": 949,
+     "hue_std_deg": 4.82,
+     "hue_mean_deg": 7.9
     },
     "B": {
-     "n": 319,
-     "hue_std_deg": 12.07,
-     "hue_mean_deg": 135.2
+     "n": 647,
+     "hue_std_deg": 12.04,
+     "hue_mean_deg": 135.3
     }
    },
    "field_rate": {
     "A": {
-     "inside": 482,
-     "total": 482,
+     "inside": 949,
+     "total": 949,
      "rate": 1.0
     },
     "B": {
-     "inside": 319,
-     "total": 319,
-     "rate": 1.0
+     "inside": 646,
+     "total": 647,
+     "rate": 0.998
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 482,
-     "median": 0.6326,
-     "mean": 0.6176
+     "n": 949,
+     "median": 0.6349,
+     "mean": 0.6183
     },
     "B": {
-     "n": 319,
-     "median": 0.6728,
-     "mean": 0.6364
+     "n": 647,
+     "median": 0.6687,
+     "mean": 0.6277
     },
     "unknown": {
-     "n": 203,
-     "median": 0.6158,
-     "mean": 0.6051
+     "n": 405,
+     "median": 0.6275,
+     "mean": 0.6035
     }
    },
    "rescue": {
-    "n_extra_all": 177,
-    "n_extra_kept": 65,
-    "keep_ratio": 0.367,
+    "n_extra_all": 357,
+    "n_extra_kept": 328,
+    "keep_ratio": 0.919,
     "dist_kept": {
-     "n": 65,
+     "n": 328,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 112,
+     "n": 29,
      "median": 9.9,
-     "mean": 6.9126
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 65,
-     "unknown": 0,
-     "staff": 112
+     "player": 267,
+     "unknown": 61,
+     "staff": 29
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 61,
-     "color_drop_color": 35,
-     "colored_A": 33,
-     "colored_B": 32,
-     "color_drop_purity": 10,
-     "color_drop_rect": 6
-    }
+     "color_keep_too_small": 135,
+     "colored_B": 66,
+     "colored_A": 66,
+     "color_demote_color": 61,
+     "color_drop_purity": 16,
+     "color_drop_rect": 13
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 18,
-    "purity": 73,
-    "rect": 7,
-    "color": 105,
-    "colored": 801
+    "too_small": 36,
+    "purity": 154,
+    "rect": 12,
+    "color": 203,
+    "colored": 1596
    },
    "hi_unknown_h": {
-    "n": 203,
-    "median": 35.8789,
-    "mean": 50.7621
+    "n": 405,
+    "median": 36.0623,
+    "mean": 50.8039
    }
   },
   {
    "clip": "inc_12_t06867.9.mp4",
    "fps": 25.0,
-   "n_hi_boxes": 1255,
+   "n_hi_boxes": 2497,
    "team_counts": {
-    "A": 590,
-    "B": 415,
-    "unknown": 250
+    "A": 1177,
+    "B": 828,
+    "unknown": 492
    },
    "team_share": {
-    "A": 0.47,
-    "B": 0.331,
-    "unknown": 0.199
+    "A": 0.471,
+    "B": 0.332,
+    "unknown": 0.197
    },
    "hue_tightness": {
     "A": {
-     "n": 590,
-     "hue_std_deg": 4.61,
+     "n": 1177,
+     "hue_std_deg": 4.53,
      "hue_mean_deg": 7.7
     },
     "B": {
-     "n": 415,
-     "hue_std_deg": 17.36,
-     "hue_mean_deg": 135.8
+     "n": 828,
+     "hue_std_deg": 17.87,
+     "hue_mean_deg": 136.8
     }
    },
    "field_rate": {
     "A": {
-     "inside": 590,
-     "total": 590,
+     "inside": 1177,
+     "total": 1177,
      "rate": 1.0
     },
     "B": {
-     "inside": 415,
-     "total": 415,
+     "inside": 828,
+     "total": 828,
      "rate": 1.0
     }
    },
    "conf_by_role": {
     "A": {
-     "n": 590,
-     "median": 0.6507,
-     "mean": 0.632
+     "n": 1177,
+     "median": 0.6547,
+     "mean": 0.6298
     },
     "B": {
-     "n": 415,
-     "median": 0.6912,
-     "mean": 0.6618
+     "n": 828,
+     "median": 0.6904,
+     "mean": 0.66
     },
     "unknown": {
-     "n": 250,
-     "median": 0.6628,
-     "mean": 0.6274
+     "n": 492,
+     "median": 0.6675,
+     "mean": 0.6278
     }
    },
    "rescue": {
-    "n_extra_all": 169,
-    "n_extra_kept": 79,
-    "keep_ratio": 0.467,
+    "n_extra_all": 343,
+    "n_extra_kept": 307,
+    "keep_ratio": 0.895,
     "dist_kept": {
-     "n": 79,
+     "n": 307,
      "median": 9.9,
      "mean": 9.9
     },
     "dist_dropped": {
-     "n": 90,
+     "n": 36,
      "median": 9.9,
-     "mean": 7.9051
+     "mean": 9.9
     },
-    "gate": "legacy",
+    "gate": "after",
     "gate_role_counts": {
-     "player": 77,
-     "unknown": 2,
-     "staff": 90
+     "player": 260,
+     "unknown": 47,
+     "staff": 36
     },
     "gate_reason_counts": {
-     "color_drop_too_small": 48,
-     "colored_A": 46,
-     "colored_B": 31,
-     "color_drop_color": 19,
-     "color_drop_purity": 12,
-     "color_drop_rect": 11,
-     "purity_hull_ok": 2
-    }
+     "color_keep_too_small": 106,
+     "colored_A": 93,
+     "colored_B": 61,
+     "color_demote_color": 42,
+     "color_drop_rect": 19,
+     "color_drop_purity": 17,
+     "purity_hull_ok": 5
+    },
+    "gate_matrix": null
    },
    "hi_unknown_reason": {
-    "too_small": 41,
-    "purity": 111,
-    "rect": 3,
-    "color": 95,
-    "colored": 1005
+    "too_small": 79,
+    "purity": 213,
+    "rect": 7,
+    "color": 193,
+    "colored": 2005
    },
    "hi_unknown_h": {
-    "n": 250,
-    "median": 37.9141,
-    "mean": 61.6259
+    "n": 492,
+    "median": 38.1772,
+    "mean": 61.0345
    }
   }
  ],
@@ -1199,10 +1212,10 @@
  ],
  "totals": {
   "n_clips": 12,
-  "n_hi_boxes": 12585,
-  "rescue_kept": 811,
-  "rescue_dropped": 1566,
-  "rescue_keep_ratio": 0.341,
+  "n_hi_boxes": 25036,
+  "rescue_kept": 4147,
+  "rescue_dropped": 573,
+  "rescue_keep_ratio": 0.879,
   "median_dist_kept": 9.9,
   "median_dist_dropped": 9.9
  }

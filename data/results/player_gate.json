@@ -1,6 +1,6 @@
 {
  "tool": "tools/player_gate.py",
- "generated": "2026-10-20T15:03:34+0800",
+ "generated": "2026-10-20T15:27:29+0800",
  "decision": "D013-a：用「取色失败原因」做球员判定门控（颜色是手段）",
  "version": "v2",
  "params": {
@@ -44,7 +44,7 @@
  },
  "n_steps": 1110,
  "n_boxes": 12585,
- "wall_time_s": 172.0,
+ "wall_time_s": 120.6,
  "ablation": {
   "after": {
    "n_kept": 12487,
@@ -1514,6 +1514,26 @@
   "kind": "precision_proxy_weighted_by_stratum_share（不是 precision）",
   "valid": true,
   "invalid_reason": null,
+  "cov_est_reliable": false,
+  "cov": {
+   "cov_est_reliable": false,
+   "why_unreliable": [
+    "分母乘了一组来自另一次运行(hi_color_diag)的层占比，与本 run 不是同一批框；实测框数/折算框数在 rect 层相差 2.6 倍",
+    "层内 N率来自 kappa=0.226 的标注，只可信层间相对高低",
+    "purity 层存在拓扑矛盾：本 run 保留 802 框 > 按层占比折算的 785.0 框 ⇒ 『同一层』的两种口径定义的集合不同（本 run 的 geo_rescue_purity/purity_hull_ok 可能被 diag 那次归到了别层）",
+    "因此本字段**不给精确百分比**，只给一个对『覆盖率被低估』方向不敏感的界限"
+   ],
+   "bound_kind": "rate_vs_hi_unknown_boxes（★上限意义上的下界，不是 precision，也不是 recall）",
+   "bound_lo_from_measured_drops": 0.046,
+   "bound_lo_pct": 4.6,
+   "bound_denominator": {
+    "n_drop_measured": 98,
+    "denom_upper_bound": 2116.0,
+    "why_upper": "取 max(折算估计量, 本 run 的 hi-unknown 框数)，对『门控覆盖得少』最不利的口径"
+   },
+   "strength": "weak -> 只能读作『几分之一量级』，不得换算成任何百分比结论",
+   "n_topology_violations": 3
+  },
   "n_hi_this_run": 12585,
   "n_hi_unknown_est_from_diag": 2596,
   "per_stratum": {
@@ -1528,6 +1548,7 @@
     "n_N_est": 764.9,
     "real_recall_est": 0.114,
     "n_stratum_boxes_est": 785.0,
+    "topology_ok": false,
     "recall_est_clamped": false
    },
    "rect": {
@@ -1541,6 +1562,7 @@
     "n_N_est": 54.5,
     "real_recall_est": 0.202,
     "n_stratum_boxes_est": 80.6,
+    "topology_ok": false,
     "recall_est_clamped": false
    },
    "color": {
@@ -1554,6 +1576,7 @@
     "n_N_est": 409.6,
     "real_recall_est": 0.0,
     "n_stratum_boxes_est": 939.7,
+    "topology_ok": false,
     "recall_est_clamped": false
    }
   },
@@ -1728,7 +1751,7 @@
   "素材仅 12 段、同一场比赛、单机位、红/白队服；白色队区分度天生弱",
   "第二批标注 kappa=0.226、P/N 真冲突 27% ⇒ 标注只用于『层间相对高低』，不与本文件的绝对数字做交叉验证",
   "hull_purity 用的是「球衣色像素在其凸包面积中的占比」，阈值 0.60 不是从标注集调的，敏感性见 docs/player_gate_v1.md §5",
-  "precision_proxy 只是**层内 N 率 × 层假定占比**的折算（层假定占比来自另一次运行），本 run 的估计量(≈57 框)甚至小于实际丢弃数(98) ⇒ coverage_status=INCONSISTENT，不得当作覆盖率引用；见 docs/player_gate_v1.md §5.1(b)",
+  "precision_proxy 只是**层内 N 率 × 层假定占比**的折算（层假定占比来自另一次运行），且 purity 层存在**拓扑矛盾**（本 run 保留 844 框 > 按层占比折算的 785 框）⇒ cov_est_reliable=false，**不给精确百分比**，令牌里只打 cov_est=unreliable；见 docs/player_gate_v1.md §5.1(b)",
   "标注的 (clip,frame,box_idx) 不是框身份（box_idx 是层内 enumerate 下标，labels.csv 73 行仅 61 个唯一值、labels2.csv 159 行仅 115 个）⇒ 本文件零逐框对齐；alignment_policy.n_boxes_aligned_one_to_one = 0"
  ]
 }

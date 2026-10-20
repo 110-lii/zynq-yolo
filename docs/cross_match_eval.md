@@ -608,3 +608,420 @@ D:\python\python.exe tools\make_newmatch_labels.py --score
 > 修法：口径只留一个权威落点 `color_prior.set_classify_metric()`，并在切换后
 > **回读断言**（`cp.classify_metric() != args.color_metric` 直接 `CROSS_MATCH_FAIL`）。
 > 教训与 D013 的两次「全判 white」同类：**多份模块实例 + 全局开关 = 静默假绿**。
+
+---
+
+## 13. 分辨率伪影 与 色板过紧（2026-10-20 本轮的两条正式结论）
+
+> # ★ 本轮对外能说的主结论（先读这一段，再看后面所有表）
+>
+> **v2 让「能判出队色」的比例从 60.4% 提到 78.9%，但黄牌裁判、紫色门将、看台等
+> 非队色像素**仍会被误分到某一支队**。因此在第四批标注回来之前：**
+>
+> 1. **v2 不能当默认口径**（默认仍是 v1，`--color-metric v2` 显式开启）；
+> 2. **不能报「精确率提升」** —— 覆盖率 +18.5 pt 的代价是判错从 4 涨到 18（§13.2 标定表）；
+> 3. **G6 只堵了草坪一个口子**（护栏见 §13.4），堵不住黄衣/紫衣/被环境色染的白灰。
+>
+> **Lead 口述数字已更正**：初版这里曾写「60.4% → 78.9%」，经 JSON 复算无法还原
+> （52.30/76.33 是 `colored` 字段；81.33/81.33 是"非 color 层失败"上限），
+> 以本节数字为准。规则：**Lead 口述数字与 JSON 冲突时一律以 JSON 为准，并在文档注明已更正**。
+>
+> 数字口径（同一批 12 段 `--play-windows`、n_hi=7886）：v1 有 4124 框判出队色
+> （`colored` 4124/7886 = **52.3%**），v2 有 6019 框（**76.3%**）；
+> 若按「所有不是 `color` 层失败的框」这一更宽的可用上限算，两口径都是 81.3%
+> （6399/7886）——**差额正是 v1 那 1895 个「取到色但离两队都远」的框**，
+> v2 把它们纳入了，但纳入得对不对**只能靠标注判**。
+
+
+本节把 §12 的实测升级成两条**可以独立引用**的结论，并补上 §12 没覆盖的
+「判据阈值」「探针修前/修后」「随机窗口对照」。
+
+### 13.1 结论一：`too_small` / `rect` 的占比在**跨分辨率**下不可直接比
+
+新片 854x480，旧片 1280x720（切片 640x360）。两条链路的同一批 12 段：
+
+| 层 | 旧基线（640x360） | 新片 **原生 854x480** | 新片 **缩到 640 宽重检** |
+|---|---|---|---|
+| `purity` | 37.10% | 37.88%（v1）/ 76.33%（v2） | 30.77% / 54.66% |
+| `color` | 44.41% | 60.87% / 21.16% | 54.94% / 19.95% |
+| `too_small` | **14.68%** | **1.04%** / 2.09% | **10.83%** / 19.24% |
+| `rect` | **3.81%** | **0.21%** / 0.43% | **3.46%** / 6.15% |
+| 框高 h 中位 | 37.9 px | **43.5 px** | **33.5 px** |
+
+**机制**：`too_small` 的判据是 `h_px < MIN_H_PX(22)`。新片原生画面里人更高
+（h 中位 43.5 vs 旧 37.9），**几乎没人落进 22 px 以下** ⇒ 该层从 14.68% 掉到 1.04%。
+这不是"新比赛的人更好认"，是**画面尺度变了**。`rect` 同理（矩形合法性对高度敏感）。
+一旦缩到与旧片同宽（640），h 中位回到 33.5，`too_small` 立刻回到 10.83%，与基线 14.68%
+的相对漂移降到 −26%（PASS）。
+
+**因此定下的规则（已写进 `caveats` 与令牌）**：
+
+1. 跨分辨率比较时 **`too_small` / `rect` 两层的原生占比不可直接比**，判据必须看
+   `scaled_640` 那一列；
+2. 但**两套数字都要报**——原生的 `purity` / `color` 才是生产里真正会看到的分布，
+   只报缩放列会掩盖"实际部署画面下客户端的真实分层"；
+3. 因此 `max_drift` 取两布局的**较大者**：宁可被伪影触发一次 WARN（可解释），
+   也不要漏掉真漂移。
+
+> 这条是**工具在如实报告尺度变化**，不是结论变差。若只读原生列就把 `too_small`
+> 判成"−93% 不可迁移"，是把分辨率伪影当真漂移——本轮最容易犯的错。
+
+### 13.2 结论二：`blue` 预设色**匹配不上深蓝球衣**（色板过紧）
+
+新场是「大连英博海发 = 白衣 / 深圳新鹏城 = 深藏青」，`--palette white,blue`。
+真帧量出的躯干色（`tools/kit_calib.py`，12 起点 × 3 帧，`min_h=40`，共 229 样本）：
+
+| 簇 | n | h01（圆中位） | S | V |
+|---|---|---|---|---|
+| 白衣（旧场+新场白队） | 120 | 0.250 | 0.067 | 0.935 |
+| 深藏青（新场客队） | 109 | **0.598** | **0.298** | **0.435** |
+
+预设 `blue` 的参考色是 `(115, 0.70, 0.70)` ⇒ h01 0.639 / S 0.70 / V 0.70
+（`tools/classify_players.py` 的 `PALETTE_REF`）。它描述的是**亮蓝**，不是藏青。
+
+**量化**：深蓝簇 66 个候选像素（`s≥0.15 & h01∈[0.50,0.72]`）到预设 `blue` 的距离
+min 0.068 / p10 0.091 / **med 0.128** / p90 0.169 / max 0.210 ⇒ **9/66 超过
+`MAX_COLOR_DIST=0.16`**。中位数只有 0.128，**离阈值 0.16 只剩 0.032 的余量**。
+
+**为什么"只把阈值调大"不行**（这是本轮最重要的一条设计判断）：
+
+v1 的彩色分支是 `0.8×(色相环距离/0.5) + 0.2×|ΔS|`，**完全没有亮度项 V**。
+`MAX_COLOR_DIST=0.16` 落在色相项上的配额是 `0.16/0.8 = 0.2` ⇒ 等价于
+**色相差 ≤ 36°**，且饱和度几乎要完全相等（ΔS 只剩 0.16×0.2=0.032 的预算）。
+后果是：
+
+| 现象 | 数值 | 后果 |
+|---|---|---|
+| 深蓝(V 0.435) 与 亮蓝/V 更高的同色相衣服 | 色相相同 ⇒ **距离相同** | 深色队服和浅色队服分不开 |
+| 草反射率高的白衣（V 0.63-0.80） | 与深蓝只差亮度 | 会被判成深蓝 |
+| 草坪绿 h01≈0.44 → 预设 `blue` | 距离 = `0.8×(155-115)/180/0.5` = **0.36** | **不能把阈值放到 0.36 以上**，否则全体草地框都会被判成队色 |
+
+也就是说：**阈值往上调一点漏判还多，往上调多了又把草地吃进来**。所以本轮
+**没有**动 `MAX_COLOR_DIST`（旧比赛结论零影响），而是新增独立口径
+`CLASSIFY_METRIC=v2`（`--color-metric v2`），v2 做三件事：
+
+1. **色相改成角度配额**：`hd = hue_dist×360`，`hd > MAX_HUE_DEG_V2=50` ⇒ 直接不可判
+   （而不是被 0.8 权重稀释）；
+2. **纳入亮度**：亮而不饱和（`V ≥ 0.65 且 S < 0.35`）⇒ 判为"被环境色染的白/灰"，
+   不可判（专门挡草反射白衣被吞成深蓝）；
+3. **深色队服的饱和度亏欠补偿**：`ref.V < 0.60` 时加 `0.08×max(0, Sref − S)`。
+
+**白/黑分支在 v2 里与 v1 逐字节相同**——这一条是踩坑换来的：v2 第一版顺手把
+white 分支的分母 0.70→0.50、0.25→0.30，结果**口罩**（S 0.60 / V 0.80）距离 0.286→0.26
+反而被判成"白队球衣"，v2 判对率一度只有 38.1%（比 v1 的 69.0% 还差）。
+结论：**v1 的白/黑分支本来是对的，v2 只该改彩色分支。**
+
+**标定用的粗真值**（197 样本：`S<0.25 & V>0.55` ⇒ white；`h01∈[0.50,0.72] & S≥0.15` ⇒ blue，
+119 white + 78 blue）：
+
+| 口径 × 色板 | 判对 | 判错 | unknown |
+|---|---|---|---|
+| v1 + 预置 `white,blue` | 136/197 = **69.0%** | 4 | 57 |
+| v1 + 按场校准 refs | 159/197 = 80.7% | 11 | 27 |
+| **v2 + 预置 `white,blue`** | **170/197 = 86.3%** | 18 | 9 |
+| **v2 + 按场校准 refs** | **186/197 = 94.4%** | 8 | 3 |
+
+⇒ 只换口径（不校准）**+17.3 pt**；口径+校准合计 **+25.4 pt**。
+代价是"判错"从 4 → 18（用精确率换覆盖率），残余 5 个 W→B 误判全是草反射下的
+病态白衣：`(0.595,0.216,0.647) (0.582,0.243,0.592) (0.634,0.218,0.631)
+(0.617,0.161,0.631) (0.585,0.22,0.635)`——真深蓝 V 0.36-0.62、白衣 V 0.63-0.80，
+**只靠亮度分得开**，这是 v2 的结构性上限，不是 bug。
+
+### 13.3 `palette_probe.py`：补上「能判出」方向（修前必失败）
+
+原探针只有 `false_assign`（"判到的队不像它"）一个方向，**从不检查"该判出却没判出"**。
+本轮补 `detect_rate()`，探针色全部改成**真帧量出的真实球衣色**（`KIT_PROBES`）：
+
+| 探针 | 颜色 | 内容 | v1 修前 | v1 修后 |
+|---|---|---|---|---|
+| `white_old` | (0.250,0.067,0.935) | white | 判成 B，OK | OK |
+| `blue_new` | (0.598,0.298,0.435) | blue | 判成 B，dist 0.1458（**余量仅 0.0142**） | OK |
+| `red_old` | (0.101,0.848,0.819) | red | 色板 `white,blue` ⇒ unknown 0.6534；**色板 `red,white` ⇒ unknown 0.1679** | OK |
+| `grass_reflection` | (0.580,0.300,0.700) | white（`detect_only`，只要求不掉 unknown） | **unknown 0.1742 ⇒ FAIL** | OK |
+
+**关键失败记录**：`--palette red,white` × v1 ⇒ `red_old` 判成 unknown，dist 0.1679 > 0.16。
+**旧比赛自己的红队，在它自己的色板下，修前代码判不出来。** 这条是"探针必须先能失败"的实证。
+修后矩阵：`red,white` v1 FAIL / v2 OK；`white,blue` v1 FAIL（grass_reflection）/ v2 OK；
+`red,blue` v1 FAIL / v2 OK；`red,orange` v1 v2 都 FAIL（`red_old` 判成 B=orange，
+正是内容判据要堵的）；`white,black` v1 v2 都 FAIL（`palette_indistinct margin 0.034 < 0.100`）。
+
+> **探针自身的三次假绿**（都修了，留档）：①第一版 `need=="any" or role in PALETTE`，
+> 后半句恒真 ⇒ 红队色在 `red,white` 下判成"白队"也算 PASS；②第二版 `role == need`
+> 但 need 写死 "A"/"B" ⇒ 白队色被判成 B 过不了；③第三版把 role 改成下标 0/1 ⇒
+> 球衣色"是不是深蓝"与排成 A/B 无关，判定永远错。最终判据是
+> **"判出角色的色板条目颜色名必须等于该探针的颜色名"**。
+
+### 13.4 ★ 判据 G6：草坪框被判成 A/B 的数量（v2 的专属守卫）
+
+放宽口径最危险的伪改进是"草地/看台被判成球队"。新增 `grass_boxes`（躯干主体是草的框）
+与 `grass_assigned`（其中被判成 A/B 的）两个计数器：
+
+```
+G6: grass_boxes > 0 且 grass_assigned / grass_boxes > MAX_GRASS_ASSIGN_RATE(0.10) ⇒ WARN
+    grass_boxes == 0 ⇒ SKIP
+```
+
+实测 12 段：原生 **0 / 97**（0.0%）、缩放 **0 / 90**（0.0%），PASS。
+**为什么 10%**：草坪像素本身到两队色距离都远（0.36 以上），但**检测器在草坪上给出的
+person 框**（远景里每帧 7-8 个）只要被判到队色就是纯假阳性；旧场 `purity` 层内非球员率
+是 0.974，10% 意味着"至少 90% 的草框必须不掉进队色"，比现状 100% 留了余量、又远比"随便"严。
+
+**但 G6 只堵了草**：v2 下黄色（裁判/门将）判成 A、紫色（门将）判成 A、
+真白像素 dist 0.40 也判成 A ⇒ **"非队色被分到某一队"这条风险 G6 管不到**，
+只能靠第四批 83 框标注判（§12.7）。所以在标注回来之前，**v2 只作为可选项，默认仍是 v1**。
+
+### 13.5 修前 / 修后完整对照（同一 mp4、同一模型、`white,blue`）
+
+**A. 比赛窗口模式（`--play-windows`，12 段，n_hi 7886）**
+
+| 指标 | v1（修前） | v2（修后） | 变化 |
+|---|---|---|---|
+| `unknown_rate` · 原生 | 47.70% | **25.03%** | **−22.7 pt** |
+| `unknown_rate` · 缩放 | 54.36% | 31.57% | −22.8 pt |
+| `purity` · 原生 | 37.88% | 72.19% | +34.3 pt |
+| `color` · 原生 | 60.87% | 25.43% | −35.4 pt |
+| `too_small` · 原生 | 1.04% | 1.98% | +0.9 pt |
+| `rect` · 原生 | 0.21% | 0.41% | +0.2 pt |
+| G6 草框被判队色 · 原生 | 0 / 97 | 0 / 97 | 无 |
+| `max_drift` / WARN 条数 | 0.371 / 5 | 0.946 / 9 | 层含义变了（§12.8） |
+
+**B. 随机窗口模式（12 段，n_hi 4712；`data/results/cross_match_random_v2.json`）**
+
+| 指标 | v1 | v2 | 变化 |
+|---|---|---|---|
+| `unknown_rate` · 原生 | 56.60% | **28.74%** | **−27.9 pt** |
+| `purity` · 原生 | 30.78% | 60.64% | +29.9 pt |
+| `color` · 原生 | 61.83% | 24.82% | −37.0 pt |
+| `too_small` · 原生 | 6.90% | 13.59% | +6.7 pt |
+| `rect` · 原生 | 0.49% | 0.96% | +0.5 pt |
+| G6 · 原生 | 0 / 32 | 0 / 32 | 无 |
+| `max_drift` / WARN | 0.392 / 6 | 1.022 / 8 | — |
+
+**A 与 B 必须分开读**：随机窗口里混着特写与看台（h 中位 86.5，@8667.9 s 单帧 h 中位 181），
+`too_small` 掉到 6.90% 同样是尺度伪影（§13.1），**不要拿随机窗口那一列论证"更好"**。
+`--play-windows` 才是与旧基线同口径的那一列。
+
+**③ 外层 precision 代理（无真值，只能代理）**：旧场"颜色层精确率 95.7%"的前提是
+unknown 只有 20.6%；新场 v1 的 unknown 是 47.7%（相当一部分是深蓝匹配不上 `blue`），
+v2 降到 25.0%（接近旧场水平）。**但 v2 的 18 个 W→B 误判说明"判出来的更不纯"** ⇒
+precision 代理与 coverage 反方向变化，**在第四批标注回来之前不能报"精确率提升"**。
+这两列只报告、不下结论，是本轮的诚实边界。
+
+### 13.6 ★ `color_metric_not_applied` 判据的**失败验证**（防第二层假绿）
+
+§12.8 记录的静默假绿（JSON 写 v2、实际跑 v1）修法里加了一条硬 FAIL：
+
+```python
+cp_metric = cp.set_classify_metric(args.color_metric)
+CP.CLASSIFY_METRIC = cp_metric
+if cp.classify_metric() != args.color_metric:
+    print("CROSS_MATCH_FAIL color_metric_not_applied %s!=%s" % (...))
+    return 2
+```
+
+**判据自己必须先能失败**，否则它只是第二层假绿。验证分两步：
+
+**(a) 单实例层验证**（importlib 加载两份 `classify_players`，复现 bug 状态）：
+
+```
+A) 修好状态 set_classify_metric(v2):
+    cp.classify_metric() = v2
+    classify(量测路径) = ('B', 0.2944, ...) | 断言会 PASS? True
+B) 复现旧 bug（只改本文件那份实例）:
+    CP.CLASSIFY_METRIC = v2 | cp.classify_metric() = v1
+    classify(量测路径) = ('B', 0.1458, ...)   <- 仍是 v1
+    断言会 FAIL? True
+```
+
+注意 `0.2944`（v2）与 `0.1458`（v1）是**同一个深蓝球衣色**在两个口径下的距离——
+v1 下它离门限 0.16 只剩 0.0142，这就是 §13.2 那个"差一点就全 unknown"的余量。
+
+**(b) 端到端注入验证**（把 `cross_match_eval.py` 里那一行换回 bug 写法，
+其余不动，直接跑脚本）：
+
+```
+$ python tools/cross_match_eval.py --self-check --color-metric v2
+CROSS_MATCH_FAIL color_metric_not_applied v1!=v2
+exit=2
+```
+
+撤掉注入、恢复原文件后重跑：
+
+```
+SELF_CHECK_OK pipeline n_clips=2 n_hi=1625 clips_ok=2 reasons_ok=2/2 gate=consistent scale_probe=ok
+CROSS_MATCH_OK 2 1625 0
+```
+
+⇒ **判据在 bug 状态下确实 FAIL（exit 2），在修好状态下确实 PASS。** 这条判据是有效的。
+
+### 13.7 ⚠️ `max_drift` / WARN 条数在 v1 与 v2 之间**不可直接比**
+
+| | v1 | v2 | 能不能比 |
+|---|---|---|---|
+| `max_drift` | 0.371 | 0.946 / 1.057 | **不能** |
+| WARN 条数 | 5 | 9 / 11 | **不能** |
+
+原因：判据 G2/G3 是「各层占比相对旧基线的漂移」，而 **v2 把 `color` 层的框大量
+搬进了 `colored`**（实测 v1 `color` 层 2290 框 → v2 只剩 395 框，其中 1895 框变成判出队色）。
+`purity` / `too_small` / `rect` 三层**逐框数量完全没变**（1425 / 39 / 8）。
+分层的**分母意义变了**（`color` 层从 29.0% 缩到 5.0%），同一套阈值自然会报出更多 WARN。
+
+> ❗ **不要**把 `0.371 → 0.946` 读成「新比赛更不可迁移」。
+> 正确读法是：**v2 改变了层的定义，所以 v1 时代的漂移阈值不能拿来评价 v2**。
+> 这也是 §12.8 说的"层含义变了"的定量版本。
+> 要评价 v2 是否更可迁移，必须重标 G2/G3 的基线，或直接用第四批标注的真值算
+> precision/recall —— 而后者还没标。
+
+### 13.8 `data/results/` 下本任务的产物索引（没有索引的证据等于没有证据）
+
+`sha256` 一列只给前 16 位，用途是**丢了能确认是不是同一份**；全量可用
+`python -c "import hashlib,pathlib;print(hashlib.sha256(pathlib.Path(r'<file>').read_bytes()).hexdigest())"` 复算。
+
+| 文件 | 命令 | 口径 | 时点 | sha256(前16) |
+|---|---|---|---|---|
+| `_cm_play_v1.json` | `--play-windows --n-clips 12 --palette white,blue --color-metric v1 --allow-indistinct-palette` | **v1** | 15:10 | `4f2b9017f90e642e` |
+| `_cm_play_v1.log` | 同上 | v1 | 15:10 | `4a7fc6b86fc21493` |
+| `_cm_rand_v1.json` | 同上但去掉 `--play-windows`，加 `--max-total-s 0` | v1 | 15:12 | `c5d613b3efef5cb2` |
+| `_cm_rand_v1.log` | 同上 | v1 | 15:12 | `4d79ce6ed507e108` |
+| `cross_match_play_v2.json` | `--play-windows --n-clips 12 --color-metric v2`（无校准） | v2 | 15:04 | `c0f0060ed07e1fae` |
+| `cross_match_v2.json` | `--play-windows --n-clips 12 --color-metric v2 --palette-refs data/results/kit_calib.json` | **v2+校准** | 15:22 | `d544b617b0d2a9ee` |
+| `cross_match_random_v2.json` | `--n-clips 12 --color-metric v2 --max-total-s 0` | v2 | 15:14 | `f2daad5880df455d` |
+| `_cm_rand_v2.log` | 同上 | v2 | 15:14 | `1f2ec49b5fededed` |
+| `_cm_play_v2_calib.log` | 对应 `cross_match_v2.json` | v2 | 15:22 | `a8d803bd4e46cf35` |
+| `cross_match_v2_STALE_buggy.json` | 旧 `cross_match_v2.json`（commit cda6427）改名留档 | 字段标注错 | 15:02 | `738bd802566cb219` |
+| `cross_match_v2_preset.json` | `--play-windows --n-clips 12 --color-metric v2`（预置色板、无校准） | v2 | 15:26 | `52bd67f08fe30fc1` |
+| `_kit_new.json` | `tools/kit_calib.py` 采样 229 个躯干色 | — | 14:32 | `c2ae9622292ea929` |
+| `kit_calib.json` | 同上聚合为按场参考色 | — | 14:02 | `45f1190242f64783` |
+
+各文件说明：
+
+- **`_cm_play_v1.json` / `.log`**：修前基准（比赛窗口）。原 `cross_match_play_v1.json`
+  在并发清理中被删、**已丢失**，以本文件+日志为准（同命令、同参数重建）。
+- **`_cm_rand_v1.json` / `.log`**：修前基准（随机窗口）。
+- **`cross_match_play_v2.json` / `cross_match_v2_preset.json`**：同一配置（预置色板、无校准）先后各跑一次（**Lead 独立复现，用于验证可复现性**），四层占比逐位相同（72.19 / 25.43 / 1.98 / 0.41，unk 0.2503），互为复现证据。
+- **`cross_match_v2.json`**：§12.8 主表用的就是这份。§12.8 表格里"v2 + 按场校准"一行即此。
+  已加 `"default_recommended": false` 与 `"blocked_by"`（见 §13.9）。
+- **`cross_match_v2_STALE_buggy.json`**：**数字是对的，只有 `max_color_dist` 字段标错**
+  （写 0.16，真 v2 应为 0.70）。其四层占比（76.33 / 21.16 / 2.09 / 0.43）与新跑的
+  真 v2 **逐框一致**。留作「字段标注错」样本，**不要引用它的 `max_color_dist`**。
+- `_cm_*` 文件**不要挪位置**（索引表按路径点名）。
+
+> ⚠️ `cross_match_v2_STALE_buggy.json` 与 `cross_match_play_v2.json` 在本轮被并发清理
+> 误删过两次，已从 git 与日志恢复。后续清理 `data/results/` 前**先看这张表**。
+> 已从 git 与日志恢复。后续谁再清理 `data/results/`，请先看这张表。
+
+### 13.9 机读的「不能当默认」标记
+
+`data/results/cross_match_v2.json` 顶层带两个字段，防止以后有人看到 76.3% 就直接拿去当默认：
+
+```json
+"default_recommended": false,
+"blocked_by": "第四批标注未标完（data/annot/labels4.csv label 列全空）"
+```
+
+判据：**只有当第四批标注标完、并用真值算出 v2 vs v1 的 precision/recall 之后**，
+才允许把这个字段改成 `true`。覆盖率（52.3% → 76.3%）单独不构成放行理由（§13 开头主结论）。
+
+---
+
+## 14. 如何验证一条「开关判据」真能失败
+
+本仓库最顽固的假绿形态是**开关没接上**，而不是阈值调错。已发生过的实例：
+
+- 颜色全判 `white`（阈值不动，模块实例是另一份）；
+- `--gate-rules` 看着生效、实际走的是默认分支；
+- `box_idx` 错位对齐（`tools/make_player_labels.py:238` 的 `box_idx` 只是 stratum 内
+  `enumerate` 下标，不是框身份，两批标注按三元组根本对不上）。
+
+共同点：**不报错、不崩、数字看着合理**。所以凡是「加了开关 ⇒ 断言开关生效」这类判据，
+它自己必须先被证明**会失败**，否则就是第二层假绿。
+
+### 14.1 三步法（可复制）
+
+**第 1 步：单实例层复现 bug 状态。** 绕开脚本，直接拿模块确认「bug 写法确实改不动量测路径」。
+
+```powershell
+$env:PYTHONIOENCODING='utf-8'
+@'
+import sys; sys.dont_write_bytecode = True
+import importlib.util
+from pathlib import Path
+REPO = Path(r"D:\zynq-yolo")
+def load(path, modname):
+    spec = importlib.util.spec_from_file_location(modname, str(REPO / "tools" / path))
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); return m
+cp = load("color_prior.py", "_bk_cp")         # 量测路径实际用的那一份
+CP = load("classify_players.py", "_bk_cls")   # 调用方手里那一份
+col = (0.598, 0.298, 0.435); pal = {"A": "white", "B": "blue"}   # 真帧深蓝球衣色
+print("修好:", cp.set_classify_metric("v2"), cp.classify(col, pal))
+cp.set_classify_metric("v1"); CP.CLASSIFY_METRIC = "v2"          # 故意退回 bug 写法
+print("bug :", CP.CLASSIFY_METRIC, cp.classify_metric(), cp.classify(col, pal))
+'@ | Set-Content -Encoding utf8 _bugcheck.py
+D:\python\python.exe -B _bugcheck.py; Remove-Item _bugcheck.py
+```
+
+实测输出（`cp.classify_metric()` 停在 `v1`、距离停在 `0.1458`，即证明 bug 写法无效）：
+
+```text
+修好: v2 ('B', 0.2944, {'A': 0.5, 'B': 0.2944})
+bug : v2 v1 ('B', 0.1458, {'A': 0.5, 'B': 0.1458})
+```
+
+**第 2 步：端到端注入 bug 写法。** 把判据依赖的那行改回 bug 形态，直接跑脚本。
+
+```powershell
+$env:PYTHONIOENCODING='utf-8'
+Copy-Item tools/cross_match_eval.py _cme_backup.py -Force
+@'
+import sys; sys.dont_write_bytecode = True
+from pathlib import Path
+p = Path("tools/cross_match_eval.py"); s = p.read_text(encoding="utf-8")
+old = "        cp_metric = cp.set_classify_metric(args.color_metric)\n        CP.CLASSIFY_METRIC = cp_metric"
+new = "        CP.CLASSIFY_METRIC = args.color_metric   # BUG-INJECTED\n        cp_metric = args.color_metric"
+assert old in s, "anchor missing"
+p.write_text(s.replace(old, new, 1), encoding="utf-8")
+'@ | Set-Content -Encoding utf8 _inj.py
+D:\python\python.exe -B _inj.py; Remove-Item _inj.py
+D:\python\python.exe -B tools/cross_match_eval.py --self-check --color-metric v2
+Write-Host "exit=$LASTEXITCODE"
+```
+
+期望（**这就是判据真能失败的证据**）：
+
+```text
+CROSS_MATCH_FAIL color_metric_not_applied v1!=v2
+exit=2
+```
+
+**第 3 步：撤掉注入，确认恢复。** 判据不能「永远 FAIL」。
+
+```powershell
+Copy-Item _cme_backup.py tools/cross_match_eval.py -Force; Remove-Item _cme_backup.py
+D:\python\python.exe -B tools/cross_match_eval.py --self-check --color-metric v2
+```
+
+期望：
+
+```text
+SELF_CHECK_OK pipeline n_clips=2 n_hi=1625 clips_ok=2 reasons_ok=2/2 gate=consistent scale_probe=ok
+CROSS_MATCH_OK 2 1625 0
+```
+
+### 14.2 三步都过了才算数
+
+| 步骤 | 证明了什么 | 没做会怎样 |
+|---|---|---|
+| 1 单实例复现 | bug 写法**确实**改不动量测路径（不是想当然） | 判据可能防的是不存在的问题 |
+| 2 端到端注入 | 判据在真实入口处**确实**会 FAIL | 判据可能写了但走不到（死代码 / 分支被跳过） |
+| 3 撤掉恢复 | 判据**不是**恒 FAIL | 一个恒 FAIL 的判据同样没用（会被 `--allow-*` 绕过后失效） |
+
+### 14.3 复用清单
+
+这套方法对下面这些判据同样适用（凡「开关 ⇒ 断言」都该这么验）：
+
+- `--color-metric` → `cp.classify_metric() != args.color_metric`（已按本节验过）
+- `--palette-refs` → 校准 refs 是否真的进了 `classify`
+  —— **目前还没有这条断言，是已知缺口**（本轮只靠 JSON 里的 `measured_refs` 字段间接确认）
+- `--gate` / `--gate-rules` → `player_gate` 实际用了哪套规则
+- `--play-windows` → 采样窗口是否真的落在草坪占比 ≥ 阈值的区间
+- `--allow-indistinct-palette` → 放行后 `palette_probe` 的结论是否仍被如实写进 JSON

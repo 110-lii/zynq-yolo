@@ -1,0 +1,944 @@
+{
+ "tool": "tools/cross_match_eval.py",
+ "generated": "2026-10-20T15:12:34+0800",
+ "mode": "cross_match",
+ "why": "现有颜色/门控结论全部来自 migu_5106947698 一场球；本工具量「换一场还剩多少」",
+ "contract": [
+  "输入 1: --video-dir 新比赛视频目录（大 mp4 或一堆小 mp4 都行）",
+  "输入 2: --palette 双方队服颜色，人工录入（D013 的 LCD 方案；默认 red,white 只对旧比赛成立）",
+  "输入 3: 可选 --model/--imgsz/--stride/--clip-len/--n-clips（默认与旧基线一致）",
+  "输出:   data/results/cross_match.json（含并排对照与判据结论，不覆盖 hi_color_diag.json）"
+ ],
+ "palette_input": {
+  "palette": {
+   "A": "white",
+   "B": "blue"
+  },
+  "given_by": "human",
+  "note": "队服颜色必须人工录入（D013 LCD 方案），默认 red,white 只对旧比赛成立"
+ },
+ "measured_refs": null,
+ "params": {
+  "n_clips": 12,
+  "clip_len": 20.0,
+  "stride": 8,
+  "imgsz": 640,
+  "model": "yolov8n.pt",
+  "hi_conf": 0.25,
+  "min_h_px": 22.0,
+  "min_purity": 0.3,
+  "max_color_dist": 0.16,
+  "min_margin": 0.04,
+  "layout": "windowed",
+  "classify_metric": "v1",
+  "native_width": 640,
+  "input_dir": "D:\\yt-dlp\\downloads\\migu_968460165\\2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4"
+ },
+ "thresholds": {
+  "MIN_N_HI": 2000,
+  "MAX_ABS_DRIFT_PT": 15.0,
+  "MAX_REL_DRIFT": 0.5,
+  "MAX_UNKNOWN_RATE_DRIFT_PT": 10.0,
+  "MAX_TOO_SMALL_THETA": 0.8,
+  "MAX_GRASS_ASSIGN_RATE": 0.1,
+  "DEGENERATE_REL": 0.1
+ },
+ "palette_probe": {
+  "palette": {
+   "A": "white",
+   "B": "blue"
+  },
+  "siblings": {
+   "A:white|B:blue": {
+    "dist_a_in_b": 0.7018,
+    "dist_b_in_a": 0.7018,
+    "margin": 0.7018,
+    "need_ge": 0.1,
+    "status": "PASS"
+   }
+  },
+  "probe_colors": {
+   "grass": [
+    0.25,
+    0.55,
+    0.55
+   ],
+   "kit_navy": [
+    0.583,
+    0.72,
+    0.35
+   ],
+   "kit_yellow": [
+    0.15555555555555556,
+    0.8,
+    0.85
+   ],
+   "kit_purple": [
+    0.7777777777777778,
+    0.35,
+    0.6
+   ],
+   "kit_white_real": [
+    0.5,
+    0.16,
+    0.75
+   ]
+  },
+  "false_assign": {
+   "grass": {
+    "role": "unknown",
+    "dist": 0.6522,
+    "scores": {
+     "A": 0.6786,
+     "B": 0.6522
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   },
+   "kit_navy": {
+    "role": "B",
+    "dist": 0.0934,
+    "scores": {
+     "A": 0.8,
+     "B": 0.0934
+    },
+    "dist_to_assigned_ref": 0.0934,
+    "status": "PASS"
+   },
+   "kit_yellow": {
+    "role": "unknown",
+    "dist": 0.5571,
+    "scores": {
+     "A": 0.5571,
+     "B": 0.7933
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   },
+   "kit_purple": {
+    "role": "unknown",
+    "dist": 0.2922,
+    "scores": {
+     "A": 0.5357,
+     "B": 0.2922
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   },
+   "kit_white_real": {
+    "role": "unknown",
+    "dist": 0.3302,
+    "scores": {
+     "A": 0.4,
+     "B": 0.3302
+    },
+    "dist_to_assigned_ref": null,
+    "status": "PASS"
+   }
+  },
+  "detect": {
+   "white_old": {
+    "col": [
+     0.25,
+     0.067,
+     0.935
+    ],
+    "colour": "white",
+    "expect": "white",
+    "role": "A",
+    "role_colour": "white",
+    "dist": 0.03,
+    "source": "kit_calib/旧场白队 n=120",
+    "status": "PASS"
+   },
+   "blue_new": {
+    "col": [
+     0.598,
+     0.298,
+     0.435
+    ],
+    "colour": "blue",
+    "expect": "blue",
+    "role": "B",
+    "role_colour": "blue",
+    "dist": 0.1458,
+    "source": "kit_calib/新场深蓝 n=109",
+    "status": "PASS"
+   },
+   "red_old": {
+    "col": [
+     0.101,
+     0.848,
+     0.819
+    ],
+    "colour": "red",
+    "expect": null,
+    "role": "unknown",
+    "dist": 0.6534,
+    "source": "kit_calib/旧场红队 n=73",
+    "status": "SKIP",
+    "note": "该球衣色不在本色板中，本场无从判断（不是失败）"
+   },
+   "grass_reflection": {
+    "col": [
+     0.58,
+     0.3,
+     0.7
+    ],
+    "colour": "white",
+    "expect": "detectable",
+    "role": "unknown",
+    "role_colour": null,
+    "dist": 0.1742,
+    "source": "新场白队病态样本（草反射 h01≈0.58 s≈0.30 v≈0.70）",
+    "status": "WARN"
+   }
+  },
+  "ok": false,
+  "problems": [
+   "palette_undetectable grass_reflection（期望颜色 detectable，实得 unknown=None，dist=0.174 > 0.16）"
+  ],
+  "metric": "v1",
+  "thresholds": {
+   "sibling_margin": 0.1,
+   "probe_tol": 1.5,
+   "max_color_dist": 0.16,
+   "min_margin": 0.04
+  }
+ },
+ "baseline": {
+  "path": "data\\results\\hi_color_diag.json",
+  "generated": "2026-10-20T12:15:03+0800",
+  "n_clips": 12,
+  "n_hi": 12585,
+  "n_unknown": 2596,
+  "unknown_rate": 0.206,
+  "reason_share_pct": {
+   "purity": 37.1,
+   "color": 44.41,
+   "too_small": 14.68,
+   "rect": 3.81
+  },
+  "palette": [
+   "red",
+   "white"
+  ],
+  "source_match": "migu_5106947698",
+  "note": "baseline palette ['red', 'white'] != 本次 ['white', 'blue']：占比漂移里有一部分可直接归因于队服换了"
+ },
+ "clips": [
+  {
+   "clip_id": 1,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@0.0s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 0.0,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 60,
+   "n_unknown": 44,
+   "unknown_rate": 0.7333,
+   "reason_counts": {
+    "purity": 1,
+    "color": 43,
+    "too_small": 0,
+    "rect": 0,
+    "colored": 16
+   },
+   "reason_share_pct": {
+    "purity": 2.27,
+    "color": 97.73,
+    "too_small": 0.0,
+    "rect": 0.0
+   },
+   "hi_h_px": {
+    "median": 152.4,
+    "p10": 56.3,
+    "p90": 466.6
+   },
+   "grass_boxes": 1,
+   "grass_assigned": 0,
+   "elapsed_s": 6.2,
+   "landscape": "wide"
+  },
+  {
+   "clip_id": 2,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@866.8s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 866.79,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 351,
+   "n_unknown": 135,
+   "unknown_rate": 0.3846,
+   "reason_counts": {
+    "purity": 11,
+    "color": 124,
+    "too_small": 0,
+    "rect": 0,
+    "colored": 216
+   },
+   "reason_share_pct": {
+    "purity": 8.15,
+    "color": 91.85,
+    "too_small": 0.0,
+    "rect": 0.0
+   },
+   "hi_h_px": {
+    "median": 226.3,
+    "p10": 87.7,
+    "p90": 331.4
+   },
+   "grass_boxes": 4,
+   "grass_assigned": 0,
+   "elapsed_s": 4.6,
+   "landscape": "very_wide"
+  },
+  {
+   "clip_id": 3,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@1733.6s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 1733.57,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 562,
+   "n_unknown": 395,
+   "unknown_rate": 0.7028,
+   "reason_counts": {
+    "purity": 61,
+    "color": 173,
+    "too_small": 158,
+    "rect": 3,
+    "colored": 167
+   },
+   "reason_share_pct": {
+    "purity": 15.44,
+    "color": 43.8,
+    "too_small": 40.0,
+    "rect": 0.76
+   },
+   "hi_h_px": {
+    "median": 25.2,
+    "p10": 19.3,
+    "p90": 220.0
+   },
+   "grass_boxes": 3,
+   "grass_assigned": 0,
+   "elapsed_s": 4.3,
+   "landscape": "mixed"
+  },
+  {
+   "clip_id": 4,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@2600.4s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 2600.36,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 995,
+   "n_unknown": 421,
+   "unknown_rate": 0.4231,
+   "reason_counts": {
+    "purity": 177,
+    "color": 243,
+    "too_small": 0,
+    "rect": 1,
+    "colored": 574
+   },
+   "reason_share_pct": {
+    "purity": 42.04,
+    "color": 57.72,
+    "too_small": 0.0,
+    "rect": 0.24
+   },
+   "hi_h_px": {
+    "median": 43.8,
+    "p10": 32.9,
+    "p90": 54.1
+   },
+   "grass_boxes": 0,
+   "grass_assigned": 0,
+   "elapsed_s": 3.8,
+   "landscape": "on_par"
+  },
+  {
+   "clip_id": 5,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@3467.1s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 3467.14,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 613,
+   "n_unknown": 379,
+   "unknown_rate": 0.6183,
+   "reason_counts": {
+    "purity": 139,
+    "color": 215,
+    "too_small": 18,
+    "rect": 7,
+    "colored": 234
+   },
+   "reason_share_pct": {
+    "purity": 36.68,
+    "color": 56.73,
+    "too_small": 4.75,
+    "rect": 1.85
+   },
+   "hi_h_px": {
+    "median": 43.6,
+    "p10": 28.9,
+    "p90": 176.7
+   },
+   "grass_boxes": 0,
+   "grass_assigned": 0,
+   "elapsed_s": 3.9,
+   "landscape": "on_par"
+  },
+  {
+   "clip_id": 6,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@4333.9s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 4333.93,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 434,
+   "n_unknown": 210,
+   "unknown_rate": 0.4839,
+   "reason_counts": {
+    "purity": 111,
+    "color": 97,
+    "too_small": 2,
+    "rect": 0,
+    "colored": 224
+   },
+   "reason_share_pct": {
+    "purity": 52.86,
+    "color": 46.19,
+    "too_small": 0.95,
+    "rect": 0.0
+   },
+   "hi_h_px": {
+    "median": 50.7,
+    "p10": 39.5,
+    "p90": 197.5
+   },
+   "grass_boxes": 0,
+   "grass_assigned": 0,
+   "elapsed_s": 4.1,
+   "landscape": "on_par"
+  },
+  {
+   "clip_id": 7,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@5200.7s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 5200.71,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 140,
+   "n_unknown": 139,
+   "unknown_rate": 0.9929,
+   "reason_counts": {
+    "purity": 0,
+    "color": 139,
+    "too_small": 0,
+    "rect": 0,
+    "colored": 1
+   },
+   "reason_share_pct": {
+    "purity": 0.0,
+    "color": 100.0,
+    "too_small": 0.0,
+    "rect": 0.0
+   },
+   "hi_h_px": {
+    "median": 257.1,
+    "p10": 213.9,
+    "p90": 412.7
+   },
+   "grass_boxes": 0,
+   "grass_assigned": 0,
+   "elapsed_s": 4.2,
+   "landscape": "no_usable_tier"
+  },
+  {
+   "clip_id": 8,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@6067.5s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 6067.5,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 166,
+   "n_unknown": 97,
+   "unknown_rate": 0.5843,
+   "reason_counts": {
+    "purity": 10,
+    "color": 84,
+    "too_small": 3,
+    "rect": 0,
+    "colored": 69
+   },
+   "reason_share_pct": {
+    "purity": 10.31,
+    "color": 86.6,
+    "too_small": 3.09,
+    "rect": 0.0
+   },
+   "hi_h_px": {
+    "median": 270.5,
+    "p10": 94.4,
+    "p90": 395.5
+   },
+   "grass_boxes": 0,
+   "grass_assigned": 0,
+   "elapsed_s": 4.3,
+   "landscape": "very_wide"
+  },
+  {
+   "clip_id": 9,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@6934.3s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 6934.28,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 260,
+   "n_unknown": 199,
+   "unknown_rate": 0.7654,
+   "reason_counts": {
+    "purity": 16,
+    "color": 183,
+    "too_small": 0,
+    "rect": 0,
+    "colored": 61
+   },
+   "reason_share_pct": {
+    "purity": 8.04,
+    "color": 91.96,
+    "too_small": 0.0,
+    "rect": 0.0
+   },
+   "hi_h_px": {
+    "median": 122.3,
+    "p10": 66.4,
+    "p90": 382.0
+   },
+   "grass_boxes": 0,
+   "grass_assigned": 0,
+   "elapsed_s": 4.3,
+   "landscape": "wide"
+  },
+  {
+   "clip_id": 10,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@7801.1s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 7801.07,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 525,
+   "n_unknown": 265,
+   "unknown_rate": 0.5048,
+   "reason_counts": {
+    "purity": 186,
+    "color": 77,
+    "too_small": 0,
+    "rect": 2,
+    "colored": 260
+   },
+   "reason_share_pct": {
+    "purity": 70.19,
+    "color": 29.06,
+    "too_small": 0.0,
+    "rect": 0.75
+   },
+   "hi_h_px": {
+    "median": 48.1,
+    "p10": 38.5,
+    "p90": 61.7
+   },
+   "grass_boxes": 6,
+   "grass_assigned": 0,
+   "elapsed_s": 3.6,
+   "landscape": "on_par"
+  },
+  {
+   "clip_id": 11,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@8667.9s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 8667.85,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 271,
+   "n_unknown": 168,
+   "unknown_rate": 0.6199,
+   "reason_counts": {
+    "purity": 34,
+    "color": 132,
+    "too_small": 2,
+    "rect": 0,
+    "colored": 103
+   },
+   "reason_share_pct": {
+    "purity": 20.24,
+    "color": 78.57,
+    "too_small": 1.19,
+    "rect": 0.0
+   },
+   "hi_h_px": {
+    "median": 240.5,
+    "p10": 63.2,
+    "p90": 419.2
+   },
+   "grass_boxes": 1,
+   "grass_assigned": 0,
+   "elapsed_s": 4.9,
+   "landscape": "very_wide"
+  },
+  {
+   "clip_id": 12,
+   "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@9534.6s",
+   "video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+   "start_s": 9534.64,
+   "dur_s": 20.0,
+   "src_size": [
+    854,
+    480
+   ],
+   "n_hi": 335,
+   "n_unknown": 215,
+   "unknown_rate": 0.6418,
+   "reason_counts": {
+    "purity": 75,
+    "color": 139,
+    "too_small": 1,
+    "rect": 0,
+    "colored": 120
+   },
+   "reason_share_pct": {
+    "purity": 34.88,
+    "color": 64.65,
+    "too_small": 0.47,
+    "rect": 0.0
+   },
+   "hi_h_px": {
+    "median": 44.5,
+    "p10": 33.4,
+    "p90": 119.5
+   },
+   "grass_boxes": 17,
+   "grass_assigned": 0,
+   "elapsed_s": 3.6,
+   "landscape": "on_par"
+  }
+ ],
+ "totals_native": {
+  "n_clips": 12,
+  "n_hi": 4712,
+  "n_unknown": 2667,
+  "unknown_rate": 0.566,
+  "grass_boxes": 32,
+  "grass_assigned": 0,
+  "grass_assigned_rate": 0.0,
+  "reason_counts": {
+   "purity": 821,
+   "color": 1649,
+   "too_small": 184,
+   "rect": 13,
+   "colored": 2045
+  },
+  "reason_share_pct": {
+   "purity": 30.78,
+   "color": 61.83,
+   "too_small": 6.9,
+   "rect": 0.49
+  },
+  "hi_h_px": {
+   "median": 122.3
+  }
+ },
+ "verdict_native": {
+  "verdict": "WARN",
+  "max_drift": 0.3923,
+  "max_abs_drift_pt": 17.42,
+  "n_hi": 4712,
+  "table": {
+   "purity": {
+    "new_pct": 30.78,
+    "base_pct": 37.1,
+    "drift": -6.32,
+    "rel_drift": -0.1704,
+    "status": "PASS"
+   },
+   "color": {
+    "new_pct": 61.83,
+    "base_pct": 44.41,
+    "drift": 17.42,
+    "rel_drift": 0.3923,
+    "status": "WARN"
+   },
+   "too_small": {
+    "new_pct": 6.9,
+    "base_pct": 14.68,
+    "drift": -7.78,
+    "rel_drift": -0.53,
+    "status": "WARN"
+   },
+   "rect": {
+    "new_pct": 0.49,
+    "base_pct": 3.81,
+    "drift": -3.32,
+    "rel_drift": -0.8714,
+    "status": "WARN"
+   }
+  },
+  "gate_check": {
+   "basis": "docs/hi_layer_color_gate.md §6.1 层内非球员率（点估计）",
+   "layer_nonplayer_rate": {
+    "purity": 0.974,
+    "rect": 0.676,
+    "color": 0.436,
+    "too_small": 0.129
+   },
+   "thresholds": {
+    "max_too_small_theta": 0.8,
+    "ref_layers": [
+     "purity",
+     "rect",
+     "color"
+    ]
+   },
+   "new_est_nonplayer_rate": 0.5816,
+   "base_est_nonplayer_rate": 0.5997,
+   "too_small_pct": 6.9,
+   "implied_too_small_theta": 0.129,
+   "shift_pt": -1.81,
+   "status": "consistent",
+   "note": "反推 too_small 层非球员率 0.13 ≤ 0.80，与旧场 0.129 的定性一致"
+  },
+  "grass_false_assign": {
+   "grass_boxes": 32,
+   "grass_assigned": 0,
+   "grass_assigned_rate": 0.0,
+   "status": "PASS"
+  }
+ },
+ "totals_scaled_640": {
+  "n_clips": 12,
+  "n_hi": 4697,
+  "n_unknown": 2903,
+  "unknown_rate": 0.6181,
+  "grass_boxes": 34,
+  "grass_assigned": 0,
+  "grass_assigned_rate": 0.0,
+  "reason_counts": {
+   "purity": 709,
+   "color": 1653,
+   "too_small": 490,
+   "rect": 51,
+   "colored": 1794
+  },
+  "reason_share_pct": {
+   "purity": 24.42,
+   "color": 56.94,
+   "too_small": 16.88,
+   "rect": 1.76
+  },
+  "hi_h_px": {
+   "median": 90.0
+  }
+ },
+ "verdict_scaled_640": {
+  "verdict": "WARN",
+  "max_drift": 0.2821,
+  "max_abs_drift_pt": 12.68,
+  "n_hi": 4697,
+  "table": {
+   "purity": {
+    "new_pct": 24.42,
+    "base_pct": 37.1,
+    "drift": -12.68,
+    "rel_drift": -0.3418,
+    "status": "PASS"
+   },
+   "color": {
+    "new_pct": 56.94,
+    "base_pct": 44.41,
+    "drift": 12.53,
+    "rel_drift": 0.2821,
+    "status": "PASS"
+   },
+   "too_small": {
+    "new_pct": 16.88,
+    "base_pct": 14.68,
+    "drift": 2.2,
+    "rel_drift": 0.1499,
+    "status": "PASS"
+   },
+   "rect": {
+    "new_pct": 1.76,
+    "base_pct": 3.81,
+    "drift": -2.05,
+    "rel_drift": -0.5381,
+    "status": "WARN"
+   }
+  },
+  "gate_check": {
+   "basis": "docs/hi_layer_color_gate.md §6.1 层内非球员率（点估计）",
+   "layer_nonplayer_rate": {
+    "purity": 0.974,
+    "rect": 0.676,
+    "color": 0.436,
+    "too_small": 0.129
+   },
+   "thresholds": {
+    "max_too_small_theta": 0.8,
+    "ref_layers": [
+     "purity",
+     "rect",
+     "color"
+    ]
+   },
+   "new_est_nonplayer_rate": 0.5198,
+   "base_est_nonplayer_rate": 0.5997,
+   "too_small_pct": 16.88,
+   "implied_too_small_theta": 0.129,
+   "shift_pt": -7.99,
+   "status": "consistent",
+   "note": "反推 too_small 层非球员率 0.13 ≤ 0.80，与旧场 0.129 的定性一致"
+  },
+  "grass_false_assign": {
+   "grass_boxes": 34,
+   "grass_assigned": 0,
+   "grass_assigned_rate": 0.0,
+   "status": "PASS"
+  },
+  "label": "scaled_640"
+ },
+ "play_windows": null,
+ "landscape": {
+  "per_clip": [
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@0.0s",
+    "landscape": "wide",
+    "median_h_px": 152.4
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@866.8s",
+    "landscape": "very_wide",
+    "median_h_px": 226.3
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@1733.6s",
+    "landscape": "mixed",
+    "median_h_px": 25.2
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@2600.4s",
+    "landscape": "on_par",
+    "median_h_px": 43.8
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@3467.1s",
+    "landscape": "on_par",
+    "median_h_px": 43.6
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@4333.9s",
+    "landscape": "on_par",
+    "median_h_px": 50.7
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@5200.7s",
+    "landscape": "no_usable_tier",
+    "median_h_px": 257.1
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@6067.5s",
+    "landscape": "very_wide",
+    "median_h_px": 270.5
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@6934.3s",
+    "landscape": "wide",
+    "median_h_px": 122.3
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@7801.1s",
+    "landscape": "on_par",
+    "median_h_px": 48.1
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@8667.9s",
+    "landscape": "very_wide",
+    "median_h_px": 240.5
+   },
+   {
+    "label": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城@9534.6s",
+    "landscape": "on_par",
+    "median_h_px": 44.5
+   }
+  ],
+  "median_h_px": 86.5,
+  "kinds": {
+   "wide": 2,
+   "very_wide": 3,
+   "mixed": 1,
+   "on_par": 5,
+   "no_usable_tier": 1
+  }
+ },
+ "warns": [
+  "G2 abs_drift_color +17.4pt>=15",
+  "G3 rel_drift_too_small -53%>=50%",
+  "G3 rel_drift_rect -87%>=50%",
+  "G4 unknown_rate_drift +36.0pt>=10",
+  "G3 rel_drift_rect -54%>=50%",
+  "G4 unknown_rate_drift +41.2pt>=10"
+ ],
+ "fails": [],
+ "elapsed_s": 104.9,
+ "output_path": "data\\results\\_cm_rand_v1.json",
+ "conclusion": [
+  "最大单层漂移在 color：44.4% -> 61.8%（基线 migu_5106947698）",
+  "原生布局 n_hi=4712（h 中位 86.5），缩放至 640 宽后 n_hi=4697（h 中位 90.0）：两者差距就是「画面尺度变了」这一项",
+  "门控检验：consistent（too_small 占比 6.9%，反推层内非球员率 0.129，上限 0.80；旧基线加权 0.5997）",
+  "判据报 6 条 WARN：G2 abs_drift_color +17.4pt>=15；G3 rel_drift_too_small -53%>=50%；G3 rel_drift_rect -87%>=50%；G4 unknown_rate_drift +36.0pt>=10"
+ ],
+ "caveats": [
+  "无真值：量的是取色失败原因的**构成**，不是「球员判得准不准」",
+  "层内非球员率取自旧比赛标注（docs/hi_layer_color_gate.md §6.1），跨场能否搬本身是待验问题",
+  "锚点以比赛为单位：事件切片比随机 20s 窗口更「忙」，抽样偏差已知",
+  "两种布局（原生 / 缩放到 640 宽）都要看：原生布局混入了「画面尺度变了」这个因素",
+  "跨分辨率比较时 too_small / rect 两层的占比**不可直接比**：它们由框高与画面宽度共同决定（MIN_H_PX=22 是绝对像素），换分辨率后必须看 scale 到 640 那一列",
+  "v2 放宽色相窗口会牺牲一部分「精确率」换「覆盖率」：误判率从 2.0% 升到 9.1%（197 个真值样本里 4→18），是否值得取决于下游怎么用（见 docs §12.6）"
+ ]
+}

@@ -1,6 +1,6 @@
 {
  "tool": "tools/cross_match_eval.py",
- "generated": "2026-10-20T15:05:17+0800",
+ "generated": "2026-10-20T15:20:12+0800",
  "mode": "self_check",
  "why": "现有颜色/门控结论全部来自 migu_5106947698 一场球；本工具量「换一场还剩多少」",
  "contract": [
@@ -254,7 +254,7 @@
    },
    "grass_boxes": 38,
    "grass_assigned": 0,
-   "elapsed_s": 5.7,
+   "elapsed_s": 4.0,
    "landscape": "on_par"
   },
   {
@@ -290,7 +290,7 @@
    },
    "grass_boxes": 49,
    "grass_assigned": 0,
-   "elapsed_s": 3.4,
+   "elapsed_s": 2.1,
    "landscape": "on_par"
   }
  ],
@@ -500,7 +500,7 @@
  },
  "warns": [],
  "fails": "pipeline n_clips=2 n_hi=1625 clips_ok=2 reasons_ok=2/2 gate=consistent scale_probe=ok",
- "elapsed_s": 19.3,
+ "elapsed_s": 12.8,
  "output_path": "D:\\zynq-yolo\\data\\results\\cross_match_selfcheck.json",
  "conclusion": [
   "最大单层漂移在 color：44.4% -> 15.8%（基线 migu_5106947698）",

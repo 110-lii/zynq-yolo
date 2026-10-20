@@ -29,7 +29,7 @@
 | 记号 | 含义 | 能不能当 precision 用 |
 |---|---|---|
 | `inside_gap` | 保留框与丢弃框的**场内率差**（pt） | **不能**。位置分布差，不是准确率 |
-| `cov_est` | 门控丢的框数 ÷ 按标注层内 N 率折算的非球员估计量 | **不能**。分子分母不是同一批框 |
+| `cov_est` | **不再是数字**。令牌里恒为 `cov_est=unreliable`，理由与保守界限见 §5.1(b) | **不能**（`cov_est_reliable=false`） |
 | `DEFECT=4` | `gate_defects` 条目数（漏网点/旁证清单） | 不是 bug 数，是**待证伪清单**长度 |
 | `CONFLICT=1` | 与标注结论冲突的条目数 | 是证据，不是错误计数 |
 
@@ -46,6 +46,12 @@ conf 降序、长度随 conf 门限变化（第一批 conf=0.08，第二批 conf
 写回案件记录（供后来人避坑）：曾有一版把两批标注当成同一批框做了逐框对齐，
 得到「总体 N 率 0.58 / 估计 N=1430 / 覆盖率 112%」这类**作废数字**（`over` 判据当时也没拦住）。
 现在 `precision_proxy` 只保留一种失效判据——**不可能性**（丢的框比盘面上的框还多）。
+
+> **更正记录（2026-10-20，本轮）**：本文件此前多处写「`cov_est` = 8%」。
+> 该数字已**全部作废并删除**，理由见 §5.1(b)：分子分母不同源、rect 层两把尺子差 2.6 倍、
+> purity 层还存在**拓扑矛盾**（本 run 保留 802 框 > 按层占比折算的 785 框）。
+> 任何把「8%」当覆盖率/精度引用的下游结论都必须一并撤回。
+> 令牌字段 `cov_est` 现在**只输出 `unreliable` 这个标签**，不再输出任何百分比。
 
 标注自身的可信度上限（决定一切「标注 vs 实测」的重合度）：第二批 159 框里与第一批
 同 `(clip,frame,box_idx)` 的 37 框，一致性 **kappa=0.226**，P/N 真冲突 **10/37=27%**。
@@ -315,20 +321,51 @@ Inc.05 f16 站立的**白衣场上球员**在 v1 下被判 `far_crowd`/`staff`�
 都不自洽，不足以推翻 1 000+ 个「场内且尺度正常」的框；但这也不等于标注错——
 **这是一个必须用新数据解决的问题，不是用现有数据能裁决的问题**（见 §8 第 1 条）。
 
-**(b) 精度代理 `cov_est` 名义上 100%，但它说明不了什么。**
+**(b) 覆盖率 `cov_est` 已作废：不再给数字，只给「不可靠」+ 一个保守界限。**
 
-`real_recall_est_total=1.0` 看起来像「把估计的非球员量全覆盖了」，实际是因为：
-按层加权后非球员估计只有 **57.0 框**（purity 35.5 + rect 2.5 + color 19.0），
-而门控丢了 98 框 ⇒ 比值被 clamp 到 1.0。
-**57.0 这个估计量本身很虚**：它 = 层内 N 率 × (该层假定占比 × 本 run hi 框数)，而
-「层假定占比」来自 `scores2.json` 的 `stratum_true_share`（purity 0.371 / color 0.444 /
-too_small 0.147 / rect 0.038），那是**另一次运行**的分布，本 run 无法逐框复现。
-⇒ `cov_est` 只能读作「量级上不像漏了一大片」，**不能读作覆盖率**。
+这个量在旧版本里报成 **8.0%**，读起来像「门控只覆盖了 8% 的非球员」。**它不该被这样读**，
+所以本轮把它整个撤掉。三条独立理由，任何一条都足以撤掉它：
 
-> 字段修正记录（防止再被引用）：本字段早先有两个错误判据——
-> ① 把估计量写成「样本 N 数 / 抽样率」，抽样率≈0.084 时把量级放大 ~12 倍；
-> ② 把失效判据写成「覆盖率 >100%」，导致任何小样本子集运行都被静默作废。
-> 现在按定义重算（`n_N_est = N_rate × (share × 本 run hi 框数)`），失效判据只剩「不可能性」。
+| # | 问题 | 证据（本 run，`data/results/player_gate.json → precision_proxy`） |
+|---|---|---|
+| 1 | 分子分母不同源 | 分母 = 层内 N率 × **另一次运行**（`hi_color_diag.json`）的层占比 × 本 run 框数。两把尺子对同一层的框数估计在 **rect 层差 2.6 倍**、purity 层差 1.1 倍 |
+| 2 | 层内 N率自身不可靠 | kappa=0.226、P/N 真冲突 27% ⇒ 只可信层间相对高低（§0.2） |
+| 3 | **拓扑矛盾（三层全部）** | `per_stratum[*].topology_ok` 在 purity / rect / color **三层全为 false**：purity 层本 run **保留 802 框** > 按层占比折算的 **785.0 框**；rect 层保留 **199** > 折算 **80.6**；color 层保留 **1 017** > 折算 **939.7**。保留数大于该层总框数是不可能的 ⇒ 「同一层」在两套口径里指的不是同一个集合（本 run 的 `geo_rescue_purity` / `purity_hull_ok` 在 diag 那次被归到了别处） |
+
+**本轮改成只给一个对「门控覆盖得少」最不利的保守界限**（也让覆盖率看起来最大）：
+
+```
+分子 = 98      = 门控实际丢掉的框数（本 run 实测，全表唯一硬数）
+分母 = 2 116   = max(折算估计量 1 229, 本 run 的 hi-unknown 全量框数)
+⇒ 覆盖率下界 4.6%  （bound_kind = rate_vs_hi_unknown_boxes）
+```
+
+**这个 4.6% 也不能当结论用**，它只能干一件事：**否定「门控覆盖了大部分非球员」这种说法**。
+它的方向性偏差也很清楚——分母越大、算出的比例越小，所以它是「覆盖率有多低」的**上限**。
+
+| 层 | 本 run 实测（丢/留） | 按层占比折算的框数 | 二者的比值 | `topology_ok` | 折算出的非球员估计 |
+|---|---|---|---|---|
+| purity | 87 / 802 | 785.0 | 1.1× | **false** | 764.9 |
+| rect | 11 / 199 | 80.6 | **2.6×** | **false** | 54.5 |
+| color | 0 / 1 017 | 939.7 | 1.1× | **false** | 409.6 |
+| **合计** | **98 丢** / 2 116 框 | — | — | 3 处违例 | **1 229.0** |
+
+⇒ 唯一能安全说的是：**在标注口径下，本门控的覆盖面是「几分之一」量级，不是「大部分」。**
+这与 §2「只丢 0.78%」是同一件事的两面——门控是降权层，不是过滤器。
+
+**JSON 字段口径**（防止再被误用）：`precision_proxy.cov_est_reliable = false`、
+`precision_proxy.cov = {bound_lo_pct, bound_denominator, why_unreliable[], strength}`；
+`real_recall_est_total` 恒为 `null`，**故意留空**——这个字段只要出现就会被读成 recall。
+`coverage_status` 保留（`ok` / `INCONSISTENT_est_below_drops` / `n/a`），但它已不再决定任何被打印的数字。
+
+> 字段修正记录（防止再被引用）：本字段先后错过四次，每次都让覆盖率看起来更漂亮。
+> ① 把估计量写成「样本 N 数 / 抽样率」，抽样率≈0.084 时放大 ~12 倍；
+> ② 「本 run 的 hi-unknown 框数」只统计了「丢的 + 按 reason 名精确匹配留下的」，
+> 而 `geo_rescue_purity` / `purity_hull_ok` 的名字里没有 `purity`，被漏光
+> ⇒ 分母缩到 98、分母≈分子、覆盖率被 clamp 成 **100%**；
+> ③ 失效判据写成「覆盖率 >100%」，任何小样本子集运行都被静默作废；
+> ④ 即使前三处都修好，输出仍是一个**精确到 0.1% 的假精确值**，而它建立在
+> 一个拓扑矛盾之上（见上表第 3 行）⇒ 现在彻底不输出百分比。
 
 ---
 
@@ -362,7 +399,9 @@ too_small 0.147 / rect 0.038），那是**另一次运行**的分布，本 run �
 3. **对照 A 的两列不是同一批框**，`inside_gap` 含集合漂移；只有 `by_band` 桶内比较是干净的。
 4. **对照 B 受 stride=8 影响**：`max_age=3`≈1 s 的容忍窗会吸收单帧丢弃；且 +56 条轨迹
    更可能来自「保留集合变大」的二阶效应，**不能**归因于那 98 个被丢框。
-5. **`cov_est=100%` 是 clamp 出来的**，估计量只有 57 框且基于另一次运行的分布（§5.1b）。
+5. **`cov_est` 已作废**：不再输出任何百分比（`cov_est_reliable=false`），令牌里只打
+   `cov_est=unreliable`。唯一保留的数是「保守界限 4.6%」，且它只能用来**否定**
+   「门控覆盖了大部分」，不能当覆盖率/精度（§5.1b）。
 6. **素材单一**：12 段、同一场比赛、单机位（含近景/远景切换）、红/白队服。
    白队区分度天生弱（`hue_std` 12–18° vs 红色 4.5°）。
 7. **裁判若与某队同色，本方法在原理上无法分开**（物理限制，非实现问题）。
@@ -380,18 +419,80 @@ too_small 0.147 / rect 0.038），那是**另一次运行**的分布，本 run �
 
 ## 8. 下一步（按优先级）
 
-1. **用一份小规模、高一致性的「球员/非球员/看不清」标注重测 purity/rect 两层。**
-   做法：每个 clip 抽 10 帧、n≈120、两人独立标、目标 kappa ≥0.7；只判三选，不判原因。
-   这是 §5.1(a) 唯一能裁决的方式，也是本轮**最重要**的遗留问题。
-   （第三批 60 框 `data/annot/labels3.csv` 标完可跑 `tools/repeat_agreement.py` 先量一致性。）
-2. **把 `unknown` 的 `score` 接进球权判定**，并测「A/B/C 三组指标随降权策略的变化」——
+1. **用第四批跨场标注（`data/annot/labels4.csv`）裁决 purity 层 —— 这是唯一已就位的裁决工具。**
+   见 §8.1（含「能裁决什么 / 不能裁决什么」与**标完后跑哪条命令**）。
+2. **rect 层跨场样本不足（只有 3 框）⇒ 本批**不能**裁决 rect，需要主场小标注补**。
+   见 §8.1 的表格最后一行。
+3. **把 `unknown` 的 `score` 接进球权判定**，并测「A/B/C 三组指标随降权策略的变化」——
    `unknown` 占 16.5%（2 072/12 585），有没有用**完全取决于下游读不读 `score`**。
-3. **先决定 `geo_rescue` 该不该这么松**（§7 第 8 条）：目前它把 purity/rect 两层 1 001 个
+4. **先决定 `geo_rescue` 该不该这么松**（§7 第 8 条）：目前它把 purity/rect 两层 1 001 个
    取色失败框救成 `unknown`，这才让「按原因门控」看起来几乎不删框。
    旋钮的口径要先定，再谈「按原因门控值不值」。
-4. **B 组 stride 要降到 1 才能测真碎片化**（当前 0.32 s × `max_age=3` 的容忍窗把要测的东西
+5. **B 组 stride 要降到 1 才能测真碎片化**（当前 0.32 s × `max_age=3` 的容忍窗把要测的东西
    吃掉了）。建议专门跑一段 stride=1 的对照，只看 `id_switch` 与 `len_median`。
-5. 跨场：新场先按场校准色板（`tools/kit_calib.py`，见 `cross_match_eval.md` §12.3）再重跑本文件。
+6. 跨场：新场先按场校准色板（`tools/kit_calib.py`，见 `cross_match_eval.md` §12.3）再重跑本文件。
+
+### 8.1 第四批（跨场 · 新比赛）能裁决什么、不能裁决什么
+
+**这批是什么**：`data/annot/MANIFEST4.json`，由 `tools/make_newmatch_labels.py --build` 生成
+（2026-10-20T14:46）。新比赛（大连英博 vs 深圳新鹏城，白衣/深蓝衣），
+12 个 20 s 窗口 × stride=12，候选 5 316 框，每层抽 20 个 ⇒ **83 框**。
+`label` 列**全为空**（83/83 未标）⇒ 本节不引用任何来自它的数字。
+
+**它覆盖了哪几层**（`MANIFEST4.json → n_candidates_by_stratum` 与 `counts`，逐字）：
+
+| 层 | 新场候选框数 | 抽样数 | 旧场层内 N率（`labels2.csv`） | 能否裁决旧场结论 |
+|---|---|---|---|---|
+| `purity` | **968** | **20** | 97.4%（38/39） | ✅ **能**。20 个样本若全是 N，95% 下界 ≈ 0.83 ⇒ 支持旧结论；若 N 率掉到 60% 以下 ⇒ 旧结论在新场**不成立** |
+| `color` | 1 055 | 20 | 43.6%（17/39） | ◻ 能测，但旧结论是「五五开」⇒ 本层规则是 demote，影响本来就小 |
+| `too_small` | 32 | 20 | 12.9%（4/31） | ◻ 能测；新场候选只有 32 个（旧场约 1 847 个）⇒ **小框在新场几乎不存在**，这本身就是一条重要的跨场差异 |
+| `colored`（对照） | 3 258 | 20 | —（旧场判为 player） | ◻ 可作「门控不该丢」的反向对照 |
+| **`rect`** | **3** | **3** | 67.6%（25/37） | ❌ **不能裁决**。新场 rect 候选总共只有 3 个框，其中 **2 个是 x2=853.6 的 HUD 右边缘框**（见下） ⇒ n=3 的路子没有判别力 |
+
+**结论**：
+- **purity 层（§5.1(a) 争议的一半）本批可以裁决**；
+- **rect 层（争议的另一半）本批不能裁决** —— 新场 rect 候选只有 3 个，且 2 个疑似
+  **赛前被分诊到 `purity` 层去了**（见下一条）⇒ 需要主场再来一份小标注，或先修分诊顺序。
+
+**一个顺带发现（未证实，只作假设）**：新场 `rect` 层的 3 个候选里，2 个 `x2 = 853.6`
+（= 画面右缘，853.6 即帧宽 853.6 px 的 HUD 条左边界的同一列），宽度只有 7.3–8.0 px。
+按 `tools/color_prior.py:107-110` 的分诊顺序，`MIN_H_PX → torso_rect → purity → color` 是
+**逐层短路**的：落在 HUD/边线上的窄框会先通过 `torso_rect`，然后在 `purity` 层失败，
+于是被记成 `purity` 而不是 `rect`。若这个假设成立，旧场 `rect` 层的 67.6% 非球员率里
+**可能有一块是 HUD/边线伪框**，那批框本来就该丢，与本门控的争议无关。
+**如何证实**：跑一次 `tools/hi_color_diag.py` 的变体，把 `rect` 分诊改到 `purity` **之前**，
+看 `rect` 层框数是否显著上升。本文件不下结论——没有这个实验就是在猜。
+
+**标完之后的裁决命令（可直接复制）**：
+
+```powershell
+$env:PYTHONIOENCODING='utf-8'
+cd D:\zynq-yolo
+
+# 0) 先确认标完了（未标完时严格失败，不给数字：docs/repo_spec.md §5）
+#    把 data/annot/labels4.csv 的 label 列全部填 P / N / U（三选，不判原因）
+D:\python\python.exe tools\make_newmatch_labels.py --score
+# 期望末行：NEWLABEL_SCORE_OK 83 purity=<..> color=<..> too_small=<..> rect=<..> colored=<..>
+# 未标完会打出：NEWLABEL_FAIL not_all_labeled <k>/83
+
+# 1) 看分层 N 率 + Wilson CI + 与旧场的保序检验
+#    结果落在 data/results/newmatch_labels.json
+#    裁决口径：只看 purity 层的 N_rate_pn 与 n_N
+#      ≥ 0.80  ⇒ 旧场 purity 结论跨场成立 ⇒ §5.1(a) 判「本门控漏了 purity 层」，要收紧
+#      ≤ 0.50  ⇒ 旧场 purity 结论不跨场成立 ⇒ §5.1(a) 判「标注侧不成立」，保持现状
+#      0.50–0.80 ⇒ 没有裁决力，写进 §5.1(a) 说「仍待定」
+#    同时读 "order_preserved"：false 说明连层间排序都不能跨场搬。
+
+# 2) 若要把新场也接进本门控的对照（需先按场校准色板，§8 第 6 条）
+D:\python\python.exe tools\kit_calib.py --video <新场比赛视频> --palette white,blue
+```
+
+**诚实边界（这条最容易忘）**：第四批是**新比赛、两队服色完全不同**（白衣/深蓝 vs 红/白），
+取色失败原因的**分布本身可能整体平移**。所以它裁决的是
+「**purity 层的『非球员率高』这个方向能不能跨场成立**」，
+**不能**把新旧两场的 N 率直接相减、也不能把新场的 N 率代回本文件的 `cov_est`（§5.1b 已作废）。
+如果 `order_preserved = false`，那么第二、三批标注建立的分层规则表**整体不可跨场迁移**，
+本门控只能作为「单场标定」使用。
 
 ---
 
@@ -421,26 +522,26 @@ D:\python\python.exe tools\check_repo.py     # 期望 CHECK_REPO_OK
 
 ### 9.1 `tools/color_prior.py --gate` 的接入口径（新）
 
-②补检层的 keep/drop（stride=8，12 段，hi 框 12 585）：
+②补检层（低置信补检，`lo_conf=0.08 → hi_conf=0.25`，stride=4，12 段，12 585 个 hi 框）
+的 keep/drop，来源 `data/results/color_prior.json → clips[].rescue.gate_matrix`：
 
-| 配置 | kept | dropped | keep_ratio |
+| 规则表（`--gate-matrix`） | 补检框 kept | dropped | keep_ratio |
 |---|---|---|---|
-| `norules` / `minimal` | 2 377 | 0 | 1.000 |
-| **`after`（默认）** | **2 095** | **282** | **0.881** |
-| `noprior` | 2 095 | 282 | 0.881 |
-| `legacy` | 811 | 1 566 | 0.341 |
-| `--no-color`（对照） | 2 377 | 0 | 1.000 |
+| `minimal`（只保留颜色正向证据） | 4 720 | 0 | 1.000 |
+| **`after`（默认）** | **4 147** | **573** | **0.879** |
+| `legacy` = `presets`（取不到色就丢） | 1 643 | 3 077 | 0.348 |
 
-按 reason 拆 `after` 丢的 282：`color_drop_purity 186` + `color_drop_rect 96`。
-`legacy` 另外多丢 **876** 个 `color_drop_too_small`——正是标注说「87% 是球员」的那一层。
+⇒ 同一批 5 320 个补检框，旧规则丢掉 **3 077/4 720 = 65.2%**，新规则丢 **573/4 720 = 12.1%**。
+按 reason 拆 `after` 丢的 573：`color_drop_purity 382` + `color_drop_rect 191`；
+留下的 4 147 里 `color_keep_too_small 1 691`（**31.8%** 是「人太小」——标注说这层 87% 是球员，
+正是 v1 白扔的那一批）、`colored_A 925` + `colored_B 684`、`color_demote_color 813`、
+`purity_hull_ok 34`。
 
 **默认行为向后兼容的验证**（这条最容易被忽略）：`--gate after` 下 `team_share` 逐段与
-改动前的 `data/results/color_prior.json` **12/12 段完全一致**（`n_hi_boxes` 12 585 一致，
-`field_rate` / `hue_tightness` / `team_counts` 全一致）⇒ 新增的 `--gate`
-**只影响 ②补检的去留，不碰 ①剔除 / ④分队**。
-
-**注意数据期间**：`data/results/color_prior.json` 的落盘值取决于**最后一次运行**。
-复算前以本节表格为准，或按上面命令重跑。
+改动前的 12/12 段完全一致（`n_hi_boxes`、`field_rate`、`hue_tightness`、`team_counts` 全一致）
+⇒ 新增的 `--gate` **只影响 ②补检的去留，不碰 ①剔除 / ④分队**。
+复算：`tools/color_prior.py --gate after --gate-matrix`（约 4 min），末行
+`COLOR_PRIOR_DONE 12 4147 573`。
 
 ### 9.2 `--gate` 的实现要点（给后来人）
 
@@ -487,3 +588,74 @@ kept, dropped, every = pg.apply_gate(frames, cfg, want=("player", "unknown"))
   `v1struct` / `minimal`，外加旧别名 `presets`），不存在「脚本里一套、实验里另一套」。
 - `--gate-rules` 与 `cfg_base` 现在真正进入核心统计（早先有一个 bug 让它「在对照表上
   看着生效、在核心统计里完全不生效」，是典型的**静默假绿**，已修）。
+- 下游读数据时**只认 `role` + `score`**，不要自己再调一遍 `torso_rect`/`classify`——
+  两套阈值口径分叉过一次（`classify_players.py:266`），修起来很贵。
+
+### 10.1 ★ 一个会悄悄吃掉规则表的加载坑（给后来人）
+
+`tools/color_prior.py --gate presets` 走的是**旧代码路径**：它直接
+`GateConfig(palette=..., rules=dict(PRESET_RULES))`，而 `GateConfig` 的**字段默认值**是
+`LEGACY_RULES`（四条全 drop）。所以 `presets` 与 `legacy` 在数值上是同一条规则——
+这不是 bug，是「旧口径」的正确含义，写在这里免得有人以为 `presets` 应该更宽松。
+
+`--gate-rules` 是**唯一**能改规则表的入口，且它同时作用于 `PRESETS` 名与 `presets` 别名；
+带它跑时，`--ablate` 表里 `legacy` / `v1struct` 两行会被 `cfg_base` 覆盖成同一套规则
+（这两行的对照意义随之失效）。**要复现 `legacy` 必须不带 `--gate-rules`。**
+
+---
+
+## 11. ★ 踩坑：`git diff` 会因为 CRLF 规范化说反话，要信 sha256
+
+**症状**（2026-10-20 实际踩到）：一个文件在编辑器里被改过，`git status` 却**不显示 `M`**；
+换一个文件，`git diff HEAD --stat` 报出「+58/−30」，而工作区字节数与 HEAD 一模一样。
+两种现象同时出现，跟着 `git diff` 判断「有没有改」一定会判错。
+
+**机制**（两条独立成因，都在本仓库实测过）：
+
+1. `git cat-file -p HEAD:<file>` 拿到的 **原字节** 与工作区文件的字节数可能**恰好相等**，
+   但经过 clean filter 后 blob hash 不同 —— 反之亦然。
+   本仓库 `core.autocrlf = false`、`core.eol` 未设 ⇒ 落地时按 `.gitattributes` / 平台默认
+   做 CRLF↔LF 转换，**committed blob（LF 域）与 working tree（CRLF 域）不同域**。
+2. `git status` / `git diff` 走 **stat 缓存 + clean filter** 两条路径，二者对「文件变没变」
+   的判定标准不同（mtime/size 命中缓存时直接判「没变」，可文件内容已经变了）。
+   ⇒ **`git diff` 是启发式，不是哈希比对。**
+
+**结论：凡是「这份文件到底等于哪个版本」的判断，一律走 sha256，不走 `git diff`。**
+可直接复制的核对命令（Windows PowerShell，本仓库路径）：
+
+```powershell
+$env:PYTHONIOENCODING='utf-8'
+cd D:\zynq-yolo
+
+# 一次比对「工作区 vs HEAD」的全部交付物（CRLF 规范化后逐字节比）
+& D:\python\python.exe -c @'
+import subprocess, hashlib
+from pathlib import Path
+for p in ('tools/player_gate.py','tools/color_prior.py',
+          'docs/player_gate_v1.md','data/results/player_gate.json'):
+    r = subprocess.run(['git','cat-file','-p','HEAD:'+p], capture_output=True)
+    if r.returncode != 0:
+        print('%-32s NOT IN HEAD' % p); continue
+    hb, wb = r.stdout, Path(p).read_bytes()
+    n = lambda b: hashlib.sha256(b.replace(b'\r\n', b'\n')).hexdigest()[:16]
+    print('%-32s HEAD=%-8s WT=%-8s SAME=%s' % (p, n(hb), n(wb), n(hb) == n(wb)))
+'@
+
+# 辅助：哪些文件真的 dirty（注意：这里会漏报，只作参考）
+git diff-files --name-only
+```
+
+判定规则（照抄即可）：
+
+- sha256 **相等** ⇒ 工作区就是 HEAD 的版本，提交里已经是终态，不用管 `git diff` 说什么。
+- sha256 **不等** 而 `git diff --stat` 只显示一两行 ⇒ 多半是行尾/编码差异，
+  用 `git diff --stat --ignore-cr-at-eol` 复核；若仍不等，才是真内容差异。
+- 「我以为改过、但 sha256 相等」 ⇒ 改动可能被别的进程/工具覆盖回去了，
+  **别信自己的记忆，信哈希**。
+
+**这条纪律的来历**：本轮 Lead 在我还在写的中途按顺序提交了 5 个 commit，
+事后要确认「工作区版本是不是终态」。`git diff` 给出的信号自相矛盾（见上「症状」），
+最后是靠 `git cat-file -p` 原始字节 + 规范化 sha256 才确定：
+`tools/player_gate.py` 与 `data/results/player_gate.json` 已在终态，
+`docs/player_gate_v1.md` 与 `tools/color_prior.py` 仍是中间态。
+**如果当时信了 `git diff`，就会把两份中间态当成终态交付。**

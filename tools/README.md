@@ -28,6 +28,8 @@
 | `make_calib_from_video.py` / `find_incidents.py` / `log_incident_decisions.py` / `make_incident_review.py` / `conf_calibration.py` / `draw_detections.py` / `eval_calib_set.py` / `class_coverage.py` / `fetch_calib_real.py` / `onnx_probe.py` / `fps_feasibility.py` / `design_tradeoffs.py` / `export_layers.py` / `make_golden.py` / `ref_int8_conv.py` | 数据集 / 标定 / 评测 / 金标准 / 契约参考实现族 | ✅ 已创建 |
 | `track_players.py` | **球员检测/跟踪/轨迹/倒地候选**（D011）：YOLOv8n + ByteTrack + 相机运动补偿（ECC 仿射，落脚点反变换回首帧坐标系）；输出 `data/results/player_tracks.json` 与逐段 `tracks/*.{json,csv}` | ✅ 已创建（12 段实测 942 轨迹；倒地候选分 strong/weak 两级，**未经人工确认**，见 [`../docs/player_tracking_v1.md`](../docs/player_tracking_v1.md)） |
 | `fall_review.py` | **倒地候选人工复核表**：每候选出「前/峰/后」三帧联系表 + CSV 待填 `judgement`；`--decide` 写回后才有「人工确认的倒地数」 | ✅ 已创建（26 张候选图；**刻意不产出 precision/recall**，理由见该文件头注释） |
+| `classify_players.py` | **球员/非球员颜色分类**（D013）：预设色板 -> 躯干主色 -> 判 A/B/ref/unknown；含草坪抑制与 purity 自证；半场归属逐帧投票 + 翻转点检测 | ✅ 已创建（**注意**：只产出颜色标签，属「手段」；D013-a 目标需看 `color_prior.py`，见 [`../docs/color_prior_v1.md`](../docs/color_prior_v1.md)） |
+| `color_prior.py` | **用颜色提升球员识别**（D013-a）：① 剔非球员 ② 低置信补检（带/不带颜色先验对照） ④ 分队；输出结构量（色相紧致度、场地内占比、keep_ratio） | ✅ 已创建（**无人工真值 ⇒ 不产出 precision/recall**；详见 [`../docs/color_prior_v1.md`](../docs/color_prior_v1.md)） |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |
 
 ## 规则

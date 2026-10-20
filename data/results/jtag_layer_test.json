@@ -1,0 +1,25 @@
+{
+  "tool": "board/scripts/jtag_layer_test.tcl",
+  "path": "JTAG only, no operating system",
+  "generated_utc": "2026-10-20T02:27:33Z",
+  "bitfile": "board/overlay/conv_engine.bit",
+  "ps7_init": "PS7_INIT_OK",
+  "program": "PROGRAM_OK",
+  "cases": [
+        {"case": "k1s1_smallw", "ok": true, "bytes_bad": 0, "bytes_total": 1600, "polls": 2}
+,
+        {"case": "k1s1_tailcout", "ok": true, "bytes_bad": 0, "bytes_total": 8000, "polls": 4}
+,
+        {"case": "k3s1_c3_40", "ok": true, "bytes_bad": 0, "bytes_total": 25600, "polls": 1}
+,
+        {"case": "k3s1_cin512", "ok": true, "bytes_bad": 0, "bytes_total": 1600, "polls": 10}
+,
+        {"case": "k3s1_pad0", "ok": true, "bytes_bad": 0, "bytes_total": 5184, "polls": 1}
+,
+        {"case": "k3s2_c16_40", "ok": true, "bytes_bad": 0, "bytes_total": 12800, "polls": 2}
+  ],
+  "cases_ok": 6,
+  "cases_total": 6,
+  "status": "JTAG_TEST_OK",
+  "timing_note": "elapsed/GOPs intentionally absent: JTAG round trips are ms scale; only run_layer_test.py on a PYNQ boot measures throughput"
+}

@@ -1,0 +1,71 @@
+{
+ "tool": "tools/make_player_labels.py --score",
+ "generated": "2026-10-20T12:06:42+0800",
+ "n_labeled": 73,
+ "n_used": 62,
+ "n_unsure_excluded": 11,
+ "by_stratum": {
+  "hi": {
+   "n": 24,
+   "n_player": 18,
+   "n_nonplayer": 6,
+   "precision_in_stratum": 0.75
+  },
+  "lo_kept": {
+   "n": 23,
+   "n_player": 22,
+   "n_nonplayer": 1,
+   "precision_in_stratum": 0.957
+  },
+  "lo_drop": {
+   "n": 15,
+   "n_player": 4,
+   "n_nonplayer": 11,
+   "precision_in_stratum": 0.267
+  }
+ },
+ "keep_color_prior": {
+  "n": 47,
+  "precision_among_kept": 0.8511,
+  "recall_proxy": 0.9091
+ },
+ "keep_no_color": {
+  "n": 62,
+  "precision_among_kept": 0.7097,
+  "recall_proxy": 1.0
+ },
+ "caveats": [
+  "precision 是**样本内**精确率，样本是分层抽的，不是随机抽的 ⇒ 不能当总体精确率",
+  "recall_proxy 不是 recall：未被检测出的球员不在样本中",
+  "每层约 25 个，95% 置信区间宽约 ±9 pt；差值方向可信、幅度不可信",
+  "标注只有一人一轮，无第二人复核，标注者偏差未量化",
+  "颜色阈值（MAX_COLOR_DIST 等）由 257 个躯干样本校准，不是在本测试集上调的 ⇒ 无过拟合"
+ ],
+ "by_box_height": {
+  "note": "P/N 共 62 个；用于检验「大框=非球员」这条与颜色正交的线索",
+  "counts": {
+   "0-30": 18,
+   "30-50": 20,
+   "50-100": 8,
+   "100-150": 8,
+   "150+": 8
+  },
+  "pct_player": {
+   "0-30": 72,
+   "30-50": 85,
+   "50-100": 62,
+   "100-150": 38,
+   "150+": 75
+  }
+ },
+ "hi_h_lt_100": {
+  "n": 10,
+  "n_player": 10,
+  "precision": 1.0
+ },
+ "hi_h_ge_100": {
+  "n": 14,
+  "n_player": 8,
+  "precision": 0.571
+ }
+}

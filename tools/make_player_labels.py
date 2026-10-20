@@ -357,9 +357,32 @@ def score(args):
         "caveats": [
             "precision 是**样本内**精确率，样本是分层抽的，不是随机抽的 ⇒ 不能当总体精确率",
             "recall_proxy 不是 recall：未被检测出的球员不在样本中",
-            "样本量小（默认每层 25），置信区间很宽；数字只作方向性参考",
+            "每层约 25 个，95% 置信区间宽约 ±9 pt；差值方向可信、幅度不可信",
+            "标注只有一人一轮，无第二人复核，标注者偏差未量化",
+            "颜色阈值（MAX_COLOR_DIST 等）由 257 个躯干样本校准，不是在本测试集上调的 ⇒ 无过拟合",
         ],
     }
+
+    # ---- 框高 vs 是否球员（与颜色正交的一条线索，首轮发现见 docs/player_labels_v1.md §4）----
+    BANDS = ((0, 30, "0-30"), (30, 50, "30-50"), (50, 100, "50-100"),
+             (100, 150, "100-150"), (150, 1e9, "150+"))
+    band_n, band_pct = {}, {}
+    for lo, hi, name in BANDS:
+        sub = [r for r in used if lo <= float(r["h_px"]) < hi]
+        if not sub:
+            continue
+        band_n[name] = len(sub)
+        band_pct[name] = round(100.0 * sum(1 for r in sub if r["label"] == "P") / len(sub))
+    out["by_box_height"] = {"note": "P/N 共 %d 个；用于检验「大框=非球员」这条与颜色正交的线索" % len(used),
+                            "counts": band_n, "pct_player": band_pct}
+
+    # hi 层内部按 100 px 切一刀：首轮 hi 层 6 个非球员里 5 个 h>=100
+    for tag, sel in (("hi_h_lt_100", lambda r: float(r["h_px"]) < 100),
+                     ("hi_h_ge_100", lambda r: float(r["h_px"]) >= 100)):
+        sub = [r for r in used if r["stratum"] == "hi" and sel(r)]
+        out[tag] = {"n": len(sub),
+                    "n_player": sum(1 for r in sub if r["label"] == "P"),
+                    "precision": round(sum(1 for r in sub if r["label"] == "P") / len(sub), 3) if sub else None}
     SCORES.write_text(json.dumps(out, ensure_ascii=False, indent=1),
                       encoding="utf-8", newline="\n")
     print("SCORES %s" % SCORES)

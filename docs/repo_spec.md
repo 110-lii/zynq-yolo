@@ -63,7 +63,7 @@
 | 路径 | 职责 |
 |---|---|
 | `src/rtl/common/` | 时钟、复位、CDC、FIFO 等与题目无关的基础设施（前缀 `inf_`） |
-| `src/rtl/video/` | 视频采集与预处理：DVP 捕获、SCCB 配置、格式转换、缩放（前缀 `vid_`） |
+| `src/rtl/video/` | 视频输入与预处理：格式转换、缩放等（前缀 `vid_`）。**本项目主线不使用板载摄像头（D015）**；DVP 捕获/SCCB 模块仅作历史资产保留 |
 | `src/rtl/accel/` | 加速器数据通路：DMA 搬运、流控、层间接口（前缀 `acc_`） |
 | `src/rtl/io/` | 面向外设的接口：AXI-Lite 寄存器、UART、以太网、LCD（前缀 `io_`） |
 | `src/rtl/ip/` | 需要保留的 IP 配置引脚/约束（`.xci` 只读，勿手改） |

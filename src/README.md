@@ -17,7 +17,7 @@
 src/
 ├── rtl/                        # 手写 Verilog，会被综合进最终作品
 │   ├── common/                 # 时钟、复位、CDC、FIFO 等与题目无关的基础设施
-│   ├── video/                  # 视频采集与预处理：DVP 捕获、SCCB 配置、格式转换、缩放
+│   ├── video/                  # 视频输入与预处理：格式转换、缩放（主线不用板载摄像头，D015）
 │   ├── accel/                  # 加速器数据通路：DMA 搬运、流控、层间接口
 │   ├── io/                     # 面向外设的接口：AXI-Lite 寄存器、UART、以太网、LCD
 │   └── ip/                     # 需要保留的 IP 配置引脚/约束（.xci 只读，勿手改）
@@ -39,7 +39,7 @@ RTL 模块名以**子系统前缀**开头，前缀与目录一一对应，便于
 | 目录 | 职责 | 模块前缀 |
 |---|---|---|
 | `rtl/common/` | 时钟 / 复位 / CDC / FIFO | `inf_` |
-| `rtl/video/` | 视频采集与预处理 | `vid_` |
+| `rtl/video/` | 视频输入与预处理（DVP 模块为历史资产，D015） | `vid_` |
 | `rtl/accel/` | 加速器数据通路 | `acc_` |
 | `rtl/io/` | 外设接口（AXI-Lite / 以太网 / LCD） | `io_` |
 | `hls/accel/` | HLS 导出的 IP 顶层命名 | `hls_` |
@@ -51,11 +51,13 @@ RTL 模块名以**子系统前缀**开头，前缀与目录一一对应，便于
 >   + `acc_conv3x3.cpp`（早期探针）+ `tb/tb_conv_engine.cpp` + 7 个构建/导出脚本；
 >   已出片 `board/overlay/conv_engine.bit`（83.33 MHz 时序收敛，见该契约 §7.4）。
 > - `src/ps/`：`pynq_driver/conv_engine.py`（PYNQ 驱动，**未上板**）+ `host/run_layer_test.py`（板上验收脚本，**未上板**）。
-> - `src/rtl/` 各子目录**仍为空**：尚无任何 `.v` 手写 Verilog。
+> - `src/rtl/`：已有 `video/vid_dvp_capture.v`、`video/vid_test_pattern.v`、`common/inf_axis_async_fifo.v`。
+>   **这三者是摄像头采集链的历史资产，已随 D015 退出主线**，保留用于回归与 CDC 参考；
+>   主线视频入口改为 PS 侧网络接收（待实现）。
 >
-> 下文出现的 `inf_reset_sync.v`、`vid_dvp_capture.v` 等 RTL 文件名仍是**命名示例**（文件不存在）。
+> 下文出现的 `inf_reset_sync.v` 等文件名仍是**命名示例**（文件不存在）。
 >
-> 例（示例，非现有文件）：`src/rtl/common/inf_reset_sync.v` 必须在 `rtl/common/`；`src/rtl/video/vid_dvp_capture.v` 必须在 `rtl/video/`。
+> 例：`src/rtl/common/inf_reset_sync.v` 必须在 `rtl/common/`；`src/rtl/video/vid_dvp_capture.v` 必须在 `rtl/video/`。
 > **跨目录放错 = 违反 §2.2**，`tools/check_repo.py` 应能检出（该脚本已创建，`CHECK_REPO_OK`）。
 
 ## 规则
@@ -71,7 +73,8 @@ RTL 模块名以**子系统前缀**开头，前缀与目录一一对应，便于
   > ★ 事实进展（2026-10-20，**不是状态变更**，见 [`../ai/coordination/DECISIONS.md`](../ai/coordination/DECISIONS.md) 汇总段）：
   > D003 已按 **HLS 单内核路线**落地出片、D006 的 AXI 数值已冻结（`docs/accel_interface.md` §4），
   > 但两者都是 Lead 的工程选择、**未经用户裁定**，台账状态仍为 `discussing`。
-  > D004 原则已裁定（YOLO 出人），参数待细化；D010 已把题目收窄到「看得见的目标」（球员位置/队形/越位线/区域人数）。
+  > D004 原则已裁定（YOLO 识别），参数待细化；D011 已把交付范围定为「人 + 球 + 简单事件 + 倒地 + 轨迹」，
+  > 不做越位/犯规判罚；D015 已取消板载摄像头采集，视频改由 PC 经以太网送入。
 
 ## 怎么用
 

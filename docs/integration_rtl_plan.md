@@ -1,9 +1,13 @@
 # 整机 RTL 集成计划（D004 档：416×416 输入）
 
-> 状态：**v2（2026-10-20）**。上游契约见 [`accel_interface.md`](accel_interface.md)（`conv_engine`
+> 状态：**v3（2026-10-20）**。上游契约见 [`accel_interface.md`](accel_interface.md)（`conv_engine`
 > 数值口径已冻结）；输入分辨率取 D004 = **416×416 精度优先档**。
 >
-> **v2 相对 v1 的改动（重要）**：**删除了 HDMI 上屏与 OSD 框图元支路**。D013 已裁定
+> **v3 相对 v2 的改动（重要）**：**取消板载摄像头采集**。D015 已裁定视频由 **PC 经以太网送入**，
+> 主线不再使用 OV5640 / DVP / SCCB，也不再以 DVP→AXIS→DMA 作为输入通路。数据通路的起点改为
+> **PS 侧网络接收**（端口与协议仍待定，见 §7-1），帧落 DDR 后的处理与 v2 相同。
+>
+> **v2 相对 v1 的改动**：**删除了 HDMI 上屏与 OSD 框图元支路**。D013 已裁定
 > 板载触屏只作**数据输入端**、本项目**不做视频输出**（用户 2026-10-20 指出计划里出现
 > `vid_hdmi_tx`/`vid_osd_boxes` 是越权设计）。删掉之后数据通路少一整段，且**不再需要
 > 「PL 读回 DDR 再输出」的模块**——检测本来就在 PS 里做，PS 直接读 DDR 帧缓冲即可。
@@ -24,34 +28,33 @@ D004 定了 416 之后，整机 PL 需要补齐什么、为什么这么分、每
 ## 1. 数据通路
 
 ```text
-OV5640 DVP（RGB565，640×480@30，pclk 24 MHz）
-   │  pclk 域
+PC（视频文件 / 实时推流）
+   │  以太网（端口与协议待定，见 §7-1）
    ▼
-vid_dvp_capture ── AXIS 24bit RGB888（tuser=帧首，tlast=行尾）
+PS（PYNQ Linux，网络接收 + 帧重组）
+   │  写 DDR 帧缓冲（N 个 slot + 写指针）
+   ▼
+PS 预处理：letterbox 416×416（灰边）+ 量化 int8 NCHW
    │
    ▼
-inf_axis_async_fifo（pclk → 100 MHz，格雷码指针）
+PL `conv_engine`（逐层卷积；输入/输出缓冲都在 DDR，经 AXI HP 访问）
    │
    ▼
-AXI DMA（S2MM）── burst 写 ──► DDR 帧缓冲（N 个 slot + 写指针）
-                                   │
-                                   │  PS 直接读（PYNQ 零拷贝 numpy），**无需 PL 读回模块**
-                                   ▼
-                     ┌──────────────────────────────┐
-                     │ PS（PYNQ python）             │
-                     │  · letterbox 416×416（灰边）   │
-                     │  · 量化 int8 NCHW             │
-                     │  · 逐层调 conv_engine          │
-                     │  · 后处理 → 检测框/轨迹/事件    │
-                     │  · 结果经以太网输出给 PC        │
-                     └──────────────────────────────┘
+PS 后处理 → 检测框 / 球员轨迹 / 队别 / 事件
+   │  结果只序列化一次（D014）
+   ├──► 以太网推给 PC
+   └──► 落 SD 卡（与推送格式同构）
 ```
 
-**显示支路已删除**：检测结果不出现在任何屏幕上，由 PS 经以太网输出（PYNQ 自带能力，
+**摄像头支路已删除（D015）**：本项目不使用板载 OV5640/DVP/SCCB，也不使用
+`vid_dvp_capture` → `inf_axis_async_fifo` → `AXI DMA` 作为输入通路。该链路的 RTL / BD /
+仿真**保留为历史与回归资产**，但**不再出现在主线数据通路里**，也不再是 M1 的验收对象。
+
+**显示支路已删除（D013）**：检测结果不出现在任何屏幕上，由 PS 经以太网输出（PYNQ 自带能力，
 PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、没有 TMDS/HDMI 时序。
 
-**离线评测与现场演示共用同一条采集通路**：离线时由 PS 把视频文件的帧写进同一个 DDR
-帧缓冲，PL 侧从 DMA 往后完全一样。
+**离线评测与现场演示共用同一条输入通路**：两者都由 PC 经以太网把帧送给板端，区别只在
+PC 侧是读文件还是实时推流；板端从「网络接收」往后完全一样。
 
 ---
 
@@ -59,8 +62,7 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 | 环节 | 谁做 | 为什么 |
 |---|---|---|
-| DVP 采集、字节对拼、RGB565→888 | **PL** | 时序由摄像头时钟决定，PS 无法实时跟 |
-| DMA 写 DDR 帧缓冲 | **PL**（Xilinx AXI DMA IP） | S2MM 的突发/对齐/中断都是坑，自写只在必须省 LUT 时才值；7020 的 LUT 要留给卷积 |
+| 视频接收、帧重组、写 DDR 帧缓冲 | **PS**（PYNQ Linux 网络栈） | 网络协议栈与文件系统都是 PS 现成能力；PL 侧自写 MAC/UDP 会吃掉本该留给卷积的 LUT |
 | letterbox 到 416×416、量化 int8 | **PS**（numpy） | 每帧只做一次 resize+pad；放 PL 要额外 line buffer + 定点坐标口径，不划算（决定 1） |
 | 卷积层 | **PL** `conv_engine` | 唯一有算力收益的部分（契约见 `accel_interface.md`） |
 | MaxPool / Concat / 上采样 / DFL | **PS** | 搬运量远大于算术量（`yolo_on_zynq7020_survey.md` §7 实测） |
@@ -74,16 +76,15 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 | 模块 | 目录 | 状态 | 判据 |
 |---|---|---|---|
-| `vid_dvp_capture` | `src/rtl/video/` | ✅ 已实现 + TB 通过（出口 32 位、高 8 位补零） | `VID_DVP_CAPTURE_TB_PASS`（`make sim`） |
-| `vid_test_pattern` | `src/rtl/video/` | ✅ 已实现 + TB 通过（闭式图样，M1 的假摄像头） | `VID_TEST_PATTERN_TB_PASS` |
-| `inf_axis_async_fifo` | `src/rtl/common/` | ✅ 已实现 + TB 通过（FWFT、格雷码 CDC、单侧复位；含 6 个变异自检） | `INF_AXIS_ASYNC_FIFO_TB_PASS` |
-| 采集链整链（pattern→capture→FIFO，25→100 MHz） | `sim/tb/video/` | ✅ 已实现 + TB 通过 + **黄金模型后置比对** | `VID_CAPTURE_CHAIN_TB_PASS` + `CAPTURE_MATCH_OK` |
-| 黄金模型 / 比对器 | `tools/capture_golden.py` | ✅ 已实现（`--out` 生成、`--compare` 比对；自测：改 1 字节必 FAIL） | `CAPTURE_GOLDEN_OK` / `CAPTURE_MATCH_OK` / `CAPTURE_MATCH_FAIL` |
-| BD 集成（PS7 + AXI DMA + 采集链） | `build/scripts/bd_capture_chain.tcl` | 🟨 **建设中**：BD 已 validate 通过，综合实现出片中；产物 `board/overlay/capture_chain.{bit,hwh}` + `capture_chain_addr.txt` | 综合/实现日志 `BD_DONE_OK`，下载 `PROGRAM_OK` |
-| 上板验收（M1） | `board/scripts/jtag_capture_test.tcl` | 🟨 已写 + 假硬件试跑通过（`stub_jtag_capture_dryrun.tcl`：pass→OK / corrupt→FAIL），**待真板实跑** | `JTAG_CAPTURE_OK` + `CAPTURE_MATCH_OK` |
+| **网络视频接收 + 帧重组** | `src/ps/host/` 或 `src/ps/pynq_driver/`（待定） | ⬜ **待实现**（D015 后的新主线入口） | 待定：PC 发送已知测试片段，板端收到的帧逐字节/逐帧号一致 |
+| `conv_engine` | `src/hls/accel/` | ✅ 已实现 + csim 通过 + 出片（83.33 MHz 时序收敛） | `CSIM_ALL_OK` / `BOARD_LAYER_OK` |
+| `vid_dvp_capture` | `src/rtl/video/` | ⛔ **退出主线**（D015；保留为历史资产） | 原判据 `VID_DVP_CAPTURE_TB_PASS` 仅用于回归 |
+| `vid_test_pattern` | `src/rtl/video/` | ⛔ **退出主线**（D015；保留为历史资产） | 原判据 `VID_TEST_PATTERN_TB_PASS` 仅用于回归 |
+| `inf_axis_async_fifo` | `src/rtl/common/` | ⛔ **退出主线**（D015；保留为 CDC 参考实现） | 原判据 `INF_AXIS_ASYNC_FIFO_TB_PASS` 仅用于回归 |
+| 采集链整链 / 黄金模型 / 采集 BD / JTAG 采集验收 | `sim/tb/video/`、`tools/capture_golden.py`、`build/scripts/bd_capture_chain.tcl`、`board/scripts/jtag_capture_test.tcl` | ⛔ **退出主线**（D015；历史记录见 `board/logs/board_capture_m1_20261020.md`） | 原判据 `VID_CAPTURE_CHAIN_TB_PASS` / `CAPTURE_MATCH_OK` / `BD_DONE_OK` / `JTAG_CAPTURE_OK` 仅用于回归 |
 | 触屏 UI 的 LCD 时序核 + 触摸读取 | — | ⏸ **挂起**（硬件资料已齐：`ref/hardware.md` §G；等 D013 的 UI 形态） | 立项后再定（先定判据再写 RTL） |
 
-**明确不做**（记录以免再被当成待办）：HDMI/TMDS 输出、OSD 框图元、PL 侧帧读回与缩放。
+**明确不做**（记录以免再被当成待办）：板载摄像头采集（D015）、HDMI/TMDS 输出、OSD 框图元、PL 侧帧读回与缩放。
 
 ---
 
@@ -91,13 +92,14 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 | 域 | 频率 | 用途 |
 |---|---|---|
-| `pclk` | 24 MHz（真机：随 OV5640 XVCLK 分频）／**M1 用 25 MHz**（PS `FCLK_CLK1`，假 pclk） | DVP 采集 + 图样发生器 |
-| `axi_clk` | 100 MHz（PS `FCLK_CLK0`） | AXI HP0 / DMA / `ctrl_smc` / `data_smc` / FIFO 读侧 |
+| `axi_clk` | **83.333333 MHz**（PS `FCLK_CLK0`，1000/12） | `conv_engine`、AXI HP、SmartConnect、寄存器访问 |
 
-- 复位：PS `FCLK_RESET0_N`（低有效）分两路进 `proc_sys_reset`（100M / 25M 各一个），
-  其 `peripheral_aresetn` 经 `util_vector_logic` **取反**后喂给自研 RTL 的高有效同步复位
-  （`cap_0/rst`、`pat_0/rst`、`fifo_0/s_rst`、`fifo_0/m_rst`）——不改被 TB 验证过的复位语义。
-- CDC 只允许经 `inf_axis_async_fifo`（AXIS 语义）或 Xilinx IP；**禁止手写打两拍传多比特**。
+- 主线只有 **PS 提供的 `axi_clk` 一个时钟域**；摄像头 `pclk` 域随 D015 退出主线。
+- 复位：PS `FCLK_RESET0_N`（低有效）经 `proc_sys_reset` 产生 `peripheral_aresetn`；
+  自研 RTL 若需高有效复位，用 `util_vector_logic` 取反，不改被 TB 验证过的复位语义。
+- **主线不需要 PL 侧 CDC**：网络接收在 PS，`conv_engine` 与 PS 同处 AXI 时钟域。
+  历史采集链用的 `inf_axis_async_fifo` 仅作参考实现保留；若将来改走 PL 侧 RGMII，
+  跨域仍只允许经异步 FIFO 或 Xilinx IP，**禁止手写打两拍传多比特**。
 
 ---
 
@@ -105,13 +107,15 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 | 项 | 估算 | 口径 |
 |---|---|---|
-| 采集写 DDR | 640×480×3 B × 30 ≈ **27.6 MB/s** | 计算值 |
+| 网络视频入板（未压缩 RGB888） | 640×480@30 ≈ **27.6 MB/s**；1280×720@30 ≈ **82.9 MB/s** | 计算值；**以 PC 实际推流规格为准** |
+| 网络视频入板（压缩码流） | 取决于编码器与码率 | 需 PS 解码，CPU 成本待实测 |
 | 416×416×3 int8（一层输入） | **519 KB** | 计算值 |
 | 整网 DDR 往返总量 | **待实测** | 用 `tools/pynq_net.py` 统计每层尺寸后累加 |
-| HP0 可用带宽 | **待实测**（7020 DDR3 32bit@533 理论 1.06 GB/s） | 上板 DMA 基准 |
+| HP0 可用带宽 | **待实测**（7020 DDR3 32bit@533 理论 1.06 GB/s） | 上板实测 |
 
-> 采集只占 27.6 MB/s，不是瓶颈；真正的风险在 `conv_engine` 每层都要把输入从 DDR 读一遍、
-> 输出写一遍。这条必须在 M3 实测，不许用理论值写进报告（`repo_spec.md` §5）。
+> 网络接收本身不是主要瓶颈；真正的风险在 `conv_engine` 每层都要把输入从 DDR 读一遍、
+> 输出写一遍。若 PC 送的是压缩码流，PS 解码还会额外吃 CPU。两条都必须在 M3 实测，
+> 不许用理论值写进报告（`repo_spec.md` §5）。
 
 ---
 
@@ -119,22 +123,28 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 | 里程碑 | 内容 | 通过判据（可失败） |
 |---|---|---|
-| **M1 采集** | DVP → AXIS → DMA → DDR 帧缓冲 | ① `make sim` 全绿；② 板上连续 1000 帧 `stat_overflow=0`；③ 帧率 30 fps ±1%（帧计数/秒表，不靠感觉）；④ PS 读出的帧与 PC 参考图逐字节相同（≥100 像素抽检） |
-| **M2 帧缓冲可用性** | DMA 落 DDR 的格式/对齐/多缓冲 | ① 连续 10 min 无丢帧、无 DMA 溢出中断；② slot 轮转下 PS 拿到的帧序号单调无跳变；③ 静态场景下相邻帧差异仅噪声量级（能证明不是同一帧） |
+| **M1 视频入板** | PC → 以太网 → PS 网络接收 → DDR 帧缓冲 | ① PC 连续发送已知测试片段；② 板端收到的帧数与发送帧数一致、无丢帧；③ 抽检帧与 PC 参考帧逐字节相同；④ 分辨率/帧率/码率写入日志（不靠感觉） |
+| **M2 帧缓冲可用性** | 接收落 DDR 的格式/对齐/多缓冲 | ① 连续 10 min 无丢帧、无接收缓冲溢出；② slot 轮转下 PS 拿到的帧序号单调无跳变；③ 静态场景下相邻帧差异仅噪声量级（能证明不是同一帧） |
 | **M3 卷积集成** | BD 集成 `conv_engine` + PS 逐层调度 | ① 单层输出与 `csim` 逐字节相同；② 首层 416 行带拆分结果与整图参考逐字节相同（§7-4）；③ 整网单帧输出与 PC onnx 逐层 `cos > 0.999`；④ 端到端单帧耗时落 `report/` |
-| **M4 实时性** | 摄像头 → 检测 → 事件/轨迹输出 | ① ≥ N fps（N 由 M3 实测吞吐反推，先写「待定」）；② 连续 10 min 无死机/漂移；③ 结果流格式与离线评测输出同构（同一份后处理代码） |
+| **M4 实时性** | PC 视频 → 检测 → 事件/轨迹输出 | ① ≥ N fps（N 由 M3 实测吞吐反推，先写「待定」）；② 连续 10 min 无死机/漂移；③ 结果流格式与离线评测输出同构（同一份后处理代码） |
 
-> **反例先写**：每条判据都必须「能失败」。M1-④ 若用「能出图」当判据，色序接反、字节
-> 错位都能通过——所以比字节。M2-③ 若只看「有帧」，DMA 一直传同一帧也要到 10 min。
+> **反例先写**：每条判据都必须「能失败」。M1-③ 若用「能出图」当判据，色序接反、字节
+> 错位都能通过——所以比字节。M2-③ 若只看「有帧」，一直收同一帧也要到 10 min。
 
 ---
 
 ## 7. 未决问题
 
-1. **帧缓冲像素格式**：RGB888（3 B/px）还是 RGB565（2 B/px，PS 侧展开）？后者省 1/3 采集带宽。
-2. **letterbox 灰边值**：必须与量化输入口径一致（114？0？`zp_in`？）。PL 不碰，但报告要写清，
+1. **★ 网络入口（D015 的未定子项，先解）**：
+   - **走哪个网口**：**PS 侧 GEM（YT8521S）** 还是 **PL 侧 RGMII（YT8531）**？
+     默认倾向 PS GEM：Linux 网络栈现成、不占 PL LUT；若选 PL RGMII，则要自写 MAC/UDP/ARP，
+     并重新评估与 `conv_engine` 的 LUT/DSP 预算冲突。**未裁定前不写 PL 以太网 RTL。**
+   - **传输协议**：TCP / UDP / RTSP 等；以及 PC 侧是发明文帧还是发压缩码流。
+   - **帧边界与同步**：靠数据内的帧号/长度字段，不靠外部计时；需要丢帧检测与重同步。
+2. **帧缓冲像素格式**：PC 送 RGB888（3 B/px）、RGB565（2 B/px，PS 侧展开）还是压缩码流？
+   前两者省去解码；压缩码流省网络带宽但吃 PS CPU。**由 PC 侧推流规格决定**。
+3. **letterbox 灰边值**：必须与量化输入口径一致（114？0？`zp_in`？）。PL 不碰，但报告要写清，
    否则「416 精度优先」的分数无法复现。
-3. **OV5640 配置**：I²C(SCCB) 序列走 PS（PYNQ 有现成库）验证，出问题再移 PL。
 4. **★ 416 与 `conv_engine` 的片上容量冲突（先解，影响 PS 调度）**：现有内核按 320 档设计，
    最坏激活为首层输出 `16×160×160 = 409 600 B`，塞进 7020 的 BRAM（140×36Kb ≈ 612 500 B，
    `src/hls/accel/src/conv_engine.cpp:12`）。换 416 后首层输出 `16×208×208 = 692 224 B`，
@@ -153,17 +163,21 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
 
 ## 8. 下一步（按序）
 
-1. ~~`inf_axis_async_fifo` + TB~~ ✅ 完成（2026-10-20，含 6 个变异自检）；
-2. ~~BD 集成采集链（DMA 落 DDR）~~ ✅ BD 已 validate，出片与**上板 M1**进行中；
+1. ⬜ **待用户裁定**：网络入口选型（PS GEM vs PL RGMII）、协议与帧格式（§7-1）；
+2. 按裁定实现 PC 侧推流脚本 + PS 侧接收/帧重组，拿到 M1 判据；
 3. BD 集成 `conv_engine` + M3（先单层，再整网 416，含 §7-4 行带拆分）；
 4. M4 端到端实时性与结果流（D014 双通道）。
 
-> 顺序理由：先把「每个模块单独可验」打通，最后才做 BD 集成——BD 出问题时的定位成本最高。
+> 顺序理由：输入源改了，先把「帧能可靠进 DDR」重新打通，再谈卷积与端到端；
+> 摄像头采集链的历史经验（CDC/DMA/BD）保留在 §9，但不再作为主线验收对象。
 
 ---
 
-## 9. 实现记录（2026-10-20，M1 落地时踩到的坑）
+## 9. 实现记录（2026-10-20，M1 摄像头链路踩到的坑 —— D015 后为历史资产）
 
+> ⚠️ 本节记录的是**已退出主线的摄像头采集链**（DVP/DMA）经验，保留原因是 CDC、BD 连线、
+> PYNQ 时钟源、观测隔离这些教训对任何后续 PL 集成仍然适用。**不要把它当成当前输入通路的实现说明。**
+>
 > 只记**实测撞到并已修**的，不写猜测。每条都给了报错原文或现象，便于下次一眼认出来。
 
 1. **`axi_dma` 的 M_AXI 与 PS7 `S_AXI_HP0` 协议不同 ⇒ 必须过 SmartConnect**
@@ -222,3 +236,52 @@ PL 不参与）。因此 PL 侧没有 `vid_frame_reader`、没有 `vid_osd_*`、
     （重启 hw_server 无效），只能**断电重启板子**（或按 PS 复位键）。
     脚本已改成：`fpga` 失败 → 降 JTAG 频率到 1.5 MHz + 重做 `rst -system`/`ps7_init` 再试一次，
     仍失败则**立刻** `JTAG_CAPTURE_FAIL` 并提示断电，不再继续往下跑把板子带进更差的状态。
+
+13. **★ PYNQ 路径与 JTAG 路径的时钟差异（2026-10-20 实测）**：
+    JTAG 路径自己跑 BD 导出的 `ps7_init.tcl`，所以 `FCLK0=100 / FCLK1=25` 都按我们的 BD；
+    **PYNQ 路径下 PS7 时钟来自镜像自带的 FSBL**，我们的 PS7 配置不会在 `Overlay()` 时生效。
+    实测：FCLK1 派生的 pclk 域整块不工作（图样无输出、DMA 永远等数据，`DMASR=0` 到超时）。
+    处置：把 pclk 改成 **FCLK0 → clk_wiz(MMCM) → 25 MHz**，这样只要 FCLK0 在（PYNQ 必有，
+    AXI 就靠它）采集链就能跑。代价：多一个 MMCM。
+    教训：**凡是「PS 提供的时钟」都要问一句「谁初始化 PS」** —— JTAG 与 Linux 是两套源头。
+
+14. **PYNQ 侧环境的三个硬约束（都实测过）**：
+    ① `pynq` 包装在 `/home/xilinx/pynq`，`sudo` 重置环境后 root 看不到它 ⇒ 必须
+       `sudo -S bash -lc '...'`（login shell 会 source `/etc/profile.d/pynq_venv.sh` +
+       `xrt_setup.sh`），否则报 `No module named 'pynq'`；
+    ② 只 `sudo` 不 source XRT 会报 `No devices found, is the XRT environment sourced?`；
+    ③ 板上 `python3` 为 3.8.2 / pynq 2.7.0 / numpy 1.17.4；在板上跑多行代码要 **scp 脚本**，
+       别用 `ssh "... -c '...'"`（PowerShell 引号会把代码搞坏，本轮踩过一次，
+       报的 `SyntaxError` 是引号造成的，不是 Python 版本问题）。
+
+15. **上板调试的可观测性设计（本轮最有用的一条）**：PYNQ 路径没法像 JTAG 那样随手读内部信号，
+    所以在 BD 里把关键内部结点引到一个 **32 位 xlconcat → AXI GPIO 通道 2 输入**，PS 侧
+    忙读几万次统计命中：
+      bit0 cap.stat_overflow / bit1 复位实况 / bit2 pat.vsync_n / bit3 pat.href /
+      bit7 fifo.s_rst / bit8 fifo.m_rst / bit9 fifo.wfull / bit10 fifo.rempty /
+      bit11 fifo.dbg_wr_hit / bit12 fifo.dbg_rd_hit / bit14 恒 1 的 sanity 位
+    **必须忙读**：vsync 低电平只有 4 个 pclk（160 ns），FIFO 读侧在 DMA 全速消费时只有
+    零星几拍有效——0.5 ms 间隔的采样会系统性漏掉（实测 0.2 s / 319 次全漏，
+    改成忙读（MMIO ~3 us/次，0.05 s 采 1699 次）才看到 tvalid 命中 608 次）。
+
+16. **★★ 观测会把被测对象切断：AXIS 接口成员脚不能单独接出去（2026-10-20，代价两次出片）**
+    这是本轮最贵的一课。把 `cap_0/m_axis_tvalid`、`fifo_0/s_tready`、`fifo_0/m_tvalid`、
+    `axi_dma_0/s_axis_s2mm_tready` 四根**接口成员脚**接进 debug concat 之后，BD 报：
+    ```
+    WARNING: [BD 41-1271] The connection to the pin: /cap_0/m_axis_tvalid has been
+             overridden by the user. This pin will not be connected as a part of the
+             interface connection: cap_0_m_axis
+    CRITICAL WARNING: [BD 41-759] These pins are tied-off to all 0's ... /fifo_0/s_tvalid
+    ```
+    也就是：**观测动作把引脚从接口网里摘掉了**，FIFO 的 `s_tvalid` 变成悬空输入被 tie 成 0。
+    硅上表现极具误导性——源侧 `cap.m_axis_tvalid` 照样在翻转（读到 37% 命中）、
+    `s_tready` 恒 1、`wfull` 恒 0，但**写指针一次都没动**（`dbg_wr_hit=0`）、`rempty` 恒 1、
+    DMA 永远等不到数据。看上去像「跨时钟 FIFO 在硅上不工作」，实际是测量把对象切断了。
+    这条现象在逻辑上是**不可能**的（tvalid & tready ⇒ 必写），所以只要把三条观测放在一起
+    验一遍自洽性，就该怀疑测量本身。
+    **规矩**：
+      a) debug tap 只接**非接口**的标量脚（`stat_overflow` / `vsync_n` / `href` / 常量）；
+      b) 接口内部状态（tvalid/tready/full/empty）一律由 RTL **自己导出专用 `dbg_*` 输出**；
+      c) 已知恒定的观测位放一个**恒 1 / 恒 0 的 sanity 位**，先证明观测通路活着，再信被测位；
+      d) 构造完 BD 后**必看 `[BD 41-759]` / `[BD 41-1271]`**——它们的出现说明有脚被摘掉或 tie 0
+         而不是连接正确。

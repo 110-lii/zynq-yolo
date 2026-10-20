@@ -9,7 +9,7 @@
  "stride": 2,
  "frames_read": 750,
  "frames_used": 321,
- "wall_time_s": 14.37,
+ "wall_time_s": 14.3,
  "camera_motion": {
   "n": 374,
   "kind_hist": {
@@ -5956,7 +5956,7 @@
    ],
    "fall_candidates": [
     {
-     "tier": "weak",
+     "tier": "strong",
      "f_start": 170,
      "f_end": 176,
      "n_frames": 4,
@@ -5967,8 +5967,8 @@
      "aspect_max": 1.82
     }
    ],
-   "n_fall_strong": 0,
-   "n_fall_weak": 1
+   "n_fall_strong": 1,
+   "n_fall_weak": 0
   },
   {
    "track_id": 8191,
@@ -8348,7 +8348,7 @@
    ],
    "fall_candidates": [
     {
-     "tier": "weak",
+     "tier": "strong",
      "f_start": 682,
      "f_end": 694,
      "n_frames": 4,
@@ -8359,8 +8359,8 @@
      "aspect_max": 3.55
     }
    ],
-   "n_fall_strong": 0,
-   "n_fall_weak": 1
+   "n_fall_strong": 1,
+   "n_fall_weak": 0
   }
  ]
 }

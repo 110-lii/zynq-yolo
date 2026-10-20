@@ -9,7 +9,7 @@
  "stride": 2,
  "frames_read": 750,
  "frames_used": 360,
- "wall_time_s": 13.83,
+ "wall_time_s": 13.93,
  "camera_motion": {
   "n": 374,
   "kind_hist": {

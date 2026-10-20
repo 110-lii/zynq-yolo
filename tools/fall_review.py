@@ -59,7 +59,7 @@ VIZ_DIR = RESULTS / "viz" / "fall"
 CAND_CSV = RESULTS / "fall_candidates.csv"
 REVIEW_JSON = RESULTS / "fall_review.json"
 
-PANEL_W = 260          # 联系表每格宽度
+PANEL_W = 260          # 联系表每格宽度（默认；可被 --panel-w 覆盖，PDF 复核建议 520）
 CROP_PAD = 0.35        # 放大格在框外扩多少（相对框尺寸）
 
 
@@ -83,7 +83,7 @@ def _read_clip_frames(path, want_frames):
     return out
 
 
-def _panel(frame, pt, label, color):
+def _panel(frame, pt, label, color, panel_w=None):
     """把一个人裁剪放大 + 画框，返回固定宽度的 panel（高度按比例）。"""
     h, w = frame.shape[:2]
     cx, cy, bw, bh = pt["cx"], pt["cy"], pt["w"], pt["h"]
@@ -99,9 +99,11 @@ def _panel(frame, pt, label, color):
     bx1, by1 = int(cx - bw / 2 - x1), int(cy - bh / 2 - y1)
     bx2, by2 = int(cx + bw / 2 - x1), int(cy + bh / 2 - y1)
     cv2.rectangle(crop, (bx1, by1), (bx2, by2), color, 2)
-    scale = PANEL_W / float(crop.shape[1])
-    crop = cv2.resize(crop, (PANEL_W, max(1, int(crop.shape[0] * scale))))
-    bar = np.zeros((22, PANEL_W, 3), np.uint8)
+    pw = int(panel_w or PANEL_W)
+    scale = pw / float(crop.shape[1])
+    crop = cv2.resize(crop, (pw, max(1, int(crop.shape[0] * scale))),
+                      interpolation=cv2.INTER_CUBIC)
+    bar = np.zeros((22, pw, 3), np.uint8)
     cv2.putText(bar, label, (4, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.45,
                 (255, 255, 255), 1, cv2.LINE_AA)
     return np.vstack([bar, crop])
@@ -169,7 +171,8 @@ def build_candidates(args):
                     panels.append(None)
                     continue
                 color = (0, 0, 255) if fc["tier"] == "strong" else (0, 200, 255)
-                panels.append(_panel(frame, pt, "%s f=%d h=%.0f" % (tag, f, pt["h"]), color))
+                panels.append(_panel(frame, pt, "%s f=%d h=%.0f" % (tag, f, pt["h"]),
+                                     color, args.panel_w))
             sheet = _contact_sheet(panels)
             if sheet is None:
                 continue
@@ -234,6 +237,8 @@ def main(argv=None):
     ap.add_argument("--clips", default="", help="只处理该目录下的片段")
     ap.add_argument("--max-weak", type=int, default=4,
                     help="每段最多出几张弱候选图（强候选全出）")
+    ap.add_argument("--panel-w", type=int, default=PANEL_W,
+                    help="联系表每格像素宽度（默认 %d；PDF 复核建议 520）" % PANEL_W)
     ap.add_argument("--decide", default="", help="已填好 judgement 的 CSV 路径")
     args = ap.parse_args(argv)
 

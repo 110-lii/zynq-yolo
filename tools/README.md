@@ -31,6 +31,7 @@
 | `classify_players.py` | **球员/非球员颜色分类**（D013）：预设色板 -> 躯干主色 -> 判 A/B/ref/unknown；含草坪抑制与 purity 自证；半场归属逐帧投票 + 翻转点检测 | ✅ 已创建（**注意**：只产出颜色标签，属「手段」；D013-a 目标需看 `color_prior.py`，见 [`../docs/color_prior_v1.md`](../docs/color_prior_v1.md)） |
 | `color_prior.py` | **用颜色提升球员识别**（D013-a）：① 剔非球员 ② 低置信补检（带/不带颜色先验对照） ④ 分队；输出结构量（色相紧致度、场地内占比、keep_ratio） | ✅ 已创建（**无人工真值 ⇒ 不产出 precision/recall**；详见 [`../docs/color_prior_v1.md`](../docs/color_prior_v1.md)） |
 | `make_player_labels.py` | **球员/非球员人工标注包**（D013-a 评估用）：分三层（hi / lo_kept / lo_drop）采样出图，产出 `data/annot/labels.csv` 待填 P/N/U；`--score` 给出「颜色先验 vs 无颜色先验」的 precision 对比 | ✅ 已创建（73 框已生成，**待人工标注**；未标注时 `--score` 拒绝出数字） |
+| `hi_color_diag.py` | **hi 层颜色 unknown 原因诊断**：把 `unknown` 拆成 too_small / purity / rect / color 四类，跑全量 12 段，回答「调颜色阈值到底有没有用」 | ✅ 已跑（12 585 hi 框，2 596 unknown；too_small 仅 14.7% ⇒ 阈值不是白调，见 `docs/hi_layer_color_gate.md`） |
 | `label_web.py` | **球员/非球员标注网页**（本地 8765，键盘 p/n/u，自动存 `data/annot/labels.csv`，顶部可看分层加权 precision 对比） | ✅ 已创建（已跑通写入/读回/非法标签 400） |
 | `player_labels_pdf.py` | 把标注包排成 PDF（每页一个框 + 勾选栏） | ✅ 已创建（74 页，`report/player_labels_20261020.pdf`） |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |

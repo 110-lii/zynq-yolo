@@ -214,3 +214,6 @@ data/annot/frames3/
 #     â˜… frames4 = ç¬¬å››æ‰¹ï¼ˆæ–°æ¯”èµ› Â· è·¨åœºï¼‰ç”± tools/make_newmatch_labels.py --build å‡ºå›¾ï¼Œ
 #       é‡å»ºä¾æ®æ˜¯ MANIFEST4.json + æ–°æ¯”èµ›è§†é¢‘ï¼ˆåè€…ä¸è¿› gitï¼‰ã€‚
 data/annot/frames4/
+
+# --- ·ÂÕæ²úÎï£ºsim/scripts/run_sim.py Ã¿´ÎÖØ±àÖØÅÜ£¬Ö»ÂäÅÌ²»Áôµµ ---
+build/sim/

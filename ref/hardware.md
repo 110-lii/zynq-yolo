@@ -186,18 +186,87 @@ cam_rst_n=P14 cam_pwdn=V15 cam_pclk=W14 cam_vsync=U12 cam_href=T12
 
 ## G. LCD / 触摸
 
+**一手出处（2026-10-20 补核）**：《ATK-MD0430R 模块用户手册 V1.1》（13 页；印刷页码 1–11，**PDF 页 = 印刷页 + 2**）。
+本仓库副本 `rgb_lcd_module/ATK-MD0430R_module_user_manual_V1.1.pdf`；源盘目录
+`D:\FPGA\A\【正点原子】4.3寸RGBLCD电容触摸屏模块480272、800480\...\【正点原子】4.3寸RGB LCD电容触摸屏模块资料（新资料）`（用户 2026-10-20 提供）。
+下表数字**全部为手册原文**，不再有 `pdftotext` 缺口。
+
 | 项 | 值 | 出处 |
 |---|---|---|
-| 接口类型 | **RGB888** | `CLAUDE.md:217` |
-| 本队选用型号 | **800×480**（`ATK-MD0430R-800480`） | `ai/sessions/054_ov5640_sccb_and_cfg.md:39`（标注为「用户确认」） |
-| 模块支持的两种屏 | 480×272 与 800×480（模组名 `ATK-MD0430R`） | 文件名级出处（`.pdf` 无行号）：`rgb_lcd_module/reference/panel_480272_spec.pdf`、`rgb_lcd_module/reference/panel_800480_spec.pdf`、`rgb_lcd_module/reference/panel_480272_driver_ic_ST7282.pdf`、`rgb_lcd_module/reference/panel_800480_driver_ic_ST7262.pdf`；且旧项目目录原名即 `【正点原子】4.3寸RGBLCD电容触摸屏模块480272、800480`（见 `MANIFEST.csv` 的 `src_absolute` 列） |
-| 触摸 IC 备选 | GT9147 / GT917S / GT1151Q（附 FocalTech 应用笔记） | 文件名级出处（`.pdf` 无行号）：`rgb_lcd_module/reference/GT9147_datasheet.pdf`、`GT9147_programming_guide.pdf`、`GT917S_datasheet.pdf`、`GT917S_programming_guide.pdf`、`GT1151Q_datasheet.pdf`、`GT1151Q_programming_guide.pdf`、`Application_Note_for_CTPM_FocalTech.pdf` |
+| 接口类型 | **LCD：并行 24 位 RGB**；**触摸：IIC** | 手册 **p.1 表 1.1** |
+| 颜色格式 | **RGB888，兼容 RGB565**；颜色深度最大 24 位 | 同上 |
+| 两种分辨率 | `ATK-MD0430R-480272` = **480×272**；`ATK-MD0430R-800480` = **800×480** | 同上 |
+| 本队选用 | **800×480**（旧项目记录为「用户确认」）——**2026-10-20 未重新实测**，可用 §G.2 的 ID 位复核 | `ai/sessions/054_ov5640_sccb_and_cfg.md:39` |
+| 触摸 | 电容式（投射式/互容），**最多 5 点** | p.1 表 1.1、p.6 §2.3.1 |
+| 触摸 IC | **GT9147**（手册原文：「ATK-MD0430R 模块的电容式触摸屏采用 **GT9147** 作为其驱动 IC」） | p.7 §2.3.1 末段 |
+| 电源 / IO | **5 V 供电**；**IO 电平 3.3 V**（接 5 V 系统建议串 ~100 Ω 限流） | p.1 表 1.2 + 注 1 |
+| 功耗 | 480272：40–165 mA；800480：120–320 mA（背光关 / 最亮，5 V 下） | p.1 表 1.2 + 注 2 |
+| 接口形态 | **40P FPC 排座** | p.3 §2.1 |
 | V3.7 触摸引脚名 | `lcd_scl` `lcd_sda` `ct_rst` `ct_int`（**引脚号与 V3.9 相同，仅端口名不同**） | `CLAUDE.md:240` |
 
-> ⚠️ **LCD 具体时序参数（hsync/vsync 前后沿、porch、像素时钟）本文件不给出数字** ——
-> `pdftotext` 不在当前会话 PATH 上，我没有逐行核对 `reference/panel_800480_spec.pdf`，
-> 因此**不写猜测值**。标 **UNVERIFIED**，见 §K。
-> 需要时序时请自行抽取：`pdftotext -enc UTF-8 rgb_lcd_module/reference/panel_800480_spec.pdf -`
+### G.1 40P 引脚（手册 p.4–5 表 2.1.1）
+
+| 引脚 | 名称 | 说明 |
+|---|---|---|
+| 1~2 | VCC5 | 电源 5 V |
+| 3~10 | R0~R7 | 8 位 RED 数据 |
+| 11 | GND | |
+| 12~19 | G0~G7 | 8 位 GREEN 数据 |
+| 20 | GND | |
+| 21~28 | B0~B7 | 8 位 BLUE 数据 |
+| 29 | GND | |
+| 30 | CLK | 像素时钟 |
+| 31 | HSYNC | 水平同步 |
+| 32 | VSYNC | 垂直同步 |
+| 33 | DE | 数据使能 |
+| 34 | BL | 背光控制（⚠️ 有效电平手册未写，暂按高有效，需实测） |
+| 35 | CS | 触摸复位 |
+| 36 | MOSI | 触摸 IIC **SDA** |
+| 37 | MISO | **未连接** |
+| 38 | SCK | 触摸 IIC **SCL** |
+| 39 | PEN | 触摸中断 |
+| 40 | RESET | LCD 复位 |
+
+### G.2 模块 ID 读法（手册 p.5 表 2.1.2）—— **R7/G7/B7 即为 ID 位**
+
+| B7 (M2) | G7 (M1) | R7 (M0) | 型号 |
+|---|---|---|---|
+| 0 | 0 | 0 | ATK-MD0430R-**480272**（4.3" 480×272） |
+| 0 | 0 | 1 | ATK-MD0700R-800480（7"） |
+| 0 | 1 | 0 | ATK-MD0700R-1024600（7"） |
+| 0 | 1 | 1 | ATK-MD0700R-1280800（7"） |
+| **1** | **0** | **0** | **ATK-MD0430R-800480（4.3" 800×480）** |
+| 1 | 0 | 1 | ATK-MD1018R-1280800（10.1"） |
+
+⇒ 若本队确为 800×480：**B7=1、G7=0、R7=0**。原理图侧文字亦印证：「在初始化的时候，程序读取 LCD_R7/G7/B7 的状态，以获取 ID」（`rgb_lcd_module/schematic/ATK-MD0430R_V1.9.pdf`，PDF 无行号）。
+
+### G.3 LCD 时序（手册 p.5–6 表 2.2.1.1 / 2.2.1.2，单位：DCLK 或 H）
+
+| | 480×272（Typ） | 800×480（Typ） |
+|---|---|---|
+| DCLK | **9 MHz**（5–12） | **30 MHz**（Max 50） |
+| Tv 场周期 | **288** = 272 + 8(vbp) + 8(vfp) | **525** = 480 + 32(vbp) + 13(vfp) |
+| Th 行周期 | **525** = 480 + 40(hbp) + 5(hfp) | **928** = 800 + 40(hbp) + **88**（⚠️ 见下） |
+
+> ⚠️ **800×480 的 `Thfp` 抽取值不自洽**：手册表里该行抽到 `1 / 48 / 255`，但 `800 + 40 + 48 = 888`
+> 与 `Th = 928` 矛盾；只有当 **Thfp(Typ) = 88** 时才自洽（`888 → 928` 差 40，恰为一个 hbp）。
+> **用前必须对 `rgb_lcd_module/reference/panel_800480_spec.pdf` 与 `panel_800480_driver_ic_ST7262.pdf` 复核**。
+> ⚠️ **仍未核**：HSYNC/VSYNC **同步脉冲宽度**、HSYNC/VSYNC/DE 的**极性** —— 手册这两份时序表没给，
+> 要 ST7262 驱动 IC 手册或实测确定（见 §K 第 3 项）。
+
+### G.4 GT9147 关键寄存器（手册 p.8–9 §2.3.2）
+
+| 项 | 值 |
+|---|---|
+| IIC 地址 | 可设 **0x14 或 0x5D**；由复位时 INT 电平决定（RST 拉高前 ≥100 µs 置 INT，RST 释放后 ≥5 ms 保持）⚠️ 手册正文另一处写作 `0x14（0xD5）`，**表述不自洽，用前核 datasheet** |
+| 0x8040 控制命令 | 写 **0x02** = 软复位，写 **0x00** = 结束软复位 |
+| 0x8140–0x8143 | **PID**（ASCII 4 字节，可用来区分 9147/917S/1151Q） |
+| 0x814E 状态 | bit7 = 缓冲有效；bit3–0 = 有效触摸点数（0–5）；**读后必须回写 0 清 bit7**，否则不再输出下一次数据 |
+| 0x8150+ 触摸点信息 | 每点 **6 字节**：X 低/高、Y 低/高、尺寸 低/高；共 5 组；支持地址自增，可一次连读 6 字节 |
+
+> 📌 **对 D013 的意义**：触屏 UI 的硬件层已无未知 —— 分辨率（800×480，待 ID 复核）、
+> 像素时钟 30 MHz、40P 引脚、触摸 IC 与寄存器全部有出处。剩下的是 **UI 形态**（页面与交互），
+> 那属于设计，不是资料缺口。
 
 ---
 
@@ -280,9 +349,9 @@ cam_rst_n=P14 cam_pwdn=V15 cam_pclk=W14 cam_vsync=U12 cam_href=T12
 |---|---|---|
 | 1 | **UNVERIFIED** — BRAM「**140 × RAMB36**」 | 一手出处 `CLAUDE.md:210` 只写 `4.9 Mb BRAM`，未给 RAMB 个数。`docs/repo_spec.md:163` 的括号无一手佐证 |
 | 2 | **UNVERIFIED** — **Vitis_HLS 2020.2** | `CLAUDE.md:461` 仅列 Vivado 2020.2 + Vitis 2020.2，未提 Vitis_HLS |
-| 3 | **UNVERIFIED** — **LCD 时序参数**（hsync/vsync porch、像素时钟、DE 极性） | `pdftotext` 不在当前会话 PATH，未逐行核对 `rgb_lcd_module/reference/panel_800480_spec.pdf` / `panel_480272_spec.pdf` |
+| 3 | **部分已核（2026-10-20）** — LCD 时序：DCLK / Tv / Th / porch **已按手册 V1.1 p.5–6 抄进 §G.3**；**仍 UNVERIFIED**：HSYNC/VSYNC 同步脉冲宽度、HSYNC/VSYNC/DE 极性；800×480 的 `Thfp` 抽取值不自洽（见 §G.3 ⚠️） | 手册这两份时序表未给同步宽度与极性，需 ST7262 手册或实测 |
 | 4 | **UNVERIFIED** — 480×272 屏是否曾在本队上板 | 只查到本队**选用 800×480**（`ai/sessions/054_ov5640_sccb_and_cfg.md:39`）；480×272 只有规格书在库，无上板记录出处 |
-| 5 | **UNVERIFIED** — 触摸 IC 实际是哪一颗（GT9147 / GT917S / GT1151Q） | 三份手册都在库，但**未找到"本队用的是哪颗"的判定出处** |
+| 5 | **已判定（2026-10-20）** — 触摸 IC = **GT9147**（手册 V1.1 p.7 明写）；**仍 UNVERIFIED**：本队实物是否同批次 —— 运行时读 PID 寄存器 0x8140–0x8143 即可终判（见 §G.4） | 手册写明 GT9147，但 `reference/` 另存 GT917S/GT1151Q 手册 ⇒ 不同批次可能换 IC |
 | 6 | **UNVERIFIED** — DDR3「@ 34.1 Gbps」的测量口径 | `CLAUDE.md:211` 给了数字，但未给测量条件（位宽 × 频率？理论值还是实测？） |
 | 7 | **UNVERIFIED** — `entry_statement.docx` 的归属 | 正文是本队作品陈述（自有产出），与 `ref/` 的「外部文献」定位冲突；本目录 `README.md` §5 已请求裁定 |
 

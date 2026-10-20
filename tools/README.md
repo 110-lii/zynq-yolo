@@ -42,6 +42,7 @@
 | `palette_probe.py` | **色板可分辨性闸门**（跨比赛评估的前置条件）：两队色的 sibling margin 是否够、草坪/藏青/黄/紫/白球衣真实像素会不会被误判给任一队；`cross_match_eval.py` 开跑前自动调用 | ✅ 已创建（独立可跑：`python tools/palette_probe.py <A> <B>`）。实测白队像素 97% 判成蓝色此类**静默误判**能被挡下（见 `docs/cross_match_eval.md` §9） |
 | `kit_calib.py` | **按场校准球衣色板**：比赛段内取帧 → 取躯干色 → 按「到两队参考色的较近者」粗分两簇 → 输出「预置参考色 vs 实测中位数」下的取色成功率，回答「换场后 unknown_rate 涨的那 30 pt 有多少是色板没校准」 | ✅ 已跑新场（`data/results/kit_calib.json`）：229 样本，colored 61.1%→**74.2%**（+13.1 pt）。结论：色板参考色是**按场**的量，见 `docs/cross_match_eval.md` §12.3 |
 | `make_newmatch_labels.py` | **第四批标注包（新比赛 · 跨场）**：比赛段 → 检测 → 按取色失败原因分层（purity/color/too_small/rect/colored）各抽 K 个，出 320×320 单框图 + `labels4.csv`（label 空）+ `MANIFEST4.json`；`--score` 在标完后给每层 N 率 + Wilson CI，并与旧场层内 N 率并排做**保序检验** | ✅ 已建包（83 框：purity 20 / color 20 / too_small 20 / **rect 仅 3**（新场 rect 层候选只有 3 个）/ colored 20）；`NEWLABEL_PACK_OK 83 20 20 20 3 20`。**尚未标注**，`--score` 会明确报 `not_all_labeled` |
+| `match_setup.py` | **赛前输入（D013 的逻辑真源）**：录入双方队服颜色 / 裁判颜色 / 各自半场 → `data/config/match_<id>.json`；带 schema、颜色名校验（必须是 `PALETTE_REF` 的键）、两队同色/同半场拒绝、裁判色与队色相近告警，并直接打印可复制的下游命令（`--palette` / `--palette-refs`）。`--serve` 提供**网页前端作为 LCD 触屏的模拟**（真机 UI 复用同一份 schema 与校验） | ✅ 已实现（CLI / --list / --show / --print-cmd / --serve 8767 全跑通；负例 `same_team_color`、`same_half_side` 均被拒）。已录 `data/config/match_migu968460165.json`（white/blue，裁判 red，A 先开左半） |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |
 
 ## 规则

@@ -1,6 +1,6 @@
 {
  "tool": "tools/ball_cv.py",
- "generated": "2026-10-19T23:37:45",
+ "generated": "2026-10-19T23:44:45",
  "video": {
   "path": "D:\\yt-dlp\\downloads\\migu_5106947698\\migu_5106947698.mp4",
   "width": 1280,
@@ -34,6 +34,86 @@
   "top_k": 40
  },
  "frames": [
+  {
+   "pass_": true,
+   "reason": "ok",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_004.jpg",
+   "best": {
+    "length": 11,
+    "t0": 40,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 7.16,
+    "mean_step": 5.23,
+    "max_accel": 3.11,
+    "mean_score": 3.91,
+    "mean_app": 0.847,
+    "mean_mot": 128.1,
+    "val": 42.38
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 2.74,
+    "mean_step": 0.74,
+    "max_accel": 1.03,
+    "mean_score": 2.469,
+    "mean_app": 0.708,
+    "mean_mot": 48.9,
+    "val": 125.47
+   },
+   "t_manifest_s": 1251.4,
+   "t_matched_s": 1249.56,
+   "t_offset_s": -1.84,
+   "match_mae": 1.933,
+   "n_person": 11,
+   "green": 0.5988,
+   "human": true
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_008.jpg",
+   "best": {
+    "length": 12,
+    "t0": 39,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 4.99,
+    "mean_step": 1.5,
+    "max_accel": 4.43,
+    "mean_score": 2.993,
+    "mean_app": 0.728,
+    "mean_mot": 88.4,
+    "val": 35.72
+   },
+   "best_longest": {
+    "length": 12,
+    "t0": 39,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 4.99,
+    "mean_step": 1.5,
+    "max_accel": 4.43,
+    "mean_score": 2.993,
+    "mean_app": 0.728,
+    "mean_mot": 88.4,
+    "val": 35.72
+   },
+   "t_manifest_s": 2095.0,
+   "t_matched_s": 2093.56,
+   "t_offset_s": -1.44,
+   "match_mae": 1.653,
+   "n_person": 13,
+   "green": 0.4497,
+   "human": false
+  },
   {
    "pass_": true,
    "reason": "ok",
@@ -73,25 +153,930 @@
    "n_person": 14,
    "green": 0.6904,
    "human": false
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_016.jpg",
+   "best": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.49,
+    "mean_step": 2.59,
+    "max_accel": 4.63,
+    "mean_score": 3.663,
+    "mean_app": 0.955,
+    "mean_mot": 85.0,
+    "val": 185.25
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.49,
+    "mean_step": 2.59,
+    "max_accel": 4.63,
+    "mean_score": 3.663,
+    "mean_app": 0.955,
+    "mean_mot": 85.0,
+    "val": 185.25
+   },
+   "t_manifest_s": 3274.5,
+   "t_matched_s": 3273.54,
+   "t_offset_s": -0.96,
+   "match_mae": 1.44,
+   "n_person": 11,
+   "green": 0.6778,
+   "human": true
+  },
+  {
+   "pass_": false,
+   "reason": "len 1 < 10",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_020.jpg",
+   "best": {
+    "length": 1,
+    "t0": 50,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.0,
+    "mean_step": 0.0,
+    "max_accel": 0.0,
+    "mean_score": 3.395,
+    "mean_app": 0.633,
+    "mean_mot": 129.0,
+    "val": 3.4
+   },
+   "best_longest": {
+    "length": 4,
+    "t0": 47,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 11.88,
+    "mean_step": 6.95,
+    "max_accel": 7.41,
+    "mean_score": 2.197,
+    "mean_app": 0.366,
+    "mean_mot": 60.5,
+    "val": 8.54
+   },
+   "t_manifest_s": 3998.1,
+   "t_matched_s": 3997.54,
+   "t_offset_s": -0.56,
+   "match_mae": 1.278,
+   "n_person": 11,
+   "green": 0.5092,
+   "human": false
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_024.jpg",
+   "best": {
+    "length": 48,
+    "t0": 3,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 5.26,
+    "mean_step": 1.87,
+    "max_accel": 2.32,
+    "mean_score": 2.963,
+    "mean_app": 0.911,
+    "mean_mot": 60.3,
+    "val": 141.15
+   },
+   "best_longest": {
+    "length": 48,
+    "t0": 3,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 5.26,
+    "mean_step": 1.87,
+    "max_accel": 2.32,
+    "mean_score": 2.963,
+    "mean_app": 0.911,
+    "mean_mot": 60.3,
+    "val": 141.15
+   },
+   "t_manifest_s": 5223.6,
+   "t_matched_s": 5223.56,
+   "t_offset_s": -0.04,
+   "match_mae": 1.402,
+   "n_person": 14,
+   "green": 0.7052,
+   "human": false
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_028.jpg",
+   "best": {
+    "length": 10,
+    "t0": 41,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 12.85,
+    "mean_step": 8.55,
+    "max_accel": 6.06,
+    "mean_score": 3.276,
+    "mean_app": 0.785,
+    "mean_mot": 88.4,
+    "val": 31.84
+   },
+   "best_longest": {
+    "length": 11,
+    "t0": 40,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 11.63,
+    "mean_step": 8.74,
+    "max_accel": 2.74,
+    "mean_score": 2.066,
+    "mean_app": 0.398,
+    "mean_mot": 54.7,
+    "val": 21.67
+   },
+   "t_manifest_s": 5939.2,
+   "t_matched_s": 5939.56,
+   "t_offset_s": 0.36,
+   "match_mae": 1.528,
+   "n_person": 12,
+   "green": 0.646,
+   "human": false
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_032.jpg",
+   "best": {
+    "length": 11,
+    "t0": 40,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.64,
+    "mean_step": 3.31,
+    "max_accel": 2.9,
+    "mean_score": 3.102,
+    "mean_app": 0.796,
+    "mean_mot": 87.5,
+    "val": 33.72
+   },
+   "best_longest": {
+    "length": 36,
+    "t0": 15,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 4.41,
+    "mean_step": 1.08,
+    "max_accel": 3.58,
+    "mean_score": 1.916,
+    "mean_app": 0.505,
+    "mean_mot": 29.4,
+    "val": 68.5
+   },
+   "t_manifest_s": 6559.0,
+   "t_matched_s": 6559.56,
+   "t_offset_s": 0.56,
+   "match_mae": 1.662,
+   "n_person": 11,
+   "green": 0.6591,
+   "human": "unsure"
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_036.jpg",
+   "best": {
+    "length": 14,
+    "t0": 37,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 7.88,
+    "mean_step": 3.04,
+    "max_accel": 3.85,
+    "mean_score": 3.671,
+    "mean_app": 0.943,
+    "mean_mot": 97.4,
+    "val": 50.92
+   },
+   "best_longest": {
+    "length": 23,
+    "t0": 28,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 7.56,
+    "mean_step": 4.34,
+    "max_accel": 4.49,
+    "mean_score": 2.272,
+    "mean_app": 0.19,
+    "mean_mot": 86.3,
+    "val": 51.11
+   },
+   "t_manifest_s": 7172.7,
+   "t_matched_s": 7173.54,
+   "t_offset_s": 0.84,
+   "match_mae": 1.45,
+   "n_person": 12,
+   "green": 0.6404,
+   "human": "unsure"
+  },
+  {
+   "pass_": true,
+   "reason": "ok",
+   "n_cand_median": 40,
+   "center": 50,
+   "name": "match_040.jpg",
+   "best": {
+    "length": 37,
+    "t0": 14,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 0.5,
+    "mean_step": 0.1,
+    "max_accel": 0.5,
+    "mean_score": 2.569,
+    "mean_app": 0.491,
+    "mean_mot": 5.4,
+    "val": 95.01
+   },
+   "best_longest": {
+    "length": 51,
+    "t0": 0,
+    "t1": 50,
+    "gaps": 0,
+    "max_step": 8.38,
+    "mean_step": 0.59,
+    "max_accel": 8.38,
+    "mean_score": 1.966,
+    "mean_app": 0.583,
+    "mean_mot": 5.5,
+    "val": 99.93
+   },
+   "t_manifest_s": 7838.4,
+   "t_matched_s": 7839.56,
+   "t_offset_s": 1.16,
+   "match_mae": 2.171,
+   "n_person": 11,
+   "green": 0.5991,
+   "human": false
   }
  ],
- "controls": {},
- "verdict": "M1 机器判据 1/1 通过（本次没跑 shuffle 对照，判别力未测），但人眼逐张看图只有 2/10 帧确定框住球（match_004、match_016），另有 2 帧 unsure（白鞋尖端，10x 放大也分不清），其余是球员白鞋/白袜 6 帧、摄像师/广告牌 1 帧、len=1 失败 1 帧。人眼门槛 5/10，即使把 unsure 全算成命中也只有 4/10 ⇒ **判据假绿**：M1 只约束「存在一条长且平滑的链」，不约束「链上的东西是球」。候选层其实够用（本次没跑 synthetic 上限探针），坏在「哪个候选是球」：同帧还有 9~40 个同规格白块，且球大多贴着球员的鞋/腿/手。⇒ 这条路在现有 1280x720 素材上不可行。",
+ "controls": {
+  "shuffle": {
+   "n_pass": 0,
+   "n_total": 10,
+   "pass_rate": 0.0,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": false,
+     "reason": "len 2 < 10",
+     "length": 2,
+     "mean_step": 7.69
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": false,
+     "reason": "len 2 < 10",
+     "length": 2,
+     "mean_step": 20.44
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    }
+   ],
+   "note": "打乱帧序后重跑。若通过率不下降，说明「轨迹连续性」判据是废的。"
+  },
+  "static_center": {
+   "n_pass": 10,
+   "n_total": 10,
+   "pass_rate": 1.0,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 0.0
+    }
+   ],
+   "note": "每帧报画面正中的一个点，完全不做检测。它必然 10/10 —— 这条对照的作用是证明 M1 单独没有判别力，必须看图。"
+  },
+  "null": {
+   "n_pass": 0,
+   "n_total": 10,
+   "pass_rate": 0.0,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": false,
+     "reason": "no track",
+     "length": null,
+     "mean_step": null
+    }
+   ],
+   "note": "不产生候选。应为 0/10；若不是 0 说明计分有 bug。"
+  },
+  "synthetic": {
+   "n_pass": 9,
+   "n_total": 10,
+   "pass_rate": 0.9,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 11,
+     "mean_step": 5.23,
+     "synthetic": {
+      "gt": [
+       848,
+       378
+      ],
+      "cand_dist": 0.16,
+      "chain_len": 17,
+      "chain_max_step": 17.88,
+      "chain_mean_step": 17.55,
+      "chain_mean_score": 3.324,
+      "chain_pass": true,
+      "auto_dist": 212.37
+     }
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 12,
+     "mean_step": 1.5,
+     "synthetic": {
+      "gt": [
+       388,
+       551
+      ],
+      "cand_dist": 0.68,
+      "chain_len": 9,
+      "chain_max_step": 10.93,
+      "chain_mean_step": 10.77,
+      "chain_mean_score": 3.596,
+      "chain_pass": false,
+      "auto_dist": 409.85
+     }
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 12,
+     "mean_step": 14.66,
+     "synthetic": {
+      "gt": [
+       651,
+       516
+      ],
+      "cand_dist": 0.12,
+      "chain_len": 12,
+      "chain_max_step": 14.95,
+      "chain_mean_step": 14.61,
+      "chain_mean_score": 3.373,
+      "chain_pass": true,
+      "auto_dist": 0.52
+     }
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 51,
+     "mean_step": 2.59,
+     "synthetic": {
+      "gt": [
+       566,
+       639
+      ],
+      "cand_dist": 0.79,
+      "chain_len": 51,
+      "chain_max_step": 11.08,
+      "chain_mean_step": 10.65,
+      "chain_mean_score": 3.535,
+      "chain_pass": true,
+      "auto_dist": 509.62
+     }
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0,
+     "synthetic": {
+      "gt": [
+       871,
+       299
+      ],
+      "cand_dist": 51.52,
+      "chain_len": 1,
+      "chain_max_step": 0.0,
+      "chain_mean_step": 0.0,
+      "chain_mean_score": 0.583,
+      "chain_pass": false,
+      "auto_dist": 450.4
+     }
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 48,
+     "mean_step": 1.87,
+     "synthetic": {
+      "gt": [
+       1057,
+       203
+      ],
+      "cand_dist": 147.16,
+      "chain_len": 4,
+      "chain_max_step": 0.28,
+      "chain_mean_step": 0.18,
+      "chain_mean_score": 1.333,
+      "chain_pass": false,
+      "auto_dist": 557.44
+     }
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 34,
+     "mean_step": 11.82,
+     "synthetic": {
+      "gt": [
+       273,
+       561
+      ],
+      "cand_dist": 0.65,
+      "chain_len": 34,
+      "chain_max_step": 12.14,
+      "chain_mean_step": 11.82,
+      "chain_mean_score": 3.707,
+      "chain_pass": true,
+      "auto_dist": 0.65
+     }
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 11,
+     "mean_step": 3.31,
+     "synthetic": {
+      "gt": [
+       815,
+       298
+      ],
+      "cand_dist": 0.13,
+      "chain_len": 2,
+      "chain_max_step": 16.14,
+      "chain_mean_step": 16.14,
+      "chain_mean_score": 2.381,
+      "chain_pass": false,
+      "auto_dist": 267.87
+     }
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": true,
+     "reason": "synthetic ball tracked",
+     "length": 14,
+     "mean_step": 3.04,
+     "synthetic": {
+      "gt": [
+       816,
+       479
+      ],
+      "cand_dist": 0.21,
+      "chain_len": 12,
+      "chain_max_step": 17.09,
+      "chain_mean_step": 16.3,
+      "chain_mean_score": 3.283,
+      "chain_pass": true,
+      "auto_dist": 237.46
+     }
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 37,
+     "mean_step": 0.1,
+     "synthetic": {
+      "gt": [
+       1099,
+       527
+      ],
+      "cand_dist": 0.25,
+      "chain_len": 9,
+      "chain_max_step": 11.78,
+      "chain_mean_step": 11.25,
+      "chain_mean_score": 3.82,
+      "chain_pass": false,
+      "auto_dist": 264.35
+     }
+    }
+   ],
+   "note": "在真实帧上合成 8px 白球（平滑运动）后跑同一流程，是算法上限。"
+  },
+  "ablate_no_motion": {
+   "n_pass": 8,
+   "n_total": 10,
+   "pass_rate": 0.8,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 11,
+     "mean_step": 5.23
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 10,
+     "mean_step": 1.21
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 13,
+     "mean_step": 2.3
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 51,
+     "mean_step": 2.59
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "len 2 < 10",
+     "length": 2,
+     "mean_step": 13.42
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 47,
+     "mean_step": 1.88
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 11,
+     "mean_step": 3.31
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 14,
+     "mean_step": 3.04
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 37,
+     "mean_step": 0.1
+    }
+   ],
+   "note": "去掉运动残差项，只用外观（白+小+圆）。"
+  },
+  "ablate_no_appearance": {
+   "n_pass": 6,
+   "n_total": 10,
+   "pass_rate": 0.6,
+   "frames": [
+    {
+     "name": "match_004.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 18,
+     "mean_step": 4.97
+    },
+    {
+     "name": "match_008.jpg",
+     "pass": false,
+     "reason": "len 3 < 10",
+     "length": 3,
+     "mean_step": 3.03
+    },
+    {
+     "name": "match_012.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_016.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 10,
+     "mean_step": 3.32
+    },
+    {
+     "name": "match_020.jpg",
+     "pass": false,
+     "reason": "len 1 < 10",
+     "length": 1,
+     "mean_step": 0.0
+    },
+    {
+     "name": "match_024.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 50,
+     "mean_step": 3.45
+    },
+    {
+     "name": "match_028.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 14,
+     "mean_step": 7.38
+    },
+    {
+     "name": "match_032.jpg",
+     "pass": false,
+     "reason": "len 2 < 10",
+     "length": 2,
+     "mean_step": 3.25
+    },
+    {
+     "name": "match_036.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 23,
+     "mean_step": 4.13
+    },
+    {
+     "name": "match_040.jpg",
+     "pass": true,
+     "reason": "ok",
+     "length": 12,
+     "mean_step": 1.24
+    }
+   ],
+   "note": "去掉外观项，只用运动残差。"
+  }
+ },
+ "verdict": "M1 机器判据 9/10 通过（shuffle 0/10，判别力确实存在），但人眼逐张看图只有 2/10 帧确定框住球（match_004、match_016），另有 2 帧 unsure（白鞋尖端，10x 放大也分不清），其余是球员白鞋/白袜 6 帧、摄像师/广告牌 1 帧、len=1 失败 1 帧。人眼门槛 5/10，即使把 unsure 全算成命中也只有 4/10 ⇒ **判据假绿**：M1 只约束「存在一条长且平滑的链」，不约束「链上的东西是球」。候选层其实够用（注入 8px 合成球 cand_hit 8/10、中位距 0.45px），坏在「哪个候选是球」：同帧还有 9~40 个同规格白块，且球大多贴着球员的鞋/腿/手。⇒ 这条路在现有 1280x720 素材上不可行。",
  "verdict_class": "no_work",
  "diagnostics": {
   "n_cand_median_per_frame": 40,
-  "n_app_blobs_median": 100,
-  "n_mot_blobs_median": 461,
-  "winner_len_median": 13,
-  "winner_static_frames": 0,
-  "winner_moving_frames": 1,
-  "winner_static_names": [],
-  "pick_rule_len_static_frames": 0,
-  "winner_mean_score_median": 3.05,
-  "winner_mot_median": 75.0,
-  "motion_abs_dx_mean": 1.41,
-  "motion_abs_dx_max": 7.68,
-  "n_affine_total": 58
+  "n_app_blobs_median": 134,
+  "n_mot_blobs_median": 465,
+  "winner_len_median": 12,
+  "winner_static_frames": 2,
+  "winner_moving_frames": 8,
+  "winner_static_names": [
+   "match_020.jpg",
+   "match_040.jpg"
+  ],
+  "pick_rule_len_static_frames": 2,
+  "winner_mean_score_median": 3.19,
+  "winner_mot_median": 88.0,
+  "motion_abs_dx_mean": 4.93,
+  "motion_abs_dx_max": 120.92,
+  "n_affine_total": 643,
+  "seed_case": {
+   "name": "match_004.jpg",
+   "t_matched_s": 1249.56,
+   "seed_dist_px": 1.5,
+   "length": 11,
+   "max_step": 7.16,
+   "max_accel": 3.11,
+   "mean_step": 5.23,
+   "mean_score": 3.91,
+   "pass_": true,
+   "auto_pick": {
+    "x": 11,
+    "mean_step": 5.23
+   }
+  },
+  "synthetic": {
+   "n": 10,
+   "n_cand_hit": 8,
+   "n_chain_pass": 5,
+   "n_auto_pick": 2,
+   "median_cand_dist": 0.45,
+   "median_auto_dist": 266.11
+  }
  },
  "human_review": {
   "note": "human_review 是作者把 data/results/viz/ball_cv/*.png（含 _all10_a/b.png 的 10x 双帧放大）逐张看过之后的判定，不是自动判据。自动判据（pass）只看长度/步长/加速度，它分不清球和记分牌——这正是本次实验的主要发现，所以必须把「人眼看到框在哪」单独记下来，并且让它能否决自动判据（见 build_verdict 的 HUMAN_MIN_HITS）。",

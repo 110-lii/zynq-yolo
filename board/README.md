@@ -13,12 +13,15 @@
 
 | 路径 | 说明 | 真源/产物 |
 |---|---|---|
-| `overlay/` | Overlay 二进制与硬件握手文件：`*.bit` + `*.hwh`（PYNQ 加载自研 Overlay 用），可含 `.xsa` | ❌ 产物（由 `build/` 重建，只留基线） |
-| `scripts/` | **上板真源**：下载/烧写、加载 Overlay、跑用例、抓日志的脚本 | ✅ 真源（可改，必进 git） |
+| `overlay/` | Overlay 二进制与硬件握手文件：`conv_engine.bit` + `conv_engine.hwh`（PYNQ 加载自研 Overlay 用），可含 `.xsa` | ❌ 产物（由 `build/` 重建，只留基线） |
+| `scripts/` | **上板真源**：`deploy_to_board.ps1`（PC 侧打包推送）、`run_board_test.sh`（板上验收） | ✅ 真源（可改，必进 git） |
 | `logs/` | **板级实测日志**：串口输出、运行日志、实测数字 | ⚠️ **不可重建 ⇒ 必须落盘**（择优进 git 作基线） |
 | `images/` | **实拍图**：板卡连接、LCD 显示、示波器/ILA 截图等肉眼证据 | ⚠️ **不可重建 ⇒ 必须落盘** |
 
-> 当前磁盘事实：`board/{overlay,scripts,logs,images}/` **目录均已存在但为空**。上板脚本与实测证据尚未产生。
+> 当前磁盘事实：`overlay/` 已有 `conv_engine.bit`（4 045 674 B）+ `conv_engine.hwh`（285 760 B）
+> （83.33 MHz 时序收敛轮产出，见 [`../docs/accel_interface.md`](../docs/accel_interface.md) §7.4）；
+> `scripts/` 已有部署/验收脚本（见 [`scripts/README.md`](scripts/README.md)，**尚未实跑**）；
+> `logs/`、`images/` 尚无内容 —— **本仓库还没有任何一次真实上板记录**。
 
 ## 规则
 
@@ -42,23 +45,31 @@
 ## 怎么用
 
 ```powershell
-# 0. 现状核对（目录均在，尚无内容）
+# 0. 现状核对（overlay 已就位；logs/images 为空 = 尚无上板记录）
 Get-ChildItem -Recurse D:\zynq-yolo\board
 
 # 1. 从 build/ 取同一轮构建的 Overlay（重新构建后需同步覆盖）
 #    Copy-Item D:\zynq-yolo\build\...\*.bit,D:\zynq-yolo\build\...\*.hwh D:\zynq-yolo\board\overlay\
 
-# 2. 【TODO，脚本尚未创建】JTAG 下载并判定
-#    TODO: board/scripts/program.ps1 / program.tcl
+# 2. ✅ 部署到板（PC 侧；打包真源+用例，scp 推板解包）
+#    判据：末行 DEPLOY_OK
+& D:\zynq-yolo\board\scripts\deploy_to_board.ps1 -BoardHost <板IP> -BoardUser xilinx
+
+# 3. ✅ 板上跑验收（板侧；conv_engine 单层 + 逐字节比对 + 实测 GOPS）
+#    判据：末行 BOARD_LAYER_OK all_<n>_cases <ns> <gops>
+ssh xilinx@<板IP>
+bash /home/xilinx/zynq-yolo/board/scripts/run_board_test.sh
+
+# 4. 【TODO，脚本尚未创建】JTAG 下载并判定（走 PYNQ SD 启动时不需要 JTAG）
+#    TODO: board/scripts/program.tcl
 #    vivado -mode batch -source D:\zynq-yolo\board\scripts\program.tcl
 #    判据：日志出现 PROGRAM_OK
 Select-String -Path D:\zynq-yolo\board\logs\*.log -Pattern 'PROGRAM_OK'
 
-# 3. 【TODO，脚本尚未创建】PYNQ 侧加载 Overlay 并跑用例
-#    TODO: board/scripts/run_on_board.py（配合 ../src/ps/pynq_driver/ 的 Overlay 封装类）
-#    python D:\zynq-yolo\board\scripts\run_on_board.py 2>&1 | Tee-Object D:\zynq-yolo\board\logs\run_<YYYYMMDD>.log
+# 5. 收尾：板上结果拉回 PC 并 commit（实测数字的唯一合法来源）
+scp xilinx@<板IP>:/home/xilinx/zynq-yolo/data/results/board_layer_test.json D:\zynq-yolo\data\results\
 
-# 4. 归档不可重建证据（必做，否则本次上板结论不可追溯）
+# 6. 归档不可重建证据（必做，否则本次上板结论不可追溯）
 #    - 串口日志 -> D:\zynq-yolo\board\logs\
 #    - 实拍图   -> D:\zynq-yolo\board\images\
 ```

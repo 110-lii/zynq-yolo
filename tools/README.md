@@ -11,15 +11,21 @@
 
 ## 内容
 
-> ⚠️ **当前磁盘事实：`tools/` 为空目录，下列脚本一个都还没创建。**
-> 每个脚本的状态列如实标注为 `TODO`（未创建）。**不要假装已存在**；创建后再改为「已存在」。
+> ⚠️ 本节原写「`tools/` 为空目录、脚本一个都没创建」——**早已过时**（2026-10-20 更正）。
+> 现状：**35 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径）已落地。
+> 下表只列关键脚本；完整清单看目录。状态列**如实**标注，**不要假装已存在/已运行**。
 
 | 路径 | 说明 | 状态 |
 |---|---|---|
-| `check_repo.py` | **仓库自检**：目录/文件命名纯 ASCII（§1）、每个目录有 `README.md`、`src/rtl/` 前缀与目录对应（§2.2）、tb 命名 `x_tb.v`、禁止入库文件（`build*.log`/`*.dcp`/`__pycache__/`…） | **TODO（未创建）** |
-| `collect_metrics.py` | **资源/时序度量采集**：解析 `build/reports/{resource,timing,*}/*.rpt`，产出可写进报告的指标表（LUT6/FF/DSP48/BRAM、WNS/TNS/WHS/THS） | **TODO（未创建）** |
-| `md_to_docx.py` | **报告渲染**：把 `report/` 下 Markdown 渲染为提交用文档（docx/PDF） | **TODO（未创建）** |
-| `ball_visibility_sweep.py` | **球可见性扫描**：COCO 预训练 YOLOv8 在真实转播画面里能不能看见 `sports ball`——分辨率 320/640/960/1280/1600 × 切图 640/512/320 × yolov8n/yolov8s × 置信度 0.25→0.01，附基线复现/阴性/阳性三重对照与 Zynq 算力投影 | ✅ 已创建（2026-10-19） |
+| `check_repo.py` | **仓库自检**：命名纯 ASCII / 必需目录 / 每目录 README / 禁入文件 / 权重表 / py 语法 | ✅ 已创建（令牌 `CHECK_REPO_OK`） |
+| `collect_metrics.py` | **资源/时序度量采集**：解析 `build/reports/*` 产指标表 | **TODO（未创建）** |
+| `md_to_docx.py` | **报告渲染**：把 `report/` 下 Markdown 渲染为提交用文档 | **TODO（未创建）** |
+| `ball_visibility_sweep.py` | **球可见性扫描**（D010 范围收缩依据之一） | ✅ 已创建 |
+| `ball_cv.py` | **传统 CV 球定位可行性原型**：结论 `no_work`（人眼 2/10，判据假绿分析） | ✅ 已创建（结果 `data/results/ball_cv.json`） |
+| `pitch_geometry.py` | **白线反解球场几何可行性**：n=10 n_pass=0（D010 范围外 b 的依据） | ✅ 已创建 |
+| `person_scale_check.py` | **人可见性 vs 输入分辨率**（D010 收窄后「人看得见」判据） | ✅ 已创建 |
+| `int8_sim.py` / `pynq_net.py` | INT8 量化验证 / 整网 PC 编排（后端可插拔，PL 后端待接） | ✅ 已创建 |
+| `make_calib_from_video.py` / `find_incidents.py` / `log_incident_decisions.py` / `make_incident_review.py` / `conf_calibration.py` / `draw_detections.py` / `eval_calib_set.py` / `class_coverage.py` / `fetch_calib_real.py` / `onnx_probe.py` / `fps_feasibility.py` / `design_tradeoffs.py` / `export_layers.py` / `make_golden.py` / `ref_int8_conv.py` | 数据集 / 标定 / 评测 / 金标准 / 契约参考实现族 | ✅ 已创建 |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |
 
 ## 规则
@@ -38,22 +44,19 @@
 ## 怎么用
 
 ```powershell
-# 1. 现状核对（应为空：脚本尚未创建）
-Get-ChildItem D:\zynq-yolo\tools
-
-# 2. ✅ 已创建：仓库自检（纯标准库，无第三方依赖）
+# 1. ✅ 仓库自检（纯标准库，无第三方依赖）
 & D:\python\python.exe D:\zynq-yolo\tools\check_repo.py
-#    期望末行：SUMMARY: 5 PASS / 0 FAIL / 0 WARN  +  结论令牌 CHECK_REPO_OK
+#    期望末行：SUMMARY: 6 PASS / 0 FAIL / 0 WARN  +  结论令牌 CHECK_REPO_OK
 #    退出码 0 = 无 FAIL；有 FAIL 时为 1。也可在仓库根直接 `mingw32-make check`。
 
-# 3. 【TODO，未创建】采集资源/时序度量
+# 2. 【TODO，未创建】采集资源/时序度量
 #    python D:\zynq-yolo\tools\collect_metrics.py --reports D:\zynq-yolo\build\reports
 #    期望：输出指标表（含来源文件路径），可直接粘进 ../report/
 
-# 4. 【TODO，未创建】渲染报告
+# 3. 【TODO，未创建】渲染报告
 #    python D:\zynq-yolo\tools\md_to_docx.py --src D:\zynq-yolo\report --out D:\zynq-yolo\report\
 
-# 5. 建议节奏：每次改动 src/ 或 build/ 后跑一次 check_repo.py，
+# 4. 建议节奏：每次改动 src/ 或 build/ 后跑一次 check_repo.py，
 #    每轮构建后跑一次 collect_metrics.py（见 ../build/README.md 的报告轮转约定）
 ```
 
@@ -61,7 +64,10 @@ Get-ChildItem D:\zynq-yolo\tools
 
 | 脚本 | 状态 | 判据令牌 |
 |---|---|---|
-| `check_repo.py` | ✅ 已实现（5 项检查：命名 / 必需目录与根文件 / 每目录 README / 禁入文件 / 权重表） | `CHECK_REPO_OK` |
+| `check_repo.py` | ✅ 已实现（6 项检查：命名 / 必需目录与根文件 / 每目录 README / 禁入文件 / 权重表 / py 语法） | `CHECK_REPO_OK` |
 | `collect_metrics.py` | ⬜ TODO | —— |
 | `md_to_docx.py` | ⬜ TODO | —— |
 | `ball_visibility_sweep.py` | ✅ 已实现（分辨率 × 切图 × 模型 × 置信度四组扫描 + 基线/阴性/阳性对照） | `SWEEP_DONE <n>` / `SWEEP_FAIL <原因>` |
+| `ball_cv.py` | ✅ 已实现（运动残差 + 外观先验 + 时空关联；含 null/static/shuffle/synthetic/ablate 五类对照） | `BALL_CV_DONE`（结果 JSON 内 `verdict_class`） |
+| `pitch_geometry.py` | ✅ 已实现（白线掩膜覆盖率判据 + 阴性/阳性对照） | `PITCH_GEOM_*` |
+| `int8_sim.py` / `pynq_net.py` | ✅ 已实现 | `PYNQ_NET_OK` / `PYNQ_NET_FAIL` 等 |

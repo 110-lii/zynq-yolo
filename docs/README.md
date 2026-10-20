@@ -18,6 +18,16 @@
 | [`architecture.md`](architecture.md) | 系统架构文档骨架：软硬件划分、数据流、接口契约、资源预算 | ⬜ **骨架，待用户裁定题目后填充** |
 | [`amd_official_layout.md`](amd_official_layout.md) | **AMD 官方布局与版本控制建议查证记录**：UG949 受控源文件清单、AMD 5/6 种版本控制方法论、PYNQ 官方模板逐字要点、本仓库选 Foundational 派的理由与代价 | ✅ 已完成 |
 | [`yolo_on_zynq7020_survey.md`](yolo_on_zynq7020_survey.md) | **YOLO 在 XC7Z020 上的技术调研**：五条路线判定（含「Vitis AI DPU 在 7000 系不存在」的一手核查）、同芯片实测锚点（ARC2020，1.88 fps）、开源实现清单、推荐路线 D 与验证阶梯；**§9 是引用本文数字前必读的未验证项清单** | ✅ 已完成 |
+| [`accel_interface.md`](accel_interface.md) | **`conv_engine` 加速器接口契约**：AXIS 流格式、`tuser`/`tlast` 语义、int8 量化口径、单层吞吐与资源实测、§9 逐字节一致性用例 | ✅ 数值已冻结，待用户确认（D006） |
+| [`integration_rtl_plan.md`](integration_rtl_plan.md) | **整机 RTL 集成计划（D004 = 416 精度优先档）**：采集→DDR→检测→HDMI 数据通路、PL/PS 分工及理由、模块清单与状态、时钟/复位/CDC、带宽估算、M1–M4 验收判据、未决问题 | 🟨 v1 草案 |
+| [`player_tracking_v1.md`](player_tracking_v1.md) | 球员追踪 v1 口径：YOLOv8n + ByteTrack + ECC 相机运动补偿；旧场 12 段 4355 帧 → 942 条轨迹的产出与已知局限 | ✅ 已完成（旧场） |
+| [`player_labels_v1.md`](player_labels_v1.md) | 球员人工标注 v1：分层抽样口径、`labels.csv` 字段与判定含义 | ✅ 已完成（旧场） |
+| [`player_gate_v1.md`](player_gate_v1.md) | 球员门槛 v2（规则表 + 几何守卫 + hull 复核）：8 组消融，v1 丢 834 框 → v2 只丢 98 框且救回 736（88.2%）、新误杀 0 | ✅ 已完成（旧场） |
+| [`hi_layer_color_gate.md`](hi_layer_color_gate.md) | hi 层取色失败原因分层（purity/rect/color/too_small）与标注可信度（仅 P/N 三批 κ=0.9286）；**跨场层间保序不成立**的留档 | ✅ 已完成 |
+| [`newmatch_label_pack.md`](newmatch_label_pack.md) | 新比赛分层标注包（第四批，83 框）：抽取口径、标注判决、层内 N 率与 Wilson CI、保序检验 | ✅ 已完成 |
+| [`cross_match_eval.md`](cross_match_eval.md) | **跨场评估框架**：G1–G6 判据、`--play-windows`/`--palette-refs`/`--color-metric` 开关、四档实测、v2 假绿留档、§13.8 证据索引（sha256） | ✅ 已完成 |
+| [`cross_match_results.md`](cross_match_results.md) | **跨场实测结论**（结论优先）：彩色分支过紧已修 / `too_small`·`rect` 跨分辨率判定是伪影 / 非队色在 v2 下仍被分队（未修） | ✅ 已完成 |
+| [`color_prior_v1.md`](color_prior_v1.md) | 颜色先验 v1 口径：`PALETTE_REF` 色板、躯干取色、分类与距离度量 | ✅ 已完成（v2 见 `cross_match_eval.md`） |
 
 ---
 
@@ -40,6 +50,8 @@
 | 知道哪些文件不该进 git | [`repo_spec.md`](repo_spec.md) §4 + 根 [`.gitignore`](../.gitignore) |
 | 知道「官方推荐架构」到底指哪几层、为什么本仓库不用 Vivado 默认工程布局 | [`amd_official_layout.md`](amd_official_layout.md) |
 | 知道 YOLO 在这块板子上到底跑不跑得动、有哪些前人实现 | [`yolo_on_zynq7020_survey.md`](yolo_on_zynq7020_survey.md)（数字引用前先看 §9） |
+| 知道整机 PL 还要写哪些模块、每个模块怎么验 | [`integration_rtl_plan.md`](integration_rtl_plan.md) §3 / §6 |
+| 知道 `conv_engine` 的流接口和量化口径 | [`accel_interface.md`](accel_interface.md) |
 | 知道构建「成功」怎么判 | [`repo_spec.md`](repo_spec.md) §5（日志令牌 `DONE_OK` / `PROGRAM_OK`） |
 | 知道板子和工具链的硬约束 | [`repo_spec.md`](repo_spec.md) §6 + [`../ref/hardware.md`](../ref/hardware.md) |
 | 知道哪些事还没定 | [`repo_spec.md`](repo_spec.md) §7 + [`../ai/coordination/DECISIONS.md`](../ai/coordination/DECISIONS.md) |

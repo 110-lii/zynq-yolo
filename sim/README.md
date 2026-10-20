@@ -15,8 +15,14 @@
 |---|---|
 | `tb/` | **Testbench 真源**。镜像 `src/rtl/` 的子目录结构，见下表 |
 | `vectors/` | 激励向量：输入激励文件、期望输出、随机种子记录等，供 tb 读取 |
-| `scripts/` | 回归入口脚本（编译 + 仿真 + 结果判定），一条命令跑一轮回归 |
-| （`tb/` 下的镜像子目录） | 当前磁盘上 `sim/tb/` 为**空目录**；按下表在新增用例时按需创建 |
+| `scripts/` | 回归入口脚本：`run_sim.py` 一条命令编译+仿真+令牌判定 |
+| `scripts/make_hls_case.py` | HLS C 仿真用例生成（与 RTL 回归并列） |
+
+### 现有用例
+
+| 用例 | testbench | 被测 RTL | 成功令牌 |
+|---|---|---|---|
+| `vid_dvp_capture` | `sim/tb/video/vid_dvp_capture_tb.v` | `src/rtl/video/vid_dvp_capture.v` | `VID_DVP_CAPTURE_TB_PASS` |
 
 ### `sim/tb/` 镜像 `src/rtl/` 子目录结构
 
@@ -38,8 +44,6 @@ src/rtl/                      sim/tb/                 （镜像）
 | `src/rtl/accel/acc_dma_mover.v` | `sim/tb/accel/acc_dma_mover_tb.v` |
 | `src/rtl/io/io_axil_regs.v` | `sim/tb/io/io_axil_regs_tb.v` |
 
-> ⚠️ **当前磁盘事实**：`sim/tb/`、`sim/vectors/`、`sim/scripts/` **均已存在但为空**；上表左右两列的文件**都还不存在**，仅为命名规则示意。
-
 > 命名规则一句话：**`x.v` → `x_tb.v`**，且 tb 在 `sim/tb/` 下的相对路径与源文件在 `src/rtl/` 下的相对路径**逐段相同**。
 
 ## 规则
@@ -56,19 +60,21 @@ src/rtl/                      sim/tb/                 （镜像）
 ## 怎么用
 
 ```powershell
-# 1. 查看镜像结构现状（当前 tb/ vectors/ scripts/ 均存在，尚无文件）
-Get-ChildItem -Recurse D:\zynq-yolo\sim
+# 1. 全部用例回归（令牌判定：看 SIM_PASS / SIM_FAIL，不看退出码）
+& D:\python\python.exe sim\scripts\run_sim.py
+mingw32-make sim                     # 等价（Makefile 转发）
 
-# 2. 为一个 RTL 模块建用例（先建镜像目录，再建 x_tb.v）
-New-Item -ItemType Directory -Force D:\zynq-yolo\sim\tb\common
-#   -> 新建 D:\zynq-yolo\sim\tb\common\inf_reset_sync_tb.v
-#   -> 激励放 D:\zynq-yolo\sim\vectors\
+# 2. 单个用例 / 打开逐拍打印
+& D:\python\python.exe sim\scripts\run_sim.py --only vid_dvp_capture
+& D:\python\python.exe sim\scripts\run_sim.py --only vid_dvp_capture --trace
 
-# 3. 跑回归：由 sim/scripts/ 下的入口脚本驱动（脚本尚未创建，见下方 TODO）
-#    TODO: sim/scripts/run_regression.ps1 —— 批量编译+仿真+汇总 PASS/FAIL
-
-# 4. 结论记录：本机工具链仅 Vivado / Vitis / Vitis_HLS 2020.2（xsim 随之）；
-#    仿真结果摘要写入 ../build/README.md 所述报告体系或 ../report/
+# 3. 列出用例表
+& D:\python\python.exe sim\scripts\run_sim.py --list
 ```
+
+引擎选择：`auto` 先找 iverilog（本机 `D:\iverilog\bin`，快速回归），没有就退到
+Vivado 2020.2 的 `xvlog/xelab/xsim`。**官方工具链是 Vivado xsim**；iverilog 只是
+本机快检，RTL 统一按 Verilog-2001 可综合子集写。产物（`.vvp`/日志）只落
+`build/sim/`，不进 git。
 
 > 依赖的本机环境事实见 [`../docs/repo_spec.md`](../docs/repo_spec.md) §6：器件 `xc7z020clg400-2`，工具链 **2020.2**。

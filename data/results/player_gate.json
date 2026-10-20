@@ -1,6 +1,6 @@
 {
  "tool": "tools/player_gate.py",
- "generated": "2026-10-20T14:02:50+0800",
+ "generated": "2026-10-20T15:03:34+0800",
  "decision": "D013-a：用「取色失败原因」做球员判定门控（颜色是手段）",
  "version": "v2",
  "params": {
@@ -44,7 +44,7 @@
  },
  "n_steps": 1110,
  "n_boxes": 12585,
- "wall_time_s": 113.8,
+ "wall_time_s": 172.0,
  "ablation": {
   "after": {
    "n_kept": 12487,
@@ -1403,8 +1403,8 @@
      86.8,
      99.5
     ],
-    "share_in_this_run": 0.371,
-    "n_stratum_est_on_disk": 107.8
+    "n_stratum_est_on_diag_run": 107.8,
+    "share_assumed_from_cp": 0.371
    },
    "color": {
     "n_labeled": 39,
@@ -1416,8 +1416,8 @@
      29.3,
      59.0
     ],
-    "share_in_this_run": 0.4441,
-    "n_stratum_est_on_disk": 90.1
+    "n_stratum_est_on_diag_run": 90.1,
+    "share_assumed_from_cp": 0.4441
    },
    "toosmall": {
     "n_labeled": 31,
@@ -1429,8 +1429,8 @@
      5.1,
      28.9
     ],
-    "share_in_this_run": 0.1468,
-    "n_stratum_est_on_disk": 272.5
+    "n_stratum_est_on_diag_run": 272.5,
+    "share_assumed_from_cp": 0.1468
    },
    "rect": {
     "n_labeled": 37,
@@ -1442,8 +1442,8 @@
      51.5,
      80.4
     ],
-    "share_in_this_run": 0.0381,
-    "n_stratum_est_on_disk": 1023.6
+    "n_stratum_est_on_diag_run": 1023.6,
+    "share_assumed_from_cp": 0.0381
    }
   },
   "_source": "data/annot/scores2.json（第二批 159 框人工标注；kappa=0.226 ⇒ 只用相对高低）",
@@ -1523,8 +1523,12 @@
     "n_labeled": 39,
     "N_rate": 0.9743589743589743,
     "n_N_in_sample": 38,
-    "n_N_est": 102.4,
-    "real_recall_est": 0.85
+    "share_assumed_from_cp": 0.371,
+    "n_kept_in_stratum": 802,
+    "n_N_est": 764.9,
+    "real_recall_est": 0.114,
+    "n_stratum_boxes_est": 785.0,
+    "recall_est_clamped": false
    },
    "rect": {
     "n_dropped_by_gate": 11,
@@ -1532,8 +1536,12 @@
     "n_labeled": 37,
     "N_rate": 0.6756756756756757,
     "n_N_in_sample": 25,
-    "n_N_est": 656.2,
-    "real_recall_est": 0.017
+    "share_assumed_from_cp": 0.0381,
+    "n_kept_in_stratum": 199,
+    "n_N_est": 54.5,
+    "real_recall_est": 0.202,
+    "n_stratum_boxes_est": 80.6,
+    "recall_est_clamped": false
    },
    "color": {
     "n_dropped_by_gate": 0,
@@ -1541,17 +1549,24 @@
     "n_labeled": 39,
     "N_rate": 0.4358974358974359,
     "n_N_in_sample": 17,
-    "n_N_est": 38.3,
-    "real_recall_est": 0.0
+    "share_assumed_from_cp": 0.4441,
+    "n_kept_in_stratum": 1017,
+    "n_N_est": 409.6,
+    "real_recall_est": 0.0,
+    "n_stratum_boxes_est": 939.7,
+    "recall_est_clamped": false
    }
   },
   "n_N_in_labeled_sample": 84,
   "n_labeled_total": 146,
   "sample_N_rate_weighted": 0.575,
   "n_drop_total": 98,
-  "n_N_est_total": 796.9,
-  "real_recall_est_total": 1.167,
-  "biggest_gap": "rect",
+  "n_N_est_total": 1229.0,
+  "real_recall_est_total_raw": 0.08,
+  "real_recall_est_total": null,
+  "coverage_status": "ok",
+  "n_hi_unknown_run": 2116,
+  "biggest_gap": "purity",
   "caveats": [
    "层内 N_rate 来自标注（kappa=0.226，只可信相对高低）",
    "stratum_true_share 来自另一次运行的分布，与本 run 不是同一批框",
@@ -1567,9 +1582,12 @@
    "reason": "rect",
    "label_nonplayer_pct": 67.6,
    "n_labeled": 37,
-   "n_N_est": 656.2,
+   "n_N_est": 54.5,
+   "n_stratum_boxes_est": 80.6,
    "n_dropped_by_gate": 11,
-   "text": "标注：rect 层 67.6% 非球员（n=37）；按抽样率折回盘面约 656 个非球员框，而门控只丢了其中 11 个 ⇒ 门控在 rect 层几乎没起作用。这是 precision 上最大的漏网点，不是 recall 问题。",
+   "n_kept_by_gate": 199,
+   "measure_source_agreement": 2.6,
+   "text": "本 run 落在 rect 失败桶的框 **210 个（实测：丢 11 + 留 199）**；按第二批标注那次运行的层占比折算应约 80.6 个（2.6 倍差）。标注层内 N 率 67.6%（n=37）⇒ 若按标注，这桶里约 54.5 个是非球员，而门控只丢了 11 个。两把尺子差这么多 ⇒ 缺口大小无法定论，只能把「rect 层门控几乎不下手」当成**待测事实**（见文档 §5.1(a)）。",
    "falsifiable_prediction": "在这些框里抽 K 个上看，门控判 player/unknown 的比例应接近 1 − 标注 N率；若实测显著更低，说明 rect 层的颜色兜底（整框取色 / hull 复检）确实救回了球员"
   },
   {
@@ -1577,9 +1595,12 @@
    "reason": "purity",
    "label_nonplayer_pct": 97.4,
    "n_labeled": 39,
-   "n_N_est": 102.4,
+   "n_N_est": 764.9,
+   "n_stratum_boxes_est": 785.0,
    "n_dropped_by_gate": 87,
-   "text": "标注：purity 层 97.4% 非球员（n=39，几乎是纯净的非球员层）；按抽样率折回盘面约 102 个非球员框，门控只丢了 87 个。场内率那一条（对照 A）不能反驳它 —— 场内有裁判、教练、场边工作人员。",
+   "n_kept_by_gate": 802,
+   "measure_source_agreement": 1.1,
+   "text": "purity 层是全案最大的分歧点。本 run 落在该桶的框 **889 个（实测：丢 87 + 留 802）**，留下的 802 个场内率 100%、h 中位 37.8 px；而标注说这层 97.4% 非球员（n=39，按那次运行的层占比只折算得出约 764.9 个框，与实测差 1.1 倍）。两者无法同时成立，本轮**不裁决**（见文档 §5.1(a)）：场内率那一条不能单独反驳标注（场内有裁判/教练/工作人员）；标注也不能单独推翻 800+ 个场内正常尺度的框。",
    "falsifiable_prediction": "若这一层真是非球员，它们应当**跨帧不稳定**：同一人被检出的帧占比应低于球员层。抽 20 个测一下即可证伪"
   },
   {
@@ -1706,6 +1727,8 @@
   "B 组的 stride=8，相邻处理帧间隔 0.32 s；max_age=3 ⇒ 单帧丢弃会被掩码吸收，B 组只能测到『连续多帧丢弃』的碎片化，测不到一次性丢帧；buffer 口径只补**被门控判 staff 的框**（不是『没匹配上的框』，后者会凭空造出连续性）",
   "素材仅 12 段、同一场比赛、单机位、红/白队服；白色队区分度天生弱",
   "第二批标注 kappa=0.226、P/N 真冲突 27% ⇒ 标注只用于『层间相对高低』，不与本文件的绝对数字做交叉验证",
-  "hull_purity 用的是「球衣色像素在其凸包面积中的占比」，阈值 0.60 不是从标注集调的，敏感性见 docs/player_gate_v1.md §5"
+  "hull_purity 用的是「球衣色像素在其凸包面积中的占比」，阈值 0.60 不是从标注集调的，敏感性见 docs/player_gate_v1.md §5",
+  "precision_proxy 只是**层内 N 率 × 层假定占比**的折算（层假定占比来自另一次运行），本 run 的估计量(≈57 框)甚至小于实际丢弃数(98) ⇒ coverage_status=INCONSISTENT，不得当作覆盖率引用；见 docs/player_gate_v1.md §5.1(b)",
+  "标注的 (clip,frame,box_idx) 不是框身份（box_idx 是层内 enumerate 下标，labels.csv 73 行仅 61 个唯一值、labels2.csv 159 行仅 115 个）⇒ 本文件零逐框对齐；alignment_policy.n_boxes_aligned_one_to_one = 0"
  ]
 }

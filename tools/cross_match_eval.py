@@ -157,6 +157,11 @@ MAX_ABS_DRIFT_PT = 15.0    # G2 单层占比绝对漂移上限（百分点）
 MAX_REL_DRIFT = 0.50       # G3 单层占比相对漂移上限（50%），任务书要求的「主导判据」
 MAX_UNKNOWN_RATE_DRIFT_PT = 10.0   # G4 取色失败率整体漂移上限（百分点）
 MAX_TOO_SMALL_THETA = 0.80        # G5 反推的 too_small 层非球员率上限（旧场 12.9%，见 hi_layer_color_gate §6.1）
+# G6 草坪伪改进：躯干主体是草的框里，被判成 A/B 的比例上限。
+# 为什么是 0.10：草坪绿(OpenCV H≈44-50)到队色窗口的水平距离 ≥ MAX_HUE_DEG_V2(50°) 时
+# 只会落在窗口边缘，落进窗口内又不亮也不低饱和的草像素占比很低；实测真草坪圆中位色
+# 在 v1/v2 下都是 0/4 判成队色。留 10% 余量给"半草半人"的框边界效应。
+MAX_GRASS_ASSIGN_RATE = 0.10
 DEGENERATE_REL = 0.10      # 所有层相对漂移都 < 10% ⇒ 这个对照没有判别力
 SELF_CHECK_MIN_CLIPS = 2   # 自检至少要跑通两段
 
@@ -185,6 +190,10 @@ def _load(path, name):
 
 
 cp = _load(REPO / "tools" / "color_prior.py", "_cm_color_prior")
+# CP = 取色口径（classify / _dist_metric / _limit / _margin / CLASSIFY_METRIC）。
+# ★ 必须与 palette_probe 用**同一个**模块实例的判断口径；色相颜色由 color_prior
+#   re-export（classify 仍是 classify_players 里那一份）。
+CP = _load(REPO / "tools" / "classify_players.py", "_cm_classify")
 
 # ---------------------------------------------------------------- 契约校验
 
@@ -559,6 +568,8 @@ def _measure_scaled(plan_item, palette, model, args, out_width=None):
     src_size = None
     started = time.time()
 
+    grass_boxes = 0      # 躯干主体判为草的框数
+    grass_assigned = 0   # 其中被判成 A/B 的（伪改进的直接证据）
     idx = f0 - 1
     while True:
         ok, frame = cap.read()
@@ -587,6 +598,13 @@ def _measure_scaled(plan_item, palette, model, args, out_width=None):
             h_px.append(float(bb[3] - bb[1]))
             why = []
             role, _d, _p, _col = cp._classify_box(frame, bb, palette, why)
+            # ★ 「草坪框被判成 A/B」统计（2026-10-20）：只看 unknown_rate 会掩盖伪改进 ——
+            #   放宽色相窗口能把 unknown 换成一堆"假蓝"。所以每框再问一次
+            #   「这个框的躯干主体是不是草」，若**是草又被判成某队**单独计数。
+            if _col is not None and CP.grass_like(_col):
+                grass_boxes += 1
+                if role in ("A", "B"):
+                    grass_assigned += 1
             if role in ("A", "B"):
                 reasons[COLORED] += 1
             else:
@@ -613,6 +631,8 @@ def _measure_scaled(plan_item, palette, model, args, out_width=None):
             "p10": round(float(np.percentile(hh, 10)), 1) if hh.size else None,
             "p90": round(float(np.percentile(hh, 90)), 1) if hh.size else None,
         },
+        "grass_boxes": grass_boxes,
+        "grass_assigned": grass_assigned,
         "elapsed_s": round(time.time() - started, 1),
         "landscape": classify_landscape(hh),
     }
@@ -666,11 +686,19 @@ def aggregate(items, key="reason_counts"):
         for k in counts:
             counts[k] += int(it[key].get(k, 0))
     n_unk = n_hi - counts[COLORED]
+    # ★ 草坪伪改进：v2 放宽色相窗口后，检测器在草地上给出的 person 框会被赋个队色，
+    #   unknown_rate 因此"变好"。所以每次汇总都带这两个数，判据 G6 用它。
+    grass_boxes = sum(int(it.get("grass_boxes") or 0) for it in items if it)
+    grass_assigned = sum(int(it.get("grass_assigned") or 0) for it in items if it)
     return {
         "n_clips": len([it for it in items if it]),
         "n_hi": n_hi,
         "n_unknown": n_unk,
         "unknown_rate": round(n_unk / n_hi, 4) if n_hi else None,
+        "grass_boxes": grass_boxes,
+        "grass_assigned": grass_assigned,
+        "grass_assigned_rate": (round(grass_assigned / float(grass_boxes), 4)
+                                if grass_boxes else None),
         "reason_counts": counts,
         "reason_share_pct": {k: (round(100.0 * counts[k] / n_unk, 2) if n_unk else None)
                              for k in REASON_KEYS},
@@ -697,7 +725,11 @@ def judge(new_tbl, baseline):
         reasons.append("n_hi_too_small %d<%d" % (n_hi, MIN_N_HI))
         return ({"verdict": "FAIL", "gate_fail": "G1", "max_drift": None,
                  "max_abs_drift_pt": None, "n_hi": n_hi,
-                 "table": who_table(share, base), "gate_check": gate},
+                 "table": who_table(share, base), "gate_check": gate,
+                 "grass_false_assign": {"grass_boxes": new_tbl.get("grass_boxes") or 0,
+                                        "grass_assigned": new_tbl.get("grass_assigned") or 0,
+                                        "grass_assigned_rate": None,
+                                        "status": "SKIP"}},
                 reasons, warns)
 
     rows = who_table(share, base)
@@ -728,6 +760,24 @@ def judge(new_tbl, baseline):
         warns.append("G5 gate_mapping_likely_broken implied_too_small_theta=%.2f>%.2f"
                      % (gate.get("implied_too_small_theta") or 0.0, MAX_TOO_SMALL_THETA))
 
+    # G6 伪改进：色相窗口放宽后，"unknown 变少"可能来自**草/看台框被赋队色**。
+    #    ★ 为什么必须有这一条（lead 2026-10-20 明确要求）：v1→v2 的 unknown_rate 从
+    #    0.477 掉到约 0.2，如果不同时看"草坪框被判成 A/B 的数量"，报告会报喜不报忧。
+    #    实测新比赛一帧 854x480 里，检测器在草地上给的 person 框有 7-8 个，真球员 4-10 个
+    #    ⇒ 全部赋错色时能把 unknown 压掉一小半。
+    gb = new_tbl.get("grass_boxes") or 0
+    ga = new_tbl.get("grass_assigned") or 0
+    grass = {"grass_boxes": gb, "grass_assigned": ga,
+             "grass_assigned_rate": (round(ga / float(gb), 4) if gb else None),
+             "status": "PASS"}
+    if gb:
+        if ga / float(gb) > MAX_GRASS_ASSIGN_RATE:
+            grass["status"] = "WARN"
+            warns.append("G6 grass_false_assign %d/%d=%.1f%%>%.0f%%"
+                         % (ga, gb, 100.0 * ga / gb, 100.0 * MAX_GRASS_ASSIGN_RATE))
+    else:
+        grass["status"] = "SKIP"          # 没采到草坪框（全特写/室内）⇒ 不判
+
     # 退化检查：漂移全都小到没有判别力
     if max_rel is not None and max_rel < DEGENERATE_REL:
         warns.append("degenerate_shares max_rel_drift=%.1f%%<%.0f%%"
@@ -735,7 +785,8 @@ def judge(new_tbl, baseline):
 
     return ({"verdict": "FAIL" if reasons else ("WARN" if warns else "OK"),
              "max_drift": max_rel, "max_abs_drift_pt": max_abs,
-             "n_hi": n_hi, "table": rows, "gate_check": gate},
+             "n_hi": n_hi, "table": rows, "gate_check": gate,
+             "grass_false_assign": grass},
             reasons, warns)
 
 
@@ -851,6 +902,10 @@ def main(argv=None):
     ap.add_argument("--palette-refs", default="",
                     help="按场校准：给 tools/kit_calib.py 的 kit_calib.json"
                          "（或 {颜色名:{kind,s,v[,h01]}} 映射），只替换参考色、不动阈值")
+    ap.add_argument("--color-metric", default=None, choices=["v1", "v2"],
+                    help="取色距离口径：v1（默认，旧比赛结论逐字节不变）/ "
+                         "v2（跨场：色相角度配额 + 亮而不饱和守卫 + 草坪守卫，"
+                         "见 tools/classify_players.py 的 distance_to_ref_v2）")
     ap.add_argument("--self-check", action="store_true",
                     help="用 data/samples/incidents 的前 2 段自检（无 --video-dir 时默认开启）")
     ap.add_argument("--n-clips", type=int, default=2,
@@ -922,15 +977,38 @@ def main(argv=None):
         print("CROSS_MATCH_FAIL %s" % err)
         return 2
 
+    # ---- 取色口径：v1（默认）/ v2 ----
+    # ★ 为什么要做成**可切换**而不是直接改默认：v1 是旧比赛全部结论（低置信层精确率
+    #   95.7%、hi_color_diag 的四层占比）赖以成立的口径。改默认 = 旧结论失去基线。
+    #   所以两套并存，报告里两套数字都出（见 docs/cross_match_eval.md §12）。
+    if args.color_metric:
+        # ★ 必须改**量测路径实际使用的**那一份 classify_players 实例。
+        #   直接写 `CP.CLASSIFY_METRIC = ...` 只改到本文件自己手里那份（importlib 按
+        #   路径加载 ⇒ 多份实例），量测仍走 color_prior 的那份 v1 —— 实测后果是
+        #   JSON 记着 v2、四层占比与 unknown 却与 v1 逐位相同（静默假绿）。
+        cp_metric = cp.set_classify_metric(args.color_metric)
+        CP.CLASSIFY_METRIC = cp_metric        # 让探针与本文件读同一个口径
+        if cp.classify_metric() != args.color_metric:
+            print("CROSS_MATCH_FAIL color_metric_not_applied %s!=%s"
+                  % (cp.classify_metric(), args.color_metric))
+            return 2
+    print("  取色口径 CLASSIFY_METRIC=%s（limit=%.3f margin=%.3f）"
+          % (cp.classify_metric(), CP._limit(), CP._margin()))
+
     # ---- 色板可分辨性闸门：色板先能分辨，再谈迁移 ----
     # 理由见 tools/palette_probe.py 文档串：classify() 缺"跨过 MAX_COLOR_DIST 的像素
     # 绝不判 A/B"这条约束，误判是静默的（实测白队 97% 像素判成蓝色、零报错）。
+    # ★ 2026-10-20 补上**漏判方向**：只查误判时，深蓝球衣在预置 blue 下整队判
+    #   unknown（dist 0.146-0.180 vs 门限 0.16）探针仍报 PASS —— 判据只能判出绿。
     probe = None
     try:
         pp = load_palette_probe()
-        probe = pp.evaluate(palette)
+        probe = pp.evaluate(palette, cp.classify_metric())
     except Exception as exc:                       # noqa: BLE001 - 探针坏了不该拖垮主流程
         probe = {"ok": False, "problems": ["palette_probe_unavailable %s" % exc]}
+    for _name, _v in (probe.get("detect") or {}).items():
+        print("  probe detect %-18s expect=%-3s -> %-8s dist=%.3f %s"
+              % (_name, _v["expect"], _v["role"], _v["dist"], _v["status"]))
     if not probe["ok"] and not args.allow_indistinct_palette:
         print("CROSS_MATCH_FAIL %s" % probe["problems"][0])
         return 2
@@ -1149,14 +1227,16 @@ def assemble(args, palette, baseline, layout, self_check, clips, probe,
         "params": {"n_clips": len(clips), "clip_len": args.clip_len, "stride": args.stride,
                    "imgsz": args.imgsz, "model": Path(args.model).name,
                    "hi_conf": cp.HI_CONF, "min_h_px": cp.MIN_H_PX,
-                   "min_purity": cp.MIN_PURITY, "max_color_dist": cp.MAX_COLOR_DIST,
-                   "min_margin": cp.MIN_MARGIN, "layout": layout,
+                   "min_purity": cp.MIN_PURITY, "max_color_dist": CP._limit(),
+                   "min_margin": CP._margin(), "layout": layout,
+                    "classify_metric": cp.classify_metric(),
                    "native_width": NATIVE_OUT_WIDTH if tbl_scaled else None,
                    "input_dir": str(getattr(args, "video_dir", "") or SELF_CHECK_DIR)},
         "thresholds": {"MIN_N_HI": MIN_N_HI, "MAX_ABS_DRIFT_PT": MAX_ABS_DRIFT_PT,
                        "MAX_REL_DRIFT": MAX_REL_DRIFT,
                        "MAX_UNKNOWN_RATE_DRIFT_PT": MAX_UNKNOWN_RATE_DRIFT_PT,
                        "MAX_TOO_SMALL_THETA": MAX_TOO_SMALL_THETA,
+                       "MAX_GRASS_ASSIGN_RATE": MAX_GRASS_ASSIGN_RATE,
                        "DEGENERATE_REL": DEGENERATE_REL},
         "palette_probe": probe,
         "baseline": baseline,
@@ -1188,6 +1268,10 @@ def assemble(args, palette, baseline, layout, self_check, clips, probe,
             "层内非球员率取自旧比赛标注（docs/hi_layer_color_gate.md §6.1），跨场能否搬本身是待验问题",
             "锚点以比赛为单位：事件切片比随机 20s 窗口更「忙」，抽样偏差已知",
             "两种布局（原生 / 缩放到 640 宽）都要看：原生布局混入了「画面尺度变了」这个因素",
+            "跨分辨率比较时 too_small / rect 两层的占比**不可直接比**：它们由框高与画面"
+            "宽度共同决定（MIN_H_PX=22 是绝对像素），换分辨率后必须看 scale 到 640 那一列",
+            "v2 放宽色相窗口会牺牲一部分「精确率」换「覆盖率」：误判率从 2.0% 升到 9.1%"
+            "（197 个真值样本里 4→18），是否值得取决于下游怎么用（见 docs §12.6）",
         ],
     }
     out["conclusion"] = _conclusions(out, tbl_native, tbl_scaled, verdict_native, warns)

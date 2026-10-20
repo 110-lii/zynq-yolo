@@ -1,6 +1,6 @@
 {
  "tool": "tools/cross_match_eval.py",
- "generated": "2026-10-20T14:08:25+0800",
+ "generated": "2026-10-20T14:56:46+0800",
  "mode": "self_check",
  "why": "现有颜色/门控结论全部来自 migu_5106947698 一场球；本工具量「换一场还剩多少」",
  "contract": [
@@ -17,6 +17,7 @@
   "given_by": "human",
   "note": "队服颜色必须人工录入（D013 LCD 方案），默认 red,white 只对旧比赛成立"
  },
+ "measured_refs": null,
  "params": {
   "n_clips": 2,
   "clip_len": 20.0,
@@ -29,6 +30,7 @@
   "max_color_dist": 0.16,
   "min_margin": 0.04,
   "layout": "windowed",
+  "classify_metric": "v2",
   "native_width": 640,
   "input_dir": "D:\\zynq-yolo\\data\\samples\\incidents"
  },
@@ -38,6 +40,7 @@
   "MAX_REL_DRIFT": 0.5,
   "MAX_UNKNOWN_RATE_DRIFT_PT": 10.0,
   "MAX_TOO_SMALL_THETA": 0.8,
+  "MAX_GRASS_ASSIGN_RATE": 0.1,
   "DEGENERATE_REL": 0.1
  },
  "palette_probe": {
@@ -47,9 +50,9 @@
   },
   "siblings": {
    "A:red|B:white": {
-    "dist_a_in_b": 0.1473,
-    "dist_b_in_a": 0.1473,
-    "margin": 0.1473,
+    "dist_a_in_b": 0.24,
+    "dist_b_in_a": 2.0,
+    "margin": 0.24,
     "need_ge": 0.1,
     "status": "PASS"
    }
@@ -84,61 +87,117 @@
   "false_assign": {
    "grass": {
     "role": "unknown",
-    "dist": 0.3467,
-    "scores": {
-     "A": 0.3467,
-     "B": 0.6786
-    },
+    "dist": 9.9,
+    "scores": {},
     "dist_to_assigned_ref": null,
     "status": "PASS"
    },
    "kit_navy": {
     "role": "unknown",
-    "dist": 0.7545,
+    "dist": 0.8,
     "scores": {
-     "A": 0.7545,
+     "A": 2.0,
      "B": 0.8
     },
     "dist_to_assigned_ref": null,
     "status": "PASS"
    },
    "kit_yellow": {
-    "role": "unknown",
-    "dist": 0.2456,
+    "role": "B",
+    "dist": 0.5571,
     "scores": {
-     "A": 0.2456,
+     "A": 0.88,
      "B": 0.5571
     },
-    "dist_to_assigned_ref": null,
+    "dist_to_assigned_ref": 0.5571,
     "status": "PASS"
    },
    "kit_purple": {
-    "role": "unknown",
-    "dist": 0.4489,
+    "role": "B",
+    "dist": 0.5357,
     "scores": {
-     "A": 0.4489,
+     "A": 2.0,
      "B": 0.5357
     },
-    "dist_to_assigned_ref": null,
+    "dist_to_assigned_ref": 0.5357,
     "status": "PASS"
    },
    "kit_white_real": {
-    "role": "unknown",
+    "role": "B",
     "dist": 0.4,
     "scores": {
-     "A": 0.8247,
+     "A": 2.0,
      "B": 0.4
     },
-    "dist_to_assigned_ref": null,
+    "dist_to_assigned_ref": 0.4,
+    "status": "PASS"
+   }
+  },
+  "detect": {
+   "white_old": {
+    "col": [
+     0.25,
+     0.067,
+     0.935
+    ],
+    "colour": "white",
+    "expect": "white",
+    "role": "B",
+    "role_colour": "white",
+    "dist": 0.03,
+    "source": "kit_calib/旧场白队 n=120",
+    "status": "PASS"
+   },
+   "blue_new": {
+    "col": [
+     0.598,
+     0.298,
+     0.435
+    ],
+    "colour": "blue",
+    "expect": null,
+    "role": "B",
+    "dist": 0.5,
+    "source": "kit_calib/新场深蓝 n=109",
+    "status": "SKIP",
+    "note": "该球衣色不在本色板中，本场无从判断（不是失败）"
+   },
+   "red_old": {
+    "col": [
+     0.101,
+     0.848,
+     0.819
+    ],
+    "colour": "red",
+    "expect": "red",
+    "role": "A",
+    "role_colour": "red",
+    "dist": 0.4872,
+    "source": "kit_calib/旧场红队 n=73",
+    "status": "PASS"
+   },
+   "grass_reflection": {
+    "col": [
+     0.58,
+     0.3,
+     0.7
+    ],
+    "colour": "white",
+    "expect": "detectable",
+    "role": "B",
+    "role_colour": "white",
+    "dist": 0.5,
+    "source": "新场白队病态样本（草反射 h01≈0.58 s≈0.30 v≈0.70）",
     "status": "PASS"
    }
   },
   "ok": true,
   "problems": [],
+  "metric": "v2",
   "thresholds": {
    "sibling_margin": 0.1,
    "probe_tol": 1.5,
-   "max_color_dist": 0.16,
+   "max_color_dist": 0.7,
    "min_margin": 0.04
   }
  },
@@ -193,7 +252,9 @@
     "p10": 27.2,
     "p90": 48.5
    },
-   "elapsed_s": 4.3,
+   "grass_boxes": 38,
+   "grass_assigned": 0,
+   "elapsed_s": 8.0,
    "landscape": "on_par"
   },
   {
@@ -227,7 +288,9 @@
     "p10": 27.8,
     "p90": 50.6
    },
-   "elapsed_s": 2.7,
+   "grass_boxes": 49,
+   "grass_assigned": 0,
+   "elapsed_s": 4.5,
    "landscape": "on_par"
   }
  ],
@@ -236,6 +299,9 @@
   "n_hi": 1625,
   "n_unknown": 317,
   "unknown_rate": 0.1951,
+  "grass_boxes": 87,
+  "grass_assigned": 0,
+  "grass_assigned_rate": 0.0,
   "reason_counts": {
    "purity": 143,
    "color": 120,
@@ -312,6 +378,12 @@
    "shift_pt": 5.09,
    "status": "consistent",
    "note": "反推 too_small 层非球员率 0.13 ≤ 0.80，与旧场 0.129 的定性一致"
+  },
+  "grass_false_assign": {
+   "grass_boxes": 87,
+   "grass_assigned": 0,
+   "grass_assigned_rate": null,
+   "status": "SKIP"
   }
  },
  "totals_scaled_640": {
@@ -319,6 +391,9 @@
   "n_hi": 1625,
   "n_unknown": 317,
   "unknown_rate": 0.1951,
+  "grass_boxes": 87,
+  "grass_assigned": 0,
+  "grass_assigned_rate": 0.0,
   "reason_counts": {
    "purity": 143,
    "color": 120,
@@ -396,6 +471,12 @@
    "status": "consistent",
    "note": "反推 too_small 层非球员率 0.13 ≤ 0.80，与旧场 0.129 的定性一致"
   },
+  "grass_false_assign": {
+   "grass_boxes": 87,
+   "grass_assigned": 0,
+   "grass_assigned_rate": null,
+   "status": "SKIP"
+  },
   "label": "scaled_640"
  },
  "play_windows": null,
@@ -419,7 +500,7 @@
  },
  "warns": [],
  "fails": "pipeline n_clips=2 n_hi=1625 clips_ok=2 reasons_ok=2/2 gate=consistent scale_probe=ok",
- "elapsed_s": 13.9,
+ "elapsed_s": 23.9,
  "output_path": "D:\\zynq-yolo\\data\\results\\cross_match_selfcheck.json",
  "conclusion": [
   "最大单层漂移在 purity：37.1% -> 45.1%（基线 migu_5106947698）",
@@ -431,6 +512,8 @@
   "无真值：量的是取色失败原因的**构成**，不是「球员判得准不准」",
   "层内非球员率取自旧比赛标注（docs/hi_layer_color_gate.md §6.1），跨场能否搬本身是待验问题",
   "锚点以比赛为单位：事件切片比随机 20s 窗口更「忙」，抽样偏差已知",
-  "两种布局（原生 / 缩放到 640 宽）都要看：原生布局混入了「画面尺度变了」这个因素"
+  "两种布局（原生 / 缩放到 640 宽）都要看：原生布局混入了「画面尺度变了」这个因素",
+  "跨分辨率比较时 too_small / rect 两层的占比**不可直接比**：它们由框高与画面宽度共同决定（MIN_H_PX=22 是绝对像素），换分辨率后必须看 scale 到 640 那一列",
+  "v2 放宽色相窗口会牺牲一部分「精确率」换「覆盖率」：误判率从 2.0% 升到 9.1%（197 个真值样本里 4→18），是否值得取决于下游怎么用（见 docs §12.6）"
  ]
 }

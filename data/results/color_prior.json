@@ -1,6 +1,6 @@
 {
  "tool": "tools/color_prior.py",
- "generated": "2026-10-20T14:18:04+0800",
+ "generated": "2026-10-20T14:38:48+0800",
  "decision": "D013-a：颜色是提升球员识别的手段，不是目标",
  "mode": "color_prior",
  "palette": {

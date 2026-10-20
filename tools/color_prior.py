@@ -82,7 +82,12 @@ _cp = _ilu.module_from_spec(_cp_spec)
 # ★ 必须先登记到 sys.modules 再 exec：classify_players.py 里若有 @dataclass，
 #   dataclasses 会去 sys.modules 找 cls.__module__ 对应的模块，找不到就
 #   AttributeError: 'NoneType' object has no attribute '__dict__'。
-sys.modules.setdefault("_cp", _cp)
+# ★ 用 setdefault 会**静默复用**已存在的 `_cp`：若某个模块先加载了 classify_players
+#   并把自己那份登记成 "_cp"，这里就会拿到同一份实例、或者（更糟）拿到一份阈值不同的
+#   另一份。2026-10-20 实测踩到：`cross_match_eval --color-metric v2` 只改了自己手里
+#   一份的 CLASSIFY_METRIC，量测路径走的却是本文件这一份 ⇒ JSON 标着 v2、数字逐位是 v1。
+#   ⇒ 这里**强制覆盖**：谁最后加载谁说了算，全进程只有一份权威实例。
+sys.modules["_cp"] = _cp
 _cp_spec.loader.exec_module(_cp)
 
 PALETTE_REF = _cp.PALETTE_REF
@@ -95,6 +100,28 @@ classify = _cp.classify
 torso_color = _cp.torso_color
 torso_rect = _cp.torso_rect
 distance_to_ref = _cp.distance_to_ref
+
+
+def set_classify_metric(metric):
+    """切换取色口径（"v1"/"v2"），返回**实际生效**的口径。
+
+    ★ 为什么必须走这个函数而不是直接赋值：`importlib` 按路径加载会产出**多份模块
+      实例**（本文件一份、调用方各自一份、player_gate 里又一份）。2026-10-20 实测踩到：
+      `cross_match_eval.py --color-metric v2` 只改了**它自己手里那份**实例的
+      `CLASSIFY_METRIC`，而量测路径走的是本文件这一份 —— 结果 JSON 里
+      `classify_metric: "v2"` 写着 v2，四层占比与 unknown_rate 却与 v1 **逐位相同**。
+      这正是本仓库反复记过的「静默假绿」：不报错、数字看着合理、结论是错的。
+      ⇒ 口径只有一个权威落点（本模块的 `_cp` 实例），要改只能从这里改。
+    """
+    if metric not in ("v1", "v2"):
+        raise SystemExit("bad classify metric: %r（只接受 v1 / v2）" % (metric,))
+    _cp.CLASSIFY_METRIC = metric
+    return _cp.CLASSIFY_METRIC
+
+
+def classify_metric():
+    """当前**实际生效**的取色口径（量测路径用的那一份）。"""
+    return _cp.CLASSIFY_METRIC
 
 # ②b 统一门控（--gate）：加载 tools/player_gate.py。
 # ★ 与上面同一纪律：importlib 按路径加载 + 加载前设 dont_write_bytecode。

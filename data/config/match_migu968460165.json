@@ -1,19 +1,17 @@
 {
- "schema": "zynq-yolo/match-config/1",
+ "schema": "zynq-yolo/match-config/2",
  "match": {
   "id": "migu968460165",
-  "entered_at": "2026-10-20T15:35:59+0800"
+  "entered_at": "2026-10-20T16:27:28+0800"
  },
  "teams": {
   "A": {
    "name": "大连英博海发",
-   "kit_color": "white",
-   "first_half_side": "first_left"
+   "kit_color": "white"
   },
   "B": {
    "name": "深圳新鹏城",
-   "kit_color": "blue",
-   "first_half_side": "first_right"
+   "kit_color": "blue"
   }
  },
  "referee": {
@@ -24,6 +22,12 @@
   "note": "按场实测参考色（tools/kit_calib.py 产出）；留空则用预置 PALETTE_REF"
  },
  "entered_by": "human",
- "source": "cli",
- "why": "D013：LCD 触屏作为数据输入端——颜色与半场由人录入，不由算法猜"
+ "source": "web_touch_mock (8767)",
+ "why": "D013：LCD 触屏作为数据输入端——颜色与半场由人录入，不由算法猜",
+ "first_half": {
+  "a_side": "left",
+  "swap_at_halftime": true,
+  "halftime_s": null
+ },
+ "sides_reference": "broadcast_image_left_right（画面左右；中场按 swap_at_halftime 对调）"
 }

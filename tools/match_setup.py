@@ -29,13 +29,22 @@ D013 决定把板载 4.3 寸触摸屏当**数据输入端**：赛前由人录入
     & D:\\python\\python.exe tools\\match_setup.py --set `
         --match-id migu968460165 --team-a 大连英博海发 --team-b 深圳新鹏城 `
         --color-a white --color-b blue --ref-color red `
-        --half-a first_left
+        --a-side left
 
     # 3) 查看 / 列表 / 打印可直接复制的下游命令
     & D:\\python\\python.exe tools\\match_setup.py --show migu968460165
     & D:\\python\\python.exe tools\\match_setup.py --list
     & D:\\python\\python.exe tools\\match_setup.py --print-cmd migu968460165 `
         --video "D:\\yt-dlp\\downloads\\migu_968460165\\<全场 mp4>"
+
+半场语义（2026-10-20 修正，用户反馈「半场的选择有问题」）
+----------------------------------------------------------
+只录**一个**字段：`first_half.a_side ∈ {left, right, unknown}`，含义是
+「**A 队在上半场站画面哪一边**」。左右以**转播画面**为准（下游球权/半场逻辑都用
+图像坐标，不用球场坐标，避免"左"指谁不明确）。B 队必然在另一侧，**由 A 推导**，
+不单独录 —— 原 schema 两队各存一个 `first_half_side`，虽然校验了"不能同侧"，但
+冗余字段天然允许录入者填出互相矛盾的值，且没有表达中场交换。
+`swap_at_halftime` 默认 true（足球规则），下游按 `t < halftime_s` 取上半场、之后取对调。
 
 产物
 ----
@@ -44,7 +53,7 @@ D013 决定把板载 4.3 寸触摸屏当**数据输入端**：赛前由人录入
 
 判据令牌
 --------
-    MATCH_SETUP_OK <id> <A颜色>/<B颜色> ref=<裁判颜色>
+    MATCH_SETUP_OK <id> <A颜色>/<B颜色> ref=<裁判颜色> A第一半场=<side>
     MATCH_SETUP_FAIL <reason>        # 颜色名非法 / 两队同名 / 半场非法 / 找不到配置
 """
 from __future__ import annotations
@@ -64,7 +73,10 @@ REPO = Path(__file__).resolve().parents[1]
 TOOLS = REPO / "tools"
 CONFIG_DIR = REPO / "data" / "config"
 
-VALID_HALVES = ("first_left", "first_right", "unknown")
+VALID_SIDES = ("left", "right", "unknown")
+LEGACY_SIDE_MAP = {"first_left": "left", "first_right": "right", "unknown": "unknown"}
+
+SIDE_CN = {"left": "画面左", "right": "画面右", "unknown": "未录"}
 
 
 def _load(path, name):
@@ -103,10 +115,14 @@ def _validate(payload):
     ref = (payload.get("referee") or {}).get("kit_color")
     if ref is not None and ref not in kl.PALETTE_REF:
         probs.append("bad_color_ref %r（可选：%s）" % (ref, ", ".join(COLOR_CHOICES)))
-    for key in ("A", "B"):
-        half = (teams.get(key) or {}).get("first_half_side")
-        if half not in VALID_HALVES:
-            probs.append("bad_half_%s %r（可选：%s）" % (key, half, ", ".join(VALID_HALVES)))
+    fh = payload.get("first_half") or {}
+    if (fh.get("a_side") or "unknown") not in VALID_SIDES:
+        probs.append("bad_a_side %r（可选：%s）" % (fh.get("a_side"), ", ".join(VALID_SIDES)))
+    if not isinstance(fh.get("swap_at_halftime", True), bool):
+        probs.append("bad_swap_at_halftime %r（须为 true/false）" % (fh.get("swap_at_halftime"),))
+    hs = fh.get("halftime_s")
+    if hs is not None and (not isinstance(hs, (int, float)) or hs < 0):
+        probs.append("bad_halftime_s %r（须为 >=0 的数或 null）" % (hs,))
     if ref and ref not in (a, b):
         # 裁判色与队色相近才 WARN：颜色空间上「近」用的是同一把尺子
         for key, c in (("A", a), ("B", b)):
@@ -116,29 +132,67 @@ def _validate(payload):
             if d < kl.MAX_COLOR_DIST:
                 warns.append("referee_color_near_team_%s dist=%.3f（裁判易被判成该队）"
                              % (key, d))
-    if (teams.get("A") or {}).get("first_half_side") == \
-            (teams.get("B") or {}).get("first_half_side") and \
-            (teams.get("A") or {}).get("first_half_side") not in (None, "unknown"):
-        probs.append("same_half_side（两队不可能同侧开局）")
     return probs, warns
 
 
+def a_side_first_half(cfg):
+    """A 队上半场站画面哪一边（left/right/unknown）；B 必然在另一侧。"""
+    return ((cfg.get("first_half") or {}).get("a_side") or "unknown")
+
+
+def b_side_first_half(cfg):
+    a = a_side_first_half(cfg)
+    return {"left": "right", "right": "left"}.get(a, "unknown")
+
+
+def side_of(cfg, team_key, t_sec=None):
+    """team_key ∈ {A,B} 在时刻 t_sec（None=上半场）站画面哪一边。
+    中场（默认 true）交换，t_sec 需给出 halftime_s 才可判断后半场。"""
+    fh = cfg.get("first_half") or {}
+    a = fh.get("a_side") or "unknown"
+    if a not in ("left", "right"):
+        return "unknown"
+    side = a if team_key == "A" else ("right" if a == "left" else "left")
+    hs = fh.get("halftime_s")
+    if fh.get("swap_at_halftime", True) and t_sec is not None and hs is not None and t_sec >= hs:
+        side = "right" if side == "left" else "left"
+    return side
+
+
 def build_payload(match_id, team_a, team_b, color_a, color_b, ref_color,
-                  half_a, half_b, calib_file, source):
+                  a_side, calib_file, source, swap_at_halftime=True, halftime_s=None):
     return {
-        "schema": "zynq-yolo/match-config/1",
+        "schema": "zynq-yolo/match-config/2",
         "match": {"id": match_id, "entered_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")},
         "teams": {
-            "A": {"name": team_a, "kit_color": color_a, "first_half_side": half_a},
-            "B": {"name": team_b, "kit_color": color_b, "first_half_side": half_b},
+            "A": {"name": team_a, "kit_color": color_a},
+            "B": {"name": team_b, "kit_color": color_b},
         },
         "referee": {"kit_color": ref_color},
+        "first_half": {"a_side": a_side, "swap_at_halftime": bool(swap_at_halftime),
+                       "halftime_s": halftime_s},
+        "sides_reference": "broadcast_image_left_right（画面左右；中场按 swap_at_halftime 对调）",
         "calibration": {"refs_file": calib_file,
                         "note": "按场实测参考色（tools/kit_calib.py 产出）；留空则用预置 PALETTE_REF"},
         "entered_by": "human",
         "source": source,
         "why": "D013：LCD 触屏作为数据输入端——颜色与半场由人录入，不由算法猜",
     }
+
+
+def _normalize(cfg):
+    """把 v1 旧 schema（teams[].first_half_side）就地升级为 v2（first_half.a_side）。
+    旧字段 A=first_left ⇔ 新 a_side=left；B 由 A 推导，不再单独记录。"""
+    if cfg.get("first_half") is not None or not cfg.get("teams"):
+        return cfg
+    a_old = ((cfg["teams"].get("A") or {}).get("first_half_side") or "unknown")
+    a_new = LEGACY_SIDE_MAP.get(a_old, "unknown")
+    cfg["first_half"] = {"a_side": a_new, "swap_at_halftime": True, "halftime_s": None}
+    for k in ("A", "B"):
+        (cfg["teams"].get(k) or {}).pop("first_half_side", None)
+    cfg.setdefault("sides_reference", "broadcast_image_left_right（画面左右；中场按 swap_at_halftime 对调）")
+    cfg["schema"] = "zynq-yolo/match-config/2"
+    return cfg
 
 
 def save(payload):
@@ -168,9 +222,17 @@ def load(match_id):
     if not path.exists():
         return None, "config_missing %s" % path
     try:
-        return json.loads(path.read_text(encoding="utf-8")), None
+        cfg = json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:                              # noqa: BLE001
         return None, "config_unreadable %s: %s" % (path, exc)
+    legacy = cfg.get("first_half") is None and any(
+        (cfg.get("teams", {}).get(k) or {}).get("first_half_side")
+        for k in ("A", "B"))
+    if legacy:
+        _normalize(cfg)
+        path.write_text(json.dumps(cfg, ensure_ascii=False, indent=1),
+                        encoding="utf-8", newline="\n")     # 就地迁移旧 schema
+    return cfg, None
 
 
 def print_cmd(cfg, video):
@@ -186,9 +248,12 @@ def print_cmd(cfg, video):
     if refs:
         lines.append("  --palette-refs %s `" % refs)
     lines += ["  --n-clips 12 --play-windows --max-total-s 0"]
-    lines.append("# 裁判色 = %s；半场：A=%s / B=%s"
+    fh = cfg.get("first_half") or {}
+    lines.append("# 裁判色 = %s；第一半场：A=%s（画面），B=%s（推导）；中场交换=%s"
                  % ((cfg.get("referee") or {}).get("kit_color") or "未录",
-                    teams["A"].get("first_half_side"), teams["B"].get("first_half_side")))
+                    SIDE_CN.get(a_side_first_half(cfg), "未录"),
+                    SIDE_CN.get(b_side_first_half(cfg), "未录"),
+                    "开" if fh.get("swap_at_halftime", True) else "关"))
     return "\n".join(lines)
 
 
@@ -206,15 +271,17 @@ HTML = """<!doctype html><html><head><meta charset="utf-8">
  .warn{color:#fdd663} .err{color:#f28b82}
 </style></head><body>
 <h1>赛前输入：队服颜色 / 裁判颜色 / 各自半场</h1>
-<div class="sub">这是板载 4.3 寸触摸屏的**网页模拟**；真机 UI 复用同一份 schema 与校验（D013）。</div>
+<div class="sub">这是板载 4.3 寸触摸屏的**网页模拟**；真机 UI 复用同一份 schema 与校验（D013）。<br>
+半场只录「A 队上半场站画面哪一边」：左右以**转播画面**为准，B 自动在另一侧，中场交换默认开（足球规则）。</div>
 <div class="row"><span class="lbl">比赛 ID</span><input id="mid" type="text" value="migu968460165"></div>
-<div class="row"><span class="lbl">A 队名</span><input id="ta" type="text" value="大连英博海发">
-  <span class="lbl" style="width:70px">先开左半</span><select id="ha"><option value="first_left">是</option><option value="first_right">否</option><option value="unknown">未录</option></select></div>
+<div class="row"><span class="lbl">A 队名</span><input id="ta" type="text" value="大连英博海发"></div>
 <div class="row"><span class="lbl">A 队队服</span><div id="ca" style="display:inline-block"></div></div>
-<div class="row"><span class="lbl">B 队名</span><input id="tb" type="text" value="深圳新鹏城">
-  <span class="lbl" style="width:70px">先开左半</span><select id="hb"><option value="first_right">是</option><option value="first_left">否</option><option value="unknown">未录</option></select></div>
+<div class="row"><span class="lbl">B 队名</span><input id="tb" type="text" value="深圳新鹏城"></div>
 <div class="row"><span class="lbl">B 队队服</span><div id="cb" style="display:inline-block"></div></div>
 <div class="row"><span class="lbl">裁判队服</span><div id="cr" style="display:inline-block"></div></div>
+<div class="row"><span class="lbl">A 上半场站</span>
+  <select id="aside"><option value="left">画面左边</option><option value="right">画面右边</option><option value="unknown">未录</option></select>
+  <span style="color:#9aa0a6;font-size:12px">B 自动在另一侧；中场两队交换（默认开）</span></div>
 <div class="row"><span class="lbl">校准参考色</span><input id="refs" type="text" value="data/results/kit_calib.json" style="width:320px"></div>
 <button onclick="save()">保存并生成下游命令</button>
 <div id="out"></div>
@@ -238,7 +305,7 @@ async function save(){
   const body={match_id:document.getElementById("mid").value,
     team_a:document.getElementById("ta").value,team_b:document.getElementById("tb").value,
     color_a:sel.ca,color_b:sel.cb,ref_color:sel.cr,
-    half_a:document.getElementById("ha").value,half_b:document.getElementById("hb").value,
+    a_side:document.getElementById("aside").value,swap_at_halftime:true,
     refs_file:document.getElementById("refs").value};
   const r=await (await fetch("/api/save",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify(body)})).json();
@@ -290,9 +357,10 @@ def serve(port):
                                     body.get("team_a") or "", body.get("team_b") or "",
                                     body.get("color_a"), body.get("color_b"),
                                     body.get("ref_color"),
-                                    body.get("half_a") or "unknown",
-                                    body.get("half_b") or "unknown",
-                                    body.get("refs_file") or "", "web_touch_mock (8767)")
+                                    body.get("a_side") or "unknown",
+                                    body.get("refs_file") or "",
+                                    "web_touch_mock (8767)",
+                                    bool(body.get("swap_at_halftime", True)))
             path, probs, warns = save(payload)
             if path is None:
                 self._send(200, json.dumps({"ok": False, "problems": probs,
@@ -323,8 +391,12 @@ def main(argv=None):
     ap.add_argument("--color-a", default="")
     ap.add_argument("--color-b", default="")
     ap.add_argument("--ref-color", default=None)
-    ap.add_argument("--half-a", default="unknown", choices=VALID_HALVES)
-    ap.add_argument("--half-b", default="unknown", choices=VALID_HALVES)
+    ap.add_argument("--a-side", default="unknown", choices=VALID_SIDES,
+                    help="A 队上半场站画面哪一边（B 自动在另一侧）")
+    ap.add_argument("--no-swap", action="store_true",
+                    help="中场不交换（默认按足球规则交换；landscape 回放若已剪接可关）")
+    ap.add_argument("--halftime-s", type=float, default=None,
+                    help="中场时刻（秒，可选；用于 side_of() 判后半场）")
     ap.add_argument("--refs-file", default="", help="kit_calib.json（按场校准参考色）")
     ap.add_argument("--video", default="<全场 mp4>", help="--print-cmd 用的视频路径")
     args = ap.parse_args(argv)
@@ -340,12 +412,13 @@ def main(argv=None):
             print("MATCH_SETUP_FAIL no_configs（先 --set 或 --serve 录一场）")
             return 2
         for f in files:
-            cfg = json.loads(f.read_text(encoding="utf-8"))
+            cfg = _normalize(json.loads(f.read_text(encoding="utf-8")))
             t = cfg["teams"]
-            print("  %-28s %s=%s / %s=%s  ref=%s  entered=%s"
+            print("  %-28s %s=%s / %s=%s  ref=%s  A上半场=%s  entered=%s"
                   % (f.name, t["A"]["kit_color"], t["A"]["name"],
                      t["B"]["kit_color"], t["B"]["name"],
                      (cfg.get("referee") or {}).get("kit_color") or "-",
+                     SIDE_CN.get(a_side_first_half(cfg), "未录"),
                      (cfg.get("match") or {}).get("entered_at")))
         print("MATCH_SETUP_OK list %d" % len(files))
         return 0
@@ -360,9 +433,10 @@ def main(argv=None):
             print(json.dumps(cfg, ensure_ascii=False, indent=1))
         if args.print_cmd:
             print(print_cmd(cfg, args.video))
-        print("MATCH_SETUP_OK %s %s/%s ref=%s"
+        print("MATCH_SETUP_OK %s %s/%s ref=%s A上半场=%s"
               % (mid, cfg["teams"]["A"]["kit_color"], cfg["teams"]["B"]["kit_color"],
-                 (cfg.get("referee") or {}).get("kit_color")))
+                 (cfg.get("referee") or {}).get("kit_color"),
+                 a_side_first_half(cfg)))
         return 0
 
     if args.set:
@@ -371,7 +445,9 @@ def main(argv=None):
             return 2
         payload = build_payload(args.match_id, args.team_a, args.team_b,
                                 args.color_a, args.color_b, args.ref_color,
-                                args.half_a, args.half_b, args.refs_file, "cli")
+                                args.a_side, args.refs_file, "cli",
+                                swap_at_halftime=not args.no_swap,
+                                halftime_s=args.halftime_s)
         path, probs, warns = save(payload)
         if path is None:
             print("MATCH_SETUP_FAIL %s" % probs[0])
@@ -382,8 +458,9 @@ def main(argv=None):
             print("  WARN %s" % w)
         print("  已写 %s" % path)
         print(print_cmd(payload, args.video))
-        print("MATCH_SETUP_OK %s %s/%s ref=%s"
-              % (args.match_id, args.color_a, args.color_b, args.ref_color))
+        print("MATCH_SETUP_OK %s %s/%s ref=%s A上半场=%s"
+              % (args.match_id, args.color_a, args.color_b, args.ref_color,
+                 args.a_side))
         return 0
 
     ap.print_help()

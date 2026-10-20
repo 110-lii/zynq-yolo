@@ -1,0 +1,85 @@
+{
+ "tool": "tools/hi_color_diag.py",
+ "generated": "2026-10-20T12:15:03+0800",
+ "params": {
+  "stride": 8,
+  "imgsz": 640,
+  "hi_conf": 0.25,
+  "min_h_px": 22.0,
+  "min_purity": 0.3,
+  "palette": [
+   "red",
+   "white"
+  ]
+ },
+ "n_clips": 12,
+ "elapsed_s": 41.2,
+ "n_hi": 12585,
+ "n_unknown": 2596,
+ "unknown_rate": 0.206,
+ "reason_counts": {
+  "too_small": 381,
+  "purity": 963,
+  "rect": 99,
+  "color": 1153,
+  "colored": 9989
+ },
+ "reason_share_pct": {
+  "too_small": 14.68,
+  "purity": 37.1,
+  "rect": 3.81,
+  "color": 44.41
+ },
+ "unknown_h": {
+  "median": 37.0,
+  "mean": 71.2,
+  "p90": 266.5,
+  "p99": 336.6,
+  "max": 356.0
+ },
+ "by_box_height": {
+  "0-30": {
+   "n": 2341,
+   "unknown": 772,
+   "unknown_rate": 0.33,
+   "too_small": 381,
+   "purity": 131
+  },
+  "30-50": {
+   "n": 8732,
+   "unknown": 1198,
+   "unknown_rate": 0.137,
+   "too_small": 0,
+   "purity": 694
+  },
+  "50-100": {
+   "n": 478,
+   "unknown": 194,
+   "unknown_rate": 0.406,
+   "too_small": 0,
+   "purity": 66
+  },
+  "100-150": {
+   "n": 81,
+   "unknown": 56,
+   "unknown_rate": 0.691,
+   "too_small": 0,
+   "purity": 26
+  },
+  "150+": {
+   "n": 953,
+   "unknown": 376,
+   "unknown_rate": 0.395,
+   "too_small": 0,
+   "purity": 46
+  }
+ },
+ "conclusion": [
+  "too_small 只占 14.7%：hi 层颜色 unknown 主要不是「框太小」造成的",
+  "100-150 px 带：unknown 率 0.691，其中 purity 失败 26 个 —— 与标注里「大框反而取色失败」的线索对照看"
+ ],
+ "caveats": [
+  "无真值：能算 unknown 的构成，算不出 unknown 里多少是球员",
+  "原因分层只说明带宽是否存在，不说明救回来的框对不对"
+ ]
+}

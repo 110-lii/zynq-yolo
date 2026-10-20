@@ -96,20 +96,44 @@ HI_CONF = 0.25          # 常规检测阈值（与全仓库口径一致）
 LO_CONF = 0.08          # 补检时的下限
 FIELD_Y_MIN = 0.35      # 画面高度 35% 以上基本是看台/广告牌，不算场地内
 
+# ★ 取色失败的两种原因必须分开，否则会用一个假前提去调阈值
+#   (a) 太小的框：框高 < MIN_H_PX。**这是信息不足，不是"颜色不像任何队"**——
+#       调 MAX_COLOR_DIST / MIN_PURITY 永远不会让它们通过，白调。
+#   (b) 够大的框但取色不合格：purity 低（背景/广告牌占多数）或压根连不出躯干矩形。
+#       这一类才是「颜色在手但有歧义」，阈值的活干在这里。
+# 2026-10-20 标注实证（docs/player_labels_v1.md §4）：hi 层 6 个非球员里 4 个是 (a)，
+# 而且这 4 个全是 h≈136–144 px 的大框 —— 大框取色失败，本身就是非球员的信号。
+# 详见 docs/hi_layer_color_gate.md。
+REASON_TOO_SMALL = "too_small"
+REASON_PURITY = "purity"
+REASON_RECT = "rect"
+REASON_COLOR = "color"
 
-def _classify_box(frame, bb, palette):
-    """对一个框返回 (role, dist, purity, hsv) ；判不了返回 ("unknown", 9.9, purity, None)。"""
+
+def _classify_box(frame, bb, palette, why=None):
+    """对一个框返回 (role, dist, purity, hsv) ；判不了返回 ("unknown", 9.9, purity, None)。
+
+    why: 可选 list，追加取色失败的原因码（REASON_*），供分层统计用。
+    """
     h = float(bb[3] - bb[1])
     if h < MIN_H_PX:
+        if why is not None:
+            why.append(REASON_TOO_SMALL)
         return "unknown", 9.9, 0.0, None
     rect = torso_rect(bb, frame.shape)
     if rect is None:
+        if why is not None:
+            why.append(REASON_RECT)
         return "unknown", 9.9, 0.0, None
     col = torso_color(frame, rect)
     if col is None:
+        if why is not None:
+            why.append(REASON_COLOR)
         return "unknown", 9.9, 0.0, None
     purity = col[4]
     if purity < MIN_PURITY:
+        if why is not None:
+            why.append(REASON_PURITY)
         return "unknown", 9.9, purity, col
     role, dist, _scores = classify(col, palette)
     return role, dist, purity, col
@@ -135,6 +159,11 @@ def process_clip(model, clip_path, palette, use_color, args):
     dist_kept = []
     dist_dropped = []
 
+    # hi 层取色失败原因分层（给 docs/hi_layer_color_gate.md 提供可复算的数字）
+    hi_by_reason = {REASON_TOO_SMALL: 0, REASON_PURITY: 0, REASON_RECT: 0,
+                    REASON_COLOR: 0, "colored": 0}
+    hi_unknown_h = []
+
     frame_no = -1
     stride = max(1, int(args.stride))
     while True:
@@ -152,10 +181,17 @@ def process_clip(model, clip_path, palette, use_color, args):
         if boxes_hi is not None and len(boxes_hi) > 0:
             for bb, cf in zip(boxes_hi.xyxy.cpu().numpy(), boxes_hi.conf.cpu().numpy()):
                 n_hi += 1
-                role, dist, purity, col = _classify_box(frame, bb, palette)
+                why = []
+                role, dist, purity, col = _classify_box(frame, bb, palette, why)
                 ckey = role if role in ("A", "B") else "unknown"
                 n_team[ckey] += 1
                 conf_by_role[ckey].append(float(cf))
+                # hi 层为什么判不出颜色：按原因分开计数（见 REASON_* 注释）
+                if role in ("A", "B"):
+                    hi_by_reason["colored"] += 1
+                else:
+                    hi_by_reason[why[0] if why else REASON_COLOR] += 1
+                    hi_unknown_h.append(float(bb[3] - bb[1]))
                 if role in ("A", "B"):
                     if col is not None:
                         hue_by_role[role].append(col[0])
@@ -239,6 +275,9 @@ def process_clip(model, clip_path, palette, use_color, args):
             "dist_kept": _stat(dist_kept),
             "dist_dropped": _stat(dist_dropped),
         },
+        # hi 层"判不出颜色"的原因分层 —— 区分「信息不足」与「颜色有歧义」
+        "hi_unknown_reason": dict(hi_by_reason),
+        "hi_unknown_h": _stat(hi_unknown_h),
     }
 
 

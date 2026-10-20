@@ -74,6 +74,17 @@ MANIFEST = ANNOT / "MANIFEST.json"
 SCORES = ANNOT / "scores.json"
 MODEL = REPO / "data" / "models" / "yolov8n.pt"
 
+# ★ 第一批（73 框，已标完）的产物必须留在原地：人工标注是不可重建的。
+#   第二批（hi 层颜色-unknown，见 docs/hi_layer_color_gate.md §4）写到单独的文件，
+#   **不覆盖**第一批的 labels.csv / frames/ / scores.json。
+BATCH1_FRAMES = FRAMES_DIR
+BATCH1_CSV = LABELS_CSV
+BATCH1_SCORES = SCORES
+BATCH2_FRAMES = ANNOT / "frames2"
+BATCH2_CSV = ANNOT / "labels2.csv"
+BATCH2_MANIFEST = ANNOT / "MANIFEST2.json"
+BATCH2_SCORES = ANNOT / "scores2.json"
+
 # 复用已校准的量测（importlib 加载）。
 # ★ 光在自己文件顶部设 sys.dont_write_bytecode 不够：**被加载的模块**如果自己
 #   没设，importlib 仍会为它写 __pycache__。所以在加载前后都设一次，且
@@ -290,6 +301,300 @@ def _cp_classify(frame, bb, palette):
     return role, dist, col[4], col
 
 
+# ---------------------------------------------------------------------------
+# 第二批：hi 层「颜色 unknown」的框
+#
+# 为什么要这一批（docs/hi_layer_color_gate.md §4）
+#   全量 12 段实测：hi 层 12 585 个框里有 2 596 个（20.6%）判不出队色，其中
+#       color 44.4% / purity 37.1% / too_small 14.7% / rect 3.8%
+#   ⇒ 85% 的 unknown 是「框够大但颜色不合格」，不是信息不足，所以颜色阈值有可能救。
+#   **但救回来的框到底对不对，没有任何数据能回答。** 要回答的只有一个问题：
+#       这 2 596 个取色失败的 hi 框里，球员和非球员各占多少？
+#   若非球员占比显著高于 hi 层整体（24 个里 6 个 = 25%）⇒ unknown 本身就是信号，
+#   不用救颜色，直接降权；若球员占比和整体一样 ⇒ 颜色在 hi 层没信息量，该放弃这条路。
+#
+# 分层（按失败原因分，因为它们的「可救性」不同）：
+#   hi_unk_purity   框够大，躯干里球衣像素太少（MIN_PURITY 门限）
+#   hi_unk_color    取到色了，但离两队参考色都远（MAX_COLOR_DIST 门限）
+#   hi_unk_toosmall 框高 < MIN_H_PX，躯干只有十几像素（信息不足，阈值救不了）
+#   hi_unk_rect     取不出躯干矩形
+# 按原因分层 = 按「可救性」分层，这样每一层的结论能直接指导要不要动对应阈值。
+# ---------------------------------------------------------------------------
+
+B2_REASONS = ("purity", "color", "too_small", "rect")
+B2_STRATUM = {"purity": "hi_unk_purity", "color": "hi_unk_color",
+              "too_small": "hi_unk_toosmall", "rect": "hi_unk_rect"}
+
+
+def _classify_with_reason(frame, bb, palette):
+    """返回 (role, dist, purity, reason)。reason=None 表示判出了队色。"""
+    h = float(bb[3] - bb[1])
+    if h < _cp.MIN_H_PX:
+        return "unknown", 9.9, 0.0, "too_small"
+    rect = _cp.torso_rect(bb, frame.shape)
+    if rect is None:
+        return "unknown", 9.9, 0.0, "rect"
+    col = _cp.torso_color(frame, rect)
+    if col is None:
+        return "unknown", 9.9, 0.0, "rect"
+    if col[4] < _cp.MIN_PURITY:
+        return "unknown", 9.9, col[4], "purity"
+    role, dist, _s = _cp.classify(col, palette)
+    if role not in ("A", "B") or dist >= _cp.MAX_COLOR_DIST:
+        return "unknown", float(dist), col[4], "color"
+    return role, dist, col[4], None
+
+
+def build_hi_unknown(args):
+    from ultralytics import YOLO
+    model = YOLO(str(MODEL))
+    BATCH2_FRAMES.mkdir(parents=True, exist_ok=True)
+    ANNOT.mkdir(parents=True, exist_ok=True)
+
+    clips = sorted((REPO / "data" / "samples" / "incidents").glob("*.mp4"))
+    if args.max_clips:
+        clips = clips[: args.max_clips]
+    if not clips:
+        print("LABELS_FAIL no_clips")
+        return 2
+
+    palette = {"A": "red", "B": "white"}
+    pools = {k: [] for k in B2_REASONS}
+
+    for clip in clips:
+        cap = cv2.VideoCapture(str(clip))
+        fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+        frame_no = -1
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                break
+            frame_no += 1
+            if frame_no % max(1, args.stride):
+                continue
+            if args.every_frame > 1 and frame_no % args.every_frame:
+                continue
+            r = model.predict(frame, classes=[0], conf=HI_CONF, iou=0.45,
+                              imgsz=args.imgsz, verbose=False)
+            boxes = r[0].boxes if r and r[0].boxes is not None else None
+            if boxes is None or len(boxes) == 0:
+                continue
+            for bb, cf in zip(boxes.xyxy.cpu().numpy(), boxes.conf.cpu().numpy()):
+                h = float(bb[3] - bb[1])
+                role, dist, purity, reason = _classify_with_reason(frame, bb, palette)
+                if reason is None:
+                    continue                      # 颜色判得出来，不属本批
+                if h < args.min_h:                # 人眼也判不了的不出图
+                    continue
+                pools[reason].append({
+                    "clip": clip.name, "frame": frame_no, "fps": fps,
+                    "box": [float(v) for v in bb], "conf": float(cf),
+                    "role": role, "dist": float(dist), "purity": float(purity),
+                    "h": h, "reason": reason,
+                })
+        cap.release()
+        print("  [%s] pools=%s" % (clip.name, {k: len(v) for k, v in pools.items()}),
+              flush=True)
+
+    # 每层均匀采样（按 clip 轮转，避免全来自同一段）
+    rows = []
+    for reason in B2_REASONS:
+        pool = pools[reason]
+        if not pool:
+            continue
+        by_clip = {}
+        for it in pool:
+            by_clip.setdefault(it["clip"], []).append(it)
+        picked = []
+        order = sorted(by_clip)
+        idx = 0
+        while len(picked) < args.per_stratum and any(by_clip.values()):
+            c = order[idx % len(order)]
+            idx += 1
+            if by_clip.get(c):
+                picked.append(by_clip[c].pop(0))
+        picked = picked[: args.per_stratum]
+
+        need = {}
+        for it in picked:
+            need.setdefault(it["clip"], {}).setdefault(it["frame"], []).append(it)
+        for clip_name, frames_map in need.items():
+            cap = cv2.VideoCapture(str(REPO / "data" / "samples" / "incidents" / clip_name))
+            targets = set(frames_map)
+            fn = -1
+            got = {}
+            while targets:
+                ok, frame = cap.read()
+                if not ok:
+                    break
+                fn += 1
+                if fn in targets:
+                    got[fn] = frame.copy()
+                    targets.discard(fn)
+            cap.release()
+            for fn, items in frames_map.items():
+                frame = got.get(fn)
+                if frame is None:
+                    continue
+                for k, it in enumerate(items):
+                    crop = _crop_with_context(frame, it["box"])
+                    if crop is None:
+                        continue
+                    stem = "b2_%s_f%04d_%s_%03d" % (
+                        Path(clip_name).stem, fn, reason, len(rows))
+                    p = BATCH2_FRAMES / (stem + ".jpg")
+                    cv2.imwrite(str(p), crop, [int(cv2.IMWRITE_JPEG_QUALITY), 92])
+                    rows.append({
+                        "id": len(rows) + 1,
+                        "stratum": B2_STRATUM[reason],
+                        "fail_reason": reason,
+                        "clip": clip_name,
+                        "frame": fn,
+                        "box_idx": k,
+                        "conf": round(it["conf"], 4),
+                        "h_px": round(it["h"], 1),
+                        "purity": round(it["purity"], 3),
+                        "color_role": it["role"],
+                        "color_dist": round(it["dist"], 4),
+                        "img": str(p.relative_to(REPO)).replace("\\", "/"),
+                        "label": "",
+                        "note": "",
+                    })
+
+    if not rows:
+        print("LABELS_FAIL no_hi_unknown_rows")
+        return 2
+
+    with open(BATCH2_CSV, "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+
+    n = {k: sum(1 for r in rows if r["fail_reason"] == k) for k in B2_REASONS}
+    BATCH2_MANIFEST.write_text(json.dumps({
+        "tool": "tools/make_player_labels.py --hi-unknown",
+        "generated": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "purpose": ("hi 层颜色-unknown 的框里球员/非球员各占多少（D013-a 第二步）；"
+                    "决定颜色在 hi 层有没有信息量，见 docs/hi_layer_color_gate.md §4"),
+        "label_scheme": {"P": "球员（含守门员）",
+                         "N": "非球员（裁判/教练/替补/观众/球童/摄像师）",
+                         "U": "看不清"},
+        "strata": {
+            "hi_unk_purity": "框够大但躯干里球衣像素占比 < MIN_PURITY(0.30)",
+            "hi_unk_color": "取到色但离两队参考色都 >= MAX_COLOR_DIST(0.16)",
+            "hi_unk_toosmall": "框高 < MIN_H_PX(22)，信息不足，阈值救不了",
+            "hi_unk_rect": "取不出躯干矩形",
+        },
+        "params": {"hi_conf": HI_CONF, "per_stratum": args.per_stratum,
+                   "stride": args.stride, "every_frame": args.every_frame,
+                   "imgsz": args.imgsz, "min_h": args.min_h,
+                   "min_purity": _cp.MIN_PURITY,
+                   "max_color_dist": _cp.MAX_COLOR_DIST},
+        "pool_sizes": {k: len(v) for k, v in pools.items()},
+        "counts": n,
+        "n_total": len(rows),
+        "does_not_overwrite_batch1": True,
+    }, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+
+    print("LABELS_CSV %s" % BATCH2_CSV)
+    print("FRAMES_DIR %s" % BATCH2_FRAMES)
+    print("LABELS_PACK_OK %d %d %d %d %d"
+          % (len(rows), n["purity"], n["color"], n["too_small"], n["rect"]))
+    return 0
+
+
+def _read_csv(path):
+    with open(path, encoding="utf-8", newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+def score_hi_unknown(args):
+    """第二批的判决：unknown 里的非球员占比 vs hi 层整体，以及三种策略的 precision。"""
+    if not BATCH2_CSV.exists():
+        print("LABELS_FAIL labels2_csv_missing %s" % BATCH2_CSV)
+        return 2
+    rows = _read_csv(BATCH2_CSV)
+    labeled = [r for r in rows if r["label"] in ("P", "N", "U")]
+    used = [r for r in labeled if r["label"] in ("P", "N")]
+    if not used:
+        print("LABELS_FAIL no_labels_yet (先在 %s 的 label 列填 P/N/U)" % BATCH2_CSV)
+        return 2
+
+    # 参照：hi 层整体里非球员占多少（第一批标注，24 个里 6 个）
+    ref = {"n": 24, "n_nonplayer": 6, "nonplayer_rate": 0.25,
+           "source": "data/annot/scores.json by_stratum.hi（第一批标注）",
+           "note": "参照值来自第一批 24 个 hi 框；若第一批被重标过需同步更新"}
+
+    def _rate(sel):
+        sub = [r for r in used if sel(r)]
+        if not sub:
+            return {"n": 0}
+        n_np = sum(1 for r in sub if r["label"] == "N")
+        return {"n": len(sub), "n_player": sum(1 for r in sub if r["label"] == "P"),
+                "n_nonplayer": n_np,
+                "nonplayer_rate": round(n_np / len(sub), 3),
+                "precision_if_kept": round(sum(1 for r in sub if r["label"] == "P") / len(sub), 3)}
+
+    by_stratum = {}
+    for s in ("hi_unk_purity", "hi_unk_color", "hi_unk_toosmall", "hi_unk_rect"):
+        by_stratum[s] = _rate(lambda r, s=s: r["stratum"] == s)
+    unk_all = _rate(lambda r: True)
+
+    # 可选动作的对照（假设：hi 层判不出颜色的框要不要留）
+    strat = {
+        "全部保留": _rate(lambda r: True),
+        "丢掉 purity+rect+too_small（只救 color）": _rate(lambda r: r["fail_reason"] == "color"),
+        "只丢掉 purity": _rate(lambda r: r["fail_reason"] == "purity"),
+    }
+
+    out = {
+        "tool": "tools/make_player_labels.py --score-hi-unknown",
+        "generated": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "n_labeled": len(labeled), "n_used": len(used),
+        "n_unsure_excluded": len(labeled) - len(used),
+        "reference_hi_layer": ref,
+        "unknown_overall": unk_all,
+        "by_stratum": by_stratum,
+        "by_action": strat,
+        "verdict": None,
+        "caveats": [
+            "样本内精确率；分层抽样 ⇒ 不能当总体比例",
+            "参照值 25% 来自第一批 24 个 hi 框，样本量小",
+            "n 小，置信区间宽；只看方向",
+        ],
+    }
+
+    # 判决：unknown 里非球员占比是否显著高于 hi 层整体
+    if unk_all.get("n"):
+        gap = unk_all["nonplayer_rate"] - ref["nonplayer_rate"]
+        out["gap_vs_hi_layer"] = round(gap, 3)
+        if gap >= 0.10:
+            out["verdict"] = ("unknown 里非球员占比 %.1f%%，显著高于 hi 层整体的 %.1f%% "
+                              "⇒ 「颜色判不出」本身可作非球员信号，不必去救颜色"
+                              % (100 * unk_all["nonplayer_rate"], 100 * ref["nonplayer_rate"]))
+        elif gap <= -0.10:
+            out["verdict"] = ("unknown 里非球员占比 %.1f%%，**低于** hi 层整体的 %.1f%% "
+                              "⇒ 颜色判不出反而偏向球员，丢掉 unknown 会伤 recall，颜色在 hi 层无信息量"
+                              % (100 * unk_all["nonplayer_rate"], 100 * ref["nonplayer_rate"]))
+        else:
+            out["verdict"] = ("unknown 里非球员占比 %.1f%% 与 hi 层整体 %.1f%% 无显著差异 "
+                              "⇒ 颜色在 hi 层没有信息量，这条路应放弃"
+                              % (100 * unk_all["nonplayer_rate"], 100 * ref["nonplayer_rate"]))
+
+    BATCH2_SCORES.write_text(json.dumps(out, ensure_ascii=False, indent=1),
+                             encoding="utf-8", newline="\n")
+    print("SCORES %s" % BATCH2_SCORES)
+    print("LABELS_SCORE2_OK %d %s" % (len(used),
+                                      (out["verdict"] or "")[:60]))
+    for k, v in by_stratum.items():
+        if v.get("n"):
+            print("  %-18s n=%-3d 非球员=%-3d 非球员率=%4.0f%% 保留时精度=%4.0f%%"
+                  % (k, v["n"], v["n_nonplayer"], 100 * v["nonplayer_rate"],
+                     100 * v["precision_if_kept"]))
+    print("  VERDICT: %s" % out["verdict"])
+    return 0
+
+
 def score(args):
     if not LABELS_CSV.exists():
         print("LABELS_FAIL labels_csv_missing")
@@ -401,8 +706,26 @@ def main(argv=None):
     ap.add_argument("--every-frame", type=int, default=25,
                     help="每 N 个处理帧才取一帧做候选（控制出图量）")
     ap.add_argument("--imgsz", type=int, default=640)
-    ap.add_argument("--score", action="store_true")
+    ap.add_argument("--score", action="store_true",
+                    help="第一批（73 框）评分")
+    # ---- 第二批：hi 层颜色-unknown（docs/hi_layer_color_gate.md §4）----
+    ap.add_argument("--hi-unknown", action="store_true",
+                    help="构建第二批标注包：hi 层「颜色判定失败」的框")
+    ap.add_argument("--score-hi-unknown", action="store_true",
+                    help="第二批评分：unknown 里的非球员占比 vs hi 层整体")
+    ap.add_argument("--min-h", type=float, default=18.0,
+                    help="第二批出图的框高下限（太小的人眼也判不了）")
     args = ap.parse_args(argv)
+
+    # 三个动作互斥，且**第二批绝不覆盖第一批的 labels.csv / frames/**
+    n_act = sum(bool(x) for x in (args.score, args.hi_unknown, args.score_hi_unknown))
+    if n_act > 1:
+        print("LABELS_FAIL multiple_actions")
+        return 2
+    if args.score_hi_unknown:
+        return score_hi_unknown(args)
+    if args.hi_unknown:
+        return build_hi_unknown(args)
     return score(args) if args.score else build(args)
 
 

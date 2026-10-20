@@ -1,0 +1,40 @@
+{
+ "tool": "tools/make_player_labels.py --hi-unknown",
+ "generated": "2026-10-20T12:19:58+0800",
+ "purpose": "hi 层颜色-unknown 的框里球员/非球员各占多少（D013-a 第二步）；决定颜色在 hi 层有没有信息量，见 docs/hi_layer_color_gate.md §4",
+ "label_scheme": {
+  "P": "球员（含守门员）",
+  "N": "非球员（裁判/教练/替补/观众/球童/摄像师）",
+  "U": "看不清"
+ },
+ "strata": {
+  "hi_unk_purity": "框够大但躯干里球衣像素占比 < MIN_PURITY(0.30)",
+  "hi_unk_color": "取到色但离两队参考色都 >= MAX_COLOR_DIST(0.16)",
+  "hi_unk_toosmall": "框高 < MIN_H_PX(22)，信息不足，阈值救不了",
+  "hi_unk_rect": "取不出躯干矩形"
+ },
+ "params": {
+  "hi_conf": 0.25,
+  "per_stratum": 40,
+  "stride": 2,
+  "every_frame": 10,
+  "imgsz": 640,
+  "min_h": 18.0,
+  "min_purity": 0.3,
+  "max_color_dist": 0.16
+ },
+ "pool_sizes": {
+  "purity": 779,
+  "color": 800,
+  "too_small": 214,
+  "rect": 171
+ },
+ "counts": {
+  "purity": 40,
+  "color": 40,
+  "too_small": 40,
+  "rect": 39
+ },
+ "n_total": 159,
+ "does_not_overwrite_batch1": true
+}

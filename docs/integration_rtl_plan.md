@@ -1,5 +1,12 @@
-# 整机 RTL 集成计划（D004 档：416×416 输入）
+# 整机 RTL 集成计划（D004 档：416×416 输入）—— **历史方案，已被 D017 取代**
 
+> ⛔ **本文是历史方案，不是当前主线。** 2026-10-23 实测后，D017 已把主线改为
+> **PL `preproc`（320×320）+ PS ncnn YOLOv8n-0.25**；`conv_engine` 整网实测
+> 9.63 s/帧（≈0.10 FPS），退出主线，仅保留逐层 bit-exact（6/6）与 AXI/带宽/时序验证价值。
+> 当前架构与指标见 [`system_status.md`](system_status.md) 与
+> [`../report/design_report.md`](../report/design_report.md)。本文以下内容**原文保留**，
+> 用于记录 416 路线的设计、容量冲突与放弃理由。
+>
 > 状态：**v3（2026-10-20）**。上游契约见 [`accel_interface.md`](accel_interface.md)（`conv_engine`
 > 数值口径已冻结）；输入分辨率取 D004 = **416×416 精度优先档**。
 >

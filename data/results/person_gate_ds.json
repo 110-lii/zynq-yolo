@@ -1,0 +1,13 @@
+{
+ "tool": "tools/train_person_ds.py",
+ "train_video": "2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4",
+ "test_video": "migu_5106947698.mp4",
+ "n_train": 950,
+ "auc": 0.6548015080949213,
+ "acc": 0.5972382048331415,
+ "precision": 0.2718204488778055,
+ "recall": 0.6526946107784432,
+ "n": 869,
+ "n_pos": 167,
+ "model": "D:\\zynq-yolo\\data\\models\\person_gate_ds.npz"
+}

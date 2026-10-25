@@ -550,11 +550,26 @@ def int8_conv(xq: np.ndarray, layer: "LayerPlan") -> np.ndarray:
     if xq.dtype != np.uint8:
         raise TypeError("int8_conv 的输入必须是 uint8（QUInt8 激活），实际 %s" % xq.dtype)
     x3 = _chw(xq)
-    cols, ho, wo = _im2col(x3, layer.k, layer.stride, layer.stride,
-                           layer.pad_h_begin, layer.pad_h_end,
-                           layer.pad_w_begin, layer.pad_w_end, np.uint8(layer.zp_in), I64)
-    acc = layer.w_q.astype(I64) @ cols  # [C_OUT, Ho*Wo] int64（矩阵乘法精确，无溢出担忧）
-    acc = acc + layer.bias_i32.astype(I64)[:, None]
+    taps = int(layer.c_in) * int(layer.k) * int(layer.k)
+    # ★ 累加精度选择：int64 matmul 在 A9 上不给 BLAS 用，首层 6×6（taps=108，
+    #   74.7M MAC）实测 5.75 s。float32 的每个部分和只要绝对值 < 2^24 就是
+    #   **精确整数**（乘积 ≤ 255×128 = 32640 可精确表示；和是整数且不越界），
+    #   加法顺序无关 ⇒ 与 int64 逐位等价，但能走 BLAS。
+    #   判据：2 × taps × 255 × 128 < 2^24（bias 与累加同量级，留一倍余量）。
+    if 2 * taps * 255 * 128 < (1 << 24):
+        cols, ho, wo = _im2col(x3, layer.k, layer.stride, layer.stride,
+                               layer.pad_h_begin, layer.pad_h_end,
+                               layer.pad_w_begin, layer.pad_w_end,
+                               np.uint8(layer.zp_in), np.float32)
+        acc = layer.w_q.astype(np.float32) @ cols
+        acc = acc + layer.bias_i32.astype(np.float32)[:, None]
+        acc = acc.astype(I64)          # 已是精确整数，等价于 int64 累加结果
+    else:
+        cols, ho, wo = _im2col(x3, layer.k, layer.stride, layer.stride,
+                               layer.pad_h_begin, layer.pad_h_end,
+                               layer.pad_w_begin, layer.pad_w_end, np.uint8(layer.zp_in), I64)
+        acc = layer.w_q.astype(I64) @ cols  # [C_OUT, Ho*Wo] int64（矩阵乘法精确，无溢出担忧）
+        acc = acc + layer.bias_i32.astype(I64)[:, None]
     # requant: round(acc * M * 2^-S) == (acc*M + 2^(S-1)) >> S （M,S 均 int）
     half = (I64(1) << (layer.s.astype(I64) - I64(1)))[:, None]
     q = (acc * layer.m.astype(I64)[:, None] + half) >> layer.s.astype(I64)[:, None]

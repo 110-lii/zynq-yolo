@@ -15,8 +15,11 @@
 | 路径 | 说明 |
 |---|---|
 | `README.md` | 本文件：报告必须覆盖的 7 项 + 两张预置表 + 本目录规则 |
-| `llm_logs/` | **大模型协作记录（提交件成品）**：提示词、模型回答、自我纠错轨迹、智能体工作流设计 |
-| `figures/` | 框图与截图：系统功能框图、软硬件划分图、接口/寄存器图、上板实拍、Vivado 资源与时序截图 |
+| `design_report.md` | **设计报告正稿（Markdown 源）**：§1–§7 对应指南 3.3.5.3 的 7 项，§8 已知边界，§9 交付物对照 |
+| `design_report.docx` | 由 `tools/md_to_docx.py` 从 Markdown 生成的提交用文档 |
+| `submission_checklist.md` | 提交前逐项核对清单（工程包/技能包/报告/目录/权重 + 4 条命令） |
+| `llm_logs/` | **大模型协作记录（提交件成品）**：3 篇成稿 + 索引，逐条回指 `ai/sessions/` |
+| `figures/` | `system_arch.png`（系统框图）、`software_pipeline.png`（软件流水线）、`optimization.png`（耗时对比）；由 `tools/make_report_figures.py` 确定性生成 |
 
 ### `report/llm_logs/` 与 `ai/` 的分工（**勿混**）
 
@@ -34,25 +37,27 @@
 
 | # | 必须覆盖 | 指南原文要点（`text 964-971`） | 本仓库落点 | 状态 |
 |---|---|---|---|---|
-| 1 | 选题背景与创新点 | 为什么选这个题目，它解决了什么实际问题，前人做过什么 | 报告正文「选题背景」+ 根 `README.md` | `<待用户裁定：见 docs/repo_spec.md §7>` |
-| 2 | 设计原理与功能框图 | 原理阐述 + 功能框图 | 报告正文 + `report/figures/` | 待写 |
-| 3 | 软硬件划分依据与接口设计 | 为什么这样划分；AXI/寄存器等接口契约 | 报告正文 + `../docs/` 接口契约 | `<待用户裁定：见 docs/repo_spec.md §7>` |
-| 4 | 优化过程（含优化前后性能与资源对比表） | 必须给出优化**前后**的性能与资源对比 | 报告正文 + 下方「优化前后对比表」 | 待写 |
-| 5 | **大模型协作记录** | 提示词、模型回答、**自我纠错轨迹**、智能体工作流设计（如有） | `report/llm_logs/`（成品）← `../ai/`（原始） | 待写 |
-| 6 | 技能包的提炼过程 | 从哪些失败或观察中总结、如何验证有效、边界如何确定 | 报告正文 + `../skill/` | 待写 |
-| 7 | 复现说明 | 一份可供他人**从零开始完整执行**的操作步骤 | 报告正文末章 + 根 `README.md` | 待写 |
+| 1 | 选题背景与创新点 | 为什么选这个题目，它解决了什么实际问题，前人做过什么 | `design_report.md` §1 | ✅ 已完成 |
+| 2 | 设计原理与功能框图 | 原理阐述 + 功能框图 | `design_report.md` §2 + `figures/` | ✅ 已完成 |
+| 3 | 软硬件划分依据与接口设计 | 为什么这样划分；AXI/寄存器等接口契约 | `design_report.md` §3 + `../docs/architecture.md` | ✅ 已完成（D017） |
+| 4 | 优化过程（含优化前后性能与资源对比表） | 必须给出优化**前后**的性能与资源对比 | `design_report.md` §4 | ✅ 已完成（基线与优化行均标出处） |
+| 5 | **大模型协作记录** | 提示词、模型回答、**自我纠错轨迹**、智能体工作流设计（如有） | `llm_logs/`（成品）← `../ai/`（原始） | ✅ 已完成（3 篇 + 索引） |
+| 6 | 技能包的提炼过程 | 从哪些失败或观察中总结、如何验证有效、边界如何确定 | `design_report.md` §6 + `../skill/` | ✅ 已完成（2 个技能包） |
+| 7 | 复现说明 | 一份可供他人**从零开始完整执行**的操作步骤 | `design_report.md` §7 + 根 `README.md` | ✅ 已完成 |
 
-> 报告正文文件名由后续任务确定；**未裁定的题目/算法形态/数据集细节一律写 `<待用户裁定：见 docs/repo_spec.md §7>`，不得编造**。
+> 报告正文：`design_report.md`（Markdown 源）+ `design_report.docx`（由
+> `tools/md_to_docx.py` 生成）。未裁定项已由 D017 收口；未测量/未保留的数字在正文中
+> 明确写“未测量/未保留”，不编造。
 
 ---
 
-## 预置表 1：优化前后对比表（**空表，勿编造数字**）
+## 预置表 1：优化前后对比表（已填；详细分析见 `design_report.md` §4）
 
-| 改动 | 资源 LUT·FF·DSP·BRAM | WNS | 吞吐或帧率 | 出处 |
+| 改动 | 资源 LUT / FF / DSP / BRAM | WNS | 吞吐或帧率 | 出处 |
 |---|---|---|---|---|
-| （基线：优化前） | 待填 | 待填 | 待填 | 待填 |
-| 待填 | 待填 | 待填 | 待填 | 待填 |
-| 待填 | 待填 | 待填 | 待填 | 待填 |
+| 基线：`conv_engine` 字节访存（005 收敛版） | 13,076 / 未记录 / 162 / 9.5 | **+1.254 ns** | **20.8 s/帧** | `ai/sessions/005`、`board/logs/board_stream_new_20261022.md` |
+| 优化：`conv_engine` 32-bit 字访存（008） | 23,552 / 21,991 / 172 / 12.5 | **+1.350 ns @83.33 MHz** | **9.63 s/帧（≈0.10 FPS）** | `build/reports/resource/conv_engine_bd_util.rpt`、`build/reports/timing/conv_engine_bd_timing.rpt`、`board/logs/board_stream_new_20261022.md` |
+| 最终主线：PL `preproc` + PS ncnn YOLOv8n-0.25@320 | 4,736 / 5,260 / 13 / 1.5（BD 顶层） | **+3.724 ns** | PL 预处理 **18.8 ms**；PS 检测 **0.95–1.0 s/帧** | `build/reports/resource/preproc_bd_util.rpt`、`build/reports/timing/preproc_bd_timing.rpt`、`ai/sessions/009` |
 
 **填表纪律（承 `docs/repo_spec.md` §6「数字必须标来源」）：**
 

@@ -35,8 +35,8 @@
 // 只声明原型，不 #include conv_engine.cpp：
 //   该 .cpp 已作为 design file 加入 HLS 工程，TB 再 include 一次会在 csim 链接时
 //   出现重复定义。csim 阶段接口 pragma 不参与语义，原型足够。
-void conv_engine(const ap_uint<8> *in,
-                 const ap_int<8>  *w,
+void conv_engine(const ap_uint<32> *in,
+                 const ap_int<32>  *w,
                  const ap_int<32> *params,
                  const ap_uint<8> *lut,
                  ap_uint<8>       *out,
@@ -142,8 +142,22 @@ int main() {
     ok &= read_bin((dir + "/out_ref.bin").c_str(), ref, n_out);
     if (!ok) { printf("TB_CONV_FAIL %s : 输入文件读不全\n", dir.c_str()); return 1; }
 
+    // ---- 权重重排：外壳按 (co,ci) 记录补齐到 4/12 字节 ----
+    // 板端由 tools/make_board_stream_pack.py 做同样的补齐；TB 里现做，保证
+    // 用例目录仍保存 ONNX 原始布局 [C_OUT][C_IN][K][K]。
+    const int kk = K * K;
+    const int rec = (kk <= 4) ? 4 : 12;
+    const size_t n_rec = (size_t)C_OUT * C_IN;
+    ap_int<8> *wp = (ap_int<8> *) malloc(n_rec * rec + 64);
+    memset(wp, 0, n_rec * rec);
+    for (size_t r = 0; r < n_rec; ++r) {
+        memcpy(wp + r * rec, w + r * kk, (size_t)kk);
+    }
+
     // ---- 跑内核 ----
-    conv_engine(in, w, pm, lut, out,
+    // 内核按 32-bit 字访问 in/w（位宽由指针类型决定，见 conv_engine.cpp 头注释）。
+    // 缓冲区起点必须 4 字节对齐：malloc 在 csim 主机上按 max_align_t 对齐，满足。
+    conv_engine((const ap_uint<32> *)in, (const ap_int<32> *)wp, pm, lut, out,
                 C_IN, C_OUT, H_IN, W_IN,
                 K, stride, pad, zp_in, zp_pre, H_OUT, W_OUT);
 

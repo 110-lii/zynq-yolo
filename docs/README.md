@@ -15,11 +15,12 @@
 | 文件 | 说明 | 状态 |
 |---|---|---|
 | [`repo_spec.md`](repo_spec.md) | ★ **仓库骨架规范（唯一事实源）**：目录职责、命名规则、README 模板、真源/产物规则、构建判据、本机环境事实、待定项 | ✅ 已完成 |
-| [`architecture.md`](architecture.md) | 系统架构文档骨架：软硬件划分、数据流、接口契约、资源预算 | ⬜ **骨架，待用户裁定题目后填充** |
+| [`architecture.md`](architecture.md) | 系统架构：已按 D017 填入数据流、软硬件划分依据、`preproc` 接口契约与实测资源/时序 | ✅ 已完成（D017） |
+| [`system_status.md`](system_status.md) | **当前系统状态（唯一现役口径）**：PL 预处理 + PS ncnn 架构、实测指标、板上运行命令、已知边界 | ✅ 已完成（2026-10-24） |
 | [`amd_official_layout.md`](amd_official_layout.md) | **AMD 官方布局与版本控制建议查证记录**：UG949 受控源文件清单、AMD 5/6 种版本控制方法论、PYNQ 官方模板逐字要点、本仓库选 Foundational 派的理由与代价 | ✅ 已完成 |
 | [`yolo_on_zynq7020_survey.md`](yolo_on_zynq7020_survey.md) | **YOLO 在 XC7Z020 上的技术调研**：五条路线判定（含「Vitis AI DPU 在 7000 系不存在」的一手核查）、同芯片实测锚点（ARC2020，1.88 fps）、开源实现清单、推荐路线 D 与验证阶梯；**§9 是引用本文数字前必读的未验证项清单** | ✅ 已完成 |
 | [`accel_interface.md`](accel_interface.md) | **`conv_engine` 加速器接口契约**：AXIS 流格式、`tuser`/`tlast` 语义、int8 量化口径、单层吞吐与资源实测、§9 逐字节一致性用例 | ✅ 数值已冻结，待用户确认（D006） |
-| [`integration_rtl_plan.md`](integration_rtl_plan.md) | **整机 RTL 集成计划（D004 = 416 精度优先档）**：PC→以太网→PS→DDR→检测的数据通路（**无摄像头、无视频输出**，依 D013/D015）、PL/PS 分工及理由、模块清单与状态、时钟/CDC、带宽估算、M1–M4 验收判据、未决问题 | 🟨 v3 草案 |
+| [`integration_rtl_plan.md`](integration_rtl_plan.md) | **历史方案：整机 RTL 集成计划（D004 = 416 精度优先档）** —— 已被 D017 取代，仅保留 416 路线的设计、容量冲突与放弃理由 | ⛔ 历史（勿按此复现） |
 | [`player_tracking_v1.md`](player_tracking_v1.md) | 球员追踪 v1 口径：YOLOv8n + ByteTrack + ECC 相机运动补偿；旧场 12 段 4355 帧 → 942 条轨迹的产出与已知局限 | ✅ 已完成（旧场） |
 | [`player_labels_v1.md`](player_labels_v1.md) | 球员人工标注 v1：分层抽样口径、`labels.csv` 字段与判定含义 | ✅ 已完成（旧场） |
 | [`player_gate_v1.md`](player_gate_v1.md) | 球员门槛 v2（规则表 + 几何守卫 + hull 复核）：8 组消融，v1 丢 834 框 → v2 只丢 98 框且救回 736（88.2%）、新误杀 0 | ✅ 已完成（旧场） |

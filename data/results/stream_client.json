@@ -1,6 +1,5 @@
 {
   "compare": {
-    "cosine": 1.0000000000000002,
     "detections": {
       "boxes": [
         [
@@ -29,20 +28,12 @@
         0.921650767326355
       ]
     },
-    "max_abs_err": 5.960464477539063e-08,
-    "mean_abs_err": 1.9648361969344175e-12,
-    "n_got": 2,
-    "n_ref": 2,
-    "output_shape": [
-      1,
-      84,
-      2100
-    ]
+    "error": "output size 176400 != reference 3150"
   },
-  "frames": 3,
+  "frames": 1,
   "host": "192.168.2.99",
   "image": "D:\\zynq-yolo\\data\\samples\\zidane.jpg",
-  "mean_ms": 29060.45240000094,
+  "mean_ms": 7959.838000002492,
   "port": 5000,
   "reply": {
     "detections": {
@@ -73,7 +64,7 @@
         0.921650767326355
       ]
     },
-    "frame_id": 2,
+    "frame_id": 0,
     "ok": true,
     "output": {
       "dtype": "float32",
@@ -84,11 +75,11 @@
       ]
     },
     "timings_ms": {
-      "conv": 26669.275627997195,
-      "other": 1351.0324840117391,
-      "total": 28079.27754499906
+      "conv": 6223.194283989869,
+      "other": 1405.8770669726073,
+      "total": 7687.582414000644
     }
   },
   "tool": "tools/stream_sender.py",
-  "wall_s": 87.18135720000282
+  "wall_s": 7.959838000002492
 }

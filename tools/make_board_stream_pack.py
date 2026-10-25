@@ -151,8 +151,14 @@ def _write_layer_bins(plan_dir: Path, p: pn.LayerPlan) -> Dict[str, int]:
     if lut.shape != (256,):
         raise RuntimeError("LUT 形状不符 %s: %s" % (p.conv_name, lut.shape))
 
+    kk = int(p.k * p.k)
+    rb = 4 if kk <= 4 else 12
+    _n = int(p.c_out) * int(p.c_in)
+    wpad = np.zeros((_n, rb), dtype=np.int8)
+    wpad[:, :kk] = w.reshape(_n, kk)
+
     payloads = {
-        "w": w.tobytes(),
+        "w": wpad.tobytes(),
         "params": params.tobytes(),
         "lut": lut.tobytes(),
     }
@@ -160,7 +166,7 @@ def _write_layer_bins(plan_dir: Path, p: pn.LayerPlan) -> Dict[str, int]:
         (d / (name + ".bin")).write_bytes(raw)
 
     return {
-        "w": int(w.size * w.dtype.itemsize),
+        "w": int(wpad.size),
         "params": int(params.size * params.dtype.itemsize),
         "lut": int(lut.size * lut.dtype.itemsize),
     }

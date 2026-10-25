@@ -157,11 +157,11 @@ for q in range(256):
 
 ```cpp
 void conv_engine(
-    const uint8_t *in,      // [C_IN][H_IN][W_IN]
-    const int8_t  *w,       // [C_OUT][C_IN][K][K]
-    const int32_t *params,  // [C_OUT][3]  = {bias_i32, M, S}
-    const uint8_t *lut,     // [256]
-    uint8_t       *out,     // [C_OUT][H_OUT][W_OUT]
+    const ap_uint<32> *in,  // 字节布局 [C_IN][H_IN][W_IN]，按 32-bit 字访问
+    const ap_int<32>  *w,   // 字节布局 [C_OUT][C_IN][K][K]，按 32-bit 字访问
+    const ap_int<32> *params,  // [C_OUT][3]  = {bias_i32, M, S}
+    const ap_uint<8> *lut,     // [256]
+    ap_uint<8>       *out,     // [C_OUT][H_OUT][W_OUT]
     int C_IN, int C_OUT,
     int H_IN, int W_IN,
     int K,                  // 1 或 3（v1 只支持这两种）
@@ -171,6 +171,11 @@ void conv_engine(
     int zp_pre,             // 0..255
     int H_OUT, int W_OUT);  // ★ 实际实现里补了这两个标量
 ```
+
+> ★ `in`/`w` 的指针类型是 **32-bit 字**而不是 `uint8_t*`/`int8_t*`：m_axi 的事务粒度
+> 由指针类型决定，字节指针只会产生单字节事务（实测读吞吐 10–22 MB/s）。字节布局
+> 不变，PS 侧仍按原长度灌数据；唯一新增的约束是**缓冲区起点 4 字节对齐**（DMA/CMA
+> 分配天然满足）。越界字节只在缓冲区尾部 3（权重 11）字节内，属于同一分配页。
 
 > ★ `H_OUT`/`W_OUT` 是写代码时补上的：内核要按输出尺寸分块，而 `H_OUT` 无法由
 > `H_IN/K/stride/pad` 在硬件里"顺带"算出来（要多一路整数除法/取整，且容易和

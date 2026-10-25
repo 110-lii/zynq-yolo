@@ -224,3 +224,47 @@ build/sim/
 #       build/stub/ 是 stub_jtag_capture_dryrun.tcl 的假硬件产物（更不该入库）。
 build/board/
 build/stub/
+
+# --- 本机专用 / 提交包边界：绝不入 git --------------------------------------
+#     .train/ 是训练用的虚拟环境与第三方仓库（实测 >10 GB），换机器必须重建；
+#     uploads/ 是收件箱（外部转来的方案/资料），不是本仓库真源，按件整理后再入库。
+#     dist/ 是 tools/make_submission.py 生成的提交包导出目录，可随时重建。
+.train/
+uploads/
+dist/
+usage_statistics_webtalk.*
+
+# --- 工具/构建过程垃圾：不入库（提交包由 tools/make_submission.py 显式带入）---
+.dsh-acl-recovery/
+.srcs/
+.gen/
+.Xil/
+NA/
+build/tmp*
+build/ila_*
+build/frame*
+build/f720.jpg
+build/sample.jpg
+build/test320.rgb
+build/*.bgr
+build/*.rgb
+build/*.exe
+build/tracks_*.json
+build/calib_*.npy
+build/calib_*.jpg
+build/models/*.tflite
+build/ncnn-win/
+build/ball_rois*/
+build/ip_repo*/
+build/viz/
+build/tflite_*/
+build/train_student/
+build/preview_*/
+data/train/
+data/ball_roi*/
+.kilo/
+*.npy
+*.exe
+*.pyc
+.kilo/kilo.jsonc
+.kilo/worktrees/

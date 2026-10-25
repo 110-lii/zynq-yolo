@@ -18,7 +18,7 @@
 | `<skill_name>/README.md` | 单个技能包本体（目录名纯 ASCII 小写 `snake_case`） |
 | `<skill_name>/...` | 该技能包自带资产：提示词模板、工程骨架、校验脚本、踩坑清单等 |
 
-> 当前技能包清单：**待填，勿编造**（见下方清单表）。
+> 当前技能包清单：**2 个**（见下方清单表）；均来自 `ai/sessions/` 的真实失败/观察。
 
 ---
 
@@ -52,14 +52,15 @@
 
 ---
 
-## 技能包清单表（**待填，勿编造**）
+## 技能包清单表
 
 | 技能名 | 形态 | 适用范围 | 失效条件 | 状态 |
 |---|---|---|---|---|
-| 待填，勿编造 | 待填 | 待填 | 待填 | 待填 |
+| [`pynq_overlay_bringup`](pynq_overlay_bringup/README.md) | 通用 PYNQ（额外加分） | Zynq-7000 + PYNQ 2.7 + `.bit`/`.hwh`；AXI-Lite + `m_axi` | `.hwh` 不匹配 / 漏接 `s_axi_control_r` / 缓存未 flush / PYNQ 3.x API 差异 | ✅ 已验证（2 块 overlay、20 min 满载） |
+| [`hls_axi_stream_accel`](hls_axi_stream_accel/README.md) | HLS/AXI 通用 | Vitis_HLS/Vivado 2020.2 + Zynq-7000 `m_axi` 流式核 | 字节指针/条件读/散读权重/DATAFLOW 同 bundle 多读/只跑 csim | ✅ 已验证（6/6 bit-exact、AXI 四模式、41.4→9.63 s） |
 
-> ⚠️ **本表待填，勿编造。** 技能包只能来自本队**真实发生过**的失败或观察；
-> 没有 `ai/` 原始记录支撑的条目，一律不得凭空补行（承 `docs/repo_spec.md` §7「不得擅自填入」的纪律）。
+> 技能包只能来自本队**真实发生过**的失败或观察；没有 `ai/` 原始记录支撑的条目不得补行
+> （承 `docs/repo_spec.md` §7）。本表两个包的原始出处分别见各自 README §4。
 
 ---
 

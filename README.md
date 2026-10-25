@@ -63,9 +63,11 @@ Zynq-7020 对比赛视频做**可观测的目标与事件分析**，而不是做
 
 **明确不做**：越位、犯规、红黄牌等判罚类推理；HDMI/OSD 视频输出；板载摄像头采集（D015）。
 
-**创新点（待正式润色）**：在只有 220 DSP 的 7020 上，用「PL 通用 INT8 卷积引擎 + PS 前后处理」
-跑 YOLO；用触屏人工录入双方/裁判球衣颜色与半场，把不可靠的颜色自动推断变成一次人工设置，
-服务于球员/非球员区分（D012）与球权判定。
+**创新点（正式口径见 `report/design_report.md`）**：在只有 220 DSP 的 7020 上，把**像素级预处理**
+（BGR→320×320 RGB 平面、LUT 7%、18.8 ms/帧）放在 PL，把 **YOLOv8n-0.25 单类 person** 检测放在 PS ncnn，
+用「PL 预处理 + PS 轻量检测 + 几何/事件」的异构划分绕开 7020 的算力上限；球不靠全图检测，而用
+ROI/白块候选 + 小型 C 分类器 + 轨迹确认；用触屏人工录入双方/裁判球衣颜色与半场，把不可靠的颜色
+自动推断变成一次人工设置，服务于球员/非球员区分（D012）与球权判定。
 
 ---
 
@@ -74,27 +76,32 @@ Zynq-7020 对比赛视频做**可观测的目标与事件分析**，而不是做
 **数据流**（D015 后的主线）：
 
 ```text
-PC（视频文件 / 实时推流）
-   │  以太网（PS GEM 或 PL RGMII，未冻结）
+PC（视频文件 / 推流；见 tools/stream_sender.py）
+   │  以太网（D015；板上接收/落盘后由 tools/board_pipeline.py 读入）
    ▼
 PS：网络接收 → 帧重组 → DDR 帧缓冲
    ▼
-PS：letterbox 416×416 + int8 量化 + 逐层调度
+PL：preproc（BGR → 320×320 RGB 平面，LUT 7%，实测 18.8 ms/帧）
    ▼
-PL：conv_engine 通用卷积引擎（一次算一层，无状态）
+PS：ncnn YOLOv8n-0.25 单类 person 检测（约 0.95–1.0 s/帧）
    ▼
-PS：后处理 → 检测框 / 球员轨迹 / 队别 / 事件
+PS：SORT 跟踪 → 球链路（白块候选 + C 分类器 + 轨迹确认）
+   ▼
+PS：单应 → 球场坐标 → 事件（出界/进球/球权）
    │  结果只序列化一次（D014）
    ├──► 以太网推给 PC
    └──► 落 SD 卡（与推送格式同构）
 ```
 
-**软硬件划分原则**：时序/协议栈/分支密集的部分放 PS（网络、预处理、后处理、事件判定）；
-唯一有算力收益的卷积放 PL。触屏 LCD 只作**数据输入端**（录球衣颜色与半场），不显示视频（D013）。
+**软硬件划分原则**：时序/协议栈/分支密集的部分放 PS（网络、检测调度、跟踪、后处理、事件判定）；
+PL 承担**像素级、规则、可流水化**的预处理（D017）——这是 7020 上真正能落地且有收益的部分。
+`conv_engine`（PL 通用 INT8 卷积引擎）实测 **0.13–0.4 FPS**，已退出主线，仅作逐层 bit-exact
+（6/6）与 AXI 带宽/时序的技术验证资产。触屏 LCD 只作**数据输入端**（录球衣颜色与半场），
+不显示视频（D013）。
 
-**详细依据与接口契约**见 [`docs/architecture.md`](docs/architecture.md)、
-[`docs/integration_rtl_plan.md`](docs/integration_rtl_plan.md) 与
-[`docs/accel_interface.md`](docs/accel_interface.md)。
+**详细依据与接口契约**见 [`docs/architecture.md`](docs/architecture.md) 与
+[`docs/accel_interface.md`](docs/accel_interface.md)；历史 416 方案见
+[`docs/integration_rtl_plan.md`](docs/integration_rtl_plan.md)（顶部已标「已取代」）。
 
 ---
 
@@ -177,27 +184,32 @@ PS：后处理 → 检测框 / 球员轨迹 / 队别 / 事件
 # 0) 取得仓库（git clone 或解压评审包），进入根目录
 cd zynq-yolo
 
-# 1) 仓库自检：命名规则 / 必需目录 / 禁入文件
-#    期望看到 SUMMARY: X PASS / 0 FAIL 以及末尾的 CHECK_REPO_OK 令牌
+# 1) 仓库自检：命名 / 必需目录 / 禁入文件 / 权重表 / py 语法
+#    期望末行 CHECK_REPO_OK
 python tools/check_repo.py          # 或： mingw32-make check
 
-# 2) 仿真回归（脚本由 sim/scripts/ 提供；尚未创建时 make 会打印 TODO）
-mingw32-make sim
+# 2) 构建比特流（按需；脚本入口在 build/scripts/，工具链路径参数化）
+#    preproc（当前主线）：bd_preproc.tcl
+#    conv_engine（历史验证）：bd_conv_engine.tcl
+#    axi_bw（带宽标定）：bd_axi_bw.tcl
+vivado -mode batch -source build/scripts/bd_preproc.tcl
 
-# 3) 构建：综合 → 实现 → 出比特流
-#    脚本入口为 build/scripts/build_bitstream.tcl，工具链路径通过变量注入：
-#    （VIVADO 默认取 PATH 中的 vivado，可用 VIVADO=... 覆盖，脚本内不硬编码版本路径）
-mingw32-make bit
+# 3) 上板：部署 + 运行完整管线（见 board/README.md 与 report/design_report.md §7）
+powershell -File board/scripts/deploy_to_board.ps1
+# 板端：
+python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
+  --max-det 0 --ball-every 2 --pl --calib data/calib/field_calib.json \
+  --proposal --out /tmp/out.json
 
-# 4) 上板：加载 Overlay 并运行实测（脚本与证据见 board/README.md）
-#    证据落盘位置：board/logs/（串口输出）、board/images/（实拍图）
-#    ※ 脚本尚未创建时 make 会打印 TODO；上板脚本落地后在此补具体命令
+# 4) 生成设计报告（Markdown → docx）
+mingw32-make report                 # 或 python tools/md_to_docx.py
 
-# 5) 生成提交件报告
-mingw32-make report
+# 5) 生成提交包（含运行必需件 + manifest + SHA256，并在导出目录自检）
+python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；产物在 dist/
 ```
 
-> 仓库当前处于骨架阶段：`src/` 尚无设计实现，因此第 2–4 步的脚本可能尚未存在。**这是诚实状态，不是故障**；对应 target 会打印 `TODO: <脚本路径>` 而不是假装成功。
+> 当前仓库是**提交状态**，不是骨架：报告、技能包、协作记录、上板日志均已落盘。
+> 历史路径（DVP 采集、PL 整网 `conv_engine`）仍保留为可复现的验证资产，但不在主线。
 
 ### 5.3 成功判据（必读，`docs/repo_spec.md` §5）
 
@@ -279,14 +291,17 @@ mingw32-make report
 
 ## 10. 待用户裁定项（`docs/repo_spec.md` §7）
 
-以下内容**尚未由用户确认**，任何成员**不得**据以写入 `src/`、`build/`、`board/` 的实现：
+以下为台账状态。标「已落地」的项是**实现现状**，不等于用户裁定；台账状态仍以
+[`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) 为准。
 
-1. **核心加速器的实现方式**（HLS / RTL / 混合）—— 仍未裁定（台账 **D003**）。
-   技术基础见 [`docs/yolo_on_zynq7020_survey.md`](docs/yolo_on_zynq7020_survey.md)（该文推荐 D 路线：PL 通用量化卷积引擎 + PS 前后处理）。
+1. **核心加速器的实现方式**（HLS / RTL / 混合）—— 台账 **D003** 仍为 `discussing`；
+   **工程上已按 HLS 落地** `conv_engine`（逐层 bit-exact 6/6）与 `preproc`（上板主线），
+   这是 Lead 基于实测的工程选择（见 D017），**不据此改写 D003 状态**。
+   技术基础见 [`docs/yolo_on_zynq7020_survey.md`](docs/yolo_on_zynq7020_survey.md)。
 2. **核心算法的具体形态与输入规格** —— ★ **原则已由用户 2026-10-19 裁定：识别判定交给 YOLO 模型**（台账 **D004**）。
-   **仍待细化的参数**：具体型号 / 输入分辨率（416 还是 160–224 或 YOLO-Fastest 级）/ 类别集合 / 训练来源。
+   **参数已由 D017 定案**：单类 `person` 的 **YOLOv8n-0.25 @320×320**（约 0.386 GMAC/帧），
+   推理在 PS ncnn；D016 的 YOLOv5n@416 路线已被实测淘汰（原文保留，不删）。
    **视频来源已另行裁定（D015）**：不使用板载摄像头，视频由 PC 经以太网送入；网络端口/协议仍待定。
-   ⚠️ 这组参数**直接决定性能分怎么写**（416 ⇒ 约 2 fps；160–224 ⇒ 6–25 fps，均为估算），取舍见调研文档 §3.1 与 §7.1 第 3 条。
 3. 数据集来源与许可（台账 **D005**）。
 4. 软硬件划分边界与 AXI 接口契约的具体数值（台账 **D006**）。
 5. 与 `D:\FPGA\oi` 旧项目资产的具体复用范围（已确认原则：**复用管线，PYNQ 软硬件框架重做**；台账 **D007**）。

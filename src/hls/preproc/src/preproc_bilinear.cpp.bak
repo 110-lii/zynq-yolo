@@ -1,0 +1,110 @@
+// ============================================================================
+// preproc.cpp —— PL 预处理：BGR888 帧 -> 320x320 RGB 平面（ncnn 输入布局）
+//
+// 输入  in : BGR888，W_IN x H_IN，行主序（每行按 32-bit 字对齐读取）
+// 输出  out: RGB888 平面，3 x 320 x 320 字节，按 32-bit 字打包写出
+//
+// 缩放：双线性，坐标映射与 cv2.resize(INTER_LINEAR) 一致（实测差 <=1 LSB）
+// 接口：两条 m_axi（读/写）+ AXI-Lite 控制
+// ============================================================================
+#include <ap_int.h>
+
+#ifndef OUT_W
+#define OUT_W 320
+#endif
+#ifndef OUT_H
+#define OUT_H 320
+#endif
+#define LINE_MAX 1920
+
+void preproc(const ap_uint<32> *in,
+             ap_uint<8>  *out,
+             int W_IN, int H_IN)
+{
+    #pragma HLS INTERFACE m_axi port=in  offset=slave bundle=gmem_in  depth=1048576 num_read_outstanding=16 max_read_burst_length=64
+    #pragma HLS INTERFACE m_axi port=out offset=slave bundle=gmem_out depth=307200  num_write_outstanding=16 max_write_burst_length=64
+    #pragma HLS INTERFACE s_axilite port=W_IN  bundle=control
+    #pragma HLS INTERFACE s_axilite port=H_IN  bundle=control
+    #pragma HLS INTERFACE s_axilite port=return bundle=control
+
+    ap_uint<32> xmap[OUT_W];
+    ap_uint<32> ymap[OUT_H];
+    #pragma HLS ARRAY_PARTITION variable=xmap complete
+    #pragma HLS ARRAY_PARTITION variable=ymap complete
+
+    // 增量步长：step = (W_IN << 16) / OUT_W，起点 = step/2 - 32768（对应 (ox+0.5)*scale-0.5）
+    int xstep = (W_IN << 16) / OUT_W;
+    int ystep = (H_IN << 16) / OUT_H;
+    int xmax = (W_IN - 1) << 16;
+    int ymax = (H_IN - 1) << 16;
+    int xpos = (xstep >> 1) - 32768;
+    int ypos = (ystep >> 1) - 32768;
+    for (int ox = 0; ox < OUT_W; ++ox) {
+        #pragma HLS PIPELINE II=1
+        int t = (xpos < 0) ? 0 : (xpos > xmax ? xmax : xpos);
+        xmap[ox] = (ap_uint<32>)t;
+        xpos += xstep;
+    }
+    for (int oy = 0; oy < OUT_H; ++oy) {
+        #pragma HLS PIPELINE II=1
+        int t = (ypos < 0) ? 0 : (ypos > ymax ? ymax : ypos);
+        ymap[oy] = (ap_uint<32>)t;
+        ypos += ystep;
+    }
+
+    ap_uint<8> row0[LINE_MAX * 3];
+    ap_uint<8> row1[LINE_MAX * 3];
+    // 不分区：让 HLS 推断成 BRAM。动态下标 + 全分区会展开成巨大 mux 树，
+    // 上一版就是因此综合不收敛。顺序读写下 BRAM 完全够用。
+
+
+    const int in_words = (W_IN * 3 + 3) >> 2;   // 每行字数
+
+    for (int oy = 0; oy < OUT_H; ++oy) {
+        #pragma HLS LOOP_TRIPCOUNT min=1 max=320
+        int sy  = (int)(ymap[oy] >> 16);
+        int sy1 = (sy + 1 < H_IN) ? (sy + 1) : (H_IN - 1);
+
+        for (int q = 0; q < in_words; ++q) {
+            #pragma HLS PIPELINE II=1
+            ap_uint<32> w = in[(long long)sy * in_words + q];
+            int b0 = q * 4;
+            #pragma HLS UNROLL
+            for (int i = 0; i < 4; ++i) {
+                int idx = b0 + i;
+                if (idx < W_IN * 3) row0[idx] = ap_uint<8>(w >> (8 * i));
+            }
+        }
+        for (int q = 0; q < in_words; ++q) {
+            #pragma HLS PIPELINE II=1
+            ap_uint<32> w = in[(long long)sy1 * in_words + q];
+            int b0 = q * 4;
+            #pragma HLS UNROLL
+            for (int i = 0; i < 4; ++i) {
+                int idx = b0 + i;
+                if (idx < W_IN * 3) row1[idx] = ap_uint<8>(w >> (8 * i));
+            }
+        }
+
+        int fy = (int)(ymap[oy] & 0xFFFF);
+        for (int ox = 0; ox < OUT_W; ++ox) {
+            #pragma HLS PIPELINE II=4
+            int sx  = (int)(xmap[ox] >> 16);
+            int sx1 = (sx + 1 < W_IN) ? (sx + 1) : (W_IN - 1);
+            int fx = (int)(xmap[ox] & 0xFFFF);
+            #pragma HLS UNROLL
+            for (int c = 0; c < 3; ++c) {
+                int p00 = row0[sx * 3 + c];
+                int p01 = row0[sx1 * 3 + c];
+                int p10 = row1[sx * 3 + c];
+                int p11 = row1[sx1 * 3 + c];
+                int top = (p00 * (65536 - fx) + p01 * fx) >> 16;   // 0..255
+                int bot = (p10 * (65536 - fx) + p11 * fx) >> 16;
+                int v = (top * (65536 - fy) + bot * fy) >> 16;
+                int oc = (c == 0) ? 2 : (c == 2 ? 0 : 1);   // BGR -> RGB
+                out[(long long)oc * (OUT_W * OUT_H) + (long long)oy * OUT_W + ox] = ap_uint<8>(v);
+            }
+        }
+
+    }
+}

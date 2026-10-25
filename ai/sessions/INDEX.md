@@ -23,9 +23,15 @@
 | [003](003_conv_engine_bitstream.md) | 2026-10-19（整理于 10-20） | conv_engine HLS 内核落地、INT8 量化验证与出片（单路主线）★ | `group/1101`（客户端 `dsh`） | ① 资源收敛由对照实验逼出：`p8_1_40_a0` LUT 66.5% / DSP 58.6%，`ACC_FULL=1` 假设被 `p8_1_40_a1`（LUT 70 928）**实测证伪**；② 时序教训硬证据：100 MHz WNS **−1.247 ns** → 83.33 MHz 复跑 **+0.025 ns**（`build/reports/timing/conv_engine_bd_timing.rpt`）；③ HLS Estimated Fmax 136.99 vs 实现 88.5 MHz（差 55%）口径纪律；④ 测试向量 M/S 随手取 ⇒ 钳位假绿、差点掩盖真 bias bug —— 改为由 acc 量级反推后 csim 6 用例全绿（`CSIM_ALL_OK`）；⑤ 原文位置：`ai/raw/2026-10-19_8160c00c.md`（主会话 46 条提示词，`_prompts_all.md` P8–P53） |
 
 | [004](004_jtag_bringup.md) | 2026-10-20 | JTAG 模式（无操作系统）下 conv_engine 首次真机验证 ★ | `group/1101`（客户端 `dsh`） | ① 判据令牌 `JTAG_TEST_OK 6 / 6`、**0 / 54 784 字节不符**、连续 3 次复现（`board/logs/board_jtag_layer_test_20261020.md` 原文 + `data/results/jtag_layer_test.json`）；② 四次「像硬件坏了」的现象**全部定位到测量侧**：`memmap` 访问许可 → `mrd` 输出无 `0x` 前缀 → `ps7_init` 不停 A9 核导致核跑垃圾代码抢内存 → 前序会话遗留 PS wedge 需 `rst -system`；③ **误判「板子掉电」的自我纠正**：`targets` 全空但 Windows 设备树里 Digilent `C3059298ABCD` 在位、重扫链上器件都在 ⇒ 是 hw_server 状态问题；④ 明确划界：JTAG 路径**刻意不测**吞吐，GOPS/fps 仍为 `null`，需 PYNQ 启动后测 |
+| [005](005_engine_load_weight_pipeline.md) | 2026-10-21 | conv_engine 速度优化：装载裁剪与权重流水 ★ | `group/1101`（客户端 `kilo`） | ① 整网 **41.4 → 20.8 s/帧**（1.99x），三次检测 scores 逐值相同 ⇒ 只改时序不改数值；② 第一轮“装载字节数主导”的假设被实测**证伪**（596→77 MB/帧只换来 1.21x），按 ci-tile 拍数反推出权重装载 ~720 拍/ci 才是大头；③ 权重装载展平 + `PIPELINE II=1` 后再得 1.33x，单层聚合 0.0505→0.0846 GOP/s；④ 资源反而下降（HLS DSP 129→81、LUT 40.9K→23.0K），实现 WNS +1.254 ns；⑤ 第三轮把 PS 首层 int64 matmul 换成 float32 精确累加（部分和 < 2^24），5.75→0.8 s；⑥ 判据：`CSIM_ALL_OK 6`、`stream_client_v5_fb_ld/wld.json`、`board/logs/board_stream_v5_perf_20261021.md` |
+| [007](007_pl_mask_preproc.md) | 2026-10-21 | PL 掩码预处理器（运动 + 白球，HLS） | group/1101（客户端 kilo） | ① MASK_TB_OK 851 逐位通过；② csynth DSP 0 / LUT 2181 / II=4，640×360 预估 ~11 ms（PS 原 41 ms）；③ 出片踩坑两个：core_revision 超 int32、run_ippack 必须在 IP 目录内跑（否则 component.xml 缺 synthesis fileSet）；④ 板端 MASK_OVL_OK 待补 |
+| [006](006_fast_events_ps_pipeline.md) | 2026-10-21 | 速度优先的球员/足球事件原型（PS 像素管线） | `group/1101`（客户端 `kilo`） | ① 板端实测：帧差+连通域 320x180 **9.6 ms（104 FPS）**、MOG2 57 ms（17.5 FPS）、白球 10 ROI 27.4 ms；② 整合原型 `tools/fast_events.py` 纯处理 **63.0 ms（15.9 FPS）**、带 mp4 编码 8.0 FPS；③ CNN/PL 路径 20.8 s/帧，差 3 个数量级 ⇒ 速度优先只能走 PS；④ 球的候选 66/149 帧、出界 44 帧，**无真值、准确率未过关**（明确写入未决项） |
+| [008](008_conv_engine_axi_rewrite.md) | 2026-10-22 | conv_engine 访存口径重写（字节事务 → 32-bit 字） | `group/1101`（客户端 `kilo`） | ① 定位四处代码级不符：字节指针、条件读、w 缺 outstanding、权重散读；② 改后主机 g++ 直跑 TB **6/6 逐位通过**（1600/8000/25600/1600/5184/12800），只改事务不改算术；③ csynth 与板端吞吐**未跑**，遗留 co 重复读与单 bundle 两项 |
+| [009](009_ps_pipeline_pl_preproc.md) | 2026-10-23 | PS 检测链路 + PL 预处理（板上实测） | `magpie/group/1101`（客户端 `kilo`） | ① ncnn + person 单类 0.386 GMAC **0.95 s/帧**，与 PyTorch 差 2 px；② 跟踪/球场坐标/镜头状态/JSON 板上跑通，377 帧 34 个 ID，帧间位移 0.2 px；③ PL 预处理 **18.8 ms / LUT 7%**，单应残差 1.11 m；④ INT8 只快 17% 且精度下降，被否；⑤ 20 分钟满载压测无复位，确认此前掉线是整机复位而非网络 |
+| [010](010_board_pipeline_ball_backfill.md) | 2026-10-24 | 板上球链路 backfill 试验（两次回滚）★ | `magpie/group/1101`（客户端 `kilo`） | ① 稳定版 **144/202 帧球场坐标、49 帧球权**；② 两次 backfill（复用变量 / 状态机）均把球帧打到极低、球权归零，已完整回滚；③ 根因是 `--ball-every 2` 下 5 次丢失只覆盖 ~0.4 s + 标定边界过滤；④ 结构性改动（节奏 1 / 按秒计丢失 / 预测绕过边界）未落地，报告如实写“未完成” |
 
-> **统计**：共 **4** 条记录；带自我纠错轨迹（★）**4** 条。
-> 编号连续、不复用；下一条应为 `005_<slug>.md`。
+> **统计**：共 **10** 条记录；带自我纠错轨迹（★）**6** 条。
+> 编号连续、不复用；下一条应为 `011_<slug>.md`。
 
 ---
 
@@ -44,7 +50,7 @@
 ## 怎么加一条记录
 
 ```powershell
-# 1) 复制模板，编号取本表 max+1（当前 max=004 ⇒ 下一个是 005）
+# 1) 复制模板，编号取本表 max+1（当前 max=007 ⇒ 下一个是 008）
 Copy-Item D:\zynq-yolo\ai\sessions\_TEMPLATE.md D:\zynq-yolo\ai\sessions\005_<slug>.md
 # 2) 逐项填写（字段不得删；「原文位置」必须真实）
 # 3) 回到本文件，在上表追加一行（顺序不可反）

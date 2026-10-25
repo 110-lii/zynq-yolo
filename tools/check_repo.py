@@ -19,13 +19,16 @@
 
 实现的 6 项检查（承 docs/repo_spec.md §1/§2 与指南 3.3.5.4/3.3.5.5）::
 
-    a) 命名规则   : 遍历仓库（剪掉 .git/.research/ref/build/reports/board/logs 与
-                    .venv/__pycache__），目录名/文件名含非 [A-Za-z0-9_.-] 字符 => FAIL
+    ★ 检查范围 = **提交集**：`git ls-files --cached --others --exclude-standard`
+      （即 `git archive` 的边界）。本机 venv、Vivado 运行目录、训练环境等
+      **不随包提交**的产物不参与，避免假 FAIL；不是 git 仓库时退回整盘 walk。
+
+    a) 命名规则   : 提交集内目录名/文件名含非 [A-Za-z0-9_.-] 字符 => FAIL
     b) 必需路径   : src sim build board data skill report docs ai tools
                     与根 README.md / LICENSE / .gitignore，缺一 => FAIL
     c) 目录 README: 上述每个目录必须有 README.md，缺一 => FAIL
-    d) 禁入文件   : *.jou *.str / .Xil 目录 / __pycache__ 目录 / vivado*.log /
-                    根目录 build*.log，命中 => FAIL
+    d) 禁入文件   : 提交集内 *.jou *.str / .Xil 目录 / __pycache__ 目录 /
+                    vivado*.log / 根目录 build*.log，命中 => FAIL
     e) 权重一致性 : report/README.md 必须含指南 3.3.5.5 的 30/20/20/15/15，缺 => WARN（不 FAIL）
     f) Python 语法: 自有 .py（tools/ sim/ src/ ai/tools/）必须能被 AST 解析，命中 => FAIL
                     ★ 补这条的原因见 check_f_py_syntax 的 docstring：曾出现「4 个脚本语法
@@ -36,14 +39,15 @@
 
 import sys
 
-# 不生成 __pycache__：本仓库的 tools/check_repo.py 检查 d) 是**扫盘**的，不看 .gitignore，
-# 留下 .pyc 会直接判 FAIL。实测语义（勿想当然）：模块**自身体内**置位拦不住自己的 .pyc
+# 不生成 __pycache__：即使提交集已按 .gitignore 过滤，运行自检也不应该在仓库里
+# 留下 .pyc 垃圾。实测语义（勿想当然）：模块**自身体内**置位拦不住自己的 .pyc
 # （CPython 先编译并写缓存，再执行模块体），只有在本模块 import 别的本地模块**之前**
 # 置位才有效。所以这段必须放在所有 import 之前。
 sys.dont_write_bytecode = True
 
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -138,26 +142,80 @@ def read_text(path):
         return None
 
 
+def git_submission_paths(root):
+    """返回「会进入提交包」的相对路径集合（POSIX 风格，只含磁盘上存在的项）。
+
+    集合 = `git ls-files --cached`（已跟踪）+ `--others --exclude-standard`
+    （未被 .gitignore 排除的新文件）。这是 `git archive` 的边界，也是本自检的
+    检查边界：本机 venv、Vivado 运行目录、训练环境等不随包提交的产物，不应该
+    制造假 FAIL；而任何**会被提交**的新文件仍必须过命名/禁入检查。
+
+    不是 git 仓库或 git 不可用时返回 None，调用方退回整盘 walk。
+    """
+    try:
+        proc = subprocess.run(
+            [
+                "git", "-c", "core.quotepath=false", "-C", str(root),
+                "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except Exception:
+        return None
+    if proc.returncode != 0:
+        return None
+
+    paths = set()
+    for raw in proc.stdout.split(b"\0"):
+        if not raw:
+            continue
+        rel = raw.decode("utf-8", "replace").replace("\\", "/")
+        try:
+            exists = (root / rel).exists()
+        except OSError:
+            exists = False
+        if exists:
+            paths.add(rel)
+    return paths
+
+
 # ---------------------------------------------------------------- 检查项
 
 def check_a_naming(root):
-    """a) 目录名/文件名必须纯 ASCII：[A-Za-z0-9_.-]。"""
-    bad = []
-    for rel, _dirnames, filenames, _keep in walk(
-        root, skip_paths=SCAN_SKIP_PATHS, skip_names=SCAN_SKIP_NAMES
-    ):
-        prefix = "" if rel == "." else rel + "/"
-        # 目录名：keep 是尚未剪枝的子目录（含被跳过的），需重新枚举原始 dirnames
-        for name in sorted(_dirnames):
-            rel_child = name if rel == "." else rel + "/" + name
-            if name == ".git" or name in SCAN_SKIP_NAMES or rel_child in SCAN_SKIP_PATHS:
-                continue
-            if not NAME_ALLOWED.match(name):
-                bad.append(prefix + name + "/")
-        for name in sorted(filenames):
-            if not NAME_ALLOWED.match(name):
-                bad.append(prefix + name)
-    bad = sorted(set(bad))
+    """a) 目录名/文件名必须纯 ASCII：[A-Za-z0-9_.-]。
+
+    检查范围 = 提交集（git 跟踪 + 未忽略的新文件）；不是 git 仓库时退回扫盘。
+    本机 venv/训练环境等不随包提交的目录不参与，避免假 FAIL。
+    """
+    bad = set()
+    paths = git_submission_paths(root)
+    if paths is not None:
+        for rel in paths:
+            parts = rel.split("/")
+            for i, name in enumerate(parts):
+                if NAME_ALLOWED.match(name):
+                    continue
+                head = "/".join(parts[: i + 1])
+                is_dir = (i < len(parts) - 1) or (root / rel).is_dir()
+                bad.add(head + ("/" if is_dir else ""))
+    else:
+        for rel, _dirnames, filenames, _keep in walk(
+            root, skip_paths=SCAN_SKIP_PATHS, skip_names=SCAN_SKIP_NAMES
+        ):
+            prefix = "" if rel == "." else rel + "/"
+            # 目录名：keep 是尚未剪枝的子目录（含被跳过的），需重新枚举原始 dirnames
+            for name in sorted(_dirnames):
+                rel_child = name if rel == "." else rel + "/" + name
+                if name == ".git" or name in SCAN_SKIP_NAMES or rel_child in SCAN_SKIP_PATHS:
+                    continue
+                if not NAME_ALLOWED.match(name):
+                    bad.add(prefix + name + "/")
+            for name in sorted(filenames):
+                if not NAME_ALLOWED.match(name):
+                    bad.add(prefix + name)
+    bad = sorted(bad)
     if not bad:
         return PASS, "命名规则：未发现中文/空格/特殊字符的目录名或文件名", []
     detail = ["发现 %d 处违规命名（只允许 [A-Za-z0-9_.-]）:" % len(bad)]
@@ -195,22 +253,42 @@ def check_c_dir_readmes(root):
 
 
 def check_d_forbidden(root):
-    """d) 仓库内不得有 .jou/.str/.Xil/__pycache__/vivado*.log/根 build*.log。"""
-    hits = []
-    for rel, _dirnames, filenames, _keep in walk(root):
-        prefix = "" if rel == "." else rel + "/"
-        for name in sorted(_dirnames):
-            if name in FORBIDDEN_DIR_NAMES:
-                hits.append("禁入目录: %s%s/" % (prefix, name))
-        for name in sorted(filenames):
+    """d) 提交集内不得有 .jou/.str/.Xil/__pycache__/vivado*.log/根 build*.log。
+
+    检查范围与 a) 相同：git 提交集；不是 git 仓库时退回整盘 walk。
+    已被 .gitignore 排除的本机产物不会随包提交，不计入 FAIL。
+    """
+    hits = set()
+    paths = git_submission_paths(root)
+    if paths is not None:
+        for rel in paths:
+            parts = rel.split("/")
+            for i, name in enumerate(parts):
+                if name in FORBIDDEN_DIR_NAMES:
+                    hits.add("禁入目录: %s/" % "/".join(parts[: i + 1]))
+            name = parts[-1]
             low = name.lower()
             if low.endswith(FORBIDDEN_SUFFIXES):
-                hits.append("禁入文件: %s%s" % (prefix, name))
+                hits.add("禁入文件: %s" % rel)
             elif low.startswith("vivado") and low.endswith(".log"):
-                hits.append("禁入日志: %s%s" % (prefix, name))
-            elif rel == "." and low.startswith("build") and low.endswith(".log"):
-                hits.append("禁入根日志: %s%s" % (prefix, name))
-    hits = sorted(set(hits))
+                hits.add("禁入日志: %s" % rel)
+            elif len(parts) == 1 and low.startswith("build") and low.endswith(".log"):
+                hits.add("禁入根日志: %s" % rel)
+    else:
+        for rel, _dirnames, filenames, _keep in walk(root):
+            prefix = "" if rel == "." else rel + "/"
+            for name in sorted(_dirnames):
+                if name in FORBIDDEN_DIR_NAMES:
+                    hits.add("禁入目录: %s%s/" % (prefix, name))
+            for name in sorted(filenames):
+                low = name.lower()
+                if low.endswith(FORBIDDEN_SUFFIXES):
+                    hits.add("禁入文件: %s%s" % (prefix, name))
+                elif low.startswith("vivado") and low.endswith(".log"):
+                    hits.add("禁入日志: %s%s" % (prefix, name))
+                elif rel == "." and low.startswith("build") and low.endswith(".log"):
+                    hits.add("禁入根日志: %s%s" % (prefix, name))
+    hits = sorted(hits)
     if not hits:
         return PASS, "禁入文件：未发现 .jou/.str/.Xil/__pycache__/vivado*.log/根 build*.log", []
     detail = ["命中 %d 处禁入项（应被 .gitignore 排除或删除）:" % len(hits)]

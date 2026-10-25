@@ -1,9 +1,9 @@
 # 球员跟踪 / 轨迹 / 倒地候选 —— 第一版实测（2026-10-20）
 
 > 对应决策 **D011**（人+球；简单事件；倒地；可选轨迹）。
-> 工具：[`../../tools/track_players.py`](../../tools/track_players.py)、[`../../tools/fall_review.py`](../../tools/fall_review.py)
-> 数据：[`../../data/results/player_tracks.json`](../../data/results/player_tracks.json)、
-> [`../../data/results/fall_candidates.csv`](../../data/results/fall_candidates.csv)
+> 工具：[`../tools/track_players.py`](../tools/track_players.py)、[`../tools/fall_review.py`](../tools/fall_review.py)
+> 数据：[`../data/results/player_tracks.json`](../data/results/player_tracks.json)、
+> [`../data/results/fall_candidates.csv`](../data/results/fall_candidates.csv)
 
 ## 0. ⛔ 先作废一个数字（这是本文件最重要的一段）
 
@@ -124,8 +124,8 @@
 | 22 | `inc_10_tid8179_f170-176` | weak | **4** | 43% | 1.82 | ✅ **真倒地** |
 | 其余 23 个 | — | 多为 weak | — | — | — | ❌ 非倒地（**含大量教练/裁判**） |
 
-裁定已写入 [`../../data/results/fall_candidates.csv`](../../data/results/fall_candidates.csv)，
-汇总在 [`../../data/results/fall_review.json`](../../data/results/fall_review.json)。
+裁定已写入 [`../data/results/fall_candidates.csv`](../data/results/fall_candidates.csv)，
+汇总在 [`../data/results/fall_review.json`](../data/results/fall_review.json)。
 
 ### 7.1 由此得出的两个硬结论
 

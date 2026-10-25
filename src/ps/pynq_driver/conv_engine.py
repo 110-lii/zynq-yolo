@@ -383,6 +383,20 @@ class ConvEngineOverlay(object):
         self._meta = meta
         self._bufs = buffers
 
+        # 权重按 (co, ci) 记录补齐到 4/12 字节，与内核的装载口径一致。
+        # 用例目录仍保存 ONNX 原始布局 [C_OUT][C_IN][K][K]。
+        _kk = int(meta["K"]) ** 2
+        _rb = 4 if _kk <= 4 else 12
+        _co = int(meta["C_OUT"])
+        _ci = int(meta["C_IN"])
+        _raw = np.ascontiguousarray(buffers["w"], dtype=np.int8).reshape(-1)
+        if _raw.size != _co * _ci * _kk:
+            raise ValueError("w bytes %d != C_OUT*C_IN*K*K %d"
+                             % (_raw.size, _co * _ci * _kk))
+        _wp = np.zeros((_co * _ci, _rb), dtype=np.int8)
+        _wp[:, :_kk] = _raw.reshape(_co * _ci, _kk)
+        buffers["w"] = _wp.reshape(-1)
+
         # 先释放上一层分配的缓冲（pynq.buffer 没有显式 free 时靠 overlay 引用
         # 管理；这里简单重挂，board 内存足够大，不追求精细回收）。
         self._c2c_buf = {}

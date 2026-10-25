@@ -1,0 +1,26 @@
+{
+ "tool": "tools/train_person_gate.py",
+ "n_train": 22679,
+ "n_test": 10806,
+ "train_clips": [
+  "inc_08_t02395.4.mp4",
+  "inc_02_t01370.6.mp4",
+  "inc_05_t01796.1.mp4",
+  "inc_04_t01697.4.mp4",
+  "inc_03_t01508.3.mp4",
+  "inc_09_t03237.3.mp4",
+  "inc_06_t01901.6.mp4",
+  "inc_07_t02037.9.mp4"
+ ],
+ "test_clips": [
+  "inc_01_t01154.9.mp4",
+  "inc_11_t06345.4.mp4",
+  "inc_10_t05249.2.mp4",
+  "inc_12_t06867.9.mp4"
+ ],
+ "auc": 0.4072479452580091,
+ "acc": 0.4486396446418656,
+ "precision": 0.22234788509387016,
+ "recall": 0.2806166143305738,
+ "model": "D:\\zynq-yolo\\data\\models\\person_gate.npz"
+}

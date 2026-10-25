@@ -69,6 +69,7 @@ source [file join $root build scripts ps7_config.tcl]
 set_property -dict [list \
     CONFIG.PCW_USE_S_AXI_HP0 {1} \
     CONFIG.PCW_USE_S_AXI_HP1 {1} \
+    CONFIG.PCW_USE_S_AXI_HP2 {1} \
     CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {83.333333} \
     CONFIG.PCW_USE_FABRIC_INTERRUPT {1} \
     CONFIG.PCW_IRQ_F2P_INTR {1} \
@@ -105,7 +106,7 @@ connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins ctrl_sm
 connect_bd_net [get_bd_pins rst_ps7_100M/peripheral_aresetn] [get_bd_pins ctrl_smc/aresetn]
 
 # ⑤ 数据面：两个 1x1 SmartConnect，读走 HP0、写走 HP1（互不争用）
-foreach {tag si mi hp} {r S00_AXI M00_AXI S_AXI_HP0 w S00_AXI M00_AXI S_AXI_HP1} {
+foreach {tag si mi hp} {rin S00_AXI M00_AXI S_AXI_HP0 rw S00_AXI M00_AXI S_AXI_HP1 w S00_AXI M00_AXI S_AXI_HP2} {
     set sc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 prot_smc_$tag]
     set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $sc
     connect_bd_intf_net [get_bd_intf_pins conv_engine_0/m_axi_gmem_$tag] [get_bd_intf_pins prot_smc_$tag/$si]
@@ -119,6 +120,7 @@ foreach {tag si mi hp} {r S00_AXI M00_AXI S_AXI_HP0 w S00_AXI M00_AXI S_AXI_HP1}
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/S_AXI_HP1_ACLK]
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/S_AXI_HP2_ACLK]
 
 # ⑦ 中断（本阶段驱动用轮询，接上是为以后留路）
 set concat [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 irq_concat]

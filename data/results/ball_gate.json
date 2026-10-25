@@ -1,0 +1,40 @@
+{
+ "tool": "tools/train_ball_gate.py",
+ "n_real": 264,
+ "n_pos": 5,
+ "n_synth": 800,
+ "auc_real_holdout": 0.993421052631579,
+ "fp_rate_real_holdout": 0.013157894736842105,
+ "loo_pos_scores": [
+  0.4828,
+  0.4311,
+  0.4444,
+  0.6129,
+  0.8483
+ ],
+ "loo_recall": 1.0,
+ "sweep": {
+  "0.3": {
+   "fp_real_holdout": 0.013157894736842105,
+   "loo_recall": 1.0
+  },
+  "0.35": {
+   "fp_real_holdout": 0.013157894736842105,
+   "loo_recall": 1.0
+  },
+  "0.4": {
+   "fp_real_holdout": 0.013157894736842105,
+   "loo_recall": 1.0
+  },
+  "0.45": {
+   "fp_real_holdout": 0.013157894736842105,
+   "loo_recall": 0.6
+  },
+  "0.5": {
+   "fp_real_holdout": 0.0,
+   "loo_recall": 0.4
+  }
+ },
+ "threshold": 0.3,
+ "model": "D:\\zynq-yolo\\data\\models\\ball_gate.npz"
+}

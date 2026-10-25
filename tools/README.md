@@ -12,14 +12,16 @@
 ## 内容
 
 > ⚠️ 本节原写「`tools/` 为空目录、脚本一个都没创建」——**早已过时**（2026-10-20 更正）。
-> 现状：**50 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径，2026-10-20 复核）已落地。
+> 现状：**108 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径，2026-10-25 复核）已落地。
 > 下表只列关键脚本；完整清单看目录。状态列**如实**标注，**不要假装已存在/已运行**。
 
 | 路径 | 说明 | 状态 |
 |---|---|---|
 | `check_repo.py` | **仓库自检**：命名纯 ASCII / 必需目录 / 每目录 README / 禁入文件 / 权重表 / py 语法 | ✅ 已创建（令牌 `CHECK_REPO_OK`） |
 | `collect_metrics.py` | **资源/时序度量采集**：解析 `build/reports/*` 产指标表 | **TODO（未创建）** |
-| `md_to_docx.py` | **报告渲染**：把 `report/` 下 Markdown 渲染为提交用文档 | **TODO（未创建）** |
+| `md_to_docx.py` | **报告渲染**：把 `report/design_report.md` 渲染为 `.docx`（标题/表格/图片/代码块） | ✅ 已创建 |
+| `make_report_figures.py` | **报告图**：系统框图、软件流水线、检测路线耗时对比（确定性输出到 `report/figures/`） | ✅ 已创建 |
+| `make_submission.py` | **提交包**：按 git 边界 + 运行必需件导出，生成 manifest/SHA256 并在导出目录跑 `check_repo.py` | ✅ 已创建（令牌 `SUBMISSION_PACK_OK`） |
 | `ball_visibility_sweep.py` | **球可见性扫描**（D010 范围收缩依据之一） | ✅ 已创建 |
 | `ball_cv.py` | **传统 CV 球定位可行性原型**：结论 `no_work`（人眼 2/10，判据假绿分析） | ✅ 已创建（结果 `data/results/ball_cv.json`） |
 | `pitch_geometry.py` | **白线反解球场几何可行性**：n=10 n_pass=0（D010 范围外 b 的依据） | ✅ 已创建 |

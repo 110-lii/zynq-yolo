@@ -491,7 +491,9 @@ class BoardConvDriver(object):
                     "layer entry %r has non-positive geometry" % (name,))
             n_in = c_in * int(geom["H_IN"]) * int(geom["W_IN"])
             n_out = c_out * int(geom["H_OUT"]) * int(geom["W_OUT"])
-            n_w = c_out * c_in * k * k
+            _kk = k * k
+            _rb = 4 if _kk <= 4 else 12
+            n_w = c_out * c_in * _rb
             n_params = c_out * 3
             if n_in > max_in:
                 max_in = n_in
@@ -599,11 +601,16 @@ class BoardConvDriver(object):
             raise ValueError(
                 "layer %s w bytes %d != C_OUT*C_IN*K*K %d"
                 % (layer.conv_name, w_u8.size, expected_w))
-        if w_u8.size > self.max_w_bytes:
+        kk = int(layer.k) * int(layer.k)
+        rb = 4 if kk <= 4 else 12
+        w_pad = np.zeros((c_out * c_in, rb), dtype=np.uint8)
+        w_pad[:, :kk] = w_u8.reshape(c_out * c_in, kk)
+        w_pad = w_pad.reshape(-1)
+        if w_pad.size > self.max_w_bytes:
             raise ValueError(
                 "w tensor %d exceeds reusable buffer %d"
-                % (w_u8.size, self.max_w_bytes))
-        self._w_buf[:w_u8.size] = w_u8
+                % (w_pad.size, self.max_w_bytes))
+        self._w_buf[:w_pad.size] = w_pad
 
         # params: [C_OUT][3] = {bias_i32, M, S}, rebuilt as raw int32 bytes.
         n_params = c_out * 3

@@ -130,6 +130,44 @@ def detect(image_path, bin_path, param, model, conf=0.25, iou=0.45,
     return dets, infer_ms
 
 
+def detect_planar(planar, w0, h0, bin_path, param, model, conf=0.25, iou=0.45):
+    """直接喂 PL 已生成的 3x320x320 RGB 平面（channel-first），跳过 JPEG/resize。
+
+    planar: np.ndarray/bytes，长度 3*320*320；w0/h0: 原图尺寸，用于把框缩回原图。
+    返回 (dets, infer_ms)，格式与 detect() 一致。
+    """
+    raw_bytes = planar.tobytes() if hasattr(planar, "tobytes") else bytes(planar)
+    if len(raw_bytes) != 3 * 320 * 320:
+        return [], None
+    fd, raw = tempfile.mkstemp(suffix=".rgb")
+    os.close(fd)
+    try:
+        with open(raw, "wb") as fh:
+            fh.write(raw_bytes)
+        p = subprocess.run([bin_path, param, model, raw, str(conf), str(iou), "1"],
+                           capture_output=True, text=True, timeout=180)
+    finally:
+        try:
+            os.unlink(raw)
+        except OSError:
+            pass
+    if p.returncode != 0:
+        return [], None
+
+    sx, sy = w0 / 320.0, h0 / 320.0
+    dets, infer_ms = [], None
+    for line in p.stdout.splitlines():
+        t = line.split()
+        if not t:
+            continue
+        if t[0] == "DET":
+            x1, y1, x2, y2, s = map(float, t[1:6])
+            dets.append([x1 * sx, y1 * sy, x2 * sx, y2 * sy, s])
+        elif t[0] == "INFER_MS":
+            infer_ms = float(t[1])
+    return dets, infer_ms
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--image", required=True)

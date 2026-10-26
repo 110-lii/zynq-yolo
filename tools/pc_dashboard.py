@@ -245,7 +245,6 @@ def _selftest():
 
 def run_gui(q, stop, csv_path=None):
     import tkinter as tk
-    from tkinter import ttk
 
     root = tk.Tk()
     root.title("Zynq-7020 足球分析 · PC Dashboard")

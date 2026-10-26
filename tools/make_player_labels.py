@@ -58,12 +58,10 @@ import argparse
 import csv
 import importlib.util
 import json
-import math
 import time
 from pathlib import Path
 
 import cv2
-import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
 RES = REPO / "data" / "results"

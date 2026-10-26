@@ -1830,15 +1830,6 @@ def label_free_sanity(records):
     return out
 
 
-def _agree(blk):
-    """本 run 该层实测框数 / 按层占比折算框数。偏离 1 越多，说明两种口径越不是同一批东西。"""
-    n_est = blk.get("n_stratum_boxes_est")
-    n_run = blk.get("n_dropped_by_gate", 0) + (blk.get("n_kept_in_stratum") or 0)
-    if not n_est or not n_run:
-        return None
-    return round(n_run / n_est, 2)
-
-
 def precision_proxy(records):
     """**加权到真实占比**的 precision 代理 —— 不是 precision。
 

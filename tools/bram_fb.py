@@ -17,7 +17,6 @@
 import argparse
 import mmap
 import os
-import struct
 import sys
 
 sys.dont_write_bytecode = True

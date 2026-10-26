@@ -25,7 +25,6 @@ import sys
 # 置位才有效。所以这段必须放在所有 import 之前。
 sys.dont_write_bytecode = True
 
-import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -143,6 +143,8 @@ def main():
     ap.add_argument("--store-max-mb", type=int, default=64, help="单文件轮转阈值")
     ap.add_argument("--ball-scan", action="store_true", help="用单帧滑窗找球（慢但召回高）")
     ap.add_argument("--ball-every", type=int, default=0, help="球路径独立节奏（0=跟随主检测）")
+    ap.add_argument("--ball-cls-th", type=float, default=0.50,
+                    help="球候选的 C 分类器阈值（默认 0.50；调高可压误检，代价是召回）")
     ap.add_argument("--ball-lost-sec", type=float, default=None,
                     help="球丢失容忍窗口（秒，按视频帧换算）；默认 None=沿用 max_miss=4")
     ap.add_argument("--ball-predict-past-boundary", action="store_true",
@@ -311,11 +313,12 @@ def main():
         if _do_ball and args.ball_scan and ball_clf is not None:
             bc = slide_ball(frame, ball_clf)          # 已自带分数与距离抑制
         elif _do_ball:
+            bdiff = None
             if prev_frame is not None:
                 g1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 g0 = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
                 bdiff = cv2.GaussianBlur(cv2.absdiff(g1, g0), (3, 3), 0)
-            bc = ball_cands(frame, None, roi=ball_roi)   # 全分辨率：降采样会显著增加误检
+            bc = ball_cands(frame, bdiff, roi=ball_roi)   # 传帧差：静态白块（线/广告/鞋）在这里被挡掉
             if os.path.exists(BALL_CLS_BIN) and bc:
                 pat, sel = [], []
                 for j, c in enumerate(bc):
@@ -327,7 +330,7 @@ def main():
                     pat.append(patch)
                     sel.append(j)
                 sc = cls_scores(pat)
-                bc = [bc[j] for j, s in zip(sel, sc) if s >= 0.50]
+                bc = [bc[j] for j, s in zip(sel, sc) if s >= args.ball_cls_th]
         bt = ball_tr.step(bc, dt=(args.ball_every if args.ball_every > 0 else 1.0))
         if bt:
             b = max(bt, key=lambda t: t.hits)

@@ -1,15 +1,17 @@
-# 系统状态（2026-10-24）
+# 系统状态（2026-10-25）
 
 ## 架构
 
 ```
 视频帧
  ├─ [PL] preproc：BGR → 320×320 RGB 平面（18.8 ms，LUT 7%）
+ │        └─ 可选 track_preproc：同一 IP 另出 320×320 白/运动掩码（D019，已出片）
  ├─ [PS] ncnn person 检测（约 0.95 s/帧）
- ├─ [PS] SORT 跟踪 + 机位运动补偿
+ ├─ [PS] SORT 跟踪 + 机位运动补偿（可选 PL 运动门控）
  ├─ [PS] 球：白块候选 → C 分类器(8 ms) → 轨迹确认（每 2 帧）
  ├─ [PS] 单应 → 球场坐标（有标定时）
- └─ [PS] 事件：出界 / 进球 / 球权（FIFA 整球过线口径，可调）
+ ├─ [PS] 事件：出界 / 进球 / 球权（FIFA 整球过线口径，可调）
+ └─ [PS] 输出：SD JSONL（result_store）/ PC Dashboard（result_stream）/ HDMI-LCD（status_display）
 ```
 
 ## 实测指标
@@ -51,6 +53,49 @@ python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
 2. 球在快速移动/遮挡时确认率下降（约 28–70% 帧有球）；
 3. 出界口径默认“球心越线 0.11 m”，可在 `tools/events.py` 调整；
 4. 板子偶发整机复位（已确认非镜像问题，满载压测 20 分钟正常）。
+
+## 扩展功能（2026-10-25，D018/D019）
+
+| 功能 | 落点 | 状态 |
+|---|---|---|
+| PL 跟踪辅助（预处理+运动/白块掩码，单 IP） | `src/hls/track/src/track_preproc.cpp`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py` | **已出片** `board/overlay/track_preproc.bit`（4.05 MB；BD LUT 7,374 / FF 8,340 / DSP 13 / BRAM 3，WNS **+2.457 ns**）；**上板逐位对通过**（TRACK_PREPROC_BOARD_OK；720p 32.39 ms；管线内 20.03 ms） |
+| SD 卡增量存储 | `tools/result_store.py`（JSONL + summary + fsync/轮转） | `RESULT_STORE_SELFTEST OK` |
+| 板上结果推 PC | `tools/result_stream.py` | 本地回环测试 `RESULT_STREAM_OK sent=2` |
+| PC 端软件 | `tools/pc_dashboard.py`（TCP/回放 + 球场画布 + CSV） | `PC_DASHBOARD_SELFTEST OK`，本地端到端 3 帧通过 |
+| HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（4.05 MB；1bpp BRAM 28,800×32，基址 0x40000000；Setup +3.938 ns / Hold +0.065 ns）；**帧缓存读回通过**（DISPLAY_BOARD_OK；D022 单端口修复），画面待目视 |
+| LCD 状态面板（PL overlay） | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/lcd_status.bit`（4.05 MB；1bpp BRAM 12,000×32，基址 0x40000000；lcd_id=4384（4.3 寸 800×480）；Setup +4.283 ns / Hold +0.121 ns）；**帧缓存读回通过**（DISPLAY_BOARD_OK；D022 单端口修复），画面待目视 |
+| LCD 软件回退 | `tools/status_display.py`（fbdev/PNG） | `STATUS_DISPLAY_SELFTEST OK` |
+
+板上命令（板端）：
+
+```bash
+# PL 跟踪辅助 + SD 存储 + 结果文件
+python3 tools/board_pipeline.py --video <clips.mp4> --every 25 --max-det 0 \
+  --ball-every 2 --pl-track --motion-gate \
+  --calib data/calib/field_calib.json --proposal \
+  --store-dir /home/xilinx/zynq-yolo --store-fsync 30 --store-max-mb 64 \
+  --out /home/xilinx/out.json
+
+# 推送最新 JSONL 给 PC（另开一个窗口）
+python3 tools/result_stream.py --file /home/xilinx/zynq-yolo/run_*.jsonl \
+  --host <PC_IP> --port 5005 --follow
+
+# 有 fbdev 时直接输出状态面板（HDMI:1280x720 / LCD:800x480）
+python3 tools/status_display.py --replay /home/xilinx/out.json \
+  --size 800x480 --fb /dev/fb1
+```
+
+PC 端：
+
+```powershell
+python tools\pc_dashboard.py --listen 0.0.0.0:5005 --csv session.csv
+python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
+```
+
+> **边界**：`status_display.py` 只负责把状态面板渲染到已存在的 framebuffer；
+> 若 PYNQ 镜像没有 `/dev/fbX`，可加载已出片的 PL 显示 overlay（D020–D024：HDMI TMDS /
+> RGB LCD / 合并双屏 / 跟踪+双屏），用 `--display-bit` 写 1bpp BRAM。帧缓存读回均已通过，
+> 屏幕实际画面待目视，报告 §8 已登记。
 
 ## 已有验证与待办
 

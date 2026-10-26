@@ -61,7 +61,8 @@ Zynq-7020 对比赛视频做**可观测的目标与事件分析**，而不是做
 3. **简单事件** —— 球出界后的球权归属、角球还是球门球；
 4. **人员倒地识别** —— 识别倒地的球员/人员。
 
-**明确不做**：越位、犯规、红黄牌等判罚类推理；HDMI/OSD 视频输出；板载摄像头采集（D015）。
+**明确不做**：越位、犯规、红黄牌等判罚类推理；**HDMI 视频环出/OSD 叠框**（状态面板输出见 D018）；
+板载摄像头采集（D015）。
 
 **创新点（正式口径见 `report/design_report.md`）**：在只有 220 DSP 的 7020 上，把**像素级预处理**
 （BGR→320×320 RGB 平面、LUT 7%、18.8 ms/帧）放在 PL，把 **YOLOv8n-0.25 单类 person** 检测放在 PS ncnn，
@@ -81,23 +82,25 @@ PC（视频文件 / 推流；见 tools/stream_sender.py）
    ▼
 PS：网络接收 → 帧重组 → DDR 帧缓冲
    ▼
-PL：preproc（BGR → 320×320 RGB 平面，LUT 7%，实测 18.8 ms/帧）
+PL：track_preproc（BGR → 320×320 RGB + 320×320 运动/白块掩码，
+    单 IP / 4 HP；已出片，LUT 7,374 / WNS +2.457 ns；已上板逐位对通过）
    ▼
 PS：ncnn YOLOv8n-0.25 单类 person 检测（约 0.95–1.0 s/帧）
    ▼
-PS：SORT 跟踪 → 球链路（白块候选 + C 分类器 + 轨迹确认）
+PS：SORT 跟踪（可用 PL 运动掩码过滤无运动的新轨迹）→ 球链路
    ▼
 PS：单应 → 球场坐标 → 事件（出界/进球/球权）
    │  结果只序列化一次（D014）
-   ├──► 以太网推给 PC
-   └──► 落 SD 卡（与推送格式同构）
+   ├──► 以太网推给 PC（tools/result_stream.py → pc_dashboard.py）
+   ├──► SD 卡增量存储（JSONL + summary + fsync/轮转）
+   └──► HDMI/LCD 状态面板（framebuffer；无 fbdev 时出 PNG）
 ```
 
 **软硬件划分原则**：时序/协议栈/分支密集的部分放 PS（网络、检测调度、跟踪、后处理、事件判定）；
-PL 承担**像素级、规则、可流水化**的预处理（D017）——这是 7020 上真正能落地且有收益的部分。
-`conv_engine`（PL 通用 INT8 卷积引擎）实测 **0.13–0.4 FPS**，已退出主线，仅作逐层 bit-exact
-（6/6）与 AXI 带宽/时序的技术验证资产。触屏 LCD 只作**数据输入端**（录球衣颜色与半场），
-不显示视频（D013）。
+PL 承担**像素级、规则、可流水化**的预处理与**运动/白块掩码**（D017/D019）——这是 7020 上
+真正能落地且有收益的部分。`conv_engine`（PL 通用 INT8 卷积引擎）整网实测 **9.63 s/帧
+（≈0.10 FPS）**，已退出主线，仅作逐层 bit-exact（6/6）与 AXI 带宽/时序的技术验证资产。
+触屏 LCD 现在既作**数据输入端**，也可显示**状态面板**（D018；不做视频环出）。
 
 **详细依据与接口契约**见 [`docs/architecture.md`](docs/architecture.md) 与
 [`docs/accel_interface.md`](docs/accel_interface.md)；历史 416 方案见
@@ -192,14 +195,33 @@ python tools/check_repo.py          # 或： mingw32-make check
 #    preproc（当前主线）：bd_preproc.tcl
 #    conv_engine（历史验证）：bd_conv_engine.tcl
 #    axi_bw（带宽标定）：bd_axi_bw.tcl
+#    track_preproc（PL 跟踪辅助，D019）：先 export_track.py，再 bd_track_preproc.tcl
 vivado -mode batch -source build/scripts/bd_preproc.tcl
 
 # 3) 上板：部署 + 运行完整管线（见 board/README.md 与 report/design_report.md §7）
 powershell -File board/scripts/deploy_to_board.ps1
-# 板端：
+# 板端：PL 跟踪辅助 + SD 增量存储
 python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
-  --max-det 0 --ball-every 2 --pl --calib data/calib/field_calib.json \
-  --proposal --out /tmp/out.json
+  --max-det 0 --ball-every 2 --pl-track --motion-gate \
+  --calib data/calib/field_calib.json --proposal \
+  --store-dir /home/xilinx/zynq-yolo --out /home/xilinx/out.json
+# 可选：把结果推给 PC Dashboard
+python3 tools/result_stream.py --file /home/xilinx/zynq-yolo/run_*.jsonl \
+  --host <PC_IP> --port 5005 --follow
+
+# HDMI+LCD 合并（D023）：一次写双屏
+python3 tools/status_display.py --replay /home/xilinx/out.json \
+  --size 1280x720 --display-bit board/overlay/display_both.bit \
+  --also-lcd-base 0x40020000
+# 跟踪+双屏合并（D024）：同一 overlay 跑 --pl-track 并刷双屏
+python3 tools/status_display.py --replay /home/xilinx/out.json \
+  --size 1280x720 --display-bit board/overlay/track_display.bit \
+  --fb-bram 0x40020000 --also-lcd-base 0x40040000
+# 单独 HDMI / LCD 仍可用：hdmi_status.bit / lcd_status.bit
+
+# PC 端（接收/回放；--headless 用于无显示环境）
+python tools\pc_dashboard.py --listen 0.0.0.0:5005 --csv session.csv
+python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 
 # 4) 生成设计报告（Markdown → docx）
 mingw32-make report                 # 或 python tools/md_to_docx.py
@@ -220,6 +242,9 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；产物在 dist
 |---|---|---|
 | 综合 / 实现 / 出比特流 | 日志出现 **`DONE_OK`** | `build/reports/`（只留最新 + `baseline*/`） |
 | JTAG 下载 / Overlay 加载 | 日志出现 **`PROGRAM_OK`** | `board/logs/`（`.md` 形式保留） |
+| SD 存储 / PC / 显示 | `RESULT_STORE_SELFTEST OK`、`PC_DASHBOARD_SELFTEST OK`、`STATUS_DISPLAY_SELFTEST OK` | 终端/CI 日志 |
+| PL 跟踪辅助算法 | `TRACK_PREPROC_REF OK` | `tools/check_track_preproc.py` |
+| 提交包 | `SUBMISSION_PACK_OK` | `dist/` |
 
 配套纪律：
 

@@ -42,9 +42,14 @@ def summarize(path):
     """统计一份 board_pipeline 输出 JSON 的关键帧数。"""
     with open(path, encoding='utf-8') as f:
         data = json.load(f)
-    frames = data.get('frames') if isinstance(data, dict) else data
-    if frames is None:
-        raise ValueError('输出 JSON 里找不到 frames 数组')
+    frames = None
+    if isinstance(data, dict):
+        # board_pipeline 的输出：proposal 是逐帧的球/球员/事件；frames_out 只有检测轨迹
+        frames = data.get('proposal') or data.get('frames_out') or data.get('frames')
+    elif isinstance(data, list):
+        frames = data
+    if not isinstance(frames, list):
+        raise ValueError('输出 JSON 里找不到逐帧数组（proposal / frames_out / frames）')
     n = len(frames)
     ball_any = ball_field = possess = oop = goal = predicted = 0
     for fr in frames:
@@ -195,6 +200,8 @@ def main():
                     help='PC 端：直接统计已有 JSON（可重复给多份）')
     ap.add_argument('--selftest', action='store_true',
                     help='不跑管线也不读数据：验证判定逻辑本身')
+    ap.add_argument('--reuse', action='store_true',
+                    help='outdir 里已有同名结果就复用，不重跑管线（改判据时省时间）')
     args = ap.parse_args()
 
     if args.selftest:
@@ -236,8 +243,12 @@ def main():
     for name, extra, desc in GROUPS:
         out = os.path.join(args.outdir, f'{name}.json')
         print(f'\n-- {name}: {desc}')
-        ok, why = run_pipeline(repo, args.video, args.calib, args.every,
-                               args.ball_every, extra, out, args.timeout)
+        if args.reuse and os.path.exists(out):
+            print(f'  (reuse 已有结果 {out}，不重跑)')
+            ok, why = True, ''
+        else:
+            ok, why = run_pipeline(repo, args.video, args.calib, args.every,
+                                   args.ball_every, extra, out, args.timeout)
         if not ok:
             fails.append(f'{name} 跑不动（{why}）')
             continue

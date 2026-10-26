@@ -83,7 +83,7 @@ def fig_system_arch():
     rows = [
         (0.895, "PC：视频文件 / 推流\n（tools/stream_sender.py）", PC, PC_EDGE, "PC"),
         (0.775, "PS：以太网接收 → 帧重组 → DDR 帧缓冲", PS, PS_EDGE, "PS"),
-        (0.645, "PL：preproc\nBGR888 → 3×320×320 RGB 平面\n最近邻，II=1，18.8 ms/帧", PL, PL_EDGE, "PL"),
+        (0.645, "PL：track_preproc\nBGR888 → 3×320×320 RGB + 320×320 运动掩码\n最近邻，II=1；preproc 实测 18.8 ms/帧", PL, PL_EDGE, "PL"),
         (0.505, "PS：ncnn YOLOv8n-0.25（单类 person）\n320×320，0.386 GMAC，0.95–1.0 s/帧", PS, PS_EDGE, "PS"),
         (0.365, "PS：SORT 跟踪 + 机位运动补偿\n帧间位移中位 0.2 px，34 个 ID", PS, PS_EDGE, "PS"),
         (0.225, "PS：球链路\n白块候选 87.3% → C 分类器 8 ms → 轨迹确认 80%", PS, PS_EDGE, "PS"),
@@ -176,11 +176,38 @@ def fig_optimization():
     plt.close(fig)
 
 
+def fig_panels():
+    """渲染 LCD/HDMI 状态面板与 PC 球场视图（示意图，数据为合成样本）。"""
+    import cv2
+    if str(ROOT / "tools") not in sys.path:
+        sys.path.insert(0, str(ROOT / "tools"))
+    from pc_dashboard import FrameState, draw_pitch
+    from status_display import render
+
+    st = FrameState(
+        frame=202, timestamp=202000, camera_state="VALID",
+        players=[
+            {"id": 3, "x": 52.5, "y": 34.0, "conf": 0.92},
+            {"id": 7, "x": 40.0, "y": 22.0, "conf": 0.88},
+            {"id": 11, "x": 66.0, "y": 44.0, "conf": 0.81},
+            {"id": 18, "x": 78.0, "y": 28.0, "conf": 0.76},
+            {"id": 23, "x": 30.0, "y": 48.0, "conf": 0.71},
+        ],
+        ball={"x": 52.0, "y": 30.0, "valid": True, "space": "field"},
+        events={"out_of_play": False},
+    )
+    cv2.imwrite(str(OUT / "status_panel_lcd.png"), render(st, 800, 480))
+    cv2.imwrite(str(OUT / "status_panel_hdmi.png"), render(st, 1280, 720))
+    cv2.imwrite(str(OUT / "pc_pitch.png"), draw_pitch(st))
+
+
 def main():
     fig_system_arch()
     fig_software_pipeline()
     fig_optimization()
-    for name in ("system_arch.png", "software_pipeline.png", "optimization.png"):
+    fig_panels()
+    for name in ("system_arch.png", "software_pipeline.png", "optimization.png",
+                 "status_panel_lcd.png", "status_panel_hdmi.png", "pc_pitch.png"):
         p = OUT / name
         print(f"WROTE {p.relative_to(ROOT).as_posix()} {p.stat().st_size} bytes")
     return 0

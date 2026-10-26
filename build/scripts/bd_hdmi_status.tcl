@@ -50,7 +50,7 @@ set_property -dict [list \
     CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {74.25} \
     CONFIG.CLKOUT2_USED {true} \
     CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {371.25} \
-    CONFIG.USE_LOCKED {false} \
+    CONFIG.USE_LOCKED {true} \
     CONFIG.USE_RESET {true} \
     CONFIG.RESET_PORT {reset} \
     CONFIG.RESET_TYPE {ACTIVE_HIGH} \
@@ -68,6 +68,9 @@ set pclk5 [get_bd_pins clk_wiz/clk_out2]
 set rst_pix [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_pix]
 connect_bd_net $pclk [get_bd_pins rst_pix/slowest_sync_clk]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_pix/ext_reset_in]
+## MMCM 锁定后再释放像素域复位：原设计中 locked 未接，上电时 371.25 MHz 串行时钟
+## 可能尚未稳定，OSERDESE2 会停在未定义状态且不会自恢复（session 013 的推断）
+connect_bd_net [get_bd_pins clk_wiz/locked] [get_bd_pins rst_pix/dcm_locked]
 
 set bram_ctrl [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 bram_ctrl]
 set_property -dict [list \
@@ -109,7 +112,11 @@ connect_bd_net [get_bd_pins rst_pix/peripheral_aresetn] [get_bd_pins hdmi_status
 connect_bd_net [get_bd_pins hdmi_status_0/bram_addr] [get_bd_pins bram/addrb]
 connect_bd_net [get_bd_pins bram/doutb] [get_bd_pins hdmi_status_0/bram_dout]
 connect_bd_net $pclk [get_bd_pins bram/clkb]
-connect_bd_net [get_bd_pins rst_pix/peripheral_aresetn] [get_bd_pins bram/rstb]
+## BRAM 的 rstb 高有效，peripheral_aresetn 低有效：直接连等于读口常复位、doutb 恒 0
+## （同 LCD，session 013 实证）。Port B 不需复位，接常量 0。
+set zero [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 zero]
+set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {0}] $zero
+connect_bd_net [get_bd_pins zero/dout] [get_bd_pins bram/rstb]
 
 set one [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 one]
 set_property -dict [list CONFIG.CONST_WIDTH {1} CONFIG.CONST_VAL {1}] $one

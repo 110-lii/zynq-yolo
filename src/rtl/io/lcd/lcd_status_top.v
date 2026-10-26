@@ -17,11 +17,16 @@ module lcd_status_top(
     output              lcd_clk,
     output              lcd_rst,
     output      [23:0]  lcd_rgb
+    ,
+    output      [31:0]  dbg1,       // {7'b0, lcd_de, pixel_data}
+    output      [31:0]  dbg2        // {10'b0, v_cnt, h_cnt}
 );
 
 wire [10:0] pixel_xpos;
 wire [10:0] pixel_ypos;
 wire [23:0] pixel_data;
+wire [10:0] h_cnt_o;
+wire [10:0] v_cnt_o;
 
 lcd_fb_reader u_fb_reader(
     .pclk       (pclk),
@@ -32,6 +37,9 @@ lcd_fb_reader u_fb_reader(
     .bram_dout  (bram_dout),
     .pixel_data (pixel_data)
 );
+
+assign dbg1 = {7'b0, lcd_de, pixel_data};
+assign dbg2 = {10'b0, v_cnt_o, h_cnt_o};
 
 lcd_driver u_lcd_driver(
     .lcd_pclk   (pclk),
@@ -49,7 +57,9 @@ lcd_driver u_lcd_driver(
     .lcd_bl     (lcd_bl),
     .lcd_clk    (lcd_clk),
     .lcd_rst    (lcd_rst),
-    .lcd_rgb    (lcd_rgb)
+    .lcd_rgb    (lcd_rgb),
+    .h_cnt_o    (h_cnt_o),
+    .v_cnt_o    (v_cnt_o)
 );
 
 endmodule

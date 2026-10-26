@@ -31,9 +31,10 @@
 | [010](010_board_pipeline_ball_backfill.md) | 2026-10-24 | 板上球链路 backfill 试验（两次回滚）★ | `magpie/group/1101`（客户端 `kilo`） | ① 稳定版 **144/202 帧球场坐标、49 帧球权**；② 两次 backfill（复用变量 / 状态机）均把球帧打到极低、球权归零，已完整回滚；③ 根因是 `--ball-every 2` 下 5 次丢失只覆盖 ~0.4 s + 标定边界过滤；④ 结构性改动（节奏 1 / 按秒计丢失 / 预测绕过边界）未落地，报告如实写“未完成” |
 
 | [011](011_extensions_storage_display.md) | 2026-10-25 | 提交前扩展：PL 跟踪辅助 / SD / PC / 显示 ★ | `magpie/group/1101`（客户端 `kilo`） | ① `track_preproc` HLS+BD 出片（LUT 7,374 / WNS +2.457 ns），**上板逐位对通过**（`TRACK_PREPROC_BOARD_OK`；720p 32.39 ms、管线内 20.03 ms）；② 板上管线 `PIPELINE_OK`（20 帧、4 次检测、3→2 球员）；③ SD 20 行+summary、PC 收到 20 帧；④ HDMI/LCD overlay 出片（+3.938/+4.283 ns），**DISPLAY_BOARD_OK**（读回一致，画面待目视）；合并 overlay **DISPLAY_BOTH_BOARD_OK**；跟踪+双屏 **TRACK_DISPLAY_BOARD_OK**；⑤ `CHECK_REPO_OK` |
+| [012](012_ball_lostsec_board_reject.md) | 2026-10-26 | 球链路「丢失窗口按秒计」上板验收与否决 ★ | `magpie/group/1101`（客户端 Hermes） | ① 板上 `BOARD_ACCEPTANCE_OK`：base 144/48、lostsec **182**/48（球帧 +26.4%）、predict 144/48；② **抽查推翻机器判据**：新增 38 帧（帧 20–57）坐标只跨 0.43 m × 0.36 m，比赛进行中不可能静止；H 逆变换投影回画面抽 3 帧，用户复核**都不是球**；③ 根因是**候选质量**（静态白块被黏住），放宽 `max_miss` 4→10 只让假轨迹活得更久——与 010「球帧骤降」是同一病根的两个方向；④ 结论：`--ball-lost-sec` 保留但**默认关**，否定结论写进文档；⑤ 纪律新增：球帧上涨必须人工抽查，新增帧先看运动学 |
 
-> **统计**：共 **11** 条记录；带自我纠错轨迹（★）**7** 条。
-> 编号连续、不复用；下一条应为 `012_<slug>.md`。
+> **统计**：共 **12** 条记录；带自我纠错轨迹（★）**8** 条。
+> 编号连续、不复用；下一条应为 `013_<slug>.md`。
 
 ---
 

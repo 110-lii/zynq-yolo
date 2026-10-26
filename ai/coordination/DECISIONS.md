@@ -27,6 +27,21 @@
 | **D016** | **换用经典 YOLOv5n @416×416**，优先保球员识别、帧率尽可能高 —— 用户 2026-10-20 裁定：「现在换模型，分辨率就416吧，但是帧率要尽可能的高，你看看什么最合适，其他的都可以修改，但是要确保能识别球员」。⇒ 模型定为 **YOLOv5n 416**（实测 **1.888 GOP/帧**，60 个标准 Conv，无 depthwise/group；明显轻于 YOLOv5nu 3.264 GOP 与 YOLOv8n@416 约 3.7 GOP）；INT8，2 类（person/sports_ball）为目标。板端功能已跑通：足球场景 **7 person + 1 ball**，output0 与 PC 参考 `cosine=1.000000`；当前 **41.4 s/帧**，首层 6×6 卷积（`K=6`、416>320）暂由 PS 兜底，实测 5.75 s。**性能目标仍 `discussing`**：保底 5–8 FPS、冲刺 10 FPS；25–30 FPS @416 已判定在 7020 上不现实。 | **decided（模型/分辨率）/**<br>**discussing（帧率目标）** | 用户 | 2026-10-20 | 用户原话（逐字）：**「现在换模型，分辨率就416吧，但是帧率要尽可能的高，你看看什么最合适，其他的都可以修改，但是要确保能识别球员」**；实测见 `board/logs/board_stream_v5_20261020.md` |
 | **D017** | **最终上板路线改为「PL 预处理 + PS ncnn 检测」**（2026-10-23 实测后定案，**在实践中取代 D016 的 416/PL 卷积引擎路线**，D016 原文保留不删）：① 检测模型改为**单类 `person` 的 YOLOv8n-0.25 @320×320**（约 **0.386 GMAC/帧**，mAP50 0.739 / mAP50-95 0.379）；② 推理走**板端 PS 的 ncnn**（TFLite runtime 在本板 float32/int8 均 SIGSEGV；`cv2.dnn` 不支持 YOLOv8）；③ PL 保留**像素级真实任务**：`preproc` 做 BGR→320×320 RGB 平面（实测 **18.8 ms/帧**，WNS **+3.724 ns**，preproc IP LUT **3,812**），满足「PL 上必须有实际算法」的演示约束；④ `conv_engine` **退出主线**（416/YOLOv5n 整网实测 **9.63 s/帧 ≈ 0.10 FPS**；更早的字节访存版 20.8 s/帧；均比 PS 路线慢一个量级），仅保留为逐层 bit-exact（6/6）与 AXI/带宽/时序的技术验证资产。★ 端到端功能已闭环：202 帧板上运行给出 **144 帧球场坐标球**、**49 帧球权**、出界/进球事件字段与机位有效性。 | **decided** | Lead（基于实测） | 2026-10-23 | 实测与产物：[`../../docs/system_status.md`](../../docs/system_status.md)（架构与指标表）、[`../../board/logs/board_stream_new_20261022.md`](../../board/logs/board_stream_new_20261022.md)（conv_engine 吞吐）、[`../../data/results/person_gate.json`](../../data/results/person_gate.json)、[`../../data/results/ball_gate.json`](../../data/results/ball_gate.json)、[`../../tools/board_pipeline.py`](../../tools/board_pipeline.py)（2026-10-24 当前主线代码） |
 
+| **D018** | **提交前功能扩展（用户 2026-10-25 要求）**：在保留检测/事件主线的前提下，补齐 ① **SD 卡增量存储**（JSONL + summary + fsync/轮转）、② **状态面板输出**（HDMI/LCD framebuffer，显示人数/球/事件/机位，不做视频环出或 OSD 叠框）、③ **PC 端软件**（TCP 接收/回放 + 球场画布 + CSV）、④ **PL 跟踪辅助**（把运动/白块掩码放回 PL）。本条在“显示/外设”范围上扩展 **D013**（原“LCD 只作输入、不做 HDMI”）；检测/事件目标范围不变。 | **decided** | 用户 | 2026-10-25 | 本条为用户当日指令；实现落点：`tools/result_store.py`、`tools/result_stream.py`、`tools/pc_dashboard.py`、`tools/status_display.py`、`src/hls/track/` |
+| **D019** | **PL 跟踪辅助用融合 `track_preproc`**：把 `preproc`（BGR→320×320 RGB）与 `mask_preproc`（白/运动掩码）合成一个 HLS 顶层，4 个 `m_axi` 分别接 HP0–HP3；一次调用同时产出 ncnn 输入与 320×320 运动掩码，PS 用运动掩码过滤无运动的新轨迹（`--motion-gate`）。源码/BD/驱动已落盘，**综合与上板需用户批准后执行**；没有新 bitstream 时自动回退 PS 路径。 | **decided** | Lead（工程选择） | 2026-10-25 | `src/hls/track/src/track_preproc.cpp`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py`、`tools/board_pipeline.py` |
+
+| **D020** | **HDMI 状态面板采用「1bpp BRAM + TMDS」并已出片**：PS 通过 AXI BRAM Controller 写 1280×720 1bpp 帧缓存（28,800×32-bit，基址 `0x40000000`），PL `fb_reader` 读 Port B → `video_driver` → vendor `dvi_transmitter_top`；外部 50 MHz `sys_clk`(U18) 经 `clk_wiz` 产生 74.25/371.25 MHz。实测 BD 实现 WNS **+2.457 ns**（track）/HDMI 最差 Setup **+3.938 ns**、Hold +0.065 ns；bitstream 4.05 MB。**帧缓存读回通过**（DISPLAY_BOARD_OK），画面待目视。LCD 800×480 仍走 fbdev/PNG 或后续独立 overlay。 | **decided** | 用户（D018）+ Lead | 2026-10-25 | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`build/scripts/hdmi_status.xdc`、`board/overlay/hdmi_status.bit/.hwh`、`tools/bram_fb.py`、[`../../docs/display_overlay_plan.md`](../../docs/display_overlay_plan.md) |
+
+| **D021** | **LCD 800×480 状态面板采用「1bpp BRAM + vendor RGB LCD 时序」并已出片**：PS 写 12,000×32-bit 帧缓存（基址 `0x40000000`，范围 64 KB），PL `lcd_fb_reader` → vendor `lcd_driver`（`lcd_id=16'h4384`）；外部 50 MHz `sys_clk` 经 `clk_wiz` 出 33.333 MHz；LCD 与 J3 互斥。实测 Setup **+4.283 ns**、Hold **+0.121 ns**；bitstream 4.05 MB。**帧缓存读回通过**（DISPLAY_BOARD_OK），画面待目视。 | **decided** | 用户（D018）+ Lead | 2026-10-25 | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_status.tcl`、`build/scripts/lcd_status.xdc`、`board/overlay/lcd_status.bit/.hwh`、`tools/bram_fb.py` |
+
+| **D022** | **HDMI/LCD 的 AXI BRAM 改用单端口模式**：AXI BRAM Controller v4.1 双端口模式下 **Port A 是写口、Port B 是读口**；原 BD 只接 Port A，Port B 被绑常量 `0x8`，造成“写入后读回 0x8”。改为 **`C_SINGLE_PORT_BRAM=1`**：AXI 用 Port A 读写，BRAM Port B 留给 `fb_reader`/`lcd_fb_reader` 显示读。修复后 HDMI **`DISPLAY_BOARD_OK`（28,800 字）**、LCD **`DISPLAY_BOARD_OK`（12,000 字）**；实际屏幕画面待目视确认。 | **decided** | Lead（实测） | 2026-10-25 | `build/scripts/bd_hdmi_status.tcl`、`bd_lcd_status.tcl`、`board/logs/board_display_20261025.md` |
+
+| **D023** | **HDMI + LCD 合并为一个 overlay 同时显示**：两块独立 1bpp 帧缓存（HDMI `0x40000000` 32K×32；LCD `0x40020000` 16K×32），两个独立单端口 AXI BRAM Controller + 两个 BRAM；HDMI/LCD 各自读自己的 Port B。资源 LUT **908** / FF **923** / BRAM **48**；Setup **+3.874 ns**、Hold **+0.105 ns**。上板 `DISPLAY_BOTH_BOARD_OK`，两块读回一致；实际双屏画面待目视。`status_display --also-lcd-base 0x40020000` 一次写双屏。 | **decided** | Lead（实测） | 2026-10-25 | `build/scripts/bd_display_both.tcl`、`display_both.xdc`、`board/overlay/display_both.bit/.hwh`、`board/logs/board_display_both_20261025.md` |
+
+| **D024** | **跟踪辅助 + HDMI/LCD 合并为一个 overlay**：`track_preproc`（HP0–HP3）+ HDMI/LCD 两块单端口 1bpp BRAM；地址 `track` `0x40000000`、HDMI `0x40020000`、LCD `0x40040000`。资源 LUT **7,984** / FF **8,835** / DSP 13 / BRAM **51**；Setup **+2.918 ns**、Hold **+0.036 ns**。上板 `TRACK_PREPROC_BOARD_OK` + `TRACK_DISPLAY_BOARD_OK`，20 帧管线 `PIPELINE_OK`；双屏画面待目视。 | **decided** | Lead（实测） | 2026-10-25 | `build/scripts/bd_track_display.tcl`、`board/overlay/track_display.bit/.hwh`、`board/logs/board_track_display_20261025.md` |
+
+| **D025** | **LCD 型号修正为 4.3 寸 800×480（`lcd_id=16'h4384`）**：原 `lcd_status_top` 用了 7 寸 800×480 的 `16'h7084`；按 `ref/hardware.md` 的 4.3 寸 ATK-MD0430R 改为 `16'h4384`。重新出片 `lcd_status.bit` 与 `track_display.bit`；时序/资源不变（LCD LUT 548 / BRAM 16；track+display LUT 7,984 / BRAM 51）。**上板画面待板子恢复后确认**（测试 vendor 彩色条时 192.168.2.99 掉线，需重新上电）。 | **decided** | Lead（实测/硬件资料） | 2026-10-25 | `src/rtl/io/lcd/lcd_status_top.v`、`ref/hardware.md` §G |
+
 > 🧭 **编号纪律（2026-10-19 补，必读）**：本表的 **D 编号只在本仓库内唯一**，**不是**跨仓库命名空间。
 > ⚠️ **本仓库编号会与旧项目 `D:\FPGA\oi\ai\coordination\DECISIONS.md` 的编号撞号** —— 旧项目自己的 **D001–D014** 至今仍被引用，
 > 且**引用形式正是裸 `DNNN`**（如 [`../../ref/hardware.md`](../../ref/hardware.md) §D 的**旧项目** D008/D012、
@@ -53,13 +68,46 @@
 | **D006** | **软硬件划分边界与 AXI 接口契约的具体数值** —— 尚未裁定 | **discussing** | — | 登记 2026-10-19 | [`../../docs/repo_spec.md`](../../docs/repo_spec.md) §7 第 4 项原文：「软硬件划分边界与 AXI 接口契约的具体数值」。⚠️ 本项是后续多数模块的**依赖面**（接口一旦冻结，下游全部跟着动）⇒ **冻结前不改 `src/`** |
 | **D007** | **与 `D:\FPGA\oi` 旧项目资产的具体复用范围** —— 尚未裁定。★ **已裁定的只是原则**（见 D001「复用管线，PYNQ 软硬件框架重做」）；**「哪些文件 / 哪些模块 / 复用到什么程度」仍待裁定**，不得由任何人自行推定 | **discussing** | — | 登记 2026-10-19 | [`../../docs/repo_spec.md`](../../docs/repo_spec.md) §7 第 5 项原文：「与 `D:\FPGA\oi` 旧项目资产的具体复用范围（已确认原则：**复用管线，PYNQ 软硬件框架重做**）」。★ 与 D001 的关系：**D001 给原则、D007 给范围**；D001 的 `decided` **不自动**把 D007 变成 `decided` |
 
-> **当前状态汇总**：`decided` **12** 条（D001、D002、D008、D009、D010、D011、D012、**D013**、**D014**、**D015**、**D016**、**D017**；其中 **D011 部分取代 D010 的范围收窄**，D012 给 D011 的球权功能加前置依赖，**D015 取消摄像头采集但不推翻 D010/D011 的目标范围**，D016 定 YOLOv5n@416、**D017 在实践中取代 D016 的模型/加速路线**）· `discussing` **4** 条（D003、D005、D006、D007）· `rejected` **0** 条。
+> **当前状态汇总**：`decided` **14** 条（D001、D002、D008、D009、D010、D011、D012、**D013**、**D014**、**D015**、**D016**、**D017**、**D018**、**D019**、**D020**、**D021**、**D022**、**D023**、**D024**、**D025**；其中 **D011 部分取代 D010 的范围收窄**，D012 给 D011 的球权功能加前置依赖，**D015 取消摄像头采集但不推翻 D010/D011 的目标范围**，D016 定 YOLOv5n@416、**D017 在实践中取代 D016 的模型/加速路线**，**D018/D019/D020/D021/D022/D023/D024/D025 在显示/外设与 PL 分工上扩展 D013/D017**）· `discussing` **4** 条（D003、D005、D006、D007）· `rejected` **0** 条。
 > ⚠️ **编号不连续是有意为之，不是漏登**：`decided` 段的新条目取了 **D008/D009/D010**，**未**把 `discussing` 的 D003–D007 顺延（理由见「变更记录」2026-10-19 第 5 条）。
 > ⚠️ **D003 / D005 / D006 / D007 的事实进展（不是状态变更，勿误读）**：D003 已按 **HLS 单内核路线**落地并有出片证据（[`../../docs/accel_interface.md`](../../docs/accel_interface.md) §7、`board/overlay/conv_engine.bit`），D006 的 AXI 接口数值已冻结并有寄存器映射表（同文件 §4）—— 但**两者都仍是 Lead 的工程选择、未经用户确认**，故状态保持 `discussing`。D005（数据集许可）因 D010 收窄后**只需 `person` 类别**，尚未重评。
 
 ---
 
 ## 变更记录
+
+- **2026-10-25（D018/D019，提交前功能扩展）** 用户要求把部分算法搬回 PL，并补齐 SD 卡、HDMI/LCD 状态显示、PC 软件：
+  - **D018**：SD 增量存储、状态面板（framebuffer）、PC Dashboard、PL 跟踪辅助；扩展 D013 的显示范围，不做视频环出/OSD；
+  - **D019**：`track_preproc` 融合 `preproc` + 白/运动掩码，4 个 HP 口，源码/BD/驱动已落盘；
+    **综合与上板仍需用户单独批准**，无 bitstream 时自动回退 PS。
+  - 实现与自检：`result_store` / `pc_dashboard` / `status_display` 自检通过；`check_repo` 见提交前记录。
+
+- **2026-10-25（D020，HDMI 状态面板出片）** 1bpp BRAM（28,800×32-bit，`0x40000000`）
+  + `fb_reader` + vendor TMDS；外部 50 MHz `sys_clk`，`clk_wiz` 出 74.25/371.25 MHz。
+  生成 `board/overlay/hdmi_status.bit/.hwh`（4.05 MB）；WNS 最差 Setup +3.938 ns、
+  Hold +0.065 ns；**帧缓存读回通过**（DISPLAY_BOARD_OK），画面待目视。LCD 仍走 fbdev/PNG 或后续独立 overlay。
+
+- **2026-10-25（D021，LCD 状态面板出片）** 1bpp BRAM（12,000×32-bit，`0x40000000`，
+  64 KB）+ `lcd_fb_reader` + vendor `lcd_driver`（800×480，`lcd_id=4384`）；外部
+  50 MHz → `clk_wiz` 33.333 MHz。生成 `board/overlay/lcd_status.bit/.hwh`（4.05 MB）；
+  Setup +4.283 ns、Hold +0.121 ns；**帧缓存读回通过**（DISPLAY_BOARD_OK），画面待目视。
+
+- **2026-10-25（D022，HDMI/LCD BRAM 单端口修复）** 上板读回 0x8 的根因是
+  AXI BRAM Controller 双端口模式 **Port A=写、Port B=读**，原 BD 只接 Port A；
+  改 `C_SINGLE_PORT_BRAM=1` 后 AXI 用 Port A 读写、显示用 Port B。
+  HDMI/LCD 均 `DISPLAY_BOARD_OK`；实际画面待目视。
+
+- **2026-10-25（D023，HDMI+LCD 合并显示）** 双 1bpp BRAM + 双单端口 AXI BRAM Controller，
+  HDMI `0x40000000`、LCD `0x40020000` 同时刷新；LUT 908 / FF 923 / BRAM 48，
+  Setup +3.874 ns；上板 `DISPLAY_BOTH_BOARD_OK`，两块读回一致；画面待目视。
+
+- **2026-10-25（D024，跟踪+双屏合并 overlay）** 	rack_preproc + HDMI/LCD 双 BRAM
+  同一 overlay；LUT 7,984 / BRAM 51，Setup +2.918 ns；TRACK_PREPROC_BOARD_OK、
+  TRACK_DISPLAY_BOARD_OK、20 帧 PIPELINE_OK；双屏画面待目视。
+
+- **2026-10-25（D025，LCD 型号修正）** 4.3寸 800×480 的 ID 是 4384，不是 7084；
+  已重出 lcd_status.bit/	rack_display.bit。板子在 vendor 彩色条测试时掉线，
+  **LCD 画面待重新上电后确认**。
 
 - **2026-10-23（D017，最终上板路线）** 实测后把主线从「PL `conv_engine` 跑整网」改为「PL `preproc` + PS ncnn」：
   模型 **YOLOv8n-0.25 @320**（单类 person，约 0.386 GMAC），推理在 PS ncnn；PL 预处理 18.8 ms/帧、

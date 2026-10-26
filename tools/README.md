@@ -51,6 +51,7 @@
 | `track_preproc.py` | **PL 跟踪辅助驱动**（D019）：加载 `track_preproc.bit`，一次返回 3×320×320 RGB + 320×320 白/运动掩码 | ✅ 已出片；上板逐位对通过（`TRACK_PREPROC_BOARD_OK`） |
 | `check_track_preproc.py` | **PC 算法对拍**（不跑 HLS）：g++ 编译 TB，合成 64×64 帧，逐字节比 RGB/掩码 | ✅ `TRACK_PREPROC_REF OK` |
 | `check_track_preproc_board.py` | **PL 跟踪辅助上板对拍**：加载 overlay 后逐字节比 RGB/掩码并测 720p 耗时 | ✅ `TRACK_PREPROC_BOARD_OK`（720p 32.39 ms） |
+| `check_board_acceptance.py` | **板上一条命令验收球链路三组参数**：base / `--ball-lost-sec` / `--ball-predict-past-boundary` 各跑一遍并出对照表；`--selftest` 验判定逻辑、`--replay` 做离线统计 | ✅ `SELFTEST_OK`；板上**待板子恢复后跑**（`BOARD_ACCEPTANCE_OK` 为通过） |
 | `check_display_board.py` | **显示 overlay 上板门禁**：写 1bpp 帧缓存并 AXI 读回（HDMI/LCD/双屏） | ✅ `DISPLAY_BOARD_OK` / `DISPLAY_BOTH_BOARD_OK` / `TRACK_DISPLAY_BOARD_OK` |
 | `result_store.py` | **SD 卡增量存储**：JSONL + `summary.json` + fsync + 轮转 | ✅ 已创建（`RESULT_STORE_SELFTEST OK`） |
 | `result_stream.py` | **板→PC 推送**：按行 TCP 发 JSONL，断线重连/尾随 | ✅ 已创建（本地回环 `sent=2`） |

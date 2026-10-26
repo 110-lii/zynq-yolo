@@ -32,9 +32,10 @@
 
 | [011](011_extensions_storage_display.md) | 2026-10-25 | 提交前扩展：PL 跟踪辅助 / SD / PC / 显示 ★ | `magpie/group/1101`（客户端 `kilo`） | ① `track_preproc` HLS+BD 出片（LUT 7,374 / WNS +2.457 ns），**上板逐位对通过**（`TRACK_PREPROC_BOARD_OK`；720p 32.39 ms、管线内 20.03 ms）；② 板上管线 `PIPELINE_OK`（20 帧、4 次检测、3→2 球员）；③ SD 20 行+summary、PC 收到 20 帧；④ HDMI/LCD overlay 出片（+3.938/+4.283 ns），**DISPLAY_BOARD_OK**（读回一致，画面待目视）；合并 overlay **DISPLAY_BOTH_BOARD_OK**；跟踪+双屏 **TRACK_DISPLAY_BOARD_OK**；⑤ `CHECK_REPO_OK` |
 | [012](012_ball_lostsec_board_reject.md) | 2026-10-26 | 球链路「丢失窗口按秒计」上板验收与否决 ★ | `magpie/group/1101`（客户端 Hermes） | ① 板上 `BOARD_ACCEPTANCE_OK`：base 144/48、lostsec **182**/48（球帧 +26.4%）、predict 144/48；② **抽查推翻机器判据**：新增 38 帧（帧 20–57）坐标只跨 0.43 m × 0.36 m，比赛进行中不可能静止；H 逆变换投影回画面抽 3 帧，用户复核**都不是球**；③ 根因是**候选质量**（静态白块被黏住），放宽 `max_miss` 4→10 只让假轨迹活得更久——与 010「球帧骤降」是同一病根的两个方向；④ 结论：`--ball-lost-sec` 保留但**默认关**，否定结论写进文档；⑤ 纪律新增：球帧上涨必须人工抽查，新增帧先看运动学 |
+| [013](013_display_visual_fail.md) | 2026-10-26 | HDMI/LCD 画面目视验收未通过，更正 011 的过度表述 ★ | `magpie/group/1101`（客户端 Hermes） | ① 两块屏均无画面（HDMI 只亮背光、LCD 全黑），机器判据全绿但**不算通过**；② 逐项排除：AXI/BRAM 读写一致、TMDS 四引脚经 AMD 官方 `xc7z020clg400pkg.txt` 逐条核对无误、外部 50 MHz 确在 U18、换 PS FCLK 供时钟重出片仍黑、时序 Setup +3.938 ns 且 `no_clock=0`；③ 打破的关键假设：**BRAM 读写正常 ≠ PL 时钟正常**（前者走 PS FCLK），这是 011 误判根源；④ 更正 011：`DISPLAY_BOARD_OK` 只证明帧缓存数字通路，从未证明画面；⑤ 纪律：显示验收分 `BRAM_OK` 与 `VISUAL_OK` 两级，后者未做不许写"通过"；⑥ 未决：线/显示器/OSERDESE2 时钟布线三项需实验室判定 |
 
-> **统计**：共 **12** 条记录；带自我纠错轨迹（★）**8** 条。
-> 编号连续、不复用；下一条应为 `013_<slug>.md`。
+> **统计**：共 **13** 条记录；带自我纠错轨迹（★）**9** 条。
+> 编号连续、不复用；下一条应为 `014_<slug>.md`。
 
 ---
 

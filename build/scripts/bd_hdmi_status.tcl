@@ -46,7 +46,7 @@ connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst
 
 set clk_wiz [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz]
 set_property -dict [list \
-    CONFIG.PRIM_IN_FREQ {50.000} \
+    CONFIG.PRIM_IN_FREQ {83.333336} \
     CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {74.25} \
     CONFIG.CLKOUT2_USED {true} \
     CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {371.25} \
@@ -55,9 +55,12 @@ set_property -dict [list \
     CONFIG.RESET_PORT {reset} \
     CONFIG.RESET_TYPE {ACTIVE_HIGH} \
 ] $clk_wiz
-create_bd_port -dir I -type clk sys_clk
-set_property CONFIG.FREQ_HZ {50000000} [get_bd_ports sys_clk]
-connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz/clk_in1]
+## 诊断版：clk_wiz 改由 PS 的 FCLK_CLK0（83.333 MHz）驱动，
+## 用于判断「U18 外部 50 MHz 是否真的到达 PL」。原 sys_clk 端口保留注释备查。
+# create_bd_port -dir I -type clk sys_clk
+# set_property CONFIG.FREQ_HZ {50000000} [get_bd_ports sys_clk]
+# connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz/clk_in1]
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins clk_wiz/clk_in1]
 connect_bd_net [get_bd_pins rst_ps/peripheral_reset] [get_bd_pins clk_wiz/reset]
 
 set pclk [get_bd_pins clk_wiz/clk_out1]

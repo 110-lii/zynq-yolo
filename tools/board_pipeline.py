@@ -27,8 +27,10 @@ from result_publisher import build_frame  # noqa: E402
 from camera_state import assess as cam_assess  # noqa: E402
 from ball_cv_probe import candidates as ball_cands  # noqa: E402
 from ball_track import BallTracker  # noqa: E402
-from board_detect import detect as bd_detect, init_pl  # noqa: E402
+from board_detect import detect as bd_detect, detect_planar as bd_detect_planar, init_pl  # noqa: E402
 from ball_cls_np import BallClassifier  # noqa: E402
+from track_preproc import TrackPreproc  # noqa: E402
+from result_store import ResultStore  # noqa: E402
 
 
 BALL_CLS_BIN = "/home/xilinx/ball_cls_c"
@@ -76,7 +78,24 @@ def slide_ball(frame, clf, th=0.70, stride=16, min_d=40.0):
     return keep
 
 USE_PL = False
+TRACK = None
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _motion_frac(mask, track, frame_shape):
+    """track=[id,x1,y1,x2,y2,...]；mask 是 320x320 的 bit1=运动。"""
+    if mask is None:
+        return 0.0
+    h, w = frame_shape[:2]
+    x1, y1, x2, y2 = track[1:5]
+    mx0 = max(0, int(x1 * 320.0 / w))
+    mx1 = min(319, int(x2 * 320.0 / w))
+    my0 = max(0, int(y1 * 320.0 / h))
+    my1 = min(319, int(y2 * 320.0 / h))
+    if mx1 <= mx0 or my1 <= my0:
+        return 0.0
+    roi = mask[my0:my1 + 1, mx0:mx1 + 1] & 2
+    return float(roi.mean() / 2.0) if roi.size else 0.0
 
 
 def _is_grass(frame, u, v):
@@ -110,21 +129,50 @@ def main():
     ap.add_argument("--calib", default="", help="field_coords.py 生成的 calib.json")
     ap.add_argument("--pl", action="store_true", default=None, help="强制启用 PL preproc")
     ap.add_argument("--no-pl", action="store_true", help="禁用 PL preproc")
+    ap.add_argument("--pl-track", action="store_true",
+                    help="启用融合 PL 预处理+运动掩码（track_preproc.bit）")
+    ap.add_argument("--track-bit", default="",
+                    help="组合 overlay 的 bit 路径（如 track_display.bit）；空=track_preproc.bit")
+    ap.add_argument("--motion-gate", action="store_true",
+                    help="用 PL 运动掩码过滤无运动的新轨迹（去静态误检）")
+    ap.add_argument("--store-dir", default="",
+                    help="SD 卡增量存储目录（如 /mnt/sd/zynq-yolo）；空=不存")
+    ap.add_argument("--store-prefix", default="run")
+    ap.add_argument("--store-fsync", type=int, default=30, help="每 N 行 fsync")
+    ap.add_argument("--store-max-mb", type=int, default=64, help="单文件轮转阈值")
     ap.add_argument("--ball-scan", action="store_true", help="用单帧滑窗找球（慢但召回高）")
     ap.add_argument("--ball-every", type=int, default=0, help="球路径独立节奏（0=跟随主检测）")
     ap.add_argument("--proposal", action="store_true", help="额外输出方案 §2.1 的 JSON 结构")
     ap.add_argument("--out", default="/home/xilinx/tracks.json")
     args = ap.parse_args()
-    global USE_PL
+    global USE_PL, TRACK
     _has_pl = os.path.exists(os.path.join(REPO, "board", "overlay", "preproc.bit"))
     USE_PL = (args.pl is True) or (args.pl is None and _has_pl and not args.no_pl)
-    if USE_PL:
+    if args.pl_track:
+        USE_PL = False
+        try:
+            TRACK = TrackPreproc(REPO, bitfile=(args.track_bit or None))
+            print("PL_TRACK enabled")
+        except Exception as _e:
+            print("PL_TRACK unavailable:", _e)
+            TRACK = None
+    elif USE_PL:
         try:
             init_pl(REPO)
             print("PL_PREPROC enabled")
         except Exception as _e:      # 没 pynq / overlay 不存在时自动回退
             print("PL_PREPROC unavailable:", _e)
             USE_PL = False
+
+    store = None
+    if args.store_dir:
+        try:
+            store = ResultStore(args.store_dir, prefix=args.store_prefix,
+                                fsync_every=args.store_fsync, max_mb=args.store_max_mb)
+            print("STORE_DIR", args.store_dir)
+        except Exception as _e:
+            print("STORE_UNAVAILABLE:", _e)
+            store = None
 
     cap = cv2.VideoCapture(args.video)
     if not cap.isOpened():
@@ -177,14 +225,32 @@ def main():
         else:
             dx = dy = 0.0
         prev_gray = gray
+        rgb_planar = None
+        mask_small = None
+        pl_ms = None
+        if TRACK is not None:
+            rgb_planar, mask_small, pl_ms = TRACK.run(frame, prev_frame)
+
         is_det = (idx % args.every == 0) and (args.max_det == 0 or n_det < args.max_det)
         if is_det:
-            cv2.imwrite(tmp, frame)
             _t0 = time.perf_counter()
-            dets, ms = detect(tmp, args.bin, args.param, args.model, args.conf, args.iou)
+            try:
+                if TRACK is not None:
+                    dets, ms = bd_detect_planar(rgb_planar, frame.shape[1], frame.shape[0],
+                                               args.bin, args.param, args.model,
+                                               args.conf, args.iou)
+                else:
+                    cv2.imwrite(tmp, frame)
+                    dets, ms = detect(tmp, args.bin, args.param, args.model, args.conf, args.iou)
+            except Exception as _e:
+                print("DETECT_FAIL:", _e)
+                dets, ms = [], None
             t_det += time.perf_counter() - _t0
             dets = [d for d in dets if _is_grass(frame, (d[0] + d[2]) / 2.0, d[3])]
             tracks = tr.step(dets, dx, dy, dt=args.every)
+            if mask_small is not None and args.motion_gate:
+                tracks = [t for t in tracks
+                          if hits.get(t[0], 0) > 0 or _motion_frac(mask_small, t, frame.shape) >= 0.004]
             n_det += 1
             if ms:
                 infer_ms.append(ms)
@@ -271,26 +337,51 @@ def main():
             rows = []              # 镜头无效（特写/回放）：不输出坐标，避免错误数据
         keep_ids = {r[0] for r in rows}
         tracks = [t for t in tracks if t[0] in keep_ids]
-        frames.append({"frame": idx, "detected": is_det, "tracks": rows})
+        rec = {"frame": idx, "detected": is_det, "tracks": rows}
+        if pl_ms is not None:
+            rec["pl_ms"] = round(pl_ms, 2)
+        if mask_small is not None:
+            rec["motion"] = round(float((mask_small & 2).mean() / 2.0), 5)
+        frames.append(rec)
         if args.proposal:
             _f = build_frame(int(round(idx * 1000.0 / fps)), rows, hits=hits,
                              camera_valid=cam_ok, ball=ball)
             _f["camera_state"] = cam_state
             _f["camera_reason"] = cam_reason
+            if pl_ms is not None:
+                _f["pl_ms"] = round(pl_ms, 2)
             prop.append(_f)
+            if store is not None:
+                store.append(dict(_f, type="frame", frame=idx))
+                ev = _f.get("events") or {}
+                if ev.get("out_of_play") or ev.get("goal"):
+                    store.append({"type": "event", "frame": idx, "events": ev,
+                                  "camera_state": cam_state})
+        elif store is not None:
+            store.append(dict(rec, type="frame"))
         idx += 1
 
     cap.release()
+    pl_ms_med = statistics.median([f["pl_ms"] for f in frames if "pl_ms" in f]) if TRACK else None
     out = {
         "video": args.video, "frames": idx, "detections": n_det,
         "detect_every": args.every,
         "infer_ms_med": statistics.median(infer_ms) if infer_ms else None,
+        "pl_track": TRACK is not None,
+        "pl_ms_med": pl_ms_med,
         "frames_out": frames,
         "proposal": prop,
     }
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False)
-    print("STAGES detect_ms=%.0f ball_ms=%.0f frames=%d" % (t_det * 1e3, t_ball * 1e3, idx))
+    if store is not None:
+        summary = store.close(summary={
+            "video": args.video, "frames": idx, "detections": n_det,
+            "pl_track": TRACK is not None, "pl_ms_med": pl_ms_med,
+        })
+        print("STORE_SUMMARY", summary)
+    print("STAGES detect_ms=%.0f ball_ms=%.0f frames=%d pl_ms_med=%s"
+          % (t_det * 1e3, t_ball * 1e3, idx, pl_ms_med))
     print("PIPELINE_OK frames=%d detections=%d med_infer_ms=%s out=%s"
           % (idx, n_det, out["infer_ms_med"], args.out))
     return 0

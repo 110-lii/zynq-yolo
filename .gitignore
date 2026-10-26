@@ -252,6 +252,11 @@ build/*.exe
 build/tracks_*.json
 build/calib_*.npy
 build/calib_*.jpg
+# --- 2026-10-25 显示 overlay 的构建/调试输出：Vivado stdout 与临时调试脚本 --------
+#     ★ 证据以 board/logs/*.md 里的判据令牌为准；这些 stdout 可由 bd_*.tcl 重建。
+build/dbg_*.txt
+build/*_stdout.txt
+build/scripts/_dbg_*.tcl
 build/models/*.tflite
 build/ncnn-win/
 build/ball_rois*/

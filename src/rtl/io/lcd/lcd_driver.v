@@ -33,7 +33,9 @@ module lcd_driver(
     output               lcd_bl,      //LCD 背光控制信号
     output               lcd_clk,     //LCD 像素时钟
     output               lcd_rst,     //LCD 复位
-    output       [23:0]  lcd_rgb      //LCD RGB888颜色数据
+    output       [23:0]  lcd_rgb,     //LCD RGB888颜色数据
+    output      [10:0]  h_cnt_o,     // 调试：行计数（给 AXI GPIO 读回）
+    output      [10:0]  v_cnt_o      // 调试：场计数
     );
 
 //parameter define  
@@ -126,6 +128,10 @@ assign  lcd_rst = 1'b1;       //LCD复位
 
 //RGB888数据输出
 assign lcd_rgb = lcd_de ? pixel_data : 24'd0;
+
+// 调试输出（AXI GPIO 读回，用于判断 pclk/reset 是否活着）
+assign h_cnt_o = h_cnt;
+assign v_cnt_o = v_cnt;
 
 //像素点x坐标
 always@ (posedge lcd_pclk or negedge rst_n) begin

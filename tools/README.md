@@ -24,6 +24,8 @@
 | `make_submission.py` | **提交包**：按 git 边界 + 运行必需件导出，生成 manifest/SHA256 并在导出目录跑 `check_repo.py` | ✅ 已创建（令牌 `SUBMISSION_PACK_OK`） |
 | `ball_visibility_sweep.py` | **球可见性扫描**（D010 范围收缩依据之一） | ✅ 已创建 |
 | `ball_cv.py` | **传统 CV 球定位可行性原型**：结论 `no_work`（人眼 2/10，判据假绿分析） | ✅ 已创建（结果 `data/results/ball_cv.json`） |
+| `ball_policy.py` | **球链路策略纯函数**：丢失窗口按秒换算、预测点越界放置；供 `board_pipeline.py` 与离线自检共用同一判据 | ✅ 已创建（`--ball-lost-sec` / `--ball-predict-past-boundary` 的默认值与原逻辑逐字段一致） |
+| `check_ball_switches.py` | **两个球开关的离线验证（不需要板子）**：合成轨迹 + 真实标定；覆盖默认等价、跨缺口重捕获、越界预测恢复与事件代价 | ✅ 已跑（`BALL_SWITCHES_OK`；板上验证**尚未做**） |
 | `pitch_geometry.py` | **白线反解球场几何可行性**：n=10 n_pass=0（D010 范围外 b 的依据） | ✅ 已创建 |
 | `person_scale_check.py` | **人可见性 vs 输入分辨率**（D010 收窄后「人看得见」判据） | ✅ 已创建 |
 | `int8_sim.py` / `pynq_net.py` | INT8 量化验证 / 整网 PC 编排（后端可插拔，PL 后端待接） | ✅ 已创建 |
@@ -106,6 +108,7 @@
 | `md_to_docx.py` | ⬜ TODO | —— |
 | `ball_visibility_sweep.py` | ✅ 已实现（分辨率 × 切图 × 模型 × 置信度四组扫描 + 基线/阴性/阳性对照） | `SWEEP_DONE <n>` / `SWEEP_FAIL <原因>` |
 | `ball_cv.py` | ✅ 已实现（运动残差 + 外观先验 + 时空关联；含 null/static/shuffle/synthetic/ablate 五类对照） | `BALL_CV_DONE`（结果 JSON 内 `verdict_class`） |
+| `check_ball_switches.py` | ✅ 已实现（A：`--ball-lost-sec` 默认值/同窗口等价/8 帧缺口重捕获；B：`--ball-predict-past-boundary` 默认逐字段回归/作用域/真实标定轨迹/事件代价） | `BALL_SWITCHES_OK` / `BALL_SWITCHES_FAIL <原因>` |
 | `pitch_geometry.py` | ✅ 已实现（白线掩膜覆盖率判据 + 阴性/阳性对照） | `PITCH_GEOM_*` |
 | `int8_sim.py` / `pynq_net.py` | ✅ 已实现 | `PYNQ_NET_OK` / `PYNQ_NET_FAIL` 等 |
 | `batch3.py` | ✅ 已实现（60 框 4 层各 15；出图后自检逐像素一致；`box_idx` 不参与框身份） | `REPEAT3_PACK_OK <n> <分层计数>` / `REPEAT3_PIXELS` / `REPEAT3_AUDIT <行数> <唯一键> <共享键> <严格同框>` / `REPEAT3_FAIL <原因>` |

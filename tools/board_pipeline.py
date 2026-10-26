@@ -26,6 +26,7 @@ from field_coords import box_to_field, inside_hull  # noqa: E402
 from result_publisher import build_frame  # noqa: E402
 from camera_state import assess as cam_assess  # noqa: E402
 from ball_cv_probe import candidates as ball_cands  # noqa: E402
+from ball_policy import place_ball, resolve_max_miss  # noqa: E402
 from ball_track import BallTracker  # noqa: E402
 from board_detect import detect as bd_detect, detect_planar as bd_detect_planar, init_pl  # noqa: E402
 from ball_cls_np import BallClassifier  # noqa: E402
@@ -142,6 +143,10 @@ def main():
     ap.add_argument("--store-max-mb", type=int, default=64, help="单文件轮转阈值")
     ap.add_argument("--ball-scan", action="store_true", help="用单帧滑窗找球（慢但召回高）")
     ap.add_argument("--ball-every", type=int, default=0, help="球路径独立节奏（0=跟随主检测）")
+    ap.add_argument("--ball-lost-sec", type=float, default=None,
+                    help="球丢失容忍窗口（秒，按视频帧换算）；默认 None=沿用 max_miss=4")
+    ap.add_argument("--ball-predict-past-boundary", action="store_true",
+                    help="预测点（tracker miss>0）允许越过球场范围 ±5 m（默认关）")
     ap.add_argument("--proposal", action="store_true", help="额外输出方案 §2.1 的 JSON 结构")
     ap.add_argument("--out", default="/home/xilinx/tracks.json")
     args = ap.parse_args()
@@ -193,8 +198,18 @@ def main():
     _npz = os.path.join(REPO, "build", "models", "ball_roi.npz")
     if os.path.exists(_npz):
         ball_clf = BallClassifier(_npz)
-    ball_tr = BallTracker(min_hits=2, max_miss=4, min_speed=3.0)
+    try:
+        _ball_max_miss = resolve_max_miss(args.ball_lost_sec, fps)
+    except ValueError as _e:
+        print("PIPELINE_FAIL ball_lost_sec:", _e)
+        cap.release()
+        return 2
+    if args.ball_lost_sec is not None:
+        print("BALL_LOST_WINDOW max_miss=%d lost_sec=%.3f fps=%.2f"
+              % (_ball_max_miss, args.ball_lost_sec, fps))
+    ball_tr = BallTracker(min_hits=2, max_miss=_ball_max_miss, min_speed=3.0)
     ball = None
+    n_ball_predicted = 0
     prev_frame = None
     t_det = t_ball = 0.0
     ball_roi = None
@@ -317,16 +332,13 @@ def main():
         if bt:
             b = max(bt, key=lambda t: t.hits)
             conf = round(min(1.0, b.hits / 5.0), 2)
-            placed = False
+            f_xy = None
             if H is not None:
                 f_xy = box_to_field(H, [b.x - 1, b.y - 1, b.x + 1, b.y + 1])
-                if f_xy and -5 <= f_xy[0] <= 110 and -5 <= f_xy[1] <= 73:
-                    ball = {"x": round(f_xy[0], 2), "y": round(f_xy[1], 2),
-                            "confidence": conf, "valid": True, "space": "field"}
-                    placed = True
-            if not placed:
-                ball = {"x": round(b.x, 1), "y": round(b.y, 1),
-                        "confidence": conf, "valid": True, "space": "image"}
+            ball = place_ball(f_xy, (b.x, b.y), conf, is_predicted=(b.miss > 0),
+                              allow_predict_past_boundary=args.ball_predict_past_boundary)
+            if ball.get("predicted"):
+                n_ball_predicted += 1
         prev_frame = frame
         if not bt:
             roi_miss += 1
@@ -382,6 +394,8 @@ def main():
         print("STORE_SUMMARY", summary)
     print("STAGES detect_ms=%.0f ball_ms=%.0f frames=%d pl_ms_med=%s"
           % (t_det * 1e3, t_ball * 1e3, idx, pl_ms_med))
+    if args.ball_predict_past_boundary:
+        print("BALL_PREDICT_PAST_BOUNDARY frames=%d" % n_ball_predicted)
     print("PIPELINE_OK frames=%d detections=%d med_infer_ms=%s out=%s"
           % (idx, n_det, out["infer_ms_med"], args.out))
     return 0

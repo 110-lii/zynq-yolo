@@ -55,20 +55,26 @@
 [PS：接收 → 帧重组 → DDR 帧缓冲]
         │
         ▼
-[PL：preproc — BGR888 → 3×320×320 RGB 平面（最近邻，LUT 7%，18.8 ms/帧）]
-        │
-        ▼
+[PL：track_preproc（D019）— BGR888 → 3×320×320 RGB + 320×320 白/运动掩码]
+        │                    │
+        │ RGB 平面            │ 运动掩码（跟踪门控）
+        ▼                    ▼
 [PS：ncnn YOLOv8n-0.25 单类 person（0.95–1.0 s/帧）]
         │
         ▼
-[PS：SORT 跟踪 → 球链路（白块候选 + C 分类器 8 ms + 轨迹确认）]
+[PS：SORT 跟踪（可选 PL 运动门控）→ 球链路（白块候选 + C 分类器 8 ms + 轨迹确认）]
         │
         ▼
 [PS：单应 → 球场坐标 → 事件（出界/进球/球权）]
         │  结果只序列化一次
-        ├──► [以太网推给 PC]
-        └──► [落 SD 卡（同构格式）]
+        ├──► [以太网推给 PC（result_stream → pc_dashboard）]
+        ├──► [SD 卡 JSONL + summary（result_store）]
+        └──► [HDMI/LCD 状态面板（status_display；fbdev/PNG）]
 ```
+
+> `preproc` 单独出片仍是已验证主线；`track_preproc` 是 D019 的融合升级，
+> 已出片并**上板逐位对通过**（`TRACK_PREPROC_BOARD_OK`）。无新 bitstream 时
+> `--pl-track` 自动回退 PS。
 
 > 已废弃主线：`conv_engine` 整网逐层调度（416×416 / YOLOv5n）实测 9.63 s/帧（≈0.10 FPS），
 > 见 D017 与 `docs/integration_rtl_plan.md` 顶部说明。它仍作为 6/6 bit-exact 的
@@ -134,6 +140,20 @@
 | 3 | `gmem_in`（BGR888） | PS DDR→PL | 8-bit × 1280×720×3，行主序 | AXI HP | `m_axi` 突发，`num_read_outstanding=16` | 帧尺寸由 `W_IN/H_IN` 约束 | ✅ 已上板 |
 | 4 | `gmem_out`（RGB 平面） | PL→PS DDR | 8-bit × 3×320×320，channel-first | AXI HP | `m_axi` 突发，`num_write_outstanding=16` | 固定 307,200 B | ✅ 已上板 |
 
+`track_preproc`（D019，融合升级）的 4 个数据口：
+
+| # | 接口 | 方向 | 格式 | HP |
+|---|---|---|---|---|
+| 1 | `gmem_in` | PS DDR→PL | BGR888 W×H×3 | HP0 |
+| 2 | `gmem_prev` | PS DDR→PL | 上一帧 BGR888 | HP2 |
+| 3 | `gmem_rgb` | PL→PS DDR | 3×320×320 RGB 平面 | HP1 |
+| 4 | `gmem_mask` | PL→PS DDR | 320×320（bit0 白 / bit1 运动） | HP3 |
+
+`hdmi_status`（D020，独立 overlay）：PS 通过 AXI BRAM Controller 写
+1280×720 1bpp 帧缓存（28,800×32-bit，基址 `0x40000000`）；PL `fb_reader` 读 Port B，
+经 vendor `video_driver` + `dvi_transmitter_top` 输出 TMDS。外部 50 MHz `sys_clk` 经
+`clk_wiz` 产生 74.25/371.25 MHz；不复用主检测 overlay（PYNQ 同时只能加载一个）。
+
 > `conv_engine` 的 5 个 `m_axi` + 1 个 `s_axilite` 契约仍在
 > [`accel_interface.md`](accel_interface.md)，但已**退出主线**（D017），只作历史验证。
 
@@ -162,6 +182,12 @@
 
 > `preproc` IP 自身 LUT 为 **3,812**（`docs/system_status.md`）；BD 顶层多出的部分
 > 是 PS7、AXI 互连与复位逻辑。时序报告：Setup 0 failing、Hold 0 failing、PW 0 failing。
+
+`track_preproc`（D019，已出片）BD 顶层：LUT **7,374（13.86 %）**、FF **8,340（7.84 %）**、
+DSP **13（5.91 %）**、BRAM **3（2.14 %）**；WNS **+2.457 ns**、WHS **+0.036 ns**、
+PW **+4.870 ns**（`build/reports/{resource,timing}/track_preproc_bd_*.rpt`）。
+已上板逐位对通过（`TRACK_PREPROC_BOARD_OK`；720p 32.39 ms/帧，板上记录见
+[`../board/logs/board_track_preproc_20261025.md`](../board/logs/board_track_preproc_20261025.md)）。
 
 **硬规矩**：
 

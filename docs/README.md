@@ -16,7 +16,8 @@
 |---|---|---|
 | [`repo_spec.md`](repo_spec.md) | ★ **仓库骨架规范（唯一事实源）**：目录职责、命名规则、README 模板、真源/产物规则、构建判据、本机环境事实、待定项 | ✅ 已完成 |
 | [`architecture.md`](architecture.md) | 系统架构：已按 D017 填入数据流、软硬件划分依据、`preproc` 接口契约与实测资源/时序 | ✅ 已完成（D017） |
-| [`system_status.md`](system_status.md) | **当前系统状态（唯一现役口径）**：PL 预处理 + PS ncnn 架构、实测指标、板上运行命令、已知边界 | ✅ 已完成（2026-10-24） |
+| [`system_status.md`](system_status.md) | **当前系统状态（唯一现役口径）**：PL 预处理 + PS ncnn 架构、实测指标、板上运行命令、已知边界 | ✅ 已完成（2026-10-25） |
+| [`display_overlay_plan.md`](display_overlay_plan.md) | **HDMI/LCD 显示 overlay**：1bpp BRAM + TMDS/LCD 驱动、引脚/资源/出片门禁 | ✅ 均已出片且读回通过；画面待目视 |
 | [`amd_official_layout.md`](amd_official_layout.md) | **AMD 官方布局与版本控制建议查证记录**：UG949 受控源文件清单、AMD 5/6 种版本控制方法论、PYNQ 官方模板逐字要点、本仓库选 Foundational 派的理由与代价 | ✅ 已完成 |
 | [`yolo_on_zynq7020_survey.md`](yolo_on_zynq7020_survey.md) | **YOLO 在 XC7Z020 上的技术调研**：五条路线判定（含「Vitis AI DPU 在 7000 系不存在」的一手核查）、同芯片实测锚点（ARC2020，1.88 fps）、开源实现清单、推荐路线 D 与验证阶梯；**§9 是引用本文数字前必读的未验证项清单** | ✅ 已完成 |
 | [`accel_interface.md`](accel_interface.md) | **`conv_engine` 加速器接口契约**：AXIS 流格式、`tuser`/`tlast` 语义、int8 量化口径、单层吞吐与资源实测、§9 逐字节一致性用例 | ✅ 数值已冻结，待用户确认（D006） |

@@ -12,7 +12,7 @@
 ## 内容
 
 > ⚠️ 本节原写「`tools/` 为空目录、脚本一个都没创建」——**早已过时**（2026-10-20 更正）。
-> 现状：**108 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径，2026-10-25 复核）已落地。
+> 现状：**118 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径，2026-10-25 复核）已落地。
 > 下表只列关键脚本；完整清单看目录。状态列**如实**标注，**不要假装已存在/已运行**。
 
 | 路径 | 说明 | 状态 |
@@ -46,6 +46,16 @@
 | `make_newmatch_labels.py` | **第四批标注包（新比赛 · 跨场）**：比赛段 → 检测 → 按取色失败原因分层（purity/color/too_small/rect/colored）各抽 K 个，出 320×320 单框图 + `labels4.csv`（label 空）+ `MANIFEST4.json`；`--score` 在标完后给每层 N 率 + Wilson CI，并与旧场层内 N 率并排做**保序检验** | ✅ 已建包（83 框：purity 20 / color 20 / too_small 20 / **rect 仅 3**（新场 rect 层候选只有 3 个）/ colored 20）；`NEWLABEL_PACK_OK 83 20 20 20 3 20`。**尚未标注**，`--score` 会明确报 `not_all_labeled` |
 | `match_setup.py` | **赛前输入（D013 的逻辑真源）**：录入双方队服颜色 / 裁判颜色 / 各自半场 → `data/config/match_<id>.json`；带 schema、颜色名校验（必须是 `PALETTE_REF` 的键）、两队同色/同半场拒绝、裁判色与队色相近告警，并直接打印可复制的下游命令（`--palette` / `--palette-refs`）。`--serve` 提供**网页前端作为 LCD 触屏的模拟**（真机 UI 复用同一份 schema 与校验） | ✅ 已实现（CLI / --list / --show / --print-cmd / --serve 8767 全跑通；负例 `same_team_color`、`same_half_side` 均被拒）。已录 `data/config/match_migu968460165.json`（white/blue，裁判 red，A 先开左半） |
 | `capture_golden.py` | **采集链（M1）上板黄金模型 / 比对器**：`--out` 按 `vid_test_pattern.v` 的闭式公式生成期望 DDR 镜像（每像素 32 位小端 = B8,G8,R8,0x00；RGB565→RGB888 位复制），`--compare <dump>` 与 JTAG dump 回的 DDR 逐字比对并按字节坐标报首个不符 | ✅ 已实现（`--out` 生成 `build/board/capture_golden.bin`，`crc32=d1c9c45a`、`frame_bytes=1228800`；比对器已自测：自身比对 `CAPTURE_MATCH_OK`、改 1 字节必 `CAPTURE_MATCH_FAIL` 并定位到 `(x=360,y=1)`） | `CAPTURE_GOLDEN_OK path=.. frame_bytes=.. words=.. crc32=..` / `CAPTURE_MATCH_OK words=.. crc32=..` / `CAPTURE_GOLDEN_FAIL` / `CAPTURE_MATCH_FAIL mismatched=n/total` |
+| `track_preproc.py` | **PL 跟踪辅助驱动**（D019）：加载 `track_preproc.bit`，一次返回 3×320×320 RGB + 320×320 白/运动掩码 | ✅ 已出片；上板逐位对通过（`TRACK_PREPROC_BOARD_OK`） |
+| `check_track_preproc.py` | **PC 算法对拍**（不跑 HLS）：g++ 编译 TB，合成 64×64 帧，逐字节比 RGB/掩码 | ✅ `TRACK_PREPROC_REF OK` |
+| `check_track_preproc_board.py` | **PL 跟踪辅助上板对拍**：加载 overlay 后逐字节比 RGB/掩码并测 720p 耗时 | ✅ `TRACK_PREPROC_BOARD_OK`（720p 32.39 ms） |
+| `check_display_board.py` | **显示 overlay 上板门禁**：写 1bpp 帧缓存并 AXI 读回（HDMI/LCD/双屏） | ✅ `DISPLAY_BOARD_OK` / `DISPLAY_BOTH_BOARD_OK` / `TRACK_DISPLAY_BOARD_OK` |
+| `result_store.py` | **SD 卡增量存储**：JSONL + `summary.json` + fsync + 轮转 | ✅ 已创建（`RESULT_STORE_SELFTEST OK`） |
+| `result_stream.py` | **板→PC 推送**：按行 TCP 发 JSONL，断线重连/尾随 | ✅ 已创建（本地回环 `sent=2`） |
+| `pc_dashboard.py` | **PC 端软件**：TCP/回放 + 105×68 球场画布 + CSV + headless | ✅ 已创建（`PC_DASHBOARD_SELFTEST OK`） |
+| `status_display.py` | **HDMI/LCD 状态面板**：800×480/1280×720，fbdev/PNG/窗口/BRAM | ✅ 已创建（`STATUS_DISPLAY_SELFTEST OK`） |
+| `bram_fb.py` | **HDMI/LCD 1bpp 帧缓存**：BGR→28,800（HDMI）/12,000（LCD）×32-bit，PYNQ MMIO 或 `/dev/mem` 写 AXI BRAM | ✅ 已创建（`BRAM_FB_SELFTEST OK`） |
+| `make_report_figures.py` | 报告图：系统框图/软件流水线/耗时对比/状态面板/PC 球场视图 | ✅ 已创建 |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |
 
 ## 规则

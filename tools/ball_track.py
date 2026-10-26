@@ -7,7 +7,6 @@
 """
 import argparse
 
-import numpy as np
 
 from ball_cv_probe import candidates
 

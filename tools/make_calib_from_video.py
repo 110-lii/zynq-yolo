@@ -37,7 +37,6 @@ per-tensor 范围会把激活范围撑错，量化精度反而下降。所以标
 import argparse
 import hashlib
 import json
-import os
 import shutil
 import subprocess
 import sys

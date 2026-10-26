@@ -14,7 +14,6 @@
     python3 tools/board_track.py --selftest
 """
 import argparse
-import math
 
 
 def _iou(a, b):

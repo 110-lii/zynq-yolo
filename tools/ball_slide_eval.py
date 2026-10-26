@@ -11,7 +11,6 @@ import os
 import time
 
 import cv2
-import numpy as np
 
 from ball_cls_np import BallClassifier
 

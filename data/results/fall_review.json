@@ -1,86 +1,86 @@
 {
  "tool": "tools/fall_review.py",
- "generated": "2026-10-20T10:59:33+0800",
+ "generated": "2026-10-26T17:07:25+0800",
  "note": "这是**人工复核**结果。n_pos 是「人确认的倒地候选数」，**不是**召回率：没有标注过的片段不能当阴性，所以本文件刻意不给 precision/recall。",
  "counts": {
-  "n_candidates": 26,
+  "n_candidates": 40,
   "n_pos": 3,
-  "n_neg": 23,
+  "n_neg": 1,
   "n_unsure": 0,
-  "n_undecided": 0
+  "n_undecided": 36
  },
  "by_clip": {
   "inc_01_t01154.9.mp4": {
    "pos": 1,
-   "neg": 2,
+   "neg": 0,
    "unsure": 0,
-   "undecided": 0
+   "undecided": 3
+  },
+  "inc_02_t01370.6.mp4": {
+   "pos": 0,
+   "neg": 0,
+   "unsure": 0,
+   "undecided": 3
+  },
+  "inc_03_t01508.3.mp4": {
+   "pos": 0,
+   "neg": 0,
+   "unsure": 0,
+   "undecided": 3
+  },
+  "inc_04_t01697.4.mp4": {
+   "pos": 0,
+   "neg": 0,
+   "unsure": 0,
+   "undecided": 3
+  },
+  "inc_05_t01796.1.mp4": {
+   "pos": 0,
+   "neg": 0,
+   "unsure": 0,
+   "undecided": 3
+  },
+  "inc_06_t01901.6.mp4": {
+   "pos": 0,
+   "neg": 0,
+   "unsure": 0,
+   "undecided": 3
+  },
+  "inc_07_t02037.9.mp4": {
+   "pos": 0,
+   "neg": 0,
+   "unsure": 0,
+   "undecided": 3
+  },
+  "inc_08_t02395.4.mp4": {
+   "pos": 0,
+   "neg": 0,
+   "unsure": 0,
+   "undecided": 3
+  },
+  "inc_09_t03237.3.mp4": {
+   "pos": 0,
+   "neg": 0,
+   "unsure": 0,
+   "undecided": 3
   },
   "inc_10_t05249.2.mp4": {
    "pos": 2,
    "neg": 1,
    "unsure": 0,
-   "undecided": 0
-  },
-  "inc_02_t01370.6.mp4": {
-   "pos": 0,
-   "neg": 2,
-   "unsure": 0,
-   "undecided": 0
-  },
-  "inc_03_t01508.3.mp4": {
-   "pos": 0,
-   "neg": 2,
-   "unsure": 0,
-   "undecided": 0
-  },
-  "inc_04_t01697.4.mp4": {
-   "pos": 0,
-   "neg": 2,
-   "unsure": 0,
-   "undecided": 0
-  },
-  "inc_05_t01796.1.mp4": {
-   "pos": 0,
-   "neg": 2,
-   "unsure": 0,
-   "undecided": 0
-  },
-  "inc_06_t01901.6.mp4": {
-   "pos": 0,
-   "neg": 2,
-   "unsure": 0,
-   "undecided": 0
-  },
-  "inc_07_t02037.9.mp4": {
-   "pos": 0,
-   "neg": 2,
-   "unsure": 0,
-   "undecided": 0
-  },
-  "inc_08_t02395.4.mp4": {
-   "pos": 0,
-   "neg": 2,
-   "unsure": 0,
-   "undecided": 0
-  },
-  "inc_09_t03237.3.mp4": {
-   "pos": 0,
-   "neg": 2,
-   "unsure": 0,
-   "undecided": 0
+   "undecided": 3
   },
   "inc_11_t06345.4.mp4": {
    "pos": 0,
-   "neg": 2,
+   "neg": 0,
    "unsure": 0,
-   "undecided": 0
+   "undecided": 3
   },
   "inc_12_t06867.9.mp4": {
    "pos": 0,
-   "neg": 2,
+   "neg": 0,
    "unsure": 0,
-   "undecided": 0
+   "undecided": 3
   }
  },
  "decided": [
@@ -88,157 +88,25 @@
    "cand_id": "inc_01_t01154.9_tid481_f628-688_strong",
    "clip": "inc_01_t01154.9.mp4",
    "judgement": "pos",
-   "note": "user 2026-10-20 review of PDF"
+   "note": ""
+  },
+  {
+   "cand_id": "inc_10_t05249.2_tid8179_f170-176_strong",
+   "clip": "inc_10_t05249.2.mp4",
+   "judgement": "pos",
+   "note": ""
   },
   {
    "cand_id": "inc_10_t05249.2_tid8195_f480-528_strong",
    "clip": "inc_10_t05249.2.mp4",
    "judgement": "pos",
-   "note": "user 2026-10-20 review of PDF"
+   "note": ""
   },
   {
-   "cand_id": "inc_01_t01154.9_tid1_f42-46_weak",
-   "clip": "inc_01_t01154.9.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_01_t01154.9_tid42_f286-292_weak",
-   "clip": "inc_01_t01154.9.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_02_t01370.6_tid488_f2-68_weak",
-   "clip": "inc_02_t01370.6.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_02_t01370.6_tid489_f52-64_weak",
-   "clip": "inc_02_t01370.6.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_03_t01508.3_tid1554_f6-16_weak",
-   "clip": "inc_03_t01508.3.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_03_t01508.3_tid1708_f114-118_weak",
-   "clip": "inc_03_t01508.3.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_04_t01697.4_tid2344_f232-244_weak",
-   "clip": "inc_04_t01697.4.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_04_t01697.4_tid2344_f264-268_weak",
-   "clip": "inc_04_t01697.4.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_05_t01796.1_tid3408_f2-30_weak",
-   "clip": "inc_05_t01796.1.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_05_t01796.1_tid3385_f20-24_weak",
-   "clip": "inc_05_t01796.1.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_06_t01901.6_tid3750_f8-14_weak",
-   "clip": "inc_06_t01901.6.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_06_t01901.6_tid3750_f32-56_weak",
-   "clip": "inc_06_t01901.6.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_07_t02037.9_tid4602_f4-12_weak",
-   "clip": "inc_07_t02037.9.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_07_t02037.9_tid5209_f384-392_weak",
-   "clip": "inc_07_t02037.9.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_08_t02395.4_tid5815_f26-52_weak",
-   "clip": "inc_08_t02395.4.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_08_t02395.4_tid5816_f94-120_weak",
-   "clip": "inc_08_t02395.4.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_09_t03237.3_tid6675_f2-10_weak",
-   "clip": "inc_09_t03237.3.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_09_t03237.3_tid6929_f96-122_weak",
-   "clip": "inc_09_t03237.3.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_10_t05249.2_tid8016_f34-40_weak",
+   "cand_id": "inc_10_t05249.2_tid8279_f682-694_strong",
    "clip": "inc_10_t05249.2.mp4",
    "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_10_t05249.2_tid8179_f170-176_weak",
-   "clip": "inc_10_t05249.2.mp4",
-   "judgement": "pos",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_11_t06345.4_tid8385_f54-68_weak",
-   "clip": "inc_11_t06345.4.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_11_t06345.4_tid8289_f234-240_weak",
-   "clip": "inc_11_t06345.4.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_12_t06867.9_tid9268_f2-18_weak",
-   "clip": "inc_12_t06867.9.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
-  },
-  {
-   "cand_id": "inc_12_t06867.9_tid9269_f180-202_weak",
-   "clip": "inc_12_t06867.9.mp4",
-   "judgement": "neg",
-   "note": "user 2026-10-20 review of PDF"
+   "note": ""
   }
  ]
 }

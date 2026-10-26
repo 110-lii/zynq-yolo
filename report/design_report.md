@@ -27,7 +27,7 @@
 | PS 球链路 | 白块/圆度候选 + 3 层 C 分类器 + 轨迹确认 | 候选召回 **87.3 %**；分类器 P **0.667** / R **0.848**；逐帧确认 **80 %（16/20）** |
 | 事件 | 出界（FIFA 整球过线口径）、进球、球权 | 202 帧板上运行：**144 帧**输出球场坐标球，**49 帧**给出球权，`events` 字段同步输出 |
 | PL 跟踪辅助 | `track_preproc`：预处理 + 白/运动掩码，单 IP / 4 HP | **已出片并上板逐位对通过**（LUT 7,374 / WNS +2.457 ns；720p 32.39 ms、管线 20.03 ms） |
-| 存储/显示/上位机 | SD JSONL + PC Dashboard + HDMI/LCD 状态面板 | 软件自检通过；**HDMI/LCD/合并双屏 overlay 均已出片并读回通过**（D020–D024），画面待目视 |
+| 存储/显示/上位机 | SD JSONL + PC Dashboard + HDMI/LCD 状态面板 | 软件自检通过；**HDMI/LCD/合并双屏 overlay 均已出片、帧缓存数字通路读回通过**（D020–D024）；**上板两屏均有画面 ⇒ 显示通过**（014） |
 | 历史验证 | PL 通用卷积引擎 `conv_engine` | 单层逐值 **6/6 bit-exact**；整网 416/YOLOv5n **9.63 s/帧**，已退出主线 |
 
 **设计取舍一句话**：在 7020 上，PL 卷积引擎“算得动但喂不快”；把像素级预处理放 PL、
@@ -182,7 +182,9 @@ PS：单应 → 球场坐标 → 事件（出界/进球/球权）
 ### 2.8 人员倒地（候选）
 
 - 离线两级候选（strong/weak）：框高相对站立基线下降 + 宽高比上升；
-  强判据从 5 帧改为 **4 帧**后，3 个已知真倒地全部进入强候选，且未引入已知误报。
+  强判据从 5 帧改为 **4 帧**后，强层候选从 2 个增至 **4 个**：3 个已知真倒地进入，
+  另 1 个（`inc_10_tid8279`）人工复核为**弯腰/俯身误判** ⇒ 强层精度 **3/4**；
+  这是候选数与候选精度，不是检出率（`docs/player_tracking_v1.md` §7.1 / §7.3）。
 - 人工复核 26/132 个候选：**3 个真倒地**（#1/#2/#22），其余含大量教练/裁判；
   候选池纯度约 **2.3 %**。⇒ 纯几何启发式只能做**粗筛**，不能作为独立判据。
 - 当前定位：**候选输出 + 人工复核**；真正可用的倒地检测需要姿态/躯干方向信息
@@ -213,25 +215,30 @@ PC 端接收/回放，画 105×68 球场俯视图（球员 ID、球、事件）�
 `video_driver` + `dvi_transmitter_top` 输出 TMDS；外部 50 MHz `sys_clk` 经 `clk_wiz`
 产生 74.25/371.25 MHz。`tools/status_display.py --fb-bram 0x40000000` 负责把面板写进
 BRAM（`tools/bram_fb.py`，PYNQ MMIO 或 `/dev/mem`）。实测出片 WNS 最差 Setup
-**+3.938 ns**、Hold **+0.065 ns**；**帧缓存读回通过**（DISPLAY_BOARD_OK；画面待目视）。
+**+3.938 ns**、Hold **+0.065 ns**；**帧缓存数字通路读回通过**（DISPLAY_BOARD_OK）；
+但**上板无图像**（只亮背光、无内容）：该令牌只证明 BRAM 写得进、读得出，
+**不等于画面能显示**（`ai/sessions/013`）。
 
 **LCD 状态面板（D021，已出片）**：`src/rtl/io/lcd/` 用 1bpp 帧缓存
 （800×480，12,000×32-bit，基址 `0x40000000`，64 KB）+ vendor `lcd_driver`
 （`lcd_id=4384`）驱动 RGB LCD；外部 50 MHz 经 `clk_wiz` 出 33.333 MHz。实测
-Setup **+4.283 ns**、Hold **+0.121 ns**；**帧缓存读回通过**（DISPLAY_BOARD_OK；画面待目视）。
+Setup **+4.283 ns**、Hold **+0.121 ns**；**帧缓存数字通路读回通过**（DISPLAY_BOARD_OK）；
+但**上板全黑**：加载另一项目（`D:\FPGA\oi`）的 bit 后同一块 LCD 有画面 ⇒ LCD 硬件正常、
+本仓库 LCD overlay 有 bug（`ai/sessions/013` 及后续对照）。
 若镜像本身有 LCD fbdev，同一 `status_display.py` 也可直接写 `/dev/fbX` 作为回退。
 
 **合并显示（D023）**：`display_both.bit` 内含两块独立 1bpp BRAM 与两个单端口
 AXI BRAM Controller（HDMI `0x40000000`、LCD `0x40020000`），一次加载即可同时刷新
 两块屏；`status_display.py --display-bit display_both.bit --also-lcd-base 0x40020000`
-一次写双屏。上板 `DISPLAY_BOTH_BOARD_OK`，48 个 BRAM、Setup +3.874 ns；画面待目视。
+一次写双屏。上板 `DISPLAY_BOTH_BOARD_OK`（= 双 BRAM 读回一致），48 个 BRAM、Setup +3.874 ns；
+**画面通过**（014：两块屏的 64×64 棋盘格人眼可见）。
 
 **跟踪 + 双屏合并（D024）**：`track_display.bit` 在同一 overlay 里放
 `track_preproc`（HP0–HP3）+ HDMI/LCD 双 BRAM（`0x40020000`/`0x40040000`），
 板上可以一边跑 `--pl-track` 一边刷双屏，不需要换 overlay。资源 LUT **7,984** /
 FF **8,835** / BRAM **51**；Setup **+2.918 ns**。上板
-`TRACK_PREPROC_BOARD_OK` + `TRACK_DISPLAY_BOARD_OK`，20 帧管线 `PIPELINE_OK`；
-双屏画面待目视。
+`TRACK_PREPROC_BOARD_OK` + `TRACK_DISPLAY_BOARD_OK`（前者是逐字节对拍，后者只是 BRAM 读回），
+20 帧管线 `PIPELINE_OK`；**双屏画面未验证**（014 只修单屏 overlay，合并版尚未重出片）。
 
 ![LCD 状态面板示意图](figures/status_panel_lcd.png)
 
@@ -381,9 +388,9 @@ FF **8,835** / BRAM **51**；Setup **+2.918 ns**。上板
 | PC Dashboard | `python tools/pc_dashboard.py --selftest` + 本地回放 | `PC_DASHBOARD_SELFTEST OK`；3 帧回放 `PC_DASHBOARD_OK frames=3` |
 | 板→PC 推送 | 本地 TCP 回环 | `RESULT_STREAM_OK sent=2`；PC 端收到 2 帧 |
 | HDMI/LCD 面板（软件） | `python tools/status_display.py --selftest` | `STATUS_DISPLAY_SELFTEST OK`，PNG 800×480 生成 |
-| HDMI 面板（PL overlay） | `bd_hdmi_status.tcl` + `tools/bram_fb.py --selftest` | **已出片**：Setup +3.938 ns / Hold +0.065 ns；`BRAM_FB_SELFTEST OK`；**读回通过**（DISPLAY_BOARD_OK；画面待目视） |
-| LCD 面板（PL overlay） | `bd_lcd_status.tcl` + `tools/bram_fb.py --selftest` | **已出片**：Setup +4.283 ns / Hold +0.121 ns；**读回通过**（DISPLAY_BOARD_OK；画面待目视） |
-| HDMI+LCD 合并 | `display_both.bit` + `--also-lcd-base 0x40020000` | **已出片**：LUT 908 / BRAM 48，Setup +3.874 ns；`DISPLAY_BOTH_BOARD_OK`，双屏读回一致 |
+| HDMI 面板（PL overlay） | `bd_hdmi_status.tcl` + `tools/bram_fb.py --selftest` | **已出片**：Setup +3.938 ns / Hold +0.065 ns；`BRAM_FB_SELFTEST OK`；**数字通路读回通过**（DISPLAY_BOARD_OK）；**画面已通过**（014） |
+| LCD 面板（PL overlay） | `bd_lcd_status.tcl` + `tools/bram_fb.py --selftest` | **已出片**：Setup +4.283 ns / Hold +0.121 ns；**数字通路读回通过**（DISPLAY_BOARD_OK）；**画面已通过**（014） |
+| HDMI+LCD 合并 | `display_both.bit` + `--also-lcd-base 0x40020000` | **已出片**：LUT 908 / BRAM 48，Setup +3.874 ns；`DISPLAY_BOTH_BOARD_OK`（双屏读回一致，仅数字通路）；**画面待重出片**（014 只修单屏 overlay） |
 | PL 跟踪辅助（PC 算法） | `python tools/check_track_preproc.py` | `TRACK_PREPROC_REF OK`（RGB/MASK 逐字节一致） |
 | PL 跟踪辅助（HLS/BD） | `export_track.py` → `bd_track_preproc.tcl` | **已出片**：LUT 7,374 / FF 8,340 / DSP 13 / BRAM 3；WNS **+2.457 ns**、WHS +0.036 ns、PW +4.870 ns |
 | PL 跟踪辅助（上板） | `tools/check_track_preproc_board.py` | **`TRACK_PREPROC_BOARD_OK`**：RGB/掩码逐字节一致；720p **32.39 ms/帧** |
@@ -543,7 +550,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | AXI 带宽 | `board/scripts/run_axi_bw.sh` | `AXI_BW_OK` 四模式 |
 | 板上球输出 | `tools/board_pipeline.py` + `data/calib/field_calib.json`（汇总见 `board/logs/board_pipeline_20261024.md`） | 144/202 帧球场坐标；49 帧球权；`events` 非空 |
 | 球链路（已知球评估） | `ai/sessions/009` 的 20 个已知球、15 px 容差 | 16/20 确认（80 %） |
-| HDMI 状态面板 | `board/overlay/hdmi_status.bit` + `status_display.py --fb-bram 0x40000000` | 帧缓存读回已通过（`DISPLAY_BOARD_OK`）；屏幕画面目视待板子恢复后执行 |
+| HDMI 状态面板 | `board/overlay/hdmi_status.bit` + `status_display.py --fb-bram 0x40000000` | 帧缓存读回已通过（`DISPLAY_BOARD_OK`）；**屏幕画面已通过**（014：HDMI/LCD 棋盘格均可见）；显示类判据仍应分 BRAM_OK／VISUAL_OK 两级 |
 | SD 存储 | `python tools/result_store.py --selftest` | `RESULT_STORE_SELFTEST OK` |
 | PC 软件 | `python tools/pc_dashboard.py --selftest` + 回放 | `PC_DASHBOARD_SELFTEST OK` |
 | HDMI/LCD 面板 | `python tools/status_display.py --selftest` | `STATUS_DISPLAY_SELFTEST OK` |
@@ -593,19 +600,24 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 3. **出界口径**默认“球心越线 0.11 m”，可在 `tools/events.py` 调整；
    角球/球门球需要“最后触球队伍 + 进攻方向”，当前只输出出界侧与最近球员，
    **尚未做完整规则引擎**；不把“出界位置”冒充“角球/球门球判定”。
-4. **倒地识别是候选粗筛**：132 个候选中人工复核 26 个、3 个真倒地；候选池纯度约 2.3 %，
-   不宣称精度/召回。要产品化需姿态模型 + 更大规模复核。
+4. **倒地识别是候选粗筛**：132 个候选中人工复核 26 个、3 个真倒地；抽样不是随机的，
+   候选池纯度约 2.3 % 不可外推。4 帧门槛后强层 4 个候选 = 3 真 + 1 假，**精度 3/4**；
+   不宣称召回，也不把候选数当检出数。要产品化需姿态模型 + 更大规模复核。
 5. **帧率不是本项目的首要指标**：功能优先（D017）；当前 PS 检测约 1 FPS，
    低帧率可接受。若要求实时，需要换更小模型/多线程/NEON 定点，属于后续工作。
 6. **工具链是 2020.2**：与指南推荐版本不同，已按指南要求给出参数化构建与差异说明。
 7. **PL 跟踪辅助已上板逐位对**：`TRACK_PREPROC_BOARD_OK`，RGB/掩码逐字节一致；
    1280×720 实测 **32.39 ms/帧**，640×360 管线内 **20.03 ms/帧**（比旧 preproc 18.8 ms 慢，因为多读 prev、多写掩码）。
    这是实测代价，不是免费加速。
-8. **HDMI/LCD 帧缓存读回已通过，画面待目视**：原先读回恒为 0x8 的根因是 AXI BRAM
+8. **HDMI/LCD 画面已通过（014）**：原先读回恒为 0x8 的根因是 AXI BRAM
    Controller 双端口模式 **Port A=写、Port B=读**，原 BD 只接 Port A；改
    `C_SINGLE_PORT_BRAM=1` 后 AXI 用 Port A 读写、显示用 Port B，HDMI/LCD 均
-   **`DISPLAY_BOARD_OK`**（28,800 / 12,000 字读回一致）。实际屏幕画面仍需现场目视
-   确认；现场记录见 [`../board/logs/board_display_20261025.md`](../board/logs/board_display_20261025.md)。
+   **`DISPLAY_BOARD_OK`**（28,800 / 12,000 字读回一致）。**该令牌只证明帧缓存数字通路，
+   不等于画面能显示**：上板 HDMI 只亮背光、LCD 全黑；已排除 AXI/BRAM、TMDS 四引脚
+   （对 AMD 官方 pinout）、外部 50 MHz 晶振、时序收敛；另用 `D:\FPGA\oi` 的 bit 对照，
+   同一块 LCD 有画面而 HDMI 仍无 ⇒ LCD 硬件好、本仓库 LCD overlay 有 bug，HDMI 疑物理层
+   故障，**两者均未修复**。现场记录见
+   [`../board/logs/board_display_20261025.md`](../board/logs/board_display_20261025.md)。
 9. **SD 路径依赖挂载**：`--store-dir` 默认示例 `/home/xilinx/zynq-yolo`；若 SD 卡挂载点不同，
    由启动脚本传入；存储失败会打印 `STORE_UNAVAILABLE` 并继续跑（不静默丢结果）。
 
@@ -623,17 +635,20 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | 3.3.5.5 评测权重 | `report/README.md` 预置表 2 | ✅ |
 | D018 扩展：SD/HDMI-LCD/PC | `tools/result_store.py`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/result_stream.py` | ✅ 软件自检通过 |
 | D019 扩展：PL 跟踪辅助 | `src/hls/track/`、`build/scripts/bd_track_preproc.tcl`、`board/overlay/track_preproc.bit`、`tools/track_preproc.py` | ✅ 已出片并上板逐位对通过（720p 32.39 ms） |
-| D020 扩展：HDMI 状态面板 | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`board/overlay/hdmi_status.bit`、`tools/bram_fb.py` | ✅ 已出片（Setup +3.938 ns）；✅ 读回通过，画面待目视 |
-| D021 扩展：LCD 状态面板 | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_status.tcl`、`board/overlay/lcd_status.bit` | ✅ 已出片（Setup +4.283 ns）；✅ 读回通过，画面待目视 |
-| D022 修复：BRAM 单端口 | `bd_hdmi_status.tcl`/`bd_lcd_status.tcl` 的 `SINGLE_PORT_BRAM=1` | ✅ HDMI/LCD 均 `DISPLAY_BOARD_OK`；画面待目视 |
+| D020 扩展：HDMI 状态面板 | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`board/overlay/hdmi_status.bit`、`tools/bram_fb.py` | ✅ 已出片（Setup +3.938 ns）；✅ 数字通路读回通过；✅ 画面已通过（014） |
+| D021 扩展：LCD 状态面板 | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_status.tcl`、`board/overlay/lcd_status.bit` | ✅ 已出片（Setup +4.283 ns）；✅ 数字通路读回通过；✅ 画面已通过（014） |
+| D022 修复：BRAM 单端口 | `bd_hdmi_status.tcl`/`bd_lcd_status.tcl` 的 `SINGLE_PORT_BRAM=1` | ✅ HDMI/LCD 均 `DISPLAY_BOARD_OK`（数字通路）；⚠️ 合并版待重出片（014 只修单屏） |
 
 ---
 
 ## 10. 结论
 
-本项目在 Zynq-7020 上把“足球转播视频的可观测目标与事件分析”做成了**可上板、可复现、
-可验收**的完整链路：PL 预处理 18.8 ms/帧、PS ncnn 检测 0.95–1.0 s/帧、跟踪 0.2 px、
-球链路 80 % 确认、144/202 帧球场坐标与 49 帧球权输出。我们没有把资源花在“PL 跑整网”
+本项目在 Zynq-7020 上把“足球转播视频的可观测目标与事件分析”做成了**可上板、可复现**的分析链路：PL 预处理 18.8 ms/帧、PS ncnn 检测 0.95–1.0 s/帧、跟踪 0.2 px、
+球链路 80 % 确认（16/20，PC 侧已知球评估）、144/202 帧球场坐标与 49 帧球权输出；
+显示面板已在 014 打通（HDMI/LCD 棋盘格人眼可见）；
+按 D022 口径只有帧缓存数字通路通过，画面仍需人眼判 VISUAL。倒地只到候选层（强层精度 3/4），
+球的 backfill 结构改动未落地。
+我们没有把资源花在“PL 跑整网”
 这条实测不可行的路上，而是用异构划分、ROI 球链路和带有效性闸门的几何/事件，
 在 220 DSP 的器件上交付了功能闭环；同时保留 6/6 bit-exact 的卷积引擎与完整 AXI 标定，
 作为可复用的技术资产和后续优化基线。

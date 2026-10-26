@@ -52,7 +52,10 @@ python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
 1. 单应只对**标定过的机位**有效；未标定时球退化为图像坐标、`events` 不输出；有效区域判定已从“标定点多边形”改为“球场范围 ±5 m”（5 点集中时多边形太窄，会误丢球）；
 2. 球在快速移动/遮挡时确认率下降（约 28–70% 帧有球）；
 3. 出界口径默认“球心越线 0.11 m”，可在 `tools/events.py` 调整；
-4. 板子偶发整机复位（已确认非镜像问题，满载压测 20 分钟正常）。
+4. 板子偶发整机复位（已确认非镜像问题，满载压测 20 分钟正常）；
+5. **球帧数不能用容错参数放大**：`--ball-lost-sec 0.4` 在板上把球帧从 144 抬到 182（+26.4 %），
+   但人工抽查新增 38 帧**全部不是球**（静态白块被黏住）⇒ 该开关**已否决、默认关闭**；
+   根因是候选质量，不是丢失窗口参数（`ai/sessions/012`）。
 
 ## 扩展功能（2026-10-25，D018/D019）
 
@@ -62,8 +65,8 @@ python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
 | SD 卡增量存储 | `tools/result_store.py`（JSONL + summary + fsync/轮转） | `RESULT_STORE_SELFTEST OK` |
 | 板上结果推 PC | `tools/result_stream.py` | 本地回环测试 `RESULT_STREAM_OK sent=2` |
 | PC 端软件 | `tools/pc_dashboard.py`（TCP/回放 + 球场画布 + CSV） | `PC_DASHBOARD_SELFTEST OK`，本地端到端 3 帧通过 |
-| HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（4.05 MB；1bpp BRAM 28,800×32，基址 0x40000000；Setup +3.938 ns / Hold +0.065 ns）；**帧缓存读回通过**（DISPLAY_BOARD_OK；D022 单端口修复），画面待目视 |
-| LCD 状态面板（PL overlay） | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/lcd_status.bit`（4.05 MB；1bpp BRAM 12,000×32，基址 0x40000000；lcd_id=4384（4.3 寸 800×480）；Setup +4.283 ns / Hold +0.121 ns）；**帧缓存读回通过**（DISPLAY_BOARD_OK；D022 单端口修复），画面待目视 |
+| HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（4.05 MB；1bpp BRAM 28,800×32，基址 0x40000000；Setup +3.938 ns / Hold +0.065 ns）；**帧缓存数字通路读回通过**（DISPLAY_BOARD_OK；D022 单端口修复）；**HDMI 画面已通过**（014：1280×720 棋盘格人眼可见）。根因是 BRAM 读口 `rstb` 极性接反——`peripheral_aresetn`（低有效）直连高有效的 `rstb`，读口全程复位、`doutb` 恒 0；另修 fb_reader 左移却取 `sr[0]`、`pixel_xpos` 从 2 起而字边界等 1 |
+| LCD 状态面板（PL overlay） | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/lcd_status.bit`（4.05 MB；1bpp BRAM 12,000×32，基址 0x40000000；lcd_id=4384（4.3 寸 800×480）；Setup +4.283 ns / Hold +0.121 ns）；**帧缓存数字通路读回通过**（DISPLAY_BOARD_OK；D022 单端口修复）；**LCD 画面已通过**（014：800×480 棋盘格人眼可见）。与 HDMI 同一组缺陷：BRAM 读口 `rstb` 极性接反（读口常复位）+ fb_reader 移位方向 + `pixel_xpos` 偏移；像素时钟改用 25 MHz（与 oi 项目一致） |
 | LCD 软件回退 | `tools/status_display.py`（fbdev/PNG） | `STATUS_DISPLAY_SELFTEST OK` |
 
 板上命令（板端）：
@@ -95,7 +98,8 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 > **边界**：`status_display.py` 只负责把状态面板渲染到已存在的 framebuffer；
 > 若 PYNQ 镜像没有 `/dev/fbX`，可加载已出片的 PL 显示 overlay（D020–D024：HDMI TMDS /
 > RGB LCD / 合并双屏 / 跟踪+双屏），用 `--display-bit` 写 1bpp BRAM。帧缓存读回均已通过，
-> 屏幕实际画面待目视，报告 §8 已登记。
+> **单屏画面已通过（014）**；`DISPLAY_BOARD_OK` 本身只证明
+> 帧缓存数字通路，不等于画面能显示，报告 §8 已登记。
 
 ## 已有验证与待办
 
@@ -103,5 +107,6 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   `events` 同步输出（`report/design_report.md` §2.7/§4.6）。
 - **仍待人工输入**：其它机位各标一次（`tools/label_field_points.py`），才能验收新机位的 `events`；
   多机位可后续做镜头切换检测 + 标定切换。
-- **未完成**：球 backfill 结构改动（`ai/sessions/010`）；倒地识别仍是候选粗筛
-  （`docs/player_tracking_v1.md` §7）。
+- **未完成**：球 backfill 结构改动（`ai/sessions/010`）；倒地识别仍是候选粗筛：只输出**候选**，
+  4 帧门槛后强层 4 个候选 = 3 真 + 1 假（#8279 弯腰误判），**精度 3/4**，
+  这不是检出率、也不能外推（`docs/player_tracking_v1.md` §7）。

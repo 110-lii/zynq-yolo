@@ -30,8 +30,10 @@
 | [009](009_ps_pipeline_pl_preproc.md) | 2026-10-23 | PS 检测链路 + PL 预处理（板上实测） | `magpie/group/1101`（客户端 `kilo`） | ① ncnn + person 单类 0.386 GMAC **0.95 s/帧**，与 PyTorch 差 2 px；② 跟踪/球场坐标/镜头状态/JSON 板上跑通，377 帧 34 个 ID，帧间位移 0.2 px；③ PL 预处理 **18.8 ms / LUT 7%**，单应残差 1.11 m；④ INT8 只快 17% 且精度下降，被否；⑤ 20 分钟满载压测无复位，确认此前掉线是整机复位而非网络 |
 | [010](010_board_pipeline_ball_backfill.md) | 2026-10-24 | 板上球链路 backfill 试验（两次回滚）★ | `magpie/group/1101`（客户端 `kilo`） | ① 稳定版 **144/202 帧球场坐标、49 帧球权**；② 两次 backfill（复用变量 / 状态机）均把球帧打到极低、球权归零，已完整回滚；③ 根因是 `--ball-every 2` 下 5 次丢失只覆盖 ~0.4 s + 标定边界过滤；④ 结构性改动（节奏 1 / 按秒计丢失 / 预测绕过边界）未落地，报告如实写“未完成” |
 
-> **统计**：共 **10** 条记录；带自我纠错轨迹（★）**6** 条。
-> 编号连续、不复用；下一条应为 `011_<slug>.md`。
+| [011](011_extensions_storage_display.md) | 2026-10-25 | 提交前扩展：PL 跟踪辅助 / SD / PC / 显示 ★ | `magpie/group/1101`（客户端 `kilo`） | ① `track_preproc` HLS+BD 出片（LUT 7,374 / WNS +2.457 ns），**上板逐位对通过**（`TRACK_PREPROC_BOARD_OK`；720p 32.39 ms、管线内 20.03 ms）；② 板上管线 `PIPELINE_OK`（20 帧、4 次检测、3→2 球员）；③ SD 20 行+summary、PC 收到 20 帧；④ HDMI/LCD overlay 出片（+3.938/+4.283 ns），**DISPLAY_BOARD_OK**（读回一致，画面待目视）；合并 overlay **DISPLAY_BOTH_BOARD_OK**；跟踪+双屏 **TRACK_DISPLAY_BOARD_OK**；⑤ `CHECK_REPO_OK` |
+
+> **统计**：共 **11** 条记录；带自我纠错轨迹（★）**7** 条。
+> 编号连续、不复用；下一条应为 `012_<slug>.md`。
 
 ---
 

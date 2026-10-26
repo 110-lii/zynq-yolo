@@ -13,15 +13,17 @@
 
 | 路径 | 说明 | 真源/产物 |
 |---|---|---|
-| `overlay/` | Overlay 二进制与硬件握手文件：`conv_engine.bit` + `conv_engine.hwh`（PYNQ 加载自研 Overlay 用），可含 `.xsa` | ❌ 产物（由 `build/` 重建，只留基线） |
+| `overlay/` | Overlay 二进制与硬件握手文件：`preproc`（主线）、`track_preproc`（D019）、`hdmi_status`（D020）、`conv_engine`/`axi_bw`/`mask_preproc`（历史验证） | ⚠️ 产物；**提交包显式带入**，git 只留关键基线 |
 | `scripts/` | **上板真源**：`deploy_to_board.ps1`（PC 侧打包推送）、`run_board_test.sh`（板上验收） | ✅ 真源（可改，必进 git） |
 | `logs/` | **板级实测日志**：串口输出、运行日志、实测数字 | ⚠️ **不可重建 ⇒ 必须落盘**（择优进 git 作基线） |
 | `images/` | **实拍图**：板卡连接、LCD 显示、示波器/ILA 截图等肉眼证据 | ⚠️ **不可重建 ⇒ 必须落盘** |
 
-> 当前磁盘事实：`overlay/` 已有 `conv_engine.bit`（4 045 674 B）+ `conv_engine.hwh`（285 760 B）
-> （83.33 MHz 时序收敛轮产出，见 [`../docs/accel_interface.md`](../docs/accel_interface.md) §7.4）；
-> `scripts/` 已有部署/验收脚本（见 [`scripts/README.md`](scripts/README.md)，**尚未实跑**）；
-> `logs/`、`images/` 尚无内容 —— **本仓库还没有任何一次真实上板记录**。
+> 当前磁盘事实：`overlay/` 已有 `preproc.bit/.hwh`、`track_preproc.bit/.hwh`（WNS +2.457 ns）、
+> `hdmi_status.bit/.hwh`（D020，Setup +3.938 ns）、`lcd_status.bit/.hwh`（D021，Setup +4.283 ns）、
+> `conv_engine.bit/.hwh`（历史基线）、`axi_bw`/`mask_preproc`（验证）；
+> `logs/` 已有 `board_stream_new_20261022.md`、`board_axi_bw_20261022.md`、
+> `board_pipeline_20261024.md`、`board_display_overlay_20261025.md` 等记录；
+> `images/` 仍为空（实拍图待补）。
 
 ## 规则
 
@@ -45,7 +47,7 @@
 ## 怎么用
 
 ```powershell
-# 0. 现状核对（overlay 已就位；logs/images 为空 = 尚无上板记录）
+# 0. 现状核对（overlay 已就位；logs 有实测记录，images 待补实拍）
 Get-ChildItem -Recurse D:\zynq-yolo\board
 
 # 1. 从 build/ 取同一轮构建的 Overlay（重新构建后需同步覆盖）

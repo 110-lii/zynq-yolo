@@ -13,6 +13,8 @@
 | 上板工程/脚本/实测输出 | `board/overlay/*.bit/.hwh`、`board/scripts/`、`board/logs/` | ✅ |
 | 可复现构建脚本 | `build/scripts/bd_preproc.tcl`、`bd_conv_engine.tcl`、`bd_axi_bw.tcl`、`bd_mask_preproc.tcl` | ✅ |
 | 运行必需件（模型/标定） | `build/models/person_v8n25.{param,bin,table}`、`build/models/ball_roi.npz`、`data/calib/*.json` | ✅（`tools/make_submission.py` 显式带入） |
+| PL 跟踪辅助源码/BD | `src/hls/track/`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py`、`board/overlay/track_preproc.bit` | ✅ 已出片；✅ 上板逐位对通过（`TRACK_PREPROC_BOARD_OK`） |
+| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`board/overlay/hdmi_status.bit` | ✅ HDMI/LCD 已出片；✅ 读回通过，画面待目视 |
 
 ## 2. 技能包（指南 3.3.5.2）
 
@@ -31,9 +33,25 @@
 | 2 | 设计原理与功能框图 | §2 + `report/figures/system_arch.png`、`software_pipeline.png` | ✅ |
 | 3 | 软硬件划分依据与接口设计 | §3 + `docs/architecture.md` | ✅ |
 | 4 | 优化过程（前后性能/资源对比） | §4（基线行 + 优化行 + 出处） | ✅ |
-| 5 | 大模型协作记录 | `report/llm_logs/01–03` + 索引 | ✅ |
+| 5 | 大模型协作记录 | `report/llm_logs/01–04` + 索引 | ✅ |
 | 6 | 技能包提炼过程 | §6 + `skill/` | ✅ |
 | 7 | 复现说明 | §7 + 根 `README.md` §5 | ✅ |
+
+## 3.1 提交前扩展功能（D018–D025）
+
+| 项 | 产物 | 状态 |
+|---|---|---|
+| SD 增量存储 | `tools/result_store.py`（JSONL+summary+fsync+轮转） | ✅ 自检通过 |
+| 板上→PC 推送 | `tools/result_stream.py` | ✅ 本地回环通过 |
+| PC 端软件 | `tools/pc_dashboard.py`（TCP/回放+球场+CSV） | ✅ 自检/回放通过 |
+| HDMI/LCD 状态面板 | `tools/status_display.py`（fbdev/PNG） | ✅ 自检通过；硬件看 fbdev |
+| PL 跟踪辅助 | `src/hls/track/` + `build/scripts/bd_track_preproc.tcl` + `board/overlay/track_preproc.bit` + `tools/track_preproc.py` | ✅ 已出片（WNS +2.457 ns）；✅ 上板逐位对通过（720p 32.39 ms） |
+| HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | ✅ 已出片（Setup +3.938 ns）；✅ 读回通过，画面待目视 |
+| LCD 状态面板 | `src/rtl/io/lcd/` + `build/scripts/bd_lcd_status.tcl` + `tools/bram_fb.py` | ✅ 已出片（Setup +4.283 ns）；✅ 读回通过，画面待目视 |
+| HDMI+LCD 合并 | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ✅ 已出片（Setup +3.874 ns）；✅ `DISPLAY_BOTH_BOARD_OK` |
+| 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ 已出片（Setup +2.918 ns）；✅ `TRACK_DISPLAY_BOARD_OK` |
+| 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
+| 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025 | ✅ |
 
 ## 4. 目录与命名（指南 3.3.5.4）
 
@@ -48,11 +66,16 @@
 
 `report/README.md` 预置表 2 含 30/20/20/15/15；`check_repo.py` e) 校验。 ✅
 
-## 6. 提交前必须跑的 4 条命令
+## 6. 提交前必须跑的命令
 
 ```bash
 python tools/check_repo.py          # 末行 CHECK_REPO_OK
-python tools/make_report_figures.py # 3 张图确定性重生成
+python tools/check_track_preproc.py # TRACK_PREPROC_REF OK（PL 算法对拍）
+python tools/result_store.py --selftest
+python tools/pc_dashboard.py --selftest
+python tools/status_display.py --selftest
+python tools/bram_fb.py --selftest
+python tools/make_report_figures.py # 6 张图确定性重生成
 python tools/md_to_docx.py          # report/design_report.docx
 python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
 ```
@@ -60,7 +83,7 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
 当前实测：
 
 - `check_repo.py`：`SUMMARY: 6 PASS / 0 FAIL / 0 WARN`，`CHECK_REPO_OK`；
-- `make_submission.py`：459 files / 59,129,579 bytes，zip 约 17.7 MB，导出目录自检通过。
+- `make_submission.py`：539 files（约 84.3 MB），zip 约 19.3 MB，导出目录自检通过。
 
 ## 7. 已知开放项（不阻塞提交，但必须如实写在报告里）
 

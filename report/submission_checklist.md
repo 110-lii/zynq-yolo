@@ -14,7 +14,7 @@
 | 可复现构建脚本 | `build/scripts/bd_preproc.tcl`、`bd_conv_engine.tcl`、`bd_axi_bw.tcl`、`bd_mask_preproc.tcl` | ✅ |
 | 运行必需件（模型/标定） | `build/models/person_v8n25.{param,bin,table}`、`build/models/ball_roi.npz`、`data/calib/*.json` | ✅（`tools/make_submission.py` 显式带入） |
 | PL 跟踪辅助源码/BD | `src/hls/track/`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py`、`board/overlay/track_preproc.bit` | ✅ 已出片；✅ 上板逐位对通过（`TRACK_PREPROC_BOARD_OK`） |
-| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`board/overlay/hdmi_status.bit` | ✅ HDMI/LCD 已出片；✅ 读回通过，画面待目视 |
+| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`board/overlay/hdmi_status.bit` | ✅ HDMI/LCD 已出片；✅ 帧缓存数字通路读回通过；✅ **画面已通过**（014：两屏棋盘格均可见） |
 
 ## 2. 技能包（指南 3.3.5.2）
 
@@ -46,10 +46,10 @@
 | PC 端软件 | `tools/pc_dashboard.py`（TCP/回放+球场+CSV） | ✅ 自检/回放通过 |
 | HDMI/LCD 状态面板 | `tools/status_display.py`（fbdev/PNG） | ✅ 自检通过；硬件看 fbdev |
 | PL 跟踪辅助 | `src/hls/track/` + `build/scripts/bd_track_preproc.tcl` + `board/overlay/track_preproc.bit` + `tools/track_preproc.py` | ✅ 已出片（WNS +2.457 ns）；✅ 上板逐位对通过（720p 32.39 ms） |
-| HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | ✅ 已出片（Setup +3.938 ns）；✅ 读回通过，画面待目视 |
-| LCD 状态面板 | `src/rtl/io/lcd/` + `build/scripts/bd_lcd_status.tcl` + `tools/bram_fb.py` | ✅ 已出片（Setup +4.283 ns）；✅ 读回通过，画面待目视 |
-| HDMI+LCD 合并 | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ✅ 已出片（Setup +3.874 ns）；✅ `DISPLAY_BOTH_BOARD_OK` |
-| 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ 已出片（Setup +2.918 ns）；✅ `TRACK_DISPLAY_BOARD_OK` |
+| HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | ✅ 已出片（Setup +3.938 ns）；✅ 数字通路读回通过；✅ 画面已通过（014） |
+| LCD 状态面板 | `src/rtl/io/lcd/` + `build/scripts/bd_lcd_status.tcl` + `tools/bram_fb.py` | ✅ 已出片（Setup +4.283 ns）；✅ 数字通路读回通过；✅ 画面已通过（014） |
+| HDMI+LCD 合并 | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ✅ 已出片（Setup +3.874 ns）；✅ `DISPLAY_BOTH_BOARD_OK`（数字通路）；⚠️ 合并版待重出片（014 只修单屏） |
+| 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ 已出片（Setup +2.918 ns）；✅ `TRACK_DISPLAY_BOARD_OK`（BRAM 读回）；⚠️ 合并版待重出片（014 只修单屏） |
 | 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
 | 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025 | ✅ |
 
@@ -88,9 +88,14 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
 ## 7. 已知开放项（不阻塞提交，但必须如实写在报告里）
 
 1. 球在快速移动/遮挡时确认率下降；backfill 结构改动未落地（§8 第 2 条、`ai/sessions/010`）；
-2. 倒地识别是候选粗筛（132 候选 / 人工复核 26 / 3 真），不宣称精度/召回（§8 第 4 条）；
+   `--ball-lost-sec 0.4` 已试并否决：球帧 144→182（+26.4 %）但新增 38 帧人工抽查全非球，
+   开关默认关闭（`ai/sessions/012`）；
+2. 倒地识别是候选粗筛（132 候选 / 人工复核 26 / 3 真；4 帧门槛后强层 4 候选 = 3 真 1 假，
+   精度 **3/4**），不宣称召回、也不把候选数当检出数（§8 第 4 条）；
 3. 单应只对已标定机位有效，多机位需各标一次（§8 第 1 条）；
-4. 工具链是 Vivado 2020.2，与指南推荐 2026.1/2025.2 不同；已参数化并登记差异（§7.6）。
+4. 工具链是 Vivado 2020.2，与指南推荐 2026.1/2025.2 不同；已参数化并登记差异（§7.6）；
+5. **显示面板未通过**：HDMI/LCD 上板均无画面，`DISPLAY_BOARD_OK` 只证明帧缓存数字通路
+   （§8 第 8 条、`ai/sessions/013`）；HDMI 疑物理层故障、LCD overlay 有 bug，均未修复。
 
 ## 8. 签字
 

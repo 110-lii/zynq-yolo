@@ -8,7 +8,7 @@
 set script_dir [file normalize [file dirname [info script]]]
 set root       [file normalize [file join $script_dir .. ..]]
 set part_name  "xc7z020clg400-2"
-set proj_dir   [file join $root build vivado display_both_bd]
+set proj_dir   [expr {[info exists ::env(DB_PROJ)] ? $::env(DB_PROJ) : [file join $root build vivado display_both_bd]}]
 set overlay    [file join $root board overlay]
 set rtl_hdmi   [file join $root src rtl io hdmi]
 set rtl_lcd    [file join $root src rtl io lcd]
@@ -33,6 +33,18 @@ add_files -norecurse [list \
 add_files -fileset constrs_1 -norecurse $xdc
 update_compile_order -fileset sources_1
 
+## ⚠️ Vivado 2020.2 的 ipintegrator 初始化按 **cwd** source 自己的 tcl 库
+##    （init.tcl → utils.tcl / clkrst.tcl / board_utils.tcl …）。本机实测 create_bd_design
+##    会**间歇性**报 `couldn't read file "clkrst.tcl": no such file or directory` /
+##    `invalid argument` / `Failed to load feature 'ipintegrator'`，而文件其实存在且可读
+##    （Python 逐文件读 15/15 成功、手动 source 12/12 RC=0）。
+##    对策：**在 create_bd_design 之前把这些库按绝对路径预加载**，proc 已在全局命名空间里，
+##    Vivado 内部那次 source 就不再是唯一依赖。连续 3 次实测 BD_OK（曾用 cd 法只 2/2 后失效）。
+set _ipdir "D:/Xilinx/Vivado/2020.2/scripts/ipintegrator"
+foreach _f {utils.tcl mig_utils.tcl board_utils.tcl utils_dbg.tcl clkrst.tcl replace_bd_cell.tcl \
+            addr.tcl testbench.tcl sc_cosim_util.tcl utils_timing.tcl sdsoc_pfm.tcl gt_utils.tcl} {
+    if {[catch {source -notrace [file join $_ipdir $_f]} _e]} { puts "IP_PRELOAD_FAIL $_f $_e" }
+}
 create_bd_design "system"
 source [file join $root build scripts ps7_config.tcl]
 set_property -dict [list \
@@ -51,39 +63,30 @@ connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst
 create_bd_port -dir I -type clk sys_clk
 set_property CONFIG.FREQ_HZ {50000000} [get_bd_ports sys_clk]
 
-## ---- HDMI 侧像素时钟：与已验证的 hdmi_status.bit 一致（输入取 PS FCLK_CLK0 83.333）----
+## ---- 像素时钟：一个 clk_wiz 出三路（75 / 375 / 25 MHz）----
+## 关键约束：**同一个时钟引脚只能插一个输入缓冲**（oi 项目踩过：两个 clk_wiz 各插一个
+## IBUF 会综合通过、实现报 Place 30-602）。所以这里只用**一个** clk_wiz。
+## 50 MHz → VCO 750 MHz（M=15, D=1）→ ÷10=75（HDMI 像素）/ ÷2=375（TMDS 5x）/ ÷30=25（LCD）
+## 这三个频率都能整除 750，所以是精确值，不需要近似。
 set clk_wiz [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz]
 set_property -dict [list \
-    CONFIG.PRIM_IN_FREQ {83.333336} \
-    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {74.25} \
+    CONFIG.PRIM_IN_FREQ {50.000} \
+    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {75.000} \
     CONFIG.CLKOUT2_USED {true} \
-    CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {371.25} \
+    CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {375.000} \
+    CONFIG.CLKOUT3_USED {true} \
+    CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {25.000} \
     CONFIG.USE_LOCKED {true} \
     CONFIG.USE_RESET {true} \
     CONFIG.RESET_PORT {reset} \
     CONFIG.RESET_TYPE {ACTIVE_HIGH} \
 ] $clk_wiz
-connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins clk_wiz/clk_in1]
+connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz/clk_in1]
 connect_bd_net [get_bd_pins rst_ps/peripheral_reset] [get_bd_pins clk_wiz/reset]
-
-## ---- LCD 侧像素时钟：与已验证的 lcd_status.bit 一致（外部 50 MHz → 25 MHz）----
-## 为什么不和 HDMI 共用一个 clk_wiz：74.25 / 371.25 与 25 没有公共 VCO，
-## 合在一起只能出近似频率；25 MHz 是 4384 屏的官方值（oi 项目实测通过），必须准确。
-set clk_wiz_lcd [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_lcd]
-set_property -dict [list \
-    CONFIG.PRIM_IN_FREQ {50.000} \
-    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {25.000} \
-    CONFIG.USE_LOCKED {true} \
-    CONFIG.USE_RESET {true} \
-    CONFIG.RESET_PORT {reset} \
-    CONFIG.RESET_TYPE {ACTIVE_HIGH} \
-] $clk_wiz_lcd
-connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz_lcd/clk_in1]
-connect_bd_net [get_bd_pins rst_ps/peripheral_reset] [get_bd_pins clk_wiz_lcd/reset]
 
 set pclk_hdmi [get_bd_pins clk_wiz/clk_out1]
 set pclk5 [get_bd_pins clk_wiz/clk_out2]
-set pclk_lcd [get_bd_pins clk_wiz_lcd/clk_out1]
+set pclk_lcd [get_bd_pins clk_wiz/clk_out3]
 
 set rst_hdmi [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_hdmi]
 connect_bd_net $pclk_hdmi [get_bd_pins rst_hdmi/slowest_sync_clk]
@@ -94,7 +97,7 @@ connect_bd_net [get_bd_pins clk_wiz/locked] [get_bd_pins rst_hdmi/dcm_locked]
 set rst_lcd [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_lcd]
 connect_bd_net $pclk_lcd [get_bd_pins rst_lcd/slowest_sync_clk]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_lcd/ext_reset_in]
-connect_bd_net [get_bd_pins clk_wiz_lcd/locked] [get_bd_pins rst_lcd/dcm_locked]
+connect_bd_net [get_bd_pins clk_wiz/locked] [get_bd_pins rst_lcd/dcm_locked]
 
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] $axi_smc

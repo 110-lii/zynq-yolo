@@ -3,9 +3,25 @@
 检测每 N 帧跑一次（默认 15 帧 ≈ 1.1 s @14fps），其余帧用跟踪器外推。
 输出 JSON：每帧的 tracks（id + 原图坐标框），以及检测次数/耗时统计。
 
+证据帧（为什么）
+----------------
+JSONL 只留坐标，事后无法自证「第 N 帧确实出界/确实有人倒地」。
+`--store-evidence` 把触发事件的那一帧原图存进 `<store-dir>/evidence/`，
+JSONL 同步多一条 type=evidence 行，复盘时点一下就能看到当时的画面。
+* 出界（events.out_of_play=true）→ tag=out；
+* 倒地候选（框变扁：宽>1.15*高 且 高<0.70*该轨迹历史中位高）→ tag=fall；
+* 限流：每分钟最多 `--store-evidence-rate` 张（默认 6），超出计入 summary 的
+  `evidence.skipped`，不写盘、不抛异常（防一人倒地刷出上百张图）。
+* 注意：`out_of_play` 来自 events（只在 `--proposal` 模式下计算），所以不开
+  `--proposal` 时只有 fall 证据帧。
+
 用法（板上）：
     python3 tools/board_pipeline.py --video /home/xilinx/inc.mp4 --every 15 --max-det 8 \
         --out /home/xilinx/tracks.json
+    # 边跑边往 SD 卡存帧+证据帧（每分钟最多 6 张）
+    python3 tools/board_pipeline.py --video ... --proposal \
+        --store-dir /mnt/sd/zynq-yolo --store-evidence
+判据令牌：末行 PIPELINE_OK；summary.json 里 evidence.written/skipped/errors。
 """
 import argparse
 import json
@@ -116,6 +132,63 @@ def detect(image_path, bin_path, param, model, conf, iou):
                      use_pl=USE_PL, repo=REPO)
 
 
+# ---------- 证据帧：倒地候选判定 ----------
+# 与 tools/fast_events.py 同口径（几何判据，不做姿态估计）：
+#   人直立时框高 > 框宽；倒地时框变扁（宽>1.15*高）且因透视/遮挡比自身历史身高明显矮。
+FALL_ASPECT = 1.15       # 框宽 > 1.15 * 框高
+FALL_SHRINK = 0.70       # 框高 < 0.70 * 该轨迹历史中位高
+FALL_HIST = 30           # 每条轨迹保留的最近框高样本数
+FALL_MIN_SAMPLES = 3     # 中位高至少要这么多样本才可信，否则不判
+
+
+def fall_candidates(rows, hist):
+    """从本帧球员框判「倒地候选」；hist={track_id: [历史框高]} 就地更新。
+
+    rows: [[id, x1,y1,x2,y2, score, ...], ...]（board_pipeline 的 rows 格式）
+    返回候选 track_id 列表。**这是候选，不是检出**——只用于决定要不要留证据帧。
+    """
+    out = []
+    for r in rows:
+        try:
+            tid = int(r[0])
+            w = float(r[3]) - float(r[1])
+            h = float(r[4]) - float(r[2])
+        except (TypeError, ValueError, IndexError):
+            continue
+        hs = hist.setdefault(tid, [])
+        if len(hs) >= FALL_MIN_SAMPLES and h > 0:
+            med = float(np.median(hs))
+            if w > FALL_ASPECT * h and h < FALL_SHRINK * med:
+                out.append(tid)
+        if h > 0:
+            hs.append(h)
+            if len(hs) > FALL_HIST:
+                hs.pop(0)
+    return out
+
+
+def save_evidence_for(store, frame, idx, events, fall_ids, cam_state, ball):
+    """按本帧事件存证据帧：出界 tag=out，倒地 tag=fall。
+
+    限流/失败处理全在 ResultStore.save_evidence 里（返回 None，不抛异常），
+    所以这里不需要 try/except——写盘失败不会打断主循环。
+    """
+    if store is None:
+        return
+    events = events or {}
+    if events.get("out_of_play"):
+        store.save_evidence(frame, "out", frame=idx, meta={
+            "frame": idx, "event": "out_of_play", "side": events.get("out_side"),
+            "camera_state": cam_state,
+            "ball": None if not ball else {"x": ball.get("x"), "y": ball.get("y")},
+        })
+    if fall_ids:
+        store.save_evidence(frame, "fall", frame=idx, meta={
+            "frame": idx, "event": "fall_candidate", "tracks": list(fall_ids),
+            "camera_state": cam_state,
+        })
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--video", required=True)
@@ -141,6 +214,10 @@ def main():
     ap.add_argument("--store-prefix", default="run")
     ap.add_argument("--store-fsync", type=int, default=30, help="每 N 行 fsync")
     ap.add_argument("--store-max-mb", type=int, default=64, help="单文件轮转阈值")
+    ap.add_argument("--store-evidence", action="store_true",
+                    help="事件帧落盘到 <store-dir>/evidence（出界 tag=out / 倒地 tag=fall）")
+    ap.add_argument("--store-evidence-rate", type=int, default=6,
+                    help="证据帧每分钟上限（默认 6，防刷屏；0=不限）")
     ap.add_argument("--ball-scan", action="store_true", help="用单帧滑窗找球（慢但召回高）")
     ap.add_argument("--ball-every", type=int, default=0, help="球路径独立节奏（0=跟随主检测）")
     ap.add_argument("--ball-cls-th", type=float, default=0.50,
@@ -175,11 +252,16 @@ def main():
     if args.store_dir:
         try:
             store = ResultStore(args.store_dir, prefix=args.store_prefix,
-                                fsync_every=args.store_fsync, max_mb=args.store_max_mb)
+                                fsync_every=args.store_fsync, max_mb=args.store_max_mb,
+                                evidence_max_per_min=args.store_evidence_rate)
             print("STORE_DIR", args.store_dir)
         except Exception as _e:
             print("STORE_UNAVAILABLE:", _e)
             store = None
+    if args.store_evidence and store is None:
+        print("STORE_EVIDENCE_OFF no --store-dir（证据帧无处可写）")
+    elif args.store_evidence and not args.proposal:
+        print("STORE_EVIDENCE_NOTE 未开 --proposal：events 不生成，本次只有 fall 证据帧")
 
     cap = cv2.VideoCapture(args.video)
     if not cap.isOpened():
@@ -226,6 +308,7 @@ def main():
     sx_ratio = 1.0
     dx = dy = 0.0
     cam_ok, cam_state, cam_reason = True, "LIMITED_FIELD_VIEW", "init"
+    fall_hist = {}     # track_id -> 最近框高，倒地候选判据用（仅 --store-evidence 时维护）
 
     while True:
         ok, frame = cap.read()
@@ -352,12 +435,16 @@ def main():
             rows = []              # 镜头无效（特写/回放）：不输出坐标，避免错误数据
         keep_ids = {r[0] for r in rows}
         tracks = [t for t in tracks if t[0] in keep_ids]
+        # 倒地候选：只在真的要写证据帧时算（否则白维护中位高）
+        fall_ids = (fall_candidates(rows, fall_hist)
+                    if (args.store_evidence and store is not None) else [])
         rec = {"frame": idx, "detected": is_det, "tracks": rows}
         if pl_ms is not None:
             rec["pl_ms"] = round(pl_ms, 2)
         if mask_small is not None:
             rec["motion"] = round(float((mask_small & 2).mean() / 2.0), 5)
         frames.append(rec)
+        ev = None
         if args.proposal:
             _f = build_frame(int(round(idx * 1000.0 / fps)), rows, hits=hits,
                              camera_valid=cam_ok, ball=ball)
@@ -366,14 +453,17 @@ def main():
             if pl_ms is not None:
                 _f["pl_ms"] = round(pl_ms, 2)
             prop.append(_f)
+            ev = _f.get("events") or {}
             if store is not None:
                 store.append(dict(_f, type="frame", frame=idx))
-                ev = _f.get("events") or {}
                 if ev.get("out_of_play") or ev.get("goal"):
                     store.append({"type": "event", "frame": idx, "events": ev,
                                   "camera_state": cam_state})
         elif store is not None:
             store.append(dict(rec, type="frame"))
+        # 证据帧：出界/倒地各存当前帧原图（限流与失败处理在 ResultStore 内部）
+        if store is not None and args.store_evidence:
+            save_evidence_for(store, frame, idx, ev, fall_ids, cam_state, ball)
         idx += 1
 
     cap.release()
@@ -393,8 +483,15 @@ def main():
         summary = store.close(summary={
             "video": args.video, "frames": idx, "detections": n_det,
             "pl_track": TRACK is not None, "pl_ms_med": pl_ms_med,
+            "store_evidence": bool(args.store_evidence),
         })
         print("STORE_SUMMARY", summary)
+        if args.store_evidence:
+            _ev = store.evidence_stats()
+            print("STORE_EVIDENCE written=%d skipped=%d errors=%d max_per_min=%d"
+                  % (_ev["written"], _ev["skipped"], _ev["errors"], _ev["max_per_min"]))
+            if _ev["last_error"]:
+                print("STORE_EVIDENCE_LAST_ERROR", _ev["last_error"])
     print("STAGES detect_ms=%.0f ball_ms=%.0f frames=%d pl_ms_med=%s"
           % (t_det * 1e3, t_ball * 1e3, idx, pl_ms_med))
     if args.ball_predict_past_boundary:

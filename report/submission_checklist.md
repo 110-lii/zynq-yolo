@@ -51,7 +51,16 @@
 | HDMI+LCD 合并 | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ✅ 已出片（Setup +3.874 ns）；✅ `DISPLAY_BOTH_BOARD_OK`（数字通路）；⚠️ 合并版待重出片（014 只修单屏） |
 | 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ 已出片（Setup +2.918 ns）；✅ `TRACK_DISPLAY_BOARD_OK`（BRAM 读回）；⚠️ 合并版待重出片（014 只修单屏） |
 | 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
-| 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025 | ✅ |
+| 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025/D026 | ✅ |
+
+## 3.2 交付前补齐（2026-10-27，D026）
+
+| 项 | 产物 | 状态（机器判据） | 上板 |
+|---|---|---|---|
+| SD 证据帧落盘 | `tools/result_store.py::save_evidence`、`board_pipeline --store-evidence` | ✅ `RESULT_STORE_OK`（含每分钟限流 6 张） | ⛔ 待板 |
+| PC 上位机界面 | `tools/pc_dashboard.py`（状态条 + 球场 + 事件流 + 证据帧 + 12 列 CSV） | ✅ `PC_DASHBOARD_SELFTEST OK`；界面 PNG 已人眼核对 | 无需板 |
+| LCD 状态面板信息 | `tools/status_display.py`（8 项，800x480 / 1280x720） | ✅ `STATUS_DISPLAY_SELFTEST OK`；两尺寸 PNG 已人眼核对 | ⛔ 待板（fbdev/BRAM 通路） |
+| HDMI 视频环出（带框画面） | `src/rtl/io/hdmi/fb_scanout.v`+`hdmi_video_top.v`、`build/scripts/bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ `TB_FB_SCANOUT_OK`（2048 像素逐点 0 错）；✅ PS 侧 PNG 预览 | ⛔ 待板（bit 出片后先跑彩条） |
 
 ## 4. 目录与命名（指南 3.3.5.4）
 

@@ -4,29 +4,32 @@
 // 与 fb_reader.v（1bpp 状态面板）的区别：
 //   fb_reader 读 BRAM 里的 1bpp 面板（28,800 字）；
 //   本模块读 DDR 里的 **32bpp 真彩帧**（1280x720x4 B = 3.5 MB），所以走 AXI4 读主机
-//   + 4 条行缓存（BRAM），不是直连 BRAM 控制器。
+//   + 行缓存（BRAM），不是直连 BRAM 控制器。
 //
-// 像素格式：PS 每像素写 32-bit：bit[23:0] = **BGR888**（低字节 B，OpenCV 习惯），
+// 像素格式：PS 每像素写 32-bit：bit[23:0] = **RGB888**（bit[23:16]=R，与 dvi_encoder 一致），
 //   bit[31:24] 忽略。行跨距 cfg_stride 字节（= width*4 时最省带宽，但不强制）。
 //
-// 为什么是 4 条行缓存 + 提前 2 行取：
+// ★ 行缓存用**一个**数组（4 行 × LBUF 字，索引 = {行号低 2 位, 列}）而不是 4 个数组：
+//   4 个独立数组 + 4 路读 + 4 选 1 的写法，Vivado 2020.2 **推不出 BRAM**，会全部摊成
+//   触发器 —— 实测综合出 198,462 个 FDRE（器件只有 106,775），place 直接 DRC 报
+//   UTLZ-1 失败。单数组、单读口、单写口是 BRAM 推断的教科书形态。
+//
+// 为什么是 4 行缓存 + 提前 3 行取：
 //   扫描输出严格光栅顺序，只需要「当前行 + 后面 3 行」在缓存里。一行 1280 像素
-//   @74.25 MHz = 17.2 us，取一行要 20 个 64 拍突发 + 握手间隙 ≈ 一行时间，所以
-//   必须留 3 行提前量（首版只留 1 行，仿真里 8 行全部欠载）。取不满的行用黑像素顶，并计 st_under（上板可观测，不静默）。
+//   @74.25 MHz = 17.2 us，取一行要 20 个 64 拍突发 + 握手间隙 ≈ 一行时间，
+//   所以必须留 3 行提前量（首版只留 1 行，仿真里 8 行全部欠载）。
+//   取不满的行用黑像素顶，并计 st_under（上板可观测，不静默）。
 //
 // 时钟：**整条链路跑 pclk**（74.25 MHz），S_AXI_HP0_ACLK 也接 pclk —— 单时钟域。
 //   跨时钟 AXI 桥是这类设计最容易出错的地方，能不做就不做。
 //   带宽核算：1280x720x4 B x 30 fps = 110 MB/s，远低于 HP 口能力。
 //
 // 帧同步：vs 上升沿锁存 cfg_addr（PS 改基址即双缓冲）、disp_line 归零、ready 清零。
-//
-// 已知偏移：BRAM 读延迟 1 拍，画面相对时序有 **1 像素**固定水平偏移（fb_reader 是 2 像素），
-//   整幅平移 1 像素，肉眼不可见；不做补偿是为了省掉一套移位寄存器。
 // ============================================================================
 module fb_scanout #(
     parameter integer H_ACTIVE = 1280,
     parameter integer V_ACTIVE = 720,
-    parameter integer LBUF     = 2048,   // 行缓存深度（像素），须 >= H_ACTIVE
+    parameter integer LBUF     = 1536,   // 行缓存深度（像素），须 >= H_ACTIVE
     parameter integer BURST    = 64      // 单次 AXI 突发拍数（<=255）
 ) (
     input               pclk,
@@ -74,52 +77,45 @@ assign m_arsize  = 3'b010;   // 4 字节 / 拍
 assign m_arburst = 2'b01;    // INCR
 
 // ---------------------------------------------------------------------------
-// 4 条行缓存：写口在取数引擎，读口在显示侧（同钟，简单双口）
+// 行缓存：单数组，4 行，索引 {行号[1:0], 列}
 // ---------------------------------------------------------------------------
-reg [31:0] lbuf0 [0:LBUF-1];
-reg [31:0] lbuf1 [0:LBUF-1];
-reg [31:0] lbuf2 [0:LBUF-1];
-reg [31:0] lbuf3 [0:LBUF-1];
+reg [31:0] lbuf [0:4*LBUF-1];
 
-reg [3:0]  ready;            // bit[k] = 第 k 条缓存已装满一行
+reg [3:0]  ready;            // bit[k] = 第 k 条行缓存已装满一行
 reg [10:0] fetch_line;
 reg [10:0] fetch_ptr;
 reg [10:0] disp_line;
 reg [31:0] line_addr;
 
-wire [1:0] fbuf = fetch_line[1:0];
-wire [1:0] dbuf = disp_line[1:0];
+wire [1:0]  fbuf = fetch_line[1:0];
+wire [1:0]  dbuf = disp_line[1:0];
 
 wire [10:0] width_use = (cfg_width == 11'd0) ? H_ACTIVE[10:0] : cfg_width;
 wire [10:0] local_x   = (xpos >= 11'd2) ? (xpos - 11'd2) : 11'd0;
 wire [10:0] ahead     = fetch_line - disp_line;
 
-// 显示侧：BRAM 1 拍延迟。★ 行缓存号必须**与数据同拍寄存**（dbuf_q）：
-// 行尾那一像素的地址在 disp_line 递增的同一沿发出，若用当前 dbuf 选路，
-// 会把下一行的缓存接到这一像素上（首版仿真里每行最后一个像素错成下一行）。
-reg [31:0] rd_q0, rd_q1, rd_q2, rd_q3;
-reg [1:0]  dbuf_q;
+// 索引必须用 **fbuf*LBUF + 列** 而不是位拼接 {fbuf, 列}：
+// 拼接隐含的步长是 2^11=2048，LBUF 取 1536/256 时会落到数组外（写丢、读回 X）。
+wire [12:0] wr_idx = fbuf * LBUF[12:0] + fetch_ptr;
+wire [12:0] rd_idx = dbuf * LBUF[12:0] + local_x;
+
+// 显示侧：BRAM 1 拍延迟。读地址只用此刻的 disp_line，天然对准本行；
+// 行尾那一像素在 disp_line 递增前发出，所以不会串到下一行的缓存。
+reg  [31:0] rd_q;
 always @(posedge pclk) begin
-    rd_q0  <= lbuf0[local_x];
-    rd_q1  <= lbuf1[local_x];
-    rd_q2  <= lbuf2[local_x];
-    rd_q3  <= lbuf3[local_x];
-    dbuf_q <= dbuf;
+    rd_q <= lbuf[rd_idx];
 end
 
-reg [31:0] rd_sel;
-always @(*) begin
-    case (dbuf_q)
-        2'd0:    rd_sel = rd_q0;
-        2'd1:    rd_sel = rd_q1;
-        2'd2:    rd_sel = rd_q2;
-        default: rd_sel = rd_q3;
-    endcase
+// ★ 写端口必须**独立、无复位**：把数组写放在带异步复位的 FSM always 块里，
+//   Vivado 会报 "Unable to infer a block/distributed RAM ... memory pattern not supported"。
+wire       wr_en = (st == S_RDATA) && m_rvalid;   // 组合使能：与 m_rdata 同拍
+always @(posedge pclk) begin
+    if (wr_en) lbuf[wr_idx] <= m_rdata;
 end
 
-wire line_ready = ready[dbuf_q];
+wire line_ready = ready[dbuf];
 wire in_range   = cfg_en && de && (local_x < width_use) && line_ready;
-assign pixel_data = in_range ? rd_sel[23:0] : 24'h000000;
+assign pixel_data = in_range ? rd_q[23:0] : 24'h000000;
 
 // ---------------------------------------------------------------------------
 // vs 边沿 + 显示行推进
@@ -185,19 +181,12 @@ always @(posedge pclk or negedge reset_n) begin
         end
 
         S_AR: begin
-            // 最多提前 3 行取（4 条缓存的上限）：提前量就是 DDR 抖动/握手间隙的余量。
-            // 只提前 1 行时，取一行与显示一行同速，握手间隙会让取数永久落后 —— 这正是
-            // 首版仿真里 8 行全部欠载的原因。
+            // 最多提前 3 行取（4 条缓存的上限）：这个提前量就是 DDR 抖动/握手间隙的余量
             if ((fetch_line < V_ACTIVE[10:0]) && (ahead <= 11'd3)) begin
-                // 开始取一行时先把该缓存的 ready 清掉：否则 DDR 抖动导致本行没取完时，
-                // 显示会拿到这一条缓存里**上一轮**的旧行数据（比黑屏更糟：错行）。
+                // 开始取一行时先把该行的 ready 清掉：否则本行没取完时，
+                // 显示会拿到这一条缓存里**上一轮**的旧行数据（比黑屏更糟：错行）
                 if ((fetch_ptr == 11'd0) && (fetch_line != disp_line)) begin
-                    case (fbuf)
-                        2'd0:    ready[0] <= 1'b0;
-                        2'd1:    ready[1] <= 1'b0;
-                        2'd2:    ready[2] <= 1'b0;
-                        default: ready[3] <= 1'b0;
-                    endcase
+                    ready[fbuf] <= 1'b0;
                 end
                 m_araddr <= line_addr + {20'd0, fetch_ptr, 2'b00};
                 if (width_use - fetch_ptr > BURST[10:0]) begin
@@ -223,29 +212,17 @@ always @(posedge pclk or negedge reset_n) begin
         S_RDATA: begin
             m_rready <= 1'b1;
             if (m_rvalid) begin
-                case (fbuf)
-                    2'd0:    lbuf0[fetch_ptr] <= m_rdata;
-                    2'd1:    lbuf1[fetch_ptr] <= m_rdata;
-                    2'd2:    lbuf2[fetch_ptr] <= m_rdata;
-                    default: lbuf3[fetch_ptr] <= m_rdata;
-                endcase
                 fetch_ptr  <= fetch_ptr + 11'd1;
                 beats_left <= beats_left - 8'd1;
                 if (m_rlast || beats_left == 8'd1) begin
                     // ★ rready 不在这里撤销：撤销而 R 通道还有最后一拍没握手完，
-                    //   主机等 ARREADY、从机等 RREADY —— 双向死锁（首版仿真就死在这）。
+                    //   主机等 ARREADY、从机等 RREADY —— 双向死锁（首版仿真就死在这）
                     if (fetch_ptr + 11'd1 >= width_use) begin
-                        // 本行取完
-                        case (fbuf)
-                            2'd0:    ready[0] <= 1'b1;
-                            2'd1:    ready[1] <= 1'b1;
-                            2'd2:    ready[2] <= 1'b1;
-                            default: ready[3] <= 1'b1;
-                        endcase
-                        fetch_line <= fetch_line + 11'd1;
-                        fetch_ptr  <= 11'd0;
-                        line_addr  <= line_addr + {16'd0, cfg_stride};
-                        st         <= S_AR;
+                        ready[fbuf] <= 1'b1;
+                        fetch_line  <= fetch_line + 11'd1;
+                        fetch_ptr   <= 11'd0;
+                        line_addr   <= line_addr + {16'd0, cfg_stride};
+                        st          <= S_AR;
                     end else begin
                         st <= S_AR;   // 同一行还要再来一拍
                     end

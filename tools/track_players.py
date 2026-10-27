@@ -173,6 +173,11 @@ def _open_video(path):
 
 
 def track_clip(model, clip_path, args):
+    _pf = None
+    if getattr(args, "color_filter", False):
+        import player_color_filter as _pf_mod     # 只在开开关时导入，避免无谓依赖
+        _pf = _pf_mod
+    n_color_drop = 0
     """对一段片段做「检测 + ByteTrack 关联 + 相机补偿 + 倒地候选」。
 
     返回 dict（含轨迹明细与统计），**所有数字都可重算**。
@@ -221,13 +226,27 @@ def track_clip(model, clip_path, args):
             ids = boxes.id.int().cpu().numpy()
             xyxy = boxes.xyxy.cpu().numpy()
             confs = boxes.conf.cpu().numpy()
+            items = []
             for tid, bb, cf in zip(ids, xyxy, confs):
                 x1, y1, x2, y2 = (float(v) for v in bb)
                 if (y2 - y1) < MIN_BOX_PX:
                     continue
-                rows.append((frame_no, round(frame_no / fps, 3), int(tid),
+                items.append({"id": int(tid), "box": [x1, y1, x2, y2],
+                              "conf": float(cf)})
+            if args.color_filter:
+                # 球衣颜色筛人（D012/D013-a）：剔观众/裁判，低置信框按颜色补检。
+                # 低置信下限取当前 conf，避免把检测器已经放行的框再按阈值砍掉。
+                kept, _dropped, _st = _pf.filter_players(
+                    frame, items, args.team_colors, args.ref_color,
+                    adaptive=True, keeper_colors=args.keeper_colors,
+                    low_conf=args.conf)
+                n_color_drop += len(items) - len(kept)
+                items = kept
+            for it in items:
+                x1, y1, x2, y2 = it["box"]
+                rows.append((frame_no, round(frame_no / fps, 3), it["id"],
                              round(x1, 1), round(y1, 1), round(x2, 1), round(y2, 1),
-                             round(float(cf), 4)))
+                             round(float(it["conf"]), 4)))
             used += 1
         n_read = frame_no
 
@@ -301,6 +320,7 @@ def track_clip(model, clip_path, args):
         "wall_time_s": round(elapsed, 2),
         "camera_motion": _cam_stats(cam_rows),
         "n_tracks": len(tracks),
+        "n_color_drop": n_color_drop,
         "tracks": tracks,
     }
 
@@ -542,7 +562,16 @@ def main(argv=None):
     ap.add_argument("--iou", type=float, default=IOU_DEFAULT)
     ap.add_argument("--model", default=str(MODEL_DEFAULT))
     ap.add_argument("--viz-every", type=int, default=200, help="每 N 帧出一张可视化")
+    ap.add_argument("--color-filter", action="store_true",
+                    help="用球衣颜色剔观众/裁判并按颜色补检（D012/D013-a）")
+    ap.add_argument("--team-colors", default="white,red",
+                    help="两队球衣色，逗号分隔（作 2-means 种子；实际以本帧统计为准）")
+    ap.add_argument("--ref-color", default=None, help="裁判球衣色（可空）")
+    ap.add_argument("--keeper", dest="keeper_colors", action="append", default=[],
+                    help="门将球衣色（可重复）")
     args = ap.parse_args(argv)
+    if isinstance(args.team_colors, str):
+        args.team_colors = [c.strip() for c in args.team_colors.split(",") if c.strip()]
 
     model_path = Path(args.model)
     if not model_path.exists():
@@ -569,10 +598,14 @@ def main(argv=None):
                 _draw_clip(model, c, args, r, every=args.viz_every)
             except Exception as exc:            # 可视化失败不影响主结果
                 print("  WARN viz failed: %r" % (exc,))
-        print("  tracks=%d fall_strong=%d fall_weak=%d  %.1fs" % (
+        _cf = ""
+        if getattr(args, "color_filter", False):
+            _cf = " color_dropped=%d" % r.get("n_color_drop", 0)
+        print("  tracks=%d fall_strong=%d fall_weak=%d%s  %.1fs" % (
             r["n_tracks"],
             sum(t.get("n_fall_strong", 0) for t in r["tracks"]),
             sum(t.get("n_fall_weak", 0) for t in r["tracks"]),
+            _cf,
             r["wall_time_s"]), flush=True)
 
     s = write_outputs(results, args)

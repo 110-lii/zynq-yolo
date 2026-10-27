@@ -88,9 +88,20 @@ set_property -dict [list \
     CONFIG.C_ALL_INPUTS {1} \
 ] $gpio_st
 
+# ★ PS 的 M_AXI_GP0 跑 FCLK_CLK0(83.33 MHz)，而 gpio/interconnect 挂在 pclk(74.25 MHz)。
+#   直接把两者接起来，BD 会报 BD 41-237（FREQ_HZ / CLK_DOMAIN 不匹配）——
+#   SmartConnect 的接口时钟由 aclk 决定，不会自己跨域。所以插一个
+#   axi_clock_converter 做 83.33→74.25 的 CDC，跨域只发生在这一处（有验证的结构）。
+set axi_cc [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_clock_converter:2.1 axi_cc]
+connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins axi_cc/S_AXI]
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins axi_cc/s_axi_aclk]
+connect_bd_net [get_bd_pins rst_ps/peripheral_aresetn] [get_bd_pins axi_cc/s_axi_aresetn]
+connect_bd_net $pclk [get_bd_pins axi_cc/m_axi_aclk]
+connect_bd_net [get_bd_pins rst_pix/peripheral_aresetn] [get_bd_pins axi_cc/m_axi_aresetn]
+
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] $axi_smc
-connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins axi_smc/S00_AXI]
+connect_bd_intf_net [get_bd_intf_pins axi_cc/M_AXI] [get_bd_intf_pins axi_smc/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins gpio_cfg/S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M01_AXI] [get_bd_intf_pins gpio_st/S_AXI]
 # ★ 配置/状态寄存器的 AXI 域**跟 pclk 走**，而不是 PS 的 FCLK_CLK0。

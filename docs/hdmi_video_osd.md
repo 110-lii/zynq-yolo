@@ -44,7 +44,15 @@ PL（hdmi_video.bit）
    推断成 ~5 个 BRAM36。
    ⚠️ 索引**不能用位拼接** `{row[1:0], col}`：拼接隐含步长 2^11=2048，
    `LBUF` 取 1536 时落到数组外，写丢、读回 `X`（仿真里表现为整行 XX）。用 `row*LBUF+col`。
-4. **数组的写端口必须独立、不能带复位。** 把 `lbuf[...] <= ...` 写在带异步复位的 FSM
+4. **配置寄存器（AXI GPIO）必须和像素逻辑同域。** GPIO 挂在 PS 的 83.33 MHz、`fb_scanout`
+   在 74.25 MHz 时，这条准静态总线会被当成同步路径收敛：WNS −8.001 ns（166 端点），
+   加了两级同步器后仍 −4.573 ns（60 端点，失败在同步器**第一级**）。
+   最终处方：`axi_smc` 与两个 GPIO 的 `aclk/aresetn` 全改 `pclk` + `rst_pix`，
+   PS 的 `M_AXI_GP0`(83.33) 与 `axi_smc`(74.25) 之间插一个 **`axi_clock_converter`** ——
+   跨域只发生在这一个 IP 里。改完 WNS 转正（+5.470 ns）。
+   ⚠️ 手工在 XDC 里 `set_clock_groups -asynchronous` 不解决问题：`get_clocks` 在 BD 生成的
+   时钟约束之前执行，取不到时钟对象，约束被静默忽略（日志里连 WARN 都没有）。
+5. **数组的写端口必须独立、不能带复位。** 把 `lbuf[...] <= ...` 写在带异步复位的 FSM
    `always` 块里，Vivado 报 `Synth 8-3391 Unable to infer a block/distributed RAM ...
    memory pattern not supported`，随后 elaboration 失败。写法：单独一个
    `always @(posedge pclk) if (wr_en) lbuf[wr_idx] <= m_rdata;`，`wr_en` 用组合逻辑。
@@ -58,7 +66,7 @@ PL（hdmi_video.bit）
 | RTL 功能仿真 | `TB_FB_SCANOUT_OK`（2048 像素逐点比对，0 错误、0 欠载） | ✅ `sim/tb/tb_fb_scanout.v` |
 | PS 侧出图 | `HDMI_VIDEO_SELFTEST OK`，打包往返 `dmax=0` | ✅ `tools/hdmi_video.py --selftest` |
 | 真实画面叠框预览 | 本机 PNG（比赛画面 + 2 框 + 球圈 + 状态条） | ✅ 人眼已确认 |
-| 综合实现/时序 | `HDMI_VIDEO_BD_OK` | 见 `build/vivado/logs/hdmi_video_build*.log` |
+| 综合实现/时序 | `HDMI_VIDEO_BD_OK`；**WNS +5.470 ns / WHS +0.074 ns，0 失败端点**；LUT 2,335（4.4%）/ BRAM 6 / DSP 0 | ✅ `board/overlay/hdmi_video.bit`（4.05 MB）|
 | **上板画面** | HDMI 显示器上看到带框的视频 | ⛔ 待板子恢复（192.168.2.99 当前离线） |
 
 > 纪律：`DISPLAY_BOARD_OK` 这类「帧缓存读回一致」只证明数字通路；

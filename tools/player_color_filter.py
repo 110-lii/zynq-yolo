@@ -344,6 +344,32 @@ def _selftest():
         print("selftest %-5s -> got=%-5s sc=%.2f" % (want, got, sc))
         if got != want:
             ok = False
+    # ---- 端到端：合成一张「草皮 + 白队 + 红队 + 深色门将 + 看台观众」的图 ----
+    frame = np.zeros((240, 320, 3), np.uint8)
+    frame[:, :] = (60, 140, 60)                     # BGR 绿：会被 grass_mask 认成草皮
+    cv2.rectangle(frame, (0, 0), (320, 40), (180, 120, 60), -1)   # 顶部看台（非草皮）
+    def person(x, y, h, bgr):
+        cv2.rectangle(frame, (x, y), (x + int(h * 0.45), y + h), bgr, -1)
+        return [x, y, x + int(h * 0.45), y + h]
+    boxes = [
+        ("white", person(20, 120, 70, (245, 245, 245))),
+        ("red", person(90, 120, 70, (40, 40, 200))),
+        ("gk", person(160, 110, 80, (40, 40, 40))),
+        ("stand", person(20, 5, 30, (245, 245, 245))),      # 看台观众：脚不在草皮上
+    ]
+    dets = [{"box": b, "conf": 0.6} for _, b in boxes]
+    kept, dropped, st2 = filter_players(frame, dets, ["white", "red"], None,
+                                        adaptive=True, keeper_colors=["black"])
+    labels = sorted(k.get("color", "") for k in kept)
+    print("e2e kept=%d labels=%s dropped=%s" % (len(kept), labels,
+                                                [d.get("reason") for d in dropped]))
+    if len(kept) != 3 or not any(l.startswith("GK") for l in labels):
+        print("COLOR_FILTER_SELFTEST_FAIL e2e kept=%d labels=%s" % (len(kept), labels))
+        ok = False
+    if not any(d.get("reason") == "off_pitch" for d in dropped):
+        print("COLOR_FILTER_SELFTEST_FAIL 看台观众没被位置判据剔掉")
+        ok = False
+
     print("COLOR_FILTER_SELFTEST", "OK" if ok else "FAIL")
     return 0 if ok else 1
 

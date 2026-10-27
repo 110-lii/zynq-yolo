@@ -39,7 +39,7 @@ from classify_players import PALETTE_REF  # noqa: E402
 from ball_cv_probe import grass_mask  # noqa: E402
 
 LOW_CONF = 0.12          # 补检下限：比主阈值低，靠颜色决定去留
-MIN_H = 22               # 框高下限（实测素材里人多在 25~117 px）
+MIN_H = 16               # 框高下限（素材里人多在 20~117 px；再小颜色不可信）
 TORSO_TOP, TORSO_BOT = 0.25, 0.65
 TORSO_HALF_W = 0.25      # 左右各取框宽的 25%
 
@@ -84,8 +84,10 @@ def palette_score(h, s, v, name):
         sc = (1.0 if s < 0.22 else max(0.0, 1.0 - (s - 0.22) / 0.25)) * \
              (1.0 if v > 0.55 else max(0.0, (v - 0.30) / 0.25))
         return float(max(0.0, min(1.0, sc)))
-    if name == "black":                      # 极暗
-        return float(max(0.0, min(1.0, (0.32 - v) / 0.20)))
+    if name == "black":                      # 深色球衣
+        # 阈值放宽到 0.45：门将深色球衣在转播里实测中位亮度 0.38（inc_12 f300），
+        # 卡 0.32 会把门将判不出来
+        return float(max(0.0, min(1.0, (0.45 - v) / 0.22)))
     if s < 0.18 or v < 0.12:                 # 无彩/太暗：不可能是有彩色
         return 0.0
     # 色相是主判据；饱和度/亮度容忍度放宽 —— 球衣在阴影、逆光、脏污下 S/V 会大幅漂移，
@@ -172,7 +174,8 @@ def learn_centers(stats_list, seeds=None, iters=6):
 
 
 def filter_players(bgr, dets, team_colors, ref_color=None,
-                   low_conf=LOW_CONF, min_h=MIN_H, thr=0.45, adaptive=False, max_dist=0.75):
+                   low_conf=LOW_CONF, min_h=MIN_H, thr=0.45, adaptive=False, max_dist=0.75,
+                   keeper_colors=None):
     """按球衣颜色筛人。
 
     dets: [{'box':[x1,y1,x2,y2], 'conf': float, 'id': 可选, ...}]
@@ -186,6 +189,7 @@ def filter_players(bgr, dets, team_colors, ref_color=None,
 
     # 自适应模式：先给所有「够高置信」的框算躯干统计量，用它估两队颜色中心
     grass = grass_mask(bgr)
+    keeper_colors = [c for c in (keeper_colors or []) if c]
     centers = None
     if adaptive:
         hist = []
@@ -217,6 +221,18 @@ def filter_players(bgr, dets, team_colors, ref_color=None,
             stats["drop_small"] += 1
             dropped.append(dict(d, reason="too_small"))
             continue
+        # 门将优先：门将球衣与两队都不同，不单独放行就会被「离两队都远」剔掉
+        if keeper_colors:
+            # 门将用更松的门槛（0.30）：门将服常是深色/荧光色，与调色板参考值差得远，
+            # 用 0.45 会连门将自己也判不出来（实测 inc_12 f300 的深色门将 sc=0.32）
+            gk_name, gk_sc = label_torso(st, keeper_colors, thr=0.30)
+            if gk_sc >= 0.30:
+                item = dict(d, color="GK:%s" % gk_name, color_score=round(gk_sc, 3))
+                kept.append(item)
+                stats["kept"] += 1
+                stats["kept_keeper"] = stats.get("kept_keeper", 0) + 1
+                continue
+
         if centers is not None:
             # 自适应：离两个中心最近的那个；最近距离超过 max_dist 就丢（裁判/观众/杂物）
             d0 = _norm_dist(st, centers[0])
@@ -257,7 +273,8 @@ def filter_players(bgr, dets, team_colors, ref_color=None,
 
 
 # ---------------------------------------------------------------- 评估入口
-def run_video(video, frames_idx, team_colors, ref_color, imgsz, viz_dir, adaptive=False):
+def run_video(video, frames_idx, team_colors, ref_color, imgsz, viz_dir, adaptive=False,
+              keeper_colors=None):
     from ultralytics import YOLO
     model = YOLO(str(REPO / "weights" / "yolo26n.pt"))
     cap = cv2.VideoCapture(video)
@@ -280,11 +297,13 @@ def run_video(video, frames_idx, team_colors, ref_color, imgsz, viz_dir, adaptiv
             x1, y1, x2, y2 = [float(v) for v in b.xyxy[0]]
             dets.append({"box": [x1, y1, x2, y2], "conf": float(b.conf)})
         kept, dropped, stats = filter_players(f, dets, team_colors, ref_color,
-                                              adaptive=adaptive)
+                                              adaptive=adaptive,
+                                              keeper_colors=keeper_colors)
         out.append({"frame": idx, "stats": stats})
-        print("f%-4d in=%2d kept=%2d (low_conf %d) drop_ref=%d unknown=%d small=%d"
+        print("f%-4d in=%2d kept=%2d (low=%d gk=%d) drop_ref=%d unknown=%d small=%d"
               % (idx, stats["n_in"], stats["kept"], stats["kept_low_conf"],
-                 stats["drop_ref"], stats["drop_unknown"], stats["drop_small"]))
+                 stats.get("kept_keeper", 0), stats["drop_ref"],
+                 stats["drop_unknown"], stats["drop_small"]))
         if viz_dir:
             vis = f.copy()
             for d in kept:
@@ -337,6 +356,8 @@ def main():
     ap.add_argument("--team-b", default="red")
     ap.add_argument("--ref", default="yellow")
     ap.add_argument("--imgsz", type=int, default=1280)
+    ap.add_argument("--keeper", action="append", default=[],
+                    help="门将球衣色（可重复，如 --keeper black --keeper green）")
     ap.add_argument("--adaptive", action="store_true",
                     help="用本帧高置信检测自适应估计两队颜色中心（推荐）")
     ap.add_argument("--viz-dir", default="")
@@ -349,7 +370,8 @@ def main():
         return 2
     idxs = [int(x) for x in args.frames.split(",") if x.strip()]
     return run_video(args.video, idxs, [args.team_a, args.team_b],
-                     args.ref or None, args.imgsz, args.viz_dir, args.adaptive)
+                     args.ref or None, args.imgsz, args.viz_dir, args.adaptive,
+                     args.keeper)
 
 
 if __name__ == "__main__":

@@ -112,6 +112,10 @@ def _validate(payload):
     b = (teams.get("B") or {}).get("kit_color")
     if a and b and a == b:
         probs.append("same_team_color %s" % a)
+    for key in ("A", "B"):
+        kc = (teams.get(key) or {}).get("keeper_color")
+        if kc is not None and kc not in kl.PALETTE_REF:
+            probs.append("bad_keeper_color_%s %r（可选：%s）" % (key, kc, ", ".join(COLOR_CHOICES)))
     ref = (payload.get("referee") or {}).get("kit_color")
     if ref is not None and ref not in kl.PALETTE_REF:
         probs.append("bad_color_ref %r（可选：%s）" % (ref, ", ".join(COLOR_CHOICES)))
@@ -160,13 +164,16 @@ def side_of(cfg, team_key, t_sec=None):
 
 
 def build_payload(match_id, team_a, team_b, color_a, color_b, ref_color,
-                  a_side, calib_file, source, swap_at_halftime=True, halftime_s=None):
+                  a_side, calib_file, source, swap_at_halftime=True, halftime_s=None,
+                  keeper_a=None, keeper_b=None):
     return {
         "schema": "zynq-yolo/match-config/2",
         "match": {"id": match_id, "entered_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")},
         "teams": {
-            "A": {"name": team_a, "kit_color": color_a},
-            "B": {"name": team_b, "kit_color": color_b},
+            # keeper_color 可空：门将球衣与队服不同，颜色筛人会把它当「非球员」剔掉，
+            # 所以这一项是可选补丁（实测 inc_12 f300：黑衣门将被剔）
+            "A": {"name": team_a, "kit_color": color_a, "keeper_color": keeper_a or None},
+            "B": {"name": team_b, "kit_color": color_b, "keeper_color": keeper_b or None},
         },
         "referee": {"kit_color": ref_color},
         "first_half": {"a_side": a_side, "swap_at_halftime": bool(swap_at_halftime),
@@ -360,7 +367,9 @@ def serve(port):
                                     body.get("a_side") or "unknown",
                                     body.get("refs_file") or "",
                                     "web_touch_mock (8767)",
-                                    bool(body.get("swap_at_halftime", True)))
+                                    bool(body.get("swap_at_halftime", True)),
+                                    keeper_a=body.get("keeper_a"),
+                                    keeper_b=body.get("keeper_b"))
             path, probs, warns = save(payload)
             if path is None:
                 self._send(200, json.dumps({"ok": False, "problems": probs,
@@ -391,6 +400,8 @@ def main(argv=None):
     ap.add_argument("--color-a", default="")
     ap.add_argument("--color-b", default="")
     ap.add_argument("--ref-color", default=None)
+    ap.add_argument("--keeper-a", default=None, help="A 队门将球衣色（可选，用于不被颜色筛人剔掉）")
+    ap.add_argument("--keeper-b", default=None, help="B 队门将球衣色（可选）")
     ap.add_argument("--a-side", default="unknown", choices=VALID_SIDES,
                     help="A 队上半场站画面哪一边（B 自动在另一侧）")
     ap.add_argument("--no-swap", action="store_true",
@@ -447,7 +458,8 @@ def main(argv=None):
                                 args.color_a, args.color_b, args.ref_color,
                                 args.a_side, args.refs_file, "cli",
                                 swap_at_halftime=not args.no_swap,
-                                halftime_s=args.halftime_s)
+                                halftime_s=args.halftime_s,
+                                keeper_a=args.keeper_a, keeper_b=args.keeper_b)
         path, probs, warns = save(payload)
         if path is None:
             print("MATCH_SETUP_FAIL %s" % probs[0])

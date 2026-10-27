@@ -19,7 +19,7 @@ set overlay    [file join $root board overlay]
 set rtl_dir    [file join $root src rtl io hdmi]
 set rep_timing [file join $root build reports timing]
 set rep_util   [file join $root build reports resource]
-set xdc        [file join $script_dir hdmi_status.xdc]
+set xdc        [file join $script_dir hdmi_video.xdc]
 
 foreach d [list $overlay $rep_timing $rep_util] { file mkdir $d }
 create_project -force hdmi_video_bd $proj_dir -part $part_name
@@ -93,13 +93,18 @@ set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] $axi_smc
 connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins axi_smc/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins gpio_cfg/S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M01_AXI] [get_bd_intf_pins gpio_st/S_AXI]
-connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins axi_smc/aclk]
-connect_bd_net [get_bd_pins rst_ps/peripheral_aresetn] [get_bd_pins axi_smc/aresetn]
+# ★ 配置/状态寄存器的 AXI 域**跟 pclk 走**，而不是 PS 的 FCLK_CLK0。
+#   原因：gpio 的输出直接进 fb_scanout（pclk 域），若 GPIO 挂在 83.33 MHz，
+#   这条跨时钟路径会被当成同步路径收敛 —— 实测 WNS -4.573 ns / 60 个失败端点。
+#   把 gpio + smartconnect 一起放到 pclk，跨时钟就交给 SmartConnect 自带的时钟转换器
+#   （它是有验证的 CDC 结构），我们的 RTL 内部全同钟。
+connect_bd_net $pclk [get_bd_pins axi_smc/aclk]
+connect_bd_net [get_bd_pins rst_pix/peripheral_aresetn] [get_bd_pins axi_smc/aresetn]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
-connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins gpio_cfg/s_axi_aclk]
-connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins gpio_st/s_axi_aclk]
-connect_bd_net [get_bd_pins rst_ps/peripheral_aresetn] [get_bd_pins gpio_cfg/s_axi_aresetn]
-connect_bd_net [get_bd_pins rst_ps/peripheral_aresetn] [get_bd_pins gpio_st/s_axi_aresetn]
+connect_bd_net $pclk [get_bd_pins gpio_cfg/s_axi_aclk]
+connect_bd_net $pclk [get_bd_pins gpio_st/s_axi_aclk]
+connect_bd_net [get_bd_pins rst_pix/peripheral_aresetn] [get_bd_pins gpio_cfg/s_axi_aresetn]
+connect_bd_net [get_bd_pins rst_pix/peripheral_aresetn] [get_bd_pins gpio_st/s_axi_aresetn]
 
 # ---------------- 视频顶层 ----------------
 set hdmi [create_bd_cell -type module -reference hdmi_video_top hdmi_video_0]

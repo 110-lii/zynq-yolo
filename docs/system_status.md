@@ -79,6 +79,10 @@ python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
 | HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（4.05 MB；1bpp BRAM 28,800×32，基址 0x40000000；Setup +3.938 ns / Hold +0.065 ns）；**帧缓存数字通路读回通过**（DISPLAY_BOARD_OK；D022 单端口修复）；**HDMI 画面已通过**（014：1280×720 棋盘格人眼可见）。根因是 BRAM 读口 `rstb` 极性接反——`peripheral_aresetn`（低有效）直连高有效的 `rstb`，读口全程复位、`doutb` 恒 0；另修 fb_reader 左移却取 `sr[0]`、`pixel_xpos` 从 2 起而字边界等 1 |
 | LCD 状态面板（PL overlay） | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/lcd_status.bit`（4.05 MB；1bpp BRAM 12,000×32，基址 0x40000000；lcd_id=4384（4.3 寸 800×480）；Setup +4.283 ns / Hold +0.121 ns）；**帧缓存数字通路读回通过**（DISPLAY_BOARD_OK；D022 单端口修复）；**LCD 画面已通过**（014：800×480 棋盘格人眼可见）。与 HDMI 同一组缺陷：BRAM 读口 `rstb` 极性接反（读口常复位）+ fb_reader 移位方向 + `pixel_xpos` 偏移；像素时钟改用 25 MHz（与 oi 项目一致） |
 | LCD 软件回退 | `tools/status_display.py`（fbdev/PNG） | `STATUS_DISPLAY_SELFTEST OK` |
+| SD 证据帧 | `tools/result_store.py::save_evidence`、`board_pipeline --store-evidence` | `RESULT_STORE_OK`（evidence=2；限流 6/分钟）；**未上板端到端** |
+| PC 上位机界面 | `tools/pc_dashboard.py`（状态条/球场/事件流/证据帧/12 列 CSV） | `PC_DASHBOARD_SELFTEST OK`；界面 PNG 已人眼核对 |
+| LCD/HDMI 状态面板 8 项 | `tools/status_display.py`（800x480 / 1280x720） | `STATUS_DISPLAY_SELFTEST OK`；两尺寸 PNG 已人眼核对 |
+| HDMI 视频环出（带框） | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`tools/hdmi_video.py` | 仿真 `TB_FB_SCANOUT_OK`；OOC 综合 `SYNTH_CHECK_OK BRAM=6`；**出片与时序见 build/vivado/logs**；上板待板子恢复 |
 
 板上命令（板端）：
 

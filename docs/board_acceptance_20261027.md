@@ -11,16 +11,22 @@ ping 192.168.2.99
 ssh xilinx@192.168.2.99        # 免密不通时用 tools/board_jupyter.py（Jupyter 9090）
 ```
 
-## 1. 两块屏的状态面板（D020–D025）
+## 1. 两块屏（D020–D025）
 
 ```bash
-# 板端
-sudo -E python3 tools/check_display_board.py --bit board/overlay/display_both.bit
+# 合并版：一块 bit 上两块屏。三级阶梯按 white → chess → panel 走，别跳级
+sudo -E python3 tools/check_display_board.py --which both \
+    --bit board/overlay/display_both.bit --pattern white    # ① 信号通路：读回全 0xFFFFFFFF
+sudo -E python3 tools/check_display_board.py --which both \
+    --bit board/overlay/display_both.bit --pattern chess    # ② 寻址/位序：64×64 棋盘格
+sudo -E python3 tools/check_display_board.py --which both \
+    --bit board/overlay/display_both.bit --pattern panel    # ③ 状态面板
 ```
-- 机器判据：`DISPLAY_BOTH_BOARD_OK`（两块 1bpp 帧缓存读回一致）
-- **人眼判据**：HDMI 与 LCD 上都能看到棋盘格
-- 已知：合并版 overlay 在 014 之后**未重出片**（014 只修了单屏），若合并版画面不对，
-  退回单屏 `hdmi_status.bit` / `lcd_status.bit` 分别验
+- 机器判据：`DISPLAY_BOTH_BOARD_OK bit=display_both.bit pattern=<级>`（两块 1bpp 帧缓存**逐字**读回一致）
+- **人眼判据**：white 级整屏发亮；chess 级两块屏都是 64×64 棋盘格；panel 级 8 项信息都在、中文不乱码
+- 2026-10-27 已补：合并版 BD 补齐 014 的三处修复（`rstb` 接常量 0、两侧 `dcm_locked`、
+  LCD 走独立 clk_wiz 出准确 25 MHz），并重出 `display_both.bit`
+- 兜底：合并版若仍有单块屏不对，退回 `hdmi_status.bit` / `lcd_status.bit` 分别验（这两块 014 已人眼确认棋盘格）
 
 ## 2. LCD 状态面板信息（本轮新增 8 项）
 

@@ -101,6 +101,9 @@ connect_bd_net [get_bd_pins rst_pix/peripheral_aresetn] [get_bd_pins axi_cc/m_ax
 
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] $axi_smc
+# 默认会被判成 Low area mode（认为全是 AXI-Lite 流量）并忽略 HAS_BURST；
+# 这个 interconnect 只跑 GPIO，忽略突发不影响功能，但显式关掉以免误伤后续加的设备
+set_property -dict [list CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}}] $axi_smc
 connect_bd_intf_net [get_bd_intf_pins axi_cc/M_AXI] [get_bd_intf_pins axi_smc/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins gpio_cfg/S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M01_AXI] [get_bd_intf_pins gpio_st/S_AXI]
@@ -135,6 +138,18 @@ connect_bd_net [get_bd_pins hdmi_video_0/st_status] [get_bd_pins gpio_st/gpio_io
 #   （"protocols are incompatible"）。用 smartconnect 做协议与位宽转换，
 #   与本仓库其它 HP 接线（bd_track_preproc.tcl / bd_axi_bw.tcl）保持一致。
 # ★ 关键：HP0 的 ACLK 与 smartconnect 的 aclk 都用 pclk —— fb_scanout 内部没有跨时钟桥。
+# ★ 模块引用推出来的 AXI 接口没有「时钟引脚」概念，BD 会报
+#   CRITICAL WARNING BD 41-967（not associated to any clock pin）与 41-1343（reset 关联到
+#   tmds_clk_n），SmartConnect 也会抱怨 S00_AXI 与它不共时钟。用 associate_bd_net
+#   把接口显式绑到 pclk，物理上本来就是同一个时钟。
+# 2020.2 里没有 associate_bd_net 这个命令（新版才有）。用 catch 兜住：
+# 拿得到就绑，拿不到就留个 NOTE —— 模块引用推出来的接口没有时钟引脚，
+# BD 41-967「not associated to any clock pin」在这条路线里是预期的，
+# 物理时钟由下面的 connect_bd_net $pclk 保证（出片版 WNS +5.470 ns 就是这么来的）。
+if {[catch {associate_bd_net $pclk [get_bd_intf_pins hdmi_video_0/M_AXI]} _e]} {
+    puts "HDMI_VIDEO_NOTE associate_bd_net skipped: $_e"
+}
+
 set hp_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 hp_smc]
 set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hp_smc
 connect_bd_intf_net [get_bd_intf_pins hdmi_video_0/M_AXI] [get_bd_intf_pins hp_smc/S00_AXI]

@@ -13,6 +13,7 @@
 判据令牌：HDMI_VIDEO_BOARD_OK frames=<n> under=<m> / HDMI_VIDEO_BOARD_FAIL <reason>
 """
 import argparse
+import os
 import sys
 import time
 
@@ -52,19 +53,19 @@ def main():
 
     try:
         from pynq import Overlay
-        from tools_hdmi_video import HdmiVideoOut  # 板上与 tools/ 同目录时可直接 import
-    except Exception:
-        sys.path.insert(0, "/home/xilinx")
-        try:
-            from pynq import Overlay
-        except Exception as e:
-            print("HDMI_VIDEO_BOARD_FAIL no pynq: %s" % e)
-            return 2
-        try:
-            from hdmi_video import HdmiVideoOut
-        except Exception as e:
-            print("HDMI_VIDEO_BOARD_FAIL no hdmi_video.py: %s" % e)
-            return 2
+    except Exception as e:
+        print("HDMI_VIDEO_BOARD_FAIL no pynq: %s" % e)
+        return 2
+    # hdmi_video.py 与 check_display_board.py 一样是 `python3 tools/xxx.py` 直接跑的，
+    # 所以按脚本目录找它（板端目录通常就是 /home/xilinx/zynq-yolo/tools）
+    here = os.path.dirname(os.path.abspath(__file__))
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    try:
+        from hdmi_video import HdmiVideoOut
+    except Exception as e:
+        print("HDMI_VIDEO_BOARD_FAIL import hdmi_video: %s" % e)
+        return 2
 
     ov = Overlay(args.bit)
     out = HdmiVideoOut()

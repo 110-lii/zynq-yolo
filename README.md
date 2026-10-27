@@ -61,7 +61,7 @@ Zynq-7020 对比赛视频做**可观测的目标与事件分析**，而不是做
 3. **简单事件** —— 球出界后的球权归属、角球还是球门球；
 4. **人员倒地识别** —— 识别倒地的球员/人员。
 
-**明确不做**：越位、犯规、红黄牌等判罚类推理；**HDMI 视频环出/OSD 叠框**（状态面板输出见 D018）；
+**明确不做**：越位、犯规、红黄牌等判罚类推理；
 板载摄像头采集（D015）。
 
 **创新点（正式口径见 `report/design_report.md`）**：在只有 220 DSP 的 7020 上，把**像素级预处理**
@@ -93,14 +93,18 @@ PS：单应 → 球场坐标 → 事件（出界/进球/球权）
    │  结果只序列化一次（D014）
    ├──► 以太网推给 PC（tools/result_stream.py → pc_dashboard.py）
    ├──► SD 卡增量存储（JSONL + summary + fsync/轮转）
-   └──► HDMI/LCD 状态面板（framebuffer；无 fbdev 时出 PNG）
+   ├──► HDMI/LCD 状态面板（framebuffer；无 fbdev 时出 PNG）
+   └──► HDMI 视频环出（带框画面：PS 画 → DDR 帧缓存 → PL fb_scanout → TMDS，D026）
 ```
 
 **软硬件划分原则**：时序/协议栈/分支密集的部分放 PS（网络、检测调度、跟踪、后处理、事件判定）；
 PL 承担**像素级、规则、可流水化**的预处理与**运动/白块掩码**（D017/D019）——这是 7020 上
 真正能落地且有收益的部分。`conv_engine`（PL 通用 INT8 卷积引擎）整网实测 **9.63 s/帧
 （≈0.10 FPS）**，已退出主线，仅作逐层 bit-exact（6/6）与 AXI 带宽/时序的技术验证资产。
-触屏 LCD 现在既作**数据输入端**，也可显示**状态面板**（D018；不做视频环出）。
+触屏 LCD 现在既作**数据输入端**，也可显示**状态面板**（D018）。
+**HDMI 侧有两个并列方案**（D026）：1bpp 文字状态面板（D020–D025，便宜、常驻）与
+**视频环出（带检测框的画面）**—— PS 画框写 DDR 帧缓存，PL `fb_scanout` 经 `S_AXI_HP0`
+读出来走 TMDS；设计与验收见 [`docs/hdmi_video_osd.md`](docs/hdmi_video_osd.md)。
 
 **详细依据与接口契约**见 [`docs/architecture.md`](docs/architecture.md) 与
 [`docs/accel_interface.md`](docs/accel_interface.md)；历史 416 方案见

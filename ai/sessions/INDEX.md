@@ -34,9 +34,10 @@
 | [012](012_ball_lostsec_board_reject.md) | 2026-10-26 | 球链路「丢失窗口按秒计」上板验收与否决 ★ | `magpie/group/1101`（客户端 Hermes） | ① 板上 `BOARD_ACCEPTANCE_OK`：base 144/48、lostsec **182**/48（球帧 +26.4%）、predict 144/48；② **抽查推翻机器判据**：新增 38 帧（帧 20–57）坐标只跨 0.43 m × 0.36 m，比赛进行中不可能静止；H 逆变换投影回画面抽 3 帧，用户复核**都不是球**；③ 根因是**候选质量**（静态白块被黏住），放宽 `max_miss` 4→10 只让假轨迹活得更久——与 010「球帧骤降」是同一病根的两个方向；④ 结论：`--ball-lost-sec` 保留但**默认关**，否定结论写进文档；⑤ 纪律新增：球帧上涨必须人工抽查，新增帧先看运动学 |
 | [013](013_display_visual_fail.md) | 2026-10-26 | HDMI/LCD 画面目视验收未通过，更正 011 的过度表述 ★ | `magpie/group/1101`（客户端 Hermes） | ① 两块屏均无画面（HDMI 只亮背光、LCD 全黑），机器判据全绿但**不算通过**；② 逐项排除：AXI/BRAM 读写一致、TMDS 四引脚经 AMD 官方 `xc7z020clg400pkg.txt` 逐条核对无误、外部 50 MHz 确在 U18、换 PS FCLK 供时钟重出片仍黑、时序 Setup +3.938 ns 且 `no_clock=0`；③ 打破的关键假设：**BRAM 读写正常 ≠ PL 时钟正常**（前者走 PS FCLK），这是 011 误判根源；④ 更正 011：`DISPLAY_BOARD_OK` 只证明帧缓存数字通路，从未证明画面；⑤ 纪律：显示验收分 `BRAM_OK` 与 `VISUAL_OK` 两级，后者未做不许写"通过"；⑥ 未决：线/显示器/OSERDESE2 时钟布线三项需实验室判定 |
 | [014](014_display_lcd_hdmi_pass.md) | 2026-10-26 | HDMI/LCD 画面全部打通：三个叠加 bug 定位 ★ | `magpie/group/1101`（客户端 Hermes） | ① 两块屏均出 64×64 棋盘格，人眼确认；② 根因：`system.v:230` 的 `.rstb(rst_pix_peripheral_aresetn)` —— BRAM `rstb` 高有效而该网络低有效 ⇒ 读口全程复位、`doutb` 恒 0（Port A 经 AXI BRAM Ctrl 自己的 RST，故 PS 读写一直正常）；③ 另两处：fb_reader 左移却取 `sr[0]`（每 32 px 只出 1 位）、`pixel_xpos` 从 2 起而字边界等 `xpos[4:0]==1` 永不命中；④ 破局方法：AXI GPIO(`0x41200000`) 读回 `h_cnt/v_cnt/lcd_de/pixel_data`，先证明时钟与复位是活的、把问题切到数据侧，才顺线查到 rstb；⑤ 纪律：机器判据只覆盖它走过的端口，盲改应在第二轮就换成可读探针 |
+| [015](015_display_both_rebuild.md) | 2026-10-27 | 合并版 overlay 补齐 014 的三处修复，本机重出片（上板未验）★ | `group/1101`（客户端 Hermes 桌面端） | ① 发现 014 只修了单屏：`bd_display_both.tcl` 里 `rstb` 仍接 `peripheral_aresetn`、`dcm_locked` 仍悬空、LCD 仍用 33.333 MHz ⇒ 合并版必然复现 013 全黑；② 三处补齐（`rstb`→`xlconstant 0`、两侧 `dcm_locked` 接 locked、LCD 拆独立 clk_wiz 出准确 25.000 MHz，因 74.25/371.25 与 25 无公共 VCO）；③ 本机出片 `DISPLAY_BOTH_BD_OK`，WNS +3.986 / WHS +0.116 ns，时钟 74.256 / 371.280 / 25.000 MHz，网表核对 `.rstb(zero_dout)`、`.dcm_locked(clk_wiz*_locked)`；④ 修掉验收清单里**不存在**的 `--bit` 参数，`check_display_board.py` 重写为 `--which both/--pattern white\|chess\|black\|panel` 并逐字读回，`--selftest` 无板可跑；⑤ **画面未验**（板子 ping 不通），人眼判据单列；⑥ 事故：两次 Vivado 实例重叠导致 `Failed to load feature 'ipintegrator'` 与假"文件缺失"，串行重跑即通过 |
 
-> **统计**：共 **13** 条记录；带自我纠错轨迹（★）**9** 条。
-> 编号连续、不复用；下一条应为 `014_<slug>.md`。
+> **统计**：共 **15** 条记录；带自我纠错轨迹（★）**10** 条。
+> 编号连续、不复用；下一条应为 `016_<slug>.md`。
 
 ---
 

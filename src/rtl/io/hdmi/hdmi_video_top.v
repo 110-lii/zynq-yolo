@@ -61,9 +61,29 @@ wire        data_req;
 
 assign m_axi_arid = 6'd0;
 
-wire [15:0] cfg_stride = cfg_pack[15:0];
-wire [10:0] cfg_width  = cfg_pack[26:16];
-wire        cfg_en     = cfg_pack[27];
+// ★ 跨时钟域：cfg_* 来自 PS 侧 AXI GPIO（clk_fpga_0, 83.33 MHz），本模块跑 pclk(74.25 MHz)。
+//   两根时钟同出一个 MMCM 但频率不是整数倍，工具会当同步路径去收敛 —— 实测 WNS -8.0 ns、
+//   166 个失败端点。这些值本质是**准静态配置**（赛前/换缓冲时写一次），所以做 2 拍同步，
+//   并在 XDC 里把两组时钟声明为异步（见 build/scripts/hdmi_video.xdc）。
+//   帧内一次性用的 cfg_addr 还会在 fb_scanout 的 vs 沿锁存，多比特撕裂不会落到画面上。
+reg [31:0] cfg_addr_s1, cfg_addr_s2;
+reg [31:0] cfg_pack_s1, cfg_pack_s2;
+always @(posedge pclk or negedge reset_n) begin
+    if (!reset_n) begin
+        cfg_addr_s1 <= 32'd0; cfg_addr_s2 <= 32'd0;
+        cfg_pack_s1 <= 32'd0; cfg_pack_s2 <= 32'd0;
+    end else begin
+        cfg_addr_s1 <= cfg_addr; cfg_addr_s2 <= cfg_addr_s1;
+        cfg_pack_s1 <= cfg_pack; cfg_pack_s2 <= cfg_pack_s1;
+    end
+end
+
+wire [31:0] cfg_addr_q = cfg_addr_s2;
+wire [31:0] cfg_pack_q = cfg_pack_s2;
+
+wire [15:0] cfg_stride = cfg_pack_q[15:0];
+wire [10:0] cfg_width  = cfg_pack_q[26:16];
+wire        cfg_en     = cfg_pack_q[27];
 wire [15:0] st_frames;
 wire [15:0] st_under;
 
@@ -94,7 +114,7 @@ fb_scanout #(
     .de         (data_req),
     .xpos       (pixel_xpos),
     .ypos       (pixel_ypos),
-    .cfg_addr   (cfg_addr),
+    .cfg_addr   (cfg_addr_q),
     .cfg_stride (cfg_stride),
     .cfg_width  (cfg_width),
     .cfg_en     (cfg_en),
@@ -114,18 +134,20 @@ fb_scanout #(
     .m_rresp    (m_axi_rresp)
 );
 
+// 端口名以 dvi_transmitter_top.v 为准：video_din / video_hsync / video_vsync
 dvi_transmitter_top u_dvi(
     .pclk        (pclk),
     .pclk_x5     (pclk_x5),
     .reset_n     (reset_n),
-    .video_hs    (video_hs),
-    .video_vs    (video_vs),
+    .video_din   (video_rgb),
+    .video_hsync (video_hs),
+    .video_vsync (video_vs),
     .video_de    (video_de),
-    .video_rgb   (video_rgb),
     .tmds_clk_p  (tmds_clk_p),
     .tmds_clk_n  (tmds_clk_n),
     .tmds_data_p (tmds_data_p),
-    .tmds_data_n (tmds_data_n)
+    .tmds_data_n (tmds_data_n),
+    .tmds_oen    ()
 );
 
 endmodule

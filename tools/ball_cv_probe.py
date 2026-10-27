@@ -62,7 +62,15 @@ def _in_corner(x, y, w, h):
             (x < cw and y > h - ch) or (x > w - cw and y > h - ch))
 
 
-def candidates(bgr, diff=None, reject_corners=True, min_area=12, max_area=1500, roi=None):
+def candidates(bgr, diff=None, reject_corners=True, min_area=12, max_area=1500, roi=None,
+               grass_fallback=False, grass_min_frac=0.08):
+    """白球候选。
+
+    grass_fallback：草场包围盒占画面不足 grass_min_frac 时，改为**全幅**找白块。
+    这一条是为「球出界」场景加的：球越过边线后落在广告牌/看台背景上，
+    原逻辑（只在草场包围盒内找）会直接返回空表 —— 而那正是最需要看见球的时刻。
+    默认关闭，保持板上主线的行为不变。
+    """
     ox = oy = 0
     if roi is not None:
         rx0, ry0, rx1, ry1 = [int(v) for v in roi]
@@ -75,13 +83,23 @@ def candidates(bgr, diff=None, reject_corners=True, min_area=12, max_area=1500, 
     grass = grass_mask(bgr)
     # 只在草场包围盒内算白掩膜：1280x720 全幅 HSV 是主要开销
     x0, y0, bw, bh = cv2.boundingRect(grass)
+    hh, ww = bgr.shape[:2]
+    full_frame = False
     if bw <= 0 or bh <= 0:
-        return []
-    sub = bgr[y0:y0 + bh, x0:x0 + bw]
-    wsub = white_mask(sub)
-    white = np.zeros_like(grass)
-    white[y0:y0 + bh, x0:x0 + bw] = wsub
-    white = cv2.bitwise_and(white, grass)
+        if not grass_fallback:
+            return []
+        full_frame = True
+    elif bw * bh < grass_min_frac * ww * hh:
+        full_frame = grass_fallback
+    if full_frame:
+        white = white_mask(bgr)
+        x0, y0, bw, bh = 0, 0, ww, hh
+    else:
+        sub = bgr[y0:y0 + bh, x0:x0 + bw]
+        wsub = white_mask(sub)
+        white = np.zeros_like(grass)
+        white[y0:y0 + bh, x0:x0 + bw] = wsub
+        white = cv2.bitwise_and(white, grass)
     cnts, _ = cv2.findContours(white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     out = []
     for c in cnts:

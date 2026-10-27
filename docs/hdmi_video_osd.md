@@ -65,7 +65,8 @@ PL（hdmi_video.bit）
 |---|---|---|
 | RTL 功能仿真 | `TB_FB_SCANOUT_OK`（2048 像素逐点比对，0 错误、0 欠载） | ✅ `sim/tb/tb_fb_scanout.v` |
 | PS 侧出图 | `HDMI_VIDEO_SELFTEST OK`，打包往返 `dmax=0` | ✅ `tools/hdmi_video.py --selftest` |
-| 真实画面叠框预览 | 本机 PNG（比赛画面 + 2 框 + 球圈 + 状态条） | ✅ 人眼已确认 |
+| 渲染链路预览（**演示框**） | 本机 PNG（比赛画面 + 2 框 + 球圈 + 状态条） | ✅ 人眼已确认 |
+| 真实检测叠框预览（**真框**） | 用 `data/results/tracks/inc_12*.json` 的真实检测结果重渲染 | ✅ 人眼已确认：16 框/帧基本贴合，**有漏检（远景/边缘）与误检（观众、工作人员）** |
 | 综合实现/时序 | `HDMI_VIDEO_BD_OK`；**WNS +5.470 ns / WHS +0.074 ns，0 失败端点**；LUT 2,335（4.4%）/ BRAM 6 / DSP 0 | ✅ `board/overlay/hdmi_video.bit`（4.05 MB）|
 | **上板画面** | HDMI 显示器上看到带框的视频 | ⛔ 待板子恢复（192.168.2.99 当前离线） |
 

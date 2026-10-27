@@ -224,6 +224,8 @@ def main():
     ap.add_argument("--max-frames", type=int, default=0)
     ap.add_argument("--png-out", default="", help="本机出图路径（不接板子）")
     ap.add_argument("--timeout", type=float, default=0.0, help="板上运行秒数，0=不限")
+    ap.add_argument("--no-sync-frame", action="store_true",
+                    help="不按 JSONL 的 frame 号定位画面（默认会定位）")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
 
@@ -255,6 +257,9 @@ def main():
         idx += 1
         frame = np.zeros((H, W, 3), np.uint8)
         if cap is not None:
+            # ★ 按 JSONL 里的帧号对位取画面：顺序读会在「回放指定帧」时把框叠到第 0 帧上
+            if st.get("frame") is not None and not args.no_sync_frame:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, int(st["frame"]))
             ok, f = cap.read()
             if not ok:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)

@@ -38,6 +38,18 @@ PL（hdmi_video.bit）
 2. **Zynq-7000 的 HP 口是 AXI3，我们的主机是 AXI4。** 直连会被 BD 拒绝
    （`BD 41-1285 protocols ... incompatible`），必须经 smartconnect 转换 ——
    与本仓库 `bd_track_preproc.tcl` / `bd_axi_bw.tcl` 的 HP 接线一致。
+3. **行缓存必须是一个数组 + 单读口 + 单写口。** 首版写成 4 个独立数组、每拍读 4 路再 4 选 1，
+   Vivado 2020.2 推不出 BRAM，综合出 **198,462 个 FDRE**（器件只有 106,775），
+   `place_design` 直接 DRC `UTLZ-1` 失败。改成 `lbuf[4*LBUF]`、索引 `行号*LBUF+列` 后
+   推断成 ~5 个 BRAM36。
+   ⚠️ 索引**不能用位拼接** `{row[1:0], col}`：拼接隐含步长 2^11=2048，
+   `LBUF` 取 1536 时落到数组外，写丢、读回 `X`（仿真里表现为整行 XX）。用 `row*LBUF+col`。
+4. **数组的写端口必须独立、不能带复位。** 把 `lbuf[...] <= ...` 写在带异步复位的 FSM
+   `always` 块里，Vivado 报 `Synth 8-3391 Unable to infer a block/distributed RAM ...
+   memory pattern not supported`，随后 elaboration 失败。写法：单独一个
+   `always @(posedge pclk) if (wr_en) lbuf[wr_idx] <= m_rdata;`，`wr_en` 用组合逻辑。
+   改完先跑 `build/scripts/synth_check_hdmi_video.tcl`（约 2 min）确认 `BRAM>=4`，
+   再走完整的 BD + impl —— 否则资源问题要到 `place_design` 才暴露。
 
 ## 4. 验收状态
 

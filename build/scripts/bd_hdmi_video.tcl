@@ -149,7 +149,18 @@ update_compile_order -fileset sources_1
 generate_target all [get_files system.bd]
 
 launch_runs impl_1 -to_step write_bitstream -jobs 8
-wait_on_run impl_1
+# ★ 不用 wait_on_run：batch 模式下它有时在子任务还停在 "Scripts Generated" 时就返回，
+#   父进程随即退出、子任务被杀，表现为「假完成」。改成轮询 STATUS 直到真的出比特流。
+for {set i 0} {$i < 240} {incr i} {
+    after 10000
+    set _st [get_property STATUS [get_runs impl_1]]
+    if {[string first "write_bitstream Complete" $_st] >= 0} { break }
+    if {[string first "ERROR" $_st] >= 0 || [string first "Failed" $_st] >= 0} {
+        puts "HDMI_VIDEO_BD_FAIL $_st"
+        return
+    }
+    if {$i % 6 == 0} { puts "WAIT $i [get_property PROGRESS [get_runs impl_1]] $_st" }
+}
 set st [get_property STATUS [get_runs impl_1]]
 if {[string first "write_bitstream Complete" $st] < 0} { puts "HDMI_VIDEO_BD_FAIL $st"; return }
 

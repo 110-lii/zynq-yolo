@@ -76,13 +76,22 @@ def make_image(pattern, w, h):
 
 
 def _bram_cells(ovl):
+    """列出所有可寻址 IP 的 (实例名, 基址)。
+
+    PYNQ 2.x 在这里有个坑：`ovl.ip_dict` **只登记了 PS**（实测 display_both 的
+    ip_dict 只有 processing_system7_0），BRAM 控制器的地址在 `ovl.mem_dict` 里，
+    key 是实例名（hdmi_ctrl / lcd_ctrl）。只读 ip_dict 会得出"找不到控制器"，
+    于是退回 0x40000000 写死基址 —— 双屏时 LCD 就被写到 HDMI 上。
+    """
     out = []
-    for name, info in ovl.ip_dict.items():
-        txt = (str(name) + " " + str(info.get("type", ""))).lower()
-        if "bram" not in txt:
-            continue
+    for name, info in (getattr(ovl, "mem_dict", None) or {}).items():
         addr = info.get("phys_addr")
         if addr is None:
+            continue
+        out.append((str(name), int(addr)))
+    for name, info in ovl.ip_dict.items():
+        addr = info.get("phys_addr")
+        if addr is None or any(str(name) == n for n, _ in out):
             continue
         out.append((str(name), int(addr)))
     return out

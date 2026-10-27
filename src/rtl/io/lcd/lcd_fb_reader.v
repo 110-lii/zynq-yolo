@@ -15,34 +15,29 @@ module lcd_fb_reader(
 localparam [23:0] WHITE = 24'hFFFFFF;
 localparam [23:0] BLACK = 24'h101820;
 
-reg [31:0] sr;
-
-// xpos 由 lcd_driver 算成 h_cnt+2-h_sync-h_back，data_req 期初就是 2 ⇒ 实际像素
-// 序号要减 2 才从 0 开始。不减的话字边界 xpos[4:0]==1 永远等不到，sr 一次也不载入，
-// pixel_data 恒为 BLACK（session 013 板上实测：h_cnt/v_cnt 在跑、de=1、pix 恒 0x101820）
+// ★ 坐标口径同 HDMI（照 D:\FPGA\oi 的实测结论）：lcd_driver 的 pixel_xpos 也是
+//   1 起算（`cnt_h + 2 - h_sync - h_back`），所以列减 1、行减 1。
+//   原实现列减 2（整体右移 1 像素）、行没减（整幅上移一行、最后一行读到帧外）。
 wire [10:0] xe;
-assign xe = (xpos >= 11'd2) ? (xpos - 11'd2) : 11'd0;
+wire [10:0] ye;
+assign xe = (xpos >= 11'd1) ? (xpos - 11'd1) : 11'd0;
+assign ye = (ypos >= 11'd1) ? (ypos - 11'd1) : 11'd0;
+
+// 读出：字 + 字内位序 成对寄存一拍后按位取值（同 HDMI，见 fb_reader.v 说明）
+reg [31:0] wq;
+reg [4:0]  xq;
 
 always @(posedge pclk or negedge reset_n) begin
     if (!reset_n) begin
         bram_addr  <= 14'd0;
-        sr         <= 32'd0;
+        wq         <= 32'd0;
+        xq         <= 5'd0;
         pixel_data <= BLACK;
     end else begin
-        bram_addr <= ypos * 11'd25 + (xe >> 5);
-        if (xe[4:0] == 5'd0) begin
-            // 上一字的最后一位（bit31）：右移 30 次后留在 sr[0]
-            pixel_data <= sr[0] ? WHITE : BLACK;
-            sr         <= 32'd0;
-        end else if (xe[4:0] == 5'd1) begin
-            // 字数据到位：直接输出 bit0
-            pixel_data <= bram_dout[0] ? WHITE : BLACK;
-            sr         <= bram_dout;
-        end else begin
-            // 右移一格，下一拍从 sr[0] 取；本拍先取 sr[1] 即下一位
-            pixel_data <= sr[1] ? WHITE : BLACK;
-            sr         <= {1'b0, sr[31:1]};
-        end
+        bram_addr  <= ye * 11'd25 + (xe >> 5);
+        wq         <= bram_dout;
+        xq         <= xe[4:0];
+        pixel_data <= wq[xq] ? WHITE : BLACK;
     end
 end
 

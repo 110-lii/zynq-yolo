@@ -123,17 +123,17 @@ def check_screen(ovl, which, pattern):
     name, base = find_base(ovl, cfg["key"])
     if base is None:
         print("DISPLAY_BOARD_FAIL no_bram_ctrl_for_%s" % which)
-        return False
+        return False, None
     print("DISPLAY_BOARD_BASE %s %s %s" % (which, name, hex(base)))
 
     img = make_image(pattern, w, h)
     words = pack_1bpp(img, w, h)
     if pattern == "white" and int(words.min()) != 0xFFFFFFFF:
         print("DISPLAY_BOARD_FAIL %s pack_not_all_ones" % which)
-        return False
+        return False, None
     if pattern == "black" and int(words.max()) != 0:
         print("DISPLAY_BOARD_FAIL %s pack_not_all_zeros" % which)
-        return False
+        return False, None
 
     mode = write_image(img, base, w, h)
 
@@ -152,9 +152,10 @@ def check_screen(ovl, which, pattern):
         i, e, g = first_bad
         print("DISPLAY_BOARD_READBACK %s FAIL mismatches=%d first=(%d exp=%s got=%s)"
               % (which, bad, i, hex(e), hex(g)))
-        return False
+        return False, None
     print("DISPLAY_BOARD_READBACK %s OK" % which)
-    return True
+    bits = np.unpackbits(words.view(np.uint8), bitorder="little")
+    return True, float(bits.mean())
 
 
 def _selftest():
@@ -168,9 +169,102 @@ def _selftest():
     white = pack_1bpp(solid(800, 480, 255), 800, 480)
     ok &= white.shape == (12000,) and int(white.min()) == 0xFFFFFFFF
     ok &= int(pack_1bpp(solid(800, 480, 0), 800, 480).max()) == 0
+    # LCD 活体探针的判定逻辑：喂合成的采样序列，验「该过的过、该挂的挂」
+    HT, VT = 1056, 525
+    good1 = ([0x01FFFFFF] * 56 + [0x01101820] * 504 + [0x00101820] * 240)   # de=0.7，白 10%
+    good2 = [((v * 3) % VT) * 2048 + ((v * 7) % HT) for v in range(800)]
+    r = analyze_samples(good1, good2, HT, VT, 0.5, pclk_hz=33.356e6)
+    if not r["ok"]:
+        ok = False
+        print("DISPLAY_SELFTEST_PROBLEM good_case_rejected", r["problems"])
+    bad1 = [0x01101820] * 800                          # 全黑
+    bad2 = [0] * 800                                   # h/v 不动
+    r2 = analyze_samples(bad1, bad2, HT, VT, 0.5, pclk_hz=25.0e6)
+    if r2["ok"]:
+        ok = False
+        print("DISPLAY_SELFTEST_PROBLEM bad_case_passed")
     print("DISPLAY_SELFTEST", "OK" if ok else "FAIL",
           "chess0=%s row64=%s" % (hex(int(words[0])), hex(int(words[64 * 40]))))
     return 0 if ok else 1
+
+
+def analyze_samples(d1, d2, h_total, v_total, seconds, pclk_hz=None,
+                    pclk_expect=33.333e6, white_expect=None):
+    """从采样序列算出 LCD 显示域的自洽判据（纯函数，可脱板自检）。
+
+    d1 = {7'b0, lcd_de, pixel_data}，d2 = {10'b0, v_cnt, h_cnt}。
+    """
+    de = [(x >> 24) & 1 for x in d1]
+    px = [x & 0xFFFFFF for x in d1]
+    hs = [x & 0x7FF for x in d2]
+    vs = [(x >> 11) & 0x7FF for x in d2]
+    n = max(1, len(de))
+    duty = sum(de) / n
+    active = [p for p, d in zip(px, de) if d]
+    white_frac = (sum(1 for p in active if p & 0xFFFFFF == 0xFFFFFF) / len(active)) if active else 0.0
+    r = {
+        "samples": len(d1),
+        "de_duty": duty,
+        "h_min": min(hs) if hs else -1, "h_max": max(hs) if hs else -1,
+        "v_min": min(vs) if vs else -1, "v_max": max(vs) if vs else -1,
+        "v_uniq": len(set(vs)),
+        "white_frac": white_frac,
+        "pclk_mhz": (pclk_hz / 1e6) if pclk_hz else None,
+        "problems": [],
+    }
+    p = r["problems"]
+    if duty < 0.60 or duty > 0.88:
+        p.append("de_duty=%.3f" % duty)
+    if r["h_max"] < 0.9 * h_total:
+        p.append("h_max=%d < 0.9*%d" % (r["h_max"], h_total))
+    if r["v_uniq"] < 3:
+        p.append("v_not_advancing uniq=%d" % r["v_uniq"])
+    if pclk_hz is not None and abs(pclk_hz - pclk_expect) > 0.05 * pclk_expect:
+        p.append("pclk=%.3fMHz expect %.3f" % (pclk_hz / 1e6, pclk_expect / 1e6))
+    if not active:
+        p.append("no_active_pixels")
+    if white_expect is not None and active:
+        lo, hi = min(white_expect, 0.02) / 3.0, max(white_expect, 0.02) * 3.0 + 0.02
+        if not (lo <= white_frac <= hi):
+            p.append("white_frac=%.4f expect~%.4f" % (white_frac, white_expect))
+    r["ok"] = not p
+    return r
+
+
+def probe_lcd_live(gpio_addr, h_total, v_total, white_expect=None, verbose=True):
+    """读 AXI GPIO 判断 LCD 显示域是否真的在扫、扫的是不是我们写的那块缓存。"""
+    import time
+    from pynq import MMIO
+    g = MMIO(int(gpio_addr), 0x1000)
+    d1, d2 = [], []
+    for _ in range(1500):
+        a = int(g.read(0x00)); b = int(g.read(0x00))
+        if a == b:                      # 输入口无同步器，只收两次相同的样本
+            d1.append(a)
+        a = int(g.read(0x08)); b = int(g.read(0x08))
+        if a == b:
+            d2.append(a)
+    prev, total, n = None, 0, 0
+    t0 = time.time()
+    while time.time() - t0 < 0.5:
+        x = int(g.read(0x08))
+        c = ((x >> 11) & 0x7FF) * h_total + (x & 0x7FF)
+        if prev is not None:
+            total += (c - prev) % (h_total * v_total)
+        prev = c
+        n += 1
+    dt = max(1e-6, time.time() - t0)
+    r = analyze_samples(d1, d2, h_total, v_total, dt, pclk_hz=total / dt,
+                        white_expect=white_expect)
+    if verbose:
+        print("DISPLAY_BOARD_LIVE %s samples=%d de=%.3f h=[%d,%d] v=[%d,%d] uniq=%d "
+              "white=%.4f pclk=%.3fMHz"
+              % ("OK" if r["ok"] else "FAIL", r["samples"], r["de_duty"],
+                 r["h_min"], r["h_max"], r["v_min"], r["v_max"], r["v_uniq"],
+                 r["white_frac"], r["pclk_mhz"] or 0.0))
+        for msg in r["problems"]:
+            print("DISPLAY_BOARD_LIVE_PROBLEM %s" % msg)
+    return r["ok"]
 
 
 def main():
@@ -181,6 +275,11 @@ def main():
     ap.add_argument("--repo", default="/home/xilinx/zynq-yolo")
     ap.add_argument("--pattern", choices=["chess", "white", "black", "panel"],
                     default="chess")
+    ap.add_argument("--lcd-gpio", default="",
+                    help="LCD 活体探针的 AXI GPIO 基址（dbg_gpio_lcd），如 0x41210000；"
+                         "给了就同时验「显示域在扫、扫的是刚写的内容」")
+    ap.add_argument("--h-total", type=int, default=1056)
+    ap.add_argument("--v-total", type=int, default=525)
     args = ap.parse_args()
 
     if args.selftest:
@@ -208,10 +307,17 @@ def main():
     ovl = Overlay(str(bit))
     print("DISPLAY_BOARD_BIT", bit.name)
     targets = ["hdmi", "lcd"] if args.which == "both" else [args.which]
-    ok = all([check_screen(ovl, t, args.pattern) for t in targets])
+    results = {t: check_screen(ovl, t, args.pattern) for t in targets}
+    ok = all(r[0] for r in results.values())
     if not ok:
         print("DISPLAY_BOARD_FAIL screen_readback")
         return 1
+    if args.lcd_gpio and "lcd" in results:
+        white_expect = results["lcd"][1]
+        if not probe_lcd_live(int(args.lcd_gpio, 0), args.h_total, args.v_total,
+                              white_expect=white_expect):
+            print("DISPLAY_BOARD_FAIL lcd_live_probe")
+            return 1
     token = "DISPLAY_BOTH_BOARD_OK" if args.which == "both" else "DISPLAY_BOARD_OK"
     print("%s bit=%s pattern=%s screens=%s"
           % (token, bit.name, args.pattern, ",".join(targets)))

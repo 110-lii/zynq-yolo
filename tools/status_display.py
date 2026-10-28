@@ -121,7 +121,13 @@ def _placeholder(zh):
 
 def _font_candidates():
     env = os.environ.get("STATUS_DISPLAY_FONT", "")
-    out = [FONT_OVERRIDE, env]
+    here = Path(__file__).resolve()
+    bundled = str(here.parent.parent / "data" / "fonts" / "simhei_subset.ttf")
+    out = [FONT_OVERRIDE, env,
+           # 仓库自带子集字体放**第一**：它是按本项目实际用到的字符裁出来的，
+           # ASCII 与中文都完整；系统字体不可靠（板端 DroidSansFallbackFull
+           # 实测没有拉丁字形，数字全变方框，而 PIL 的 notdef 检测又判不出来）。
+           bundled]
     out += [
         # 板端（PYNQ/Debian）常见 CJK 字体
         "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
@@ -134,21 +140,55 @@ def _font_candidates():
         # Windows（PC 预览/出图）
         "C:/Windows/Fonts/msyh.ttc",
         "C:/Windows/Fonts/simhei.ttf",
+        # 最后才用仓库自带子集字体（100 KB）：板端没有系统 CJK 字体时靠它出中文，
+        # 放在最后是为了不改变 PC 侧既有渲染（子集只含用到的字）。
+        bundled,
     ]
     return [c for c in out if c]
 
 
+def _font_covers(path):
+    """字体是否同时能画出 ASCII 数字与中文。
+
+    坑：PIL 对缺失字形会返回 **.notdef 方框**（宽度非 0），所以「getmask 非空」
+    根本判不出来 —— 板端实测 DroidSansFallbackFull 就这么被选中，数字全变成方框。
+    这里改成拿一个必定缺失的私用区字符当 notdef 样本，逐字比对掩码。
+    """
+    try:
+        from PIL import ImageFont
+        f = ImageFont.truetype(str(path), 24)
+        nb = f.getbbox("\ue000")          # 必定缺失 → .notdef 方框的包围盒
+        def ok(ch):
+            try:
+                b = f.getbbox(ch)
+            except Exception:
+                return False
+            if not b or (b[2] - b[0]) <= 0:
+                return False
+            return b != nb
+        return ok("0") and ok("A") and ok("帧")
+    except Exception:
+        return False
+
+
 def _pick_font():
-    """返回可用的 CJK 字体路径；没有则返回 ""（调用方退英文标签）。"""
+    """返回可用的 CJK 字体路径；没有则返回 ""（调用方退英文标签）。
+
+    首选「ASCII 与中文都能画」的字体；都覆盖不了时退回第一个存在的，
+    保证至少不比没有字体更糟。
+    """
     if _FONT_CACHE:
         return _FONT_CACHE[0]
-    path = ""
     try:
         import PIL  # noqa: F401
-        for cand in _font_candidates():
-            if Path(cand).exists():
+        existing = [c for c in _font_candidates() if Path(c).exists()]
+        path = ""
+        for cand in existing:
+            if _font_covers(cand):
                 path = str(Path(cand))
                 break
+        if not path and existing:
+            path = str(Path(existing[0]))
     except Exception:
         path = ""
     _FONT_CACHE.append(path)

@@ -46,7 +46,9 @@ always @(posedge pclk or negedge reset_n) begin
         xq         <= 5'd0;
         pixel_data <= BLACK;
     end else begin
-        bram_addr  <= ye * 11'd40 + (xe >> 5);
+        // Width must be full: `ye * 11'd40` yields an 11-bit product, so the row
+        // base wrapped every 2048 words (51.2 rows). Keep operands 15-bit.
+        bram_addr  <= ({4'd0, ye} * 15'd40) + {10'd0, xe[10:5]};
         wq         <= bram_dout;
         xq         <= xe[4:0];
         pixel_data <= wq[xq] ? WHITE : BLACK;

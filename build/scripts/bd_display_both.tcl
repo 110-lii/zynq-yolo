@@ -63,11 +63,11 @@ connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst
 create_bd_port -dir I -type clk sys_clk
 set_property CONFIG.FREQ_HZ {50000000} [get_bd_ports sys_clk]
 
-## ---- 像素时钟：一个 clk_wiz 出三路（75 / 375 / 25 MHz）----
+## ---- 像素时钟：clk_wiz 出 HDMI 75/375 MHz + 一路 50 MHz 供给 LCD 的第二个 MMCM ----
 ## 关键约束：**同一个时钟引脚只能插一个输入缓冲**（oi 项目踩过：两个 clk_wiz 各插一个
-## IBUF 会综合通过、实现报 Place 30-602）。所以这里只用**一个** clk_wiz。
-## 50 MHz → VCO 750 MHz（M=15, D=1）→ ÷10=75（HDMI 像素）/ ÷2=375（TMDS 5x）/ ÷30=25（LCD）
-## 这三个频率都能整除 750，所以是精确值，不需要近似。
+## IBUF 会综合通过、实现报 Place 30-602）。所以 sys_clk 只进 clk_wiz #1，
+## clk_wiz_lcd 的输入取 #1 的一个 50 MHz 输出（内部网络，不再插 IBUF）。
+## 50 MHz → VCO 750 MHz（M=15, D=1）→ ÷10=75（HDMI 像素）/ ÷2=375（TMDS 5x）/ ÷15=50（喂 LCD MMCM）
 set clk_wiz [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz]
 set_property -dict [list \
     CONFIG.PRIM_IN_FREQ {50.000} \
@@ -75,7 +75,7 @@ set_property -dict [list \
     CONFIG.CLKOUT2_USED {true} \
     CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {375.000} \
     CONFIG.CLKOUT3_USED {true} \
-    CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {25.000} \
+    CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {50.000} \
     CONFIG.USE_LOCKED {true} \
     CONFIG.USE_RESET {true} \
     CONFIG.RESET_PORT {reset} \
@@ -84,9 +84,29 @@ set_property -dict [list \
 connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz/clk_in1]
 connect_bd_net [get_bd_pins rst_ps/peripheral_reset] [get_bd_pins clk_wiz/reset]
 
+## ---- LCD 像素时钟：33.333 MHz（不是 25 MHz）----
+## 依据（两条独立来源，都指向同一结论）：
+##  ① ATK-MD0430R-800480 手册表 2.2.1.2：Th typ 928 / Tv typ 525，Table 标题为 60 Hz；
+##     oi 项目 085 会话逐字引裸屏规格书：PCLK frequency @ Frame rate = 60Hz。
+##  ② oi 项目在同一块屏上实测过：25 MHz（=45.1 Hz）→ 整幅抖动/下跳；33.333 MHz → 稳定。
+##     1056×525 @ 33.333 MHz = 60.13 Hz（+0.2%），Th=1056 落在规格 [889,1143] 内。
+## 25 MHz 与 75/375 MHz 无公共 VCO 能达到 33.333（750÷33.333=22.5 非整数），
+## 所以 LCD 单独一个 MMCM：50 MHz → VCO 1000（M=20, D=1）→ ÷30 = 33.333 MHz。
+set clk_wiz_lcd [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_lcd]
+set_property -dict [list \
+    CONFIG.PRIM_IN_FREQ {50.000} \
+    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {33.333} \
+    CONFIG.USE_LOCKED {true} \
+    CONFIG.USE_RESET {true} \
+    CONFIG.RESET_PORT {reset} \
+    CONFIG.RESET_TYPE {ACTIVE_HIGH} \
+] $clk_wiz_lcd
+connect_bd_net [get_bd_pins clk_wiz/clk_out3] [get_bd_pins clk_wiz_lcd/clk_in1]
+connect_bd_net [get_bd_pins rst_ps/peripheral_reset] [get_bd_pins clk_wiz_lcd/reset]
+
 set pclk_hdmi [get_bd_pins clk_wiz/clk_out1]
 set pclk5 [get_bd_pins clk_wiz/clk_out2]
-set pclk_lcd [get_bd_pins clk_wiz/clk_out3]
+set pclk_lcd [get_bd_pins clk_wiz_lcd/clk_out1]
 
 set rst_hdmi [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_hdmi]
 connect_bd_net $pclk_hdmi [get_bd_pins rst_hdmi/slowest_sync_clk]
@@ -97,10 +117,10 @@ connect_bd_net [get_bd_pins clk_wiz/locked] [get_bd_pins rst_hdmi/dcm_locked]
 set rst_lcd [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_lcd]
 connect_bd_net $pclk_lcd [get_bd_pins rst_lcd/slowest_sync_clk]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_lcd/ext_reset_in]
-connect_bd_net [get_bd_pins clk_wiz/locked] [get_bd_pins rst_lcd/dcm_locked]
+connect_bd_net [get_bd_pins clk_wiz_lcd/locked] [get_bd_pins rst_lcd/dcm_locked]
 
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
-set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] $axi_smc
+set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {4}] $axi_smc
 connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins axi_smc/S00_AXI]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins axi_smc/aclk]
 connect_bd_net [get_bd_pins rst_ps/peripheral_aresetn] [get_bd_pins axi_smc/aresetn]
@@ -179,8 +199,30 @@ foreach p {lcd_de lcd_hs lcd_vs lcd_bl lcd_clk lcd_rst} {
 create_bd_port -dir O -from 23 -to 0 -type data lcd_rgb
 connect_bd_net [get_bd_ports lcd_rgb] [get_bd_pins lcd_status_0/lcd_rgb]
 
+## ---- debug: AXI GPIO reads back pixel_xpos / {de, pixel_ypos} from hdmi_status_0 ----
+set dbg_gpio [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 dbg_gpio]
+set_property -dict [list CONFIG.C_IS_DUAL {1} CONFIG.C_ALL_INPUTS {1} CONFIG.C_ALL_INPUTS_2 {1} CONFIG.C_GPIO_WIDTH {32} CONFIG.C_GPIO2_WIDTH {32}] $dbg_gpio
+connect_bd_intf_net [get_bd_intf_pins dbg_gpio/S_AXI] [get_bd_intf_pins axi_smc/M02_AXI]
+connect_bd_net [get_bd_pins dbg_gpio/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
+connect_bd_net [get_bd_pins dbg_gpio/s_axi_aresetn] [get_bd_pins rst_ps/peripheral_aresetn]
+connect_bd_net [get_bd_pins hdmi_status_0/dbg_x] [get_bd_pins dbg_gpio/gpio_io_i]
+connect_bd_net [get_bd_pins hdmi_status_0/dbg_y] [get_bd_pins dbg_gpio/gpio2_io_i]
+
+## ---- debug: 同一个套路给 LCD（dbg1={de,pixel_data} / dbg2={v_cnt,h_cnt}）----
+## 屏上几何可疑时，读这四个数就能分开「时钟/复位死了」「DE 窗口错」「读侧无数据」，
+## 不必再靠拍照猜。lcd_status_top 早就有这两个口，此前只接了 HDMI 那一路。
+set dbg_gpio_lcd [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 dbg_gpio_lcd]
+set_property -dict [list CONFIG.C_IS_DUAL {1} CONFIG.C_ALL_INPUTS {1} CONFIG.C_ALL_INPUTS_2 {1} CONFIG.C_GPIO_WIDTH {32} CONFIG.C_GPIO2_WIDTH {32}] $dbg_gpio_lcd
+connect_bd_intf_net [get_bd_intf_pins dbg_gpio_lcd/S_AXI] [get_bd_intf_pins axi_smc/M03_AXI]
+connect_bd_net [get_bd_pins dbg_gpio_lcd/s_axi_aclk] [get_bd_pins processing_system7_0/FCLK_CLK0]
+connect_bd_net [get_bd_pins dbg_gpio_lcd/s_axi_aresetn] [get_bd_pins rst_ps/peripheral_aresetn]
+connect_bd_net [get_bd_pins lcd_status_0/dbg1] [get_bd_pins dbg_gpio_lcd/gpio_io_i]
+connect_bd_net [get_bd_pins lcd_status_0/dbg2] [get_bd_pins dbg_gpio_lcd/gpio2_io_i]
+
 assign_bd_address -offset 0x40000000 -range 128K [get_bd_addr_segs {hdmi_ctrl/S_AXI/Mem0}]
 assign_bd_address -offset 0x40020000 -range 64K  [get_bd_addr_segs {lcd_ctrl/S_AXI/Mem0}]
+assign_bd_address -offset 0x41200000 -range 64K  [get_bd_addr_segs {dbg_gpio/S_AXI/Reg}]
+assign_bd_address -offset 0x41210000 -range 64K  [get_bd_addr_segs {dbg_gpio_lcd/S_AXI/Reg}]
 validate_bd_design
 save_bd_design
 

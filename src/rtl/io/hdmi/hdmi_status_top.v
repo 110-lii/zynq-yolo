@@ -17,6 +17,11 @@ module hdmi_status_top(
     output      [14:0]  bram_addr,
     input       [31:0]  bram_dout,
 
+    // debug: read back pixel coordinates from PS (AXI GPIO)
+    output      [31:0]  dbg_x,
+    output      [31:0]  dbg_y,
+
+
     output              tmds_clk_p,
     output              tmds_clk_n,
     output      [2:0]   tmds_data_p,
@@ -68,5 +73,9 @@ dvi_transmitter_top u_dvi(
     .tmds_data_n (tmds_data_n),
     .tmds_oen    ()
 );
+
+// debug taps: dbg_x = pixel_xpos, dbg_y = {de, pixel_ypos}
+assign dbg_x = {17'd0, bram_addr};   // address probe (was pixel_xpos)
+assign dbg_y = {20'd0, video_de, pixel_ypos};
 
 endmodule

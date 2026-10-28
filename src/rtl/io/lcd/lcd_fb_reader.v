@@ -34,7 +34,9 @@ always @(posedge pclk or negedge reset_n) begin
         xq         <= 5'd0;
         pixel_data <= BLACK;
     end else begin
-        bram_addr  <= ye * 11'd25 + (xe >> 5);
+        // 同 HDMI：乘积位宽取 max(11,11)=11 位会每 2048 字（81.9 行）回绕，
+        // 必须显式按 14 位（16384 字）算地址。
+        bram_addr  <= ({3'd0, ye} * 14'd25) + {9'd0, xe[10:5]};
         wq         <= bram_dout;
         xq         <= xe[4:0];
         pixel_data <= wq[xq] ? WHITE : BLACK;

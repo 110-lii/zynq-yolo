@@ -23,9 +23,20 @@ sudo -E python3 tools/check_display_board.py --which both \
     --bit board/overlay/display_both.bit --pattern panel    # ③ 状态面板
 ```
 - 机器判据：`DISPLAY_BOTH_BOARD_OK bit=display_both.bit pattern=<级>`（两块 1bpp 帧缓存**逐字**读回一致）
+- **2026-10-28 新增 LCD 活体探针**：给 `--lcd-gpio 0x41210000` 后，脚本还会读新挂的
+  `dbg_gpio_lcd`（`{de,pixel_data}` / `{v_cnt,h_cnt}`），多出三条机器判据并打一行
+  `DISPLAY_BOARD_LIVE OK ... pclk=33.3xxMHz`：
+  – 像素时钟在 33.333 MHz ±5%（不用示波器就能认出是不是退回了 25）
+  – `h_cnt` 扫到 ≥0.9×1056、`v_cnt` 在递增、`de` 占空 0.60–0.88
+  – 采样到的白像素比例与刚写进帧缓存的比例同量级（差 3 倍以上判 FAIL）
+  单独验 LCD 一行即可：
+  ```bash
+  sudo -E python3 tools/check_display_board.py --which lcd \
+      --bit board/overlay/display_both.bit --pattern panel --lcd-gpio 0x41210000
+  ```
 - **人眼判据**：white 级整屏发亮；chess 级两块屏都是 64×64 棋盘格；panel 级 8 项信息都在、中文不乱码
 - 2026-10-27 已补：合并版 BD 补齐 014 的三处修复（`rstb` 接常量 0、两侧 `dcm_locked`、
-  LCD 走独立 clk_wiz 出准确 25 MHz），并重出 `display_both.bit`
+  LCD 走独立 clk_wiz）。**2026-10-28 更正：那个独立 clk_wiz 必须出 33.333 MHz 而不是 25 MHz** —— 25 MHz 配 1056×525 只有 45.1 Hz，实测表现为「画面能出但几何全错」；见 `ai/sessions/016_lcd_refresh_rate_and_diag.md`），并重出 `display_both.bit`
 - 兜底：合并版若仍有单块屏不对，退回 `hdmi_status.bit` / `lcd_status.bit` 分别验（这两块 014 已人眼确认棋盘格）
 
 ## 2. LCD 状态面板信息（本轮新增 8 项）

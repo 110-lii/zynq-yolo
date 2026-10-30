@@ -146,3 +146,18 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
      **板上还没验**。离线 `tools/track_players.py` 不输出每人的队别（只有颜色过滤）；`--calib` 可把脚点映射到米制（`points[].X/Y`，输入 `sx/sy`）。
   3. **显示两级判据的未做部分**见上文「边界」。
   4. 202 帧板上运行的原始 `/tmp/out.json` 未随包归档（证据链缺口）。
+## 分层测试集与全流程 overlay（2026-10-30）
+
+- **测试集分层**（`tools/split_scenes.py`）：从整场比赛按「人员聚集度」切成
+  `contest`（争抢）/`normal`（普通）两类，各 5 段 × 10 s；两道硬门槛
+  （草皮占比 ≥0.35、人物框中位高 ≤0.30 画面高）排掉名单图与特写。
+  191 个探针点被剔除，保留 103 个有效点（`data/samples/scenes/MANIFEST.csv`）。
+  **标签是几何代理，不是人工真值**（`human_ok` 列留空等人填）。
+- **分层测试表**（`tools/check_scene_suite.py`，主机 640@0.25）：
+  争抢段球检出 **11.6%**、普通段 **19.6%**；聚集度 0.171 vs 0.294。
+  ⇒ 球在争抢画面里确实更难检出；且**普通场景也只有约 1/5 的帧检得到球**，
+  这解释了 `ball_policy` / `ball_gate` 存在的必要性。样本各 5 段，不作准确率用。
+- **全流程固化 overlay**（`flow_system.bit`）：LCD 4bpp + 按键 + HDMI 32bpp 合进一个
+  bitstream，一次加载小屏大屏同时可用。地址只迁了两条（`gpio_id`/`gpio_t` →
+  `0x4127/0x4128`），其余工具零改动。详见 `docs/flow_overlay.md`。
+  **尚未上板**（板子当日反复硬复位）。

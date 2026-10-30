@@ -172,6 +172,12 @@ class HdmiVideoOut(object):
         """写一帧并切到该缓冲（PL 在 vs 沿锁存基址 ⇒ 双缓冲无撕裂）。"""
         words = pack_frame(img_bgr, self.width, self.stride_px)
         np.copyto(self.bufs[self.cur], words)
+        # PYNQ 的 allocate() 默认是可缓存（cacheable）的：CPU 写完只在 cache 里，
+        # PL 走 HP0 直接读 DDR ⇒ 读到的是旧内容（上板现象：整屏纯白/garbage）。
+        # 必须在切缓冲之前把这一帧刷到 DRAM。
+        flush = getattr(self.bufs[self.cur], "flush", None)
+        if callable(flush):
+            flush()
         self.cfg.write(0x0, self.bufs[self.cur].physical_address)
         self.cur ^= 1
 

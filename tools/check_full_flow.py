@@ -209,6 +209,29 @@ def step_team(cfg, tracks_path="", palette=""):
          human="队别准确率要人工标注，此处只证链路通")
 
 
+# ---------------------------------------------------------------- 2c 分层测试集
+def step_scenes(clips_dir="", fps=2.0):
+    """按画面性质分层的测试集（`split_scenes.py` 的产物）。
+
+    分层本身不算证据；证据是**两层上的指标差**。这里只跑检测统计（主机侧，
+    不需要板子），并且**不拿它当准确率** —— 争抢/普通是几何代理标签。
+    """
+    d = Path(clips_dir) if clips_dir else (ROOT / "data" / "samples" / "scenes")
+    vids = sorted(d.glob("*.mp4")) if d.is_dir() else []
+    if not vids:
+        step("scenes", "SKIP", "no clips in %s（先跑 tools/split_scenes.py --extract）"
+             % d.name, human="分层测试集缺失时，上板只测到最难的那一类画面")
+        return
+    rc, tail = run_mod(["tools/check_scene_suite.py", "--dir", str(d),
+                        "--fps", str(fps)], timeout=1800)
+    agg = next((ln for ln in reversed(tail) if ln.startswith("SCENE_SUITE_AGG")), "")
+    ok = any(ln.startswith("SCENE_SUITE_OK") for ln in tail)
+    step("scenes", "OK" if ok else "FAIL",
+         "%d 段 | %s" % (len(vids), agg.replace("SCENE_SUITE_AGG ", "") or
+                         (tail[-1] if tail else "rc=%d" % rc)),
+         human="标签是几何代理，不是人工真值")
+
+
 # ---------------------------------------------------------------- 3 结果落盘
 def _synth_rows(n=40):
     """合成一局的最小记录集：球员 + 球 + 事件，形状与 board_pipeline 的输出一致。"""
@@ -363,6 +386,9 @@ def main():
                     help="队别检查用的 tracks JSON（默认 data/results/tracks/inc_01_*.json）")
     ap.add_argument("--palette", default="",
                     help="队别检查的色板（默认从 ui_config 取；再缺省 A=red,B=white）")
+    ap.add_argument("--scenes", nargs="?", const="", default=None,
+                    help="跑分层测试集（可选给目录；不给就是 data/samples/scenes）")
+    ap.add_argument("--scenes-fps", type=float, default=2.0)
     args = ap.parse_args()
 
     t0 = time.time()
@@ -377,6 +403,8 @@ def main():
     if cfg is None:
         print("FULL_FLOW_NOTE ui_config 读不出来，后续仍继续（面板/UI 不依赖它）")
     step_team(cfg, args.team_tracks, args.palette)
+    if args.scenes is not None:
+        step_scenes(args.scenes, args.scenes_fps)
     jsonl = step_store(Path(args.out) / "store", args.replay, args.n_synth)
     step_stream(jsonl)
     step_panel(args.board, args.out, args.fb_base, jsonl)

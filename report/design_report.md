@@ -322,7 +322,8 @@ video_driver（1280×720@30）──► dvi_transmitter_top ──► HDMI
 | 主机侧打包 | `HDMI_VIDEO_SELFTEST OK` | 32bpp 打包往返 `dmax=0` |
 | 出图 | 图 7（`figures/hdmi_osd_boxes.png`） | 4 个绿色球员框 + `#id`、红圈标球、顶部事件条 |
 | 上板（机器） | `HDMI_VIDEO_BOARD_OK frames=313 under=0` | 2026-10-30 实测：5 s 内扫描推进 305 帧、**行欠载为 0** ⇒ `BRAM_OK` 级通过 |
-| 上板（人眼） | — | 彩条 + 移动白块的 `VISUAL_OK` **尚未确认**；带框图在真屏上尚未看过 |
+| 上板（人眼） | ❌ **全白** | 2026-10-30 复验时屏上纯白、无画面 —— 而 `frames` 仍 60/s 增长、`under=0`、帧缓存地址与 `pack` 解出来全对。**机器判据全过、画面是白的**，这是「`BRAM_OK` 不能替代 `VISUAL_OK`」最直接的一次实例 |
+| 归因与修复 | `cacheable=True` | 实测 `allocate()` 出来的帧缓存 `cacheable=True`：CPU 写完只在 cache 里，PL 走 HP0 直接读 DDR ⇒ 读到旧内容。已在 `HdmiVideoOut.show()` 里于切基址前加 `Buffer.flush()`；**修复已上板但画面尚未复验**，不得据此宣称 HDMI 已通 |
 
 ![HDMI 带框环出（主机侧渲染）](figures/hdmi_osd_boxes.png)
 
@@ -331,6 +332,59 @@ video_driver（1280×720@30）──► dvi_transmitter_top ──► HDMI
 
 ★ 出图用的是**合成坐标**（`.scratch/osd_demo.jsonl` 直接给像素框），它证明「渲染器会画、位置按输入走」，
 **不证明**「检测器给的框是对的」。真实框要跑真管线 JSONL 才谈得上。
+
+### 2.11 全流程固化 overlay 与分层测试集（2026-10-30）
+
+**为什么要把 bitstream 合并**：在此之前，面板（`lcd_probe.bit`）、带框大屏（`hdmi_video.bit`）
+是两个比特流，换一项功能就要重新 `Overlay()` 加载、PS 侧所有句柄重建。
+赛场上「先看小屏面板、再看大屏回放」不该意味着一次中断。`flow_system.bit` 把
+**LCD 4bpp 帧缓存 + 两颗按键 + HDMI 32bpp 扫描输出**放进同一个 PL 配置。
+
+**怎么合**（`build/scripts/bd_flow_system.tcl`）：
+
+| 组件 | 做法 | 为什么 |
+|---|---|---|
+| 时钟 | 两个 `clk_wiz`：LCD 走外部 50 MHz 引脚，HDMI 走 PS `FCLK_CLK0` | 输入源不同，不违反「一个引脚只能一个 IBUF」 |
+| 主控总线 | `axi_smc`（10 个 MI），M09 → `axi_clock_converter` → `hdmi_smc` | `M_AXI_GP0` 只能有一个从设备分支；HDMI 的 GPIO 必须挂在 pclk 域 |
+| HP 口 | `hp_smc`（AXI4→AXI3）→ `S_AXI_HP0`，`ACLK` 与 pclk 同源 | Zynq HP 是 AXI3；`fb_scanout` 内无跨时钟桥 |
+| 地址 | 只迁两条：`gpio_id`→`0x41270000`、`gpio_t`→`0x41280000` | `0x4120/0x4121` 是 `hdmi_video.py` 写死的，动它风险更大 |
+
+**出片结果**：
+
+| 项 | 值 |
+|---|---|
+| 令牌 | `FLOW_SYSTEM_BD_OK` |
+| WNS / WHS | **+3.042 ns / +0.028 ns**，失败端点 0 |
+| Slice LUT | 23,865（44.9%） |
+| Slice Registers | 31,255（29.4%） |
+| Block RAM | 86 / 140（61.4%） |
+| MMCM | 2 / 4 |
+| 地址表与 hwh 对拍 | 11 个从设备逐条一致 |
+
+★ 一个必须记住的教训：**互连的开销不能按单体相加估**。两个设计单独出片时
+LUT 分别是 19.0% 和 11.1%，相加约 30%；实际合并后 44.9%，差额全在
+`axi_smc`(10 MI) + `axi_clock_converter` + `hdmi_smc` + `hp_smc` 四个互连 IP 上。
+
+**构建期的一个真坑**：`create_bd_design` 报 `couldn't read file "init.tcl": No error`。
+仓库里记的旧对策是「按绝对路径预加载 IP 库」，这次**连绝对路径 `source` 都读不到**，
+预加载不够；改成**建图期间把 cwd 切到 `$ipintegrator`** 才通过。
+
+**分层测试集**：原先上板只用 `data/samples/incidents/` 的 12 段录像 —— 那些是
+`find_incidents.py` 按「导播切回放」挑的，**只代表最难的一类画面**。新增
+`tools/split_scenes.py` 按人员聚集度把整场切成两类，各 5 段 × 10 s：
+
+| 层 | 球检出率 | 聚集度 | 每帧人数 | 单帧推理（PC，640） |
+|---|---|---|---|---|
+| 争抢 contest | **11.6%** | 0.171 | 15.4 | 42.4 ms |
+| 普通 normal | **19.6%** | 0.294 | 17.5 | 32.5 ms |
+
+两条结论：① 球在争抢画面里确实更难检出（少 8 个百分点），分层切到了检测的薄弱面；
+② **即便是普通场景，球也只有约 1/5 的帧检得到** —— 这就是球门控必须存在的原因。
+样本各 5 段，**不作准确率用**；两类标签是几何代理，`MANIFEST.csv` 的 `human_ok` 列留空等人填。
+
+**诚实边界**：`flow_system.bit` 2026-10-30 出片、时序收敛、地址表对拍一致，
+但**尚未上板**（当天板子多次硬复位，见 `docs/board_environment.md`）。
+按本仓库纪律，未上板即不写「已验证」。
 
 
 ---

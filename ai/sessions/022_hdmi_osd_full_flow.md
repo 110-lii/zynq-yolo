@@ -238,3 +238,83 @@ LCD_UI_SAVED … a=red b=blue gk=green/purple ref=cyan side=left
 - 板子**没有 RTC**，断电后时间回 1970/2021，日志时间不可信，排查只能按 `boot=` 编号对。
 - 处置（可回退，备份 `.bak-20261030`）：`eth0` 改 `inet manual`（地址仍留 `eth0:1`）、
   注释 `reboot 3`、停 dhclient、装 `net_guard.sh` + cron 每分钟兜底、心跳日志加记 IP 与 dhclient 数。
+
+### 7.9 续（10-30 下午）：全白归因、场景分层测试集、全流程 overlay 合并
+
+#### 1) 第三次掉线与「新配置首次生效」
+
+第三次硬复位后重新上电，读回状态：`/etc/network/interfaces.d/eth0` 已是
+`iface eth0 inet manual` + `iface eth0:1 inet static`，地址在、`pgrep -c dhclient` = 0、
+cron 里 `net_guard.sh` 在跑 ⇒ **网络改动本身是对的，且能在重启后自动生效**。
+
+但掉线没停。`journalctl --list-boots` 显示上一次 boot（12:20:42–12:46:18）仍带着旧的
+`inet dhcp` 在跑（ifupdown 只在开机读配置），依旧**没有任何 shutdown 序列**。
+这一次掉线发生在启动 HDMI 扫描输出（1280×720×60、32bpp、约 220 MB/s 连续读 DDR）之后几分钟，
+所以「`reboot 3;` 是硬复位元凶」这个假设被削弱，供电/硬件嫌疑上升。
+下一步定责办法写在 `docs/board_environment.md`：**不跑任何 overlay 空载挂 10 分钟**，
+空载也掉就基本可以定成供电。
+
+#### 2) HDMI 全白：机器判据全过，画面是白的
+
+复现到的状态：`frames` 稳定 60 帧/s 增长、`under=0`、帧缓存物理地址 `0x38100000/0x38500000`、
+`pack=0x0D001400`（width/stride=1280、en=1，解出来全对）—— **机器侧没有任何一处报错**，
+屏上却是纯白。这正是「BRAM_OK 不能替代 VISUAL_OK」的又一个实例。
+
+抓到一条实证：`bufs[*].cacheable = True`。PYNQ 的 `allocate()` 默认可缓存，
+CPU 写完的像素只在 cache 里，PL 走 S_AXI_HP0 直接读 DDR ⇒ 读到旧内容。
+已在 `tools/hdmi_video.py` 的 `show()` 里加 `Buffer.flush()`（切基址之前刷）。
+脚本已推到板上，但**屏上变了没有还没看到**，按纪律记「未验」。
+下一步的判定脚本是「红→绿→蓝→白→黑」五张带大字色卡循环，屏上读到哪几个字就能一次分清
+「缓存问题已修」和「PL 扫出来的仍是常数」。
+
+#### 3) 场景分层：把测试集从「只有最难的画面」改成两层
+
+原先上板只用 `data/samples/incidents/` 的 12 段 —— 那是 `find_incidents.py` 按
+「导播切回放」挑出来的，**只代表最难的一类画面**。新工具 `tools/split_scenes.py` 按
+**人员聚集度**切成两类：
+
+    含 50% 检出入的最窄 x 区间宽度 w（归一化）   w 小 = 人挤在一起 = 争抢
+                                              w 大 = 阵型铺开 = 普通
+
+第一版判据被两种画面骗了，靠一张接触表当场抓出来：
+
+- **首发名单图**：人脸图标挤成一团，`w` 极小，"争抢度"爆表；
+- **球员通道特写**：人也挤在一起，同上。
+
+于是补两道硬门槛：**草皮占比 ≥ 0.35**（排除名单图/通道/看台）、**人物框中位高度 ≤ 0.30 画面高**
+（排除特写）。重扫 240 个探针点，剔除 `not_pitch=97` / `closeup=39` / `too_few_players=1`，
+剩下 103 个有效点，分出 5 段争抢 + 5 段普通（各 10 s、1280×720）。
+
+产物：`data/samples/scenes/MANIFEST.csv`（入库，含时间/聚集度/哈希）+ 10 个 mp4（不入库）。
+
+过程中还修了一个**名不副实**的数：`n_probe_frames` 一开始全是 1 —— 探针间隔 10 s、窗口 ±5 s，
+只框住中心探针自己，「中位数」是假的。改成 ±(half + step/2) 后变成 1~3（仍为 1 的段是真只有
+一个有效探针，没有粉饰）。
+
+#### 4) 分层测试表的结论
+
+`tools/check_scene_suite.py` 在主机侧逐段统计（640@0.25）：
+
+| 层 | 段数 | 球检出率 | 聚集度 | 每帧人数 | 单帧推理 |
+|---|---|---|---|---|---|
+| 争抢 | 5 | **11.6%** | 0.171 | 15.4 | 42.4 ms |
+| 普通 | 5 | **19.6%** | 0.294 | 17.5 | 32.5 ms |
+
+方向与判据一致（争抢画面球被挡得更狠），规模小（各 5 段），**不作准确率用**。
+另有一个值得写进报告的硬事实：**即便是普通场景，球也只有约 1/5 的帧检得到** ——
+这就是球门控（`ball_policy` / `ball_gate`）必须存在的原因，不能靠「检测器每帧都能看见球」。
+
+#### 5) 全流程 overlay：一次加载，小屏大屏同时可用
+
+新出片脚本 `build/scripts/bd_flow_system.tcl`，把 `lcd_probe` 与 `hdmi_video` 合并进
+`flow_system.bit`：两个 `clk_wiz`（LCD 走外部 50 MHz、HDMI 走 PS FCLK_CLK0，输入源不同，
+不违反「一引脚一个 IBUF」）、`axi_smc`(10 MI) + `axi_cc`(FCLK→pclk) + `hdmi_smc` + `hp_smc`。
+
+地址只动了两条：`gpio_id` `0x41200000→0x41270000`、`gpio_t` `0x41210000→0x41280000`
+（`0x4120/0x4121` 是 `hdmi_video.py` 写死的，不能动）。`status_display` / `lcd_ui` /
+`hdmi_video` / `bram_fb` 一个地址都不用改；`lcd_probe.py` 本来就按 IP 名解地址；
+`check_lcd4_board.py` 已改成同样按 IP 名解（否则会读到 HDMI 的寄存器上）。
+
+第一次出片挂在 `create_bd_design` → `couldn't read file "init.tcl": No error` ——
+仓库里记过的老坑，但这次连绝对路径 `source` init.tcl 都读不到，说明「预加载」不够；
+改成**建图期间把 cwd 切到 `$ipintegrator`** 才过。细节与出片记录见 `docs/flow_overlay.md`。

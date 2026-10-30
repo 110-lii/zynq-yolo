@@ -197,6 +197,10 @@ data/samples/**/*.bmp
 data/samples/**/*.mp4
 data/samples/**/*.html
 data/samples/**/_cuts_scan.json
+#     ★ `data/samples/scenes/_probe.json`（split_scenes.py 的逐点打分）同属中间结果：
+#       它是几百个探针点的原始特征，量不大但属于「可重算」的东西，
+#       真正要入库的是 MANIFEST.csv（时间窗 + 判据值 + 哈希）。
+data/samples/**/_probe.json
 
 # --- 训练/推理产生的临时目录 ---------------------------------------------------
 runs/

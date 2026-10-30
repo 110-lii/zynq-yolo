@@ -68,6 +68,35 @@ def log(msg):
         fh.write(line + "\n")
 
 
+def local_route_ip(dst=None, port=9):
+    """本机连到板子时会用哪张网卡、哪个源地址（UDP connect 不发包，只查路由）。
+
+    2026-10-31 踩到：板子一直超时，查了半天板子，实际是**本机网线掉了**——
+    `以太网` 状态「已断开连接」，路由表里根本没有 192.168.2.0/24，
+    所有探测都只能走 WLAN 的默认网关，必然超时。
+    端口超时这一个现象同时对应「板子没上电」「板子内核卡死」「本机没网线」三种原因，
+    不把这个数打出来，就只能靠猜。
+    """
+    dst = dst or BOARD_IP
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect((dst, port))
+        return s.getsockname()[0]
+    except OSError:
+        return ""
+
+
+def link_diag():
+    """返回一句人能直接照着做的话：链路是通的，还是本机这头就不对。"""
+    src = local_route_ip()
+    if not src:
+        return "HOST_LINK_NONE 本机没有到 %s 的路由（网线/网口？）" % BOARD_IP
+    if not src.startswith(BOARD_IP.rsplit(".", 1)[0] + "."):
+        return ("HOST_LINK_WRONG 本机到 %s 走的是 %s（不在同一网段）——"
+                "先插回网线/看网口灯，不一定是板子的问题" % (BOARD_IP, src))
+    return "HOST_LINK_OK src=%s" % src
+
+
 def board_up(timeout=2.5):
     s = socket.socket()
     s.settimeout(timeout)
@@ -100,6 +129,7 @@ def wait_for_board(seconds, poll):
     # 直接跳过 —— 2026-10-30 连着两次「板子明明活着却 SKIP board_offline」就是这么来的。
     # 至少给一轮的时间预算。
     budget = max(seconds, poll)
+    log(link_diag())          # 只打一次：等板子前先看本机这头对不对
     while time.time() - t0 < budget:
         n += 1
         if board_alive():

@@ -34,7 +34,7 @@ add_files -norecurse [list \
     [file join $rtl_hdmi video_driver.v] \
     [file join $rtl_hdmi fb_reader.v] \
     [file join $rtl_hdmi hdmi_status_top.v] \
-    [file join $rtl_lcd lcd_driver.v] \
+    [file join $rtl_lcd lcd_timing.v] \
     [file join $rtl_lcd lcd_fb_reader.v] \
     [file join $rtl_lcd lcd_status_top.v] \
 ]
@@ -92,13 +92,27 @@ connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz/clk_in1]
 connect_bd_net [get_bd_pins rst_ps/peripheral_reset] [get_bd_pins clk_wiz/reset]
 set pclk_hdmi [get_bd_pins clk_wiz/clk_out1]
 set pclk5 [get_bd_pins clk_wiz/clk_out2]
-set pclk_lcd [get_bd_pins clk_wiz/clk_out3]
+## LCD 单独第二个 MMCM：33.333 MHz → 30.000 MHz（VCO 900, ÷30），
+## 与 ATK-MD0430R-800480 手册 DCLK typ 30 MHz / Th 928 对齐。
+set clk_wiz_lcd [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_lcd]
+set_property -dict [list \
+    CONFIG.PRIM_IN_FREQ {33.333} \
+    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {30.000} \
+    CONFIG.USE_LOCKED {true} \
+    CONFIG.USE_RESET {true} \
+    CONFIG.RESET_PORT {reset} \
+    CONFIG.RESET_TYPE {ACTIVE_HIGH} \
+] $clk_wiz_lcd
+connect_bd_net [get_bd_pins clk_wiz/clk_out3] [get_bd_pins clk_wiz_lcd/clk_in1]
+connect_bd_net [get_bd_pins rst_ps/peripheral_reset] [get_bd_pins clk_wiz_lcd/reset]
+set pclk_lcd [get_bd_pins clk_wiz_lcd/clk_out1]
 set rst_hdmi [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_hdmi]
 connect_bd_net $pclk_hdmi [get_bd_pins rst_hdmi/slowest_sync_clk]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_hdmi/ext_reset_in]
 set rst_lcd [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_lcd]
 connect_bd_net $pclk_lcd [get_bd_pins rst_lcd/slowest_sync_clk]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_lcd/ext_reset_in]
+connect_bd_net [get_bd_pins clk_wiz_lcd/locked] [get_bd_pins rst_lcd/dcm_locked]
 
 # ---------------- GP0: track control + 2 BRAM ctrls ----------------
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
@@ -174,7 +188,7 @@ foreach p {lcd_de lcd_hs lcd_vs lcd_bl lcd_clk lcd_rst} {
     create_bd_port -dir O -type data $p
     connect_bd_net [get_bd_ports $p] [get_bd_pins lcd_status_0/$p]
 }
-create_bd_port -dir O -from 23 -to 0 -type data lcd_rgb
+create_bd_port -dir IO -from 23 -to 0 -type data lcd_rgb
 connect_bd_net [get_bd_ports lcd_rgb] [get_bd_pins lcd_status_0/lcd_rgb]
 
 assign_bd_address -offset 0x40020000 -range 128K [get_bd_addr_segs {hdmi_ctrl/S_AXI/Mem0}]

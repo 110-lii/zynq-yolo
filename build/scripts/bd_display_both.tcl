@@ -26,7 +26,7 @@ add_files -norecurse [list \
     [file join $rtl_hdmi video_driver.v] \
     [file join $rtl_hdmi fb_reader.v] \
     [file join $rtl_hdmi hdmi_status_top.v] \
-    [file join $rtl_lcd lcd_driver.v] \
+    [file join $rtl_lcd lcd_timing.v] \
     [file join $rtl_lcd lcd_fb_reader.v] \
     [file join $rtl_lcd lcd_status_top.v] \
 ]
@@ -84,18 +84,17 @@ set_property -dict [list \
 connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz/clk_in1]
 connect_bd_net [get_bd_pins rst_ps/peripheral_reset] [get_bd_pins clk_wiz/reset]
 
-## ---- LCD 像素时钟：33.333 MHz（不是 25 MHz）----
-## 依据（两条独立来源，都指向同一结论）：
-##  ① ATK-MD0430R-800480 手册表 2.2.1.2：Th typ 928 / Tv typ 525，Table 标题为 60 Hz；
-##     oi 项目 085 会话逐字引裸屏规格书：PCLK frequency @ Frame rate = 60Hz。
-##  ② oi 项目在同一块屏上实测过：25 MHz（=45.1 Hz）→ 整幅抖动/下跳；33.333 MHz → 稳定。
-##     1056×525 @ 33.333 MHz = 60.13 Hz（+0.2%），Th=1056 落在规格 [889,1143] 内。
-## 25 MHz 与 75/375 MHz 无公共 VCO 能达到 33.333（750÷33.333=22.5 非整数），
-## 所以 LCD 单独一个 MMCM：50 MHz → VCO 1000（M=20, D=1）→ ÷30 = 33.333 MHz。
+## ---- LCD 像素时钟：30.000 MHz（按 ATK-MD0430R-800480 手册 typ）----
+## 依据：ATK-MD0430R 手册 800×480 档：DCLK typ 30 MHz、Th 928
+## （800 + 40 hbp + 88 hfp）、Tv 525，30e6/(928×525)=61.6 Hz。
+## 当前实物 ID 读回仍为 000（480×272），本档按用户要求配置为 800×480，
+## 待接 800×480 屏后做最终目视；480×272 档参数保留在 git 历史/会话 020。
+## 25 MHz 与 75/375 MHz 无公共 VCO 能达到 30.000，所以 LCD 单独一个 MMCM：
+## 50 MHz → VCO 900（M=18, D=1）→ ÷30 = 30 MHz。
 set clk_wiz_lcd [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_lcd]
 set_property -dict [list \
     CONFIG.PRIM_IN_FREQ {50.000} \
-    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {33.333} \
+    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {30.000} \
     CONFIG.USE_LOCKED {true} \
     CONFIG.USE_RESET {true} \
     CONFIG.RESET_PORT {reset} \
@@ -196,7 +195,7 @@ foreach p {lcd_de lcd_hs lcd_vs lcd_bl lcd_clk lcd_rst} {
     create_bd_port -dir O -type data $p
     connect_bd_net [get_bd_ports $p] [get_bd_pins lcd_status_0/$p]
 }
-create_bd_port -dir O -from 23 -to 0 -type data lcd_rgb
+create_bd_port -dir IO -from 23 -to 0 -type data lcd_rgb
 connect_bd_net [get_bd_ports lcd_rgb] [get_bd_pins lcd_status_0/lcd_rgb]
 
 ## ---- debug: AXI GPIO reads back pixel_xpos / {de, pixel_ypos} from hdmi_status_0 ----

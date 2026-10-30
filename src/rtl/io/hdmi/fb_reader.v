@@ -1,11 +1,20 @@
 // ============================================================================
-// fb_reader.v —— 1bpp BRAM 状态帧缓存读侧（1280x720）
+// fb_reader.v —— 1280x720 / 1bpp 帧缓存读取器（预取移位寄存器版）
 //
-// 帧缓存布局：每行 40 个 32-bit 字（1280 bit），共 720 行 = 28,800 字。
-// AXI BRAM Controller 从 PS 侧写 Port A；本模块读 Port B。
+// 与 LCD 侧 `lcd_fb_reader.v` 同构，只差分辨率：
+//   每行 1280 像素 = 40 个 32-bit 字，共 720 行 = 28,800 字。
+//   bit0 = 行内最左像素（与 tools/bram_fb.py 的 pack_1bpp 一致）。
 //
-// 时序说明：BRAM 读 1 拍 → (字, 位序) 成对寄存一拍后按位取值；
-// 相对像素时钟有固定 1~2 像素偏移（状态面板可接受，不是视频环出）。
+// 为什么不用「(字, 位序) 成对寄存」的队列版：
+//   队列版把「地址到数据恰好 N 拍」写死。BRAM 输出寄存器开关、AXI 侧流水、
+//   换 MMCM 后的时钟都会改变这个 N，一旦差一拍整幅图就横向抹开 ——
+//   板上表现就是「读回逐字正确、屏上是灰长条/渐变」（session 017）。
+//   本版在**每个字的第一拍就把下一字地址**发出去，留 32 拍裕量，
+//   实测 1/2/3 拍读延迟下逐像素结果完全相同。
+//
+// 关键时序口径：`video_driver` 的 pixel_xpos 有效值 1..1280、pixel_ypos 1..720，
+//   且 `video_rgb = video_de ? pixel_data : 0` 是**组合选通**，
+//   所以 pixel_data 必须与坐标同拍，不能打拍（打一拍每行第 0 列读到黑）。
 // ============================================================================
 module fb_reader(
     input               pclk,
@@ -14,45 +23,48 @@ module fb_reader(
     input       [10:0]  ypos,
     output reg  [14:0]  bram_addr,
     input       [31:0]  bram_dout,
-    output reg  [23:0]  pixel_data
+    output      [23:0]  pixel_data
 );
 
 localparam [23:0] WHITE = 24'hFFFFFF;
 localparam [23:0] BLACK = 24'h101820;
+localparam [14:0] WORDS_PER_LINE = 15'd40;
 
-// ★ 坐标口径（照 D:\FPGA\oi 的实测结论，别再自己推）：
-//   video_driver 给的 pixel_xpos 是 1..1280、pixel_ypos 是 1..720，都 1 起算。
-//   原话「列不用减、行必须减」：行少减 1 时整幅画面上移一行、最后一行读到帧外；
-//   列这边减 1 才与字内位序对齐（原实现减 2，整体右移 1 像素）。
-//   data_req 期初 xpos/ypos 还会给到 0，故做下溢保护。
-wire [10:0] xe;
-wire [10:0] ye;
-assign xe = (xpos >= 11'd1) ? (xpos - 11'd1) : 11'd0;
-assign ye = (ypos >= 11'd1) ? (ypos - 11'd1) : 11'd0;
+wire active_x = (xpos >= 11'd1) && (xpos <= 11'd1280);
+wire active_y = (ypos >= 11'd1) && (ypos <= 11'd720);
+wire active   = active_x && active_y;
 
-// ---- 读出：字 + 字内位序 一起排队一拍，再按位取值 ----
-// 为什么不用 32 位移位寄存器：移位版依赖「装载那一刻 bram_dout 恰好是本字」这个假设，
-// 而 BRAM 读延迟在综合后可能不是恰好 1 拍（blk_mem_gen 的 PortB 输出寄存器开关、
-// AXI 侧插入的流水都会改变），一旦差一个字，整幅图就被横向抹开一段。
-// 队列版把 (数据, 当时的位序) 成对寄存，地址怎么延迟都自洽，仿真匹配度
-// 97.2% → 99.7%（.scratch 里 8 组 ALIGN×延迟扫描，ALIGN=1 最好）。
-reg [31:0] wq;
-reg [4:0]  xq;
+wire [10:0] cur_col = active_x ? (xpos - 11'd1) : 11'd0;   // 0..1279
+wire [9:0]  cur_row = active_y ? (ypos[9:0] - 10'd1) : 10'd0;  // 0..719
+
+wire [14:0] row_base = {5'd0, cur_row} * WORDS_PER_LINE;
+
+reg [31:0] sr;
+reg [5:0]  word_idx;   // 0..39
+
+wire [5:0]  next_word = (word_idx < 6'd39) ? (word_idx + 6'd1) : 6'd0;
+wire [14:0] next_addr = row_base + {9'd0, next_word};
 
 always @(posedge pclk or negedge reset_n) begin
     if (!reset_n) begin
-        bram_addr  <= 15'd0;
-        wq         <= 32'd0;
-        xq         <= 5'd0;
-        pixel_data <= BLACK;
+        bram_addr <= 15'd0;
+        sr        <= 32'd0;
+        word_idx  <= 6'd0;
+    end else if (!active_x) begin
+        bram_addr <= row_base;
+        sr        <= bram_dout;
+        word_idx  <= 6'd0;
+    end else if (cur_col[4:0] == 5'd31) begin
+        sr        <= bram_dout;
+        word_idx  <= next_word;
+        bram_addr <= next_addr;
     end else begin
-        // Width must be full: `ye * 11'd40` yields an 11-bit product, so the row
-        // base wrapped every 2048 words (51.2 rows). Keep operands 15-bit.
-        bram_addr  <= ({4'd0, ye} * 15'd40) + {10'd0, xe[10:5]};
-        wq         <= bram_dout;
-        xq         <= xe[4:0];
-        pixel_data <= wq[xq] ? WHITE : BLACK;
+        sr <= {1'b0, sr[31:1]};
+        if (cur_col[4:0] == 5'd0)
+            bram_addr <= next_addr;
     end
 end
+
+assign pixel_data = active ? (sr[0] ? WHITE : BLACK) : BLACK;
 
 endmodule

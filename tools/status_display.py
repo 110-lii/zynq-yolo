@@ -104,6 +104,17 @@ C_CAMERA = (160, 255, 140)
 C_STORE = (255, 180, 190)
 C_PL = (120, 170, 255)
 C_RUNTIME = (195, 180, 170)
+C_HEADLINE = (90, 150, 210)        # 顶栏那条分隔线
+
+# LCD 是 4bpp（16 色）：调色板由界面自己给，不能让自动量化把类型色吃掉。
+# 顺序有意义：0 号永远是页面底色，其余按「背景 → 中性 → 类型色」排。
+LCD_PALETTE = [
+    BG, HEADER_BG, ROW_A, ROW_B,          # 0..3 背景
+    LABEL_FG, WHITE, C_RUNTIME, C_HEADLINE,  # 4..7 中性/标题
+    C_FRAME, C_PLAYERS, C_BALL, C_EVENT,   # 8..11 类型色（帧号/人数/球/事件）
+    C_CAMERA, C_STORE, C_PL,               # 12..14 机位/存储/PL
+    (255, 255, 255),                       # 15 纯白（留给选中/高亮）
+]
 
 # 字体/语言（main() 里允许命令行覆盖）
 FONT_OVERRIDE = ""
@@ -253,9 +264,11 @@ class _Painter:
                 from PIL import Image, ImageDraw
                 pil = Image.fromarray(np.ascontiguousarray(self.img[:, :, ::-1]))
                 d = ImageDraw.Draw(pil)
-                for x, y, t, px, c, _b in self.ops:
-                    d.text((x, y), t, font=self._font(px),
-                           fill=(c[2], c[1], c[0]), anchor="lt")
+                for x, y, t, px, c, b in self.ops:
+                    # 1bpp 屏：粗体用小字描边 1px（抗锯齿细笔画二值化后会掉，看着就是糊）
+                    d.text((x, y), t, font=self._font(px), fill=(c[2], c[1], c[0]),
+                           anchor="lt", stroke_width=1 if (b and px <= 20) else 0,
+                           stroke_fill=(c[2], c[1], c[0]))
                 self.img = np.asarray(pil)[:, :, ::-1].copy()
                 return self.img
             except Exception:
@@ -508,7 +521,7 @@ def render(st, w=800, h=480, ctx=None):
     gap = max(2, int(4 * s))
     rh = (bottom - top - gap * (len(rows) - 1)) // len(rows)
     pad_x = int(14 * s)
-    label_w = int(150 * s)
+    label_w = int(162 * s)
     val_x = pad_x + label_w
     val_max = w - pad_x - val_x - int(12 * s)
     for i, (label, value, color) in enumerate(rows):
@@ -516,8 +529,9 @@ def render(st, w=800, h=480, ctx=None):
         cv2.rectangle(img, (pad_x, y0), (w - pad_x, y0 + rh),
                       ROW_A if i % 2 == 0 else ROW_B, -1)
         cv2.rectangle(img, (pad_x, y0), (pad_x + max(3, int(5 * s)), y0 + rh), color, -1)
-        lpx = int(16 * s)
-        ltxt, lpx = _fit(p, label, label_w - int(14 * s), lpx, int(10 * s))
+        # 1bpp 上小字会掉笔画（屏上看就是「模糊」）：左标签列不许小于 12px
+        lpx = int(18 * s)
+        ltxt, lpx = _fit(p, label, label_w - int(14 * s), lpx, int(12 * s))
         p.text(pad_x + int(12 * s), y0 + rh // 2 - int(lpx * 0.62), ltxt, lpx,
                LABEL_FG, bold=True)
         vpx = int(19 * s)
@@ -525,15 +539,16 @@ def render(st, w=800, h=480, ctx=None):
         p.text(val_x, y0 + rh // 2 - int(vpx * 0.62), vtxt, vpx, color)
 
     # ---- 底栏 ----
+    # 1bpp 屏：底栏字最小，必须加粗描边 + 提亮，否则二值化后掉笔画（看着是「糊」）
     src = ctx.src or _src_hint(st.raw or {})
-    lpx = int(13 * s)
+    lpx = int(16 * s)
     ltxt = "%s  %s" % ("源文件" if zh else "src", src or _placeholder(zh))
-    ltxt, lpx = _fit(p, ltxt, int(w * 0.56), lpx, int(10 * s))
-    p.text(int(16 * s), h - int(21 * s), ltxt, lpx, (150, 158, 172))
-    rpx = int(13 * s)
+    ltxt, lpx = _fit(p, ltxt, int(w * 0.56), lpx, int(12 * s))
+    p.text(int(16 * s), h - int(24 * s), ltxt, lpx, (208, 214, 226), bold=True)
+    rpx = int(16 * s)
     rtxt = "rows 8   backend=%s" % p.backend
-    rtxt, rpx = _fit(p, rtxt, int(w * 0.38), rpx, int(10 * s))
-    p.text_right(w - int(16 * s), h - int(21 * s), rtxt, rpx, (150, 158, 172))
+    rtxt, rpx = _fit(p, rtxt, int(w * 0.40), rpx, int(12 * s))
+    p.text_right(w - int(16 * s), h - int(24 * s), rtxt, rpx, (208, 214, 226), bold=True)
     return p.flush()
 
 
@@ -623,6 +638,20 @@ def _png_path(pattern, w, h, n_sizes):
     return str(base.with_name("%s_%dx%d%s" % (base.stem, w, h, base.suffix)))
 
 
+def _bram_layout(sizes):
+    """--fb-bram 的打包版面：跟着 --size 走，不许默认成 HDMI。
+
+    1bpp 帧缓存的行宽是硬约束：LCD 800x480 → 25 字/行，HDMI 1280x720 → 40 字/行。
+    写错版面不会有任何报错：读侧按 25 字/行取数、源图按 40 字/行排，
+    每往下一行就多滑 15 个字，相邻几行文字被叠在一起（2026-10-29 上板踩过，
+    现象是「字都重叠了」）；1280x720 的 28800 字还会越界压坏 480 那块 BRAM。
+    """
+    ok = [s for s in sizes if s in ((800, 480), (1280, 720))]
+    if len(ok) == 1:
+        return ok[0]
+    return (1280, 720)
+
+
 def _fb_info(fb):
     base = Path("/sys/class/graphics") / Path(fb).name
     bpp = 32
@@ -709,6 +738,17 @@ def _selftest():
         problems.append("rows=%d (expect 8)" % len(rows))
     if any(not str(v).strip() for _l, v, _c in rows):
         problems.append("empty value in rows")
+
+    # --fb-bram 的版面必须跟着 --size 走：写错版面屏上不会报错，只会把文字叠在一起
+    from bram_fb import pack_1bpp
+    for want, sizes in (((800, 480), [(800, 480)]),
+                        ((1280, 720), [(1280, 720)]),
+                        ((1280, 720), [(800, 480), (1280, 720)])):
+        got = _bram_layout(sizes)
+        if got != want:
+            problems.append("bram layout for %s = %s (expect %s)" % (sizes, got, want))
+    if pack_1bpp(render(st, 800, 480, ctx), 800, 480).size != 12000:
+        problems.append("800x480 pack words != 12000 (LCD 读侧 25 字/行)")
 
     rows0 = build_rows(zeros, ctx0, zh=_use_zh())
     ph = _placeholder(_use_zh())
@@ -831,14 +871,25 @@ def main():
                     printed.add("fb")
                     print("STATUS_DISPLAY_FB %s bpp=%d" % (args.fb, bpp))
             if args.fb_bram:
-                from bram_fb import write_image
-                img_hdmi = imgs.get((1280, 720))
-                if img_hdmi is None:
-                    img_hdmi = render(st, 1280, 720, ctx)
-                mode = write_image(img_hdmi, int(args.fb_bram, 0), 1280, 720)
+                import bram_fb
+                bw, bh = _bram_layout(sizes)
+                img_b = imgs.get((bw, bh))
+                if img_b is None:
+                    img_b = render(st, bw, bh, ctx)
+                if (bw, bh) == (800, 480):
+                    # LCD：4bpp + 16 色调色板（每屏自带，写在图像字之后）
+                    mode, pal = bram_fb.write_image4(img_b, int(args.fb_bram, 0),
+                                                     bw, bh, palette=LCD_PALETTE)
+                    words, _ = bram_fb.pack_4bpp(img_b, bw, bh, palette=LCD_PALETTE)
+                    nw = words.size
+                else:
+                    mode = bram_fb.write_image(img_b, int(args.fb_bram, 0), bw, bh)
+                    nw = (bw // 32) * bh
                 if "bram" not in printed:
                     printed.add("bram")
-                    print("STATUS_DISPLAY_BRAM %s via %s" % (args.fb_bram, mode))
+                    # 版面/格式写进令牌：写错版面只会「字叠在一起」，光看 OK 看不出来
+                    print("STATUS_DISPLAY_BRAM %s layout=%dx%d bpp=%d words=%d via %s"
+                          % (args.fb_bram, bw, bh, 4 if (bw, bh) == (800, 480) else 1, nw, mode))
             if args.also_lcd_base:
                 from bram_fb import write_image
                 img_lcd = imgs.get((800, 480))

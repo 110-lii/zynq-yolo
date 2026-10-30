@@ -5,7 +5,8 @@
 
 用法：
     python tools/board_jupyter.py "python3 -c 'print(1)'"
-    python tools/board_jupyter.py --put local.bin remote.bin
+    python tools/board_jupyter.py --push local.bin /home/xilinx/any/path.bin   # 写任意路径
+    python tools/board_jupyter.py --put  local.bin notebooks_relative.bin      # 只能写 Jupyter 根目录
     echo "print('hi')" | python tools/board_jupyter.py
 
 注意：这是控制通道，不是产品代码；板端测试脚本仍应放 tools/ 或 board/。
@@ -117,6 +118,42 @@ def put(local, remote):
     return 0 if code in (200, 201) else 1
 
 
+def push(local, remote, chunk=262144):
+    """把本地文件写到板子上任意路径，并回读 sha256 校验。
+
+    为什么不用 `put()`：Jupyter 的 contents API 只能写服务器根目录
+    （=/home/xilinx/jupyter_notebooks）下的路径，`put('/home/xilinx/zynq-yolo/...')`
+    会 404/500。这里改走 kernel：把文件切片 base64 塞进内核代码里写盘，
+    顺带打印两端 sha256，回环可核。
+    """
+    import hashlib
+    raw = open(local, "rb").read()
+    b64 = base64.b64encode(raw).decode("ascii")
+    sha_local = hashlib.sha256(raw).hexdigest()
+    first = True
+    total = 0
+    for i in range(0, len(b64), chunk):
+        piece = b64[i:i + chunk]
+        mode = "wb" if first else "ab"
+        code = ("import base64, os\n"
+                "p = %r\n"
+                "os.makedirs(os.path.dirname(p) or '.', exist_ok=True)\n"
+                "open(p, %r).write(base64.b64decode(%r))\n"
+                % (remote, mode, piece))
+        run(code)
+        first = False
+        total += len(piece)
+    code = ("import base64, hashlib, os\n"
+            "p = %r\n"
+            "d = open(p, 'rb').read()\n"
+            "print('BOARD_PUSH %%s bytes=%%d sha256=%%s' %% (p, len(d), hashlib.sha256(d).hexdigest()))\n"
+            % remote)
+    run(code)
+    print("HOST_PUSH %s bytes=%d sha256=%s chunks=%d"
+          % (local, len(raw), sha_local, (total + chunk - 1) // chunk))
+    return 0
+
+
 def get(remote, local):
     _login()
     code, body = _call("GET", "/api/contents/" + urllib.parse.quote(remote) + "?content=1&format=base64")
@@ -134,6 +171,8 @@ def get(remote, local):
 if __name__ == "__main__":
     if len(sys.argv) == 4 and sys.argv[1] == "--put":
         raise SystemExit(put(sys.argv[2], sys.argv[3]))
+    if len(sys.argv) == 4 and sys.argv[1] == "--push":
+        raise SystemExit(push(sys.argv[2], sys.argv[3]))
     if len(sys.argv) == 4 and sys.argv[1] == "--get":
         raise SystemExit(get(sys.argv[2], sys.argv[3]))
     code = sys.stdin.read() if len(sys.argv) < 2 else " ".join(sys.argv[1:])

@@ -53,12 +53,20 @@
 | `check_track_preproc_board.py` | **PL 跟踪辅助上板对拍**：加载 overlay 后逐字节比 RGB/掩码并测 720p 耗时 | ✅ `TRACK_PREPROC_BOARD_OK`（720p 32.39 ms） |
 | `check_board_acceptance.py` | **板上一条命令验收球链路三组参数**：base / `--ball-lost-sec` / `--ball-predict-past-boundary` 各跑一遍并出对照表；`--selftest` 验判定逻辑、`--replay` 做离线统计、`--reuse` 复用已有结果 | ✅ 板上实测 `BOARD_ACCEPTANCE_OK`（`ball_clip.mp4` + `field_calib_ball.json`：base 144/48、lostsec 182/48、predict 144/48）；⚠️ **但 lostsec 新增 38 帧经人工抽查全是假球 ⇒ 该开关已否决**（见 `ai/sessions/012`） |
 |　| ⚠️ **标定必须配对**：`ball_clip.mp4` 只能用 `data/calib/field_calib_ball.json`；配 `field_calib.json` 会判 `calibration_mismatch` → 镜头无效 → 球全部不输出（0 帧），三组都会"通"但统计全 0 | |
-| `check_display_board.py` | **显示 overlay 上板门禁**：写 1bpp 帧缓存并 AXI 读回（HDMI/LCD/双屏） | ✅ `DISPLAY_BOARD_OK` / `DISPLAY_BOTH_BOARD_OK` / `TRACK_DISPLAY_BOARD_OK` |
+| `check_display_board.py` | **显示 overlay 上板门禁**：写 1bpp 帧缓存并 AXI 读回（HDMI/LCD/双屏）；`--lcd-gpio` 验像素内容/扫描范围/像素时钟，`--hdmi-gpio` 验读口地址覆盖与帧率 | ✅ `DISPLAY_BOARD_OK` / `DISPLAY_BOTH_BOARD_OK` / `DISPLAY_BOARD_LIVE OK` / `DISPLAY_BOARD_HDMI_LIVE OK` |
+| `lcd_probe.py` | **LCD 双分辨率探针（板端）**：加载 `lcd_probe.bit`，用 cfg 切 800×480@33.333 / 480×272@9.000、切纯 PL 图案/帧缓存，读 ID/时序/实测像素时钟并写帧缓存读回；帧缓存**默认 4bpp 16 色**（`--bpp 1` 回落黑白），地址 `0x40000000`（800，192 KB）/`0x40080000`（480）；`--keys` 读按键 GPIO `0x41260000`；`--dbg-row` / `--dbg-scan` 逐行读回「读侧实际送屏的字」（`0x4123`=line_buf、`0x4124`=stag_flat、`0x4125`=行 DE 拍数/预取次数，cfg[15:6] 选行） | 上板实测 800×480 / pclk 33.337 MHz；读侧根因已定位（见 `ai/sessions/021`） |
+| `lcd_data.py` | **LCD 帧缓存打包器（独立口径，不经过 PIL）**：每行 W/(32/bpp) 个 32-bit 字、字内**最低 bpp 位 = 最左像素**；`--bpp 4`（默认）生成 16 色 tag4 诊断图（第 r 行第 k 字 = `0x11111111*((r+k)&15)`）+ 末尾 16 个调色板字，`--bpp 1` 是旧黑白口径；`--selftest` 验两种 bpp 的打包/地址 | `--selftest` 通过（1bpp 800=12000、4bpp 800=48000+16） |
+| `lcd_probe_host.py` | 主机侧包装：`build` / `deploy` / `run`，把出片与 Jupyter 通道串起来 | ⚠️ Vivado 一步**不能在工具沙箱内跑**（见 021 记录） |
+| `lcd_ui.py` | **赛前设置界面（板端，800×480 4bpp）**：球衣颜色 A/B + 双方守门员，**用板载两颗 PL 键操作**（key0=下一项、key1=换色/确认，GPIO `0x41260000`），显式 16 色调色板（8 种球衣色必须精确在板内，否则量化会把红/橙、蓝/紫并掉）；确认后落 `board/ui_config.json`（颜色名 + RGB + 时间戳）供下游读；`--once` / `--script 0,1,1`（回放按键）/ `--keys`（只读电平判极性）/ `--preview-only`（主机侧出「面板真实所见」的量化 PNG） | ⚠️ 版面主机侧已过；**上板待验** |
+| `board_jupyter.py` | **Jupyter 控制通道**（SSH 不通时的唯一入口）：`run(code)` 在板端内核执行；`--push` 分片 base64 写**任意路径**并回读 sha256（`--put` 只能写 Jupyter 根目录 `/home/xilinx/jupyter_notebooks`）；`--get` 取回文件 | ✅ 已用于本仓多数板端实验 |
 | `result_store.py` | **SD 卡增量存储**：JSONL + `summary.json` + fsync + 轮转 | ✅ 已创建（`RESULT_STORE_SELFTEST OK`） |
 | `result_stream.py` | **板→PC 推送**：按行 TCP 发 JSONL，断线重连/尾随 | ✅ 已创建（本地回环 `sent=2`） |
 | `pc_dashboard.py` | **PC 端软件**：TCP/回放 + 105×68 球场画布 + CSV + headless | ✅ 已创建（`PC_DASHBOARD_SELFTEST OK`） |
-| `status_display.py` | **HDMI/LCD 状态面板**：800×480/1280×720，fbdev/PNG/窗口/BRAM | ✅ 已创建（`STATUS_DISPLAY_SELFTEST OK`） |
-| `bram_fb.py` | **HDMI/LCD 1bpp 帧缓存**：BGR→28,800（HDMI）/12,000（LCD）×32-bit，PYNQ MMIO 或 `/dev/mem` 写 AXI BRAM | ✅ 已创建（`BRAM_FB_SELFTEST OK`） |
+| `hdmi_video.py` | **HDMI 视频环出（D026，PS 侧）**：按 JSONL 把球员绿框/#id、球红圈、顶部事件条画到真实画面上，打包 32bpp 写 DDR 帧缓存，AXI GPIO 告诉 PL 基址/跨距/宽；`--png-out` 可**不接板出图**，`--selftest` 验打包往返 | ✅ `HDMI_VIDEO_SELFTEST OK`；主机侧出图已验证（框/球/事件条都在）⚠️ **上板未验** |
+| `check_full_flow.py` | **整体流程一条命令**：时间对齐 → 赛前配置 → 结果落盘 → 板→PC 推流 → LCD 状态面板 → 赛前 UI，每步一条令牌，最后打 PASS/FAIL 表；`--dry-run` 主机跑、`--board` 含真板 | ✅ `FULL_FLOW_OK`（主机侧 ok=4 skip=2 fail=0）；板上待验 |
+| `status_display.py` | **HDMI/LCD 状态面板**：800×480/1280×720，fbdev/PNG/窗口/BRAM。`--fb-bram` 的打包版面**跟着 `--size` 走**（`layout=WxH words=N` 打进令牌；写错版面不报错、只会让相邻行文字相叠，见 `ai/sessions/021`）；LCD 走 **4bpp + 语义调色板**（按类型上色：帧/人数/球/事件/相机/存储/PL/时钟各一色，`LCD_PALETTE` 显式给定，不用自动量化）；1bpp 小字用 ≤20px 加 1px 描边 | ✅ 面板已上屏人眼通过（1bpp）；⚠️ 4bpp 上色版**待上板** |
+| `board_clock.py` | **板子时间对齐（主机侧）**：`status` 看板子时间与 PS RTC 是否存在、`sync [--rtc]` 把本机时间推给板子并写进 RTC | ✅ 已创建（等上电实测） |
+| `bram_fb.py` | **帧缓存打包/写屏**：1bpp（HDMI 28,800 / LCD 12,000 字）与 **4bpp 16 色**（`pack_4bpp` / `write_image4`，可按给定调色板量化，图像字后紧跟 16 个调色板字 —— 换色只重写这 16 字，不用重新出片）；PYNQ MMIO 或 `/dev/mem` 写 AXI BRAM；`--verify-frame` 把 RTL 仿真 dump 的整场帧与 `pack_1bpp` 重算结果对拍（Python↔RTL 位序） | ✅ `BRAM_FB_SELFTEST OK` / `BRAM_FB_FRAME_OK` |
 | `make_report_figures.py` | 报告图：系统框图/软件流水线/耗时对比/状态面板/PC 球场视图 | ✅ 已创建 |
 | （其他脚本） | 需要时新增；新增后必须在上表登记并补 `README` 说明 | — |
 

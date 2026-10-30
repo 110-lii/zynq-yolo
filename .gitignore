@@ -289,3 +289,15 @@ build/ball_cls_c.c
 *.pyc
 .kilo/kilo.jsonc
 .kilo/worktrees/
+# 本机临时产物（不入库）
+.scratch/
+build/flow/
+hdmi_video_selftest.png
+TODAY_REPORT.md
+board/ui_config.json
+
+# 上板调试图（只留必看的几张，其余本地留档）
+board/fb/*
+!board/fb/tag4.bin
+!board/fb/tag4.png
+!board/fb/ui_preview_q.png

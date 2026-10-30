@@ -12,7 +12,7 @@ set xdc        [file join $script_dir lcd_status.xdc]
 foreach d [list $overlay $rep_timing $rep_util] { file mkdir $d }
 create_project -force lcd_status_bd $proj_dir -part $part_name
 add_files -norecurse [list \
-    [file join $rtl_dir lcd_driver.v] \
+    [file join $rtl_dir lcd_timing.v] \
     [file join $rtl_dir lcd_fb_reader.v] \
     [file join $rtl_dir lcd_status_top.v] \
 ]
@@ -40,7 +40,7 @@ set_property CONFIG.FREQ_HZ {50000000} [get_bd_ports sys_clk]
 set clk_wiz [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz]
 set_property -dict [list \
     CONFIG.PRIM_IN_FREQ {50.000} \
-    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {25.000} \
+    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {30.000} \
     CONFIG.USE_LOCKED {true} \
     CONFIG.USE_RESET {true} \
     CONFIG.RESET_PORT {reset} \
@@ -131,7 +131,7 @@ create_bd_port -dir O -type data lcd_vs
 create_bd_port -dir O -type data lcd_bl
 create_bd_port -dir O -type data lcd_clk
 create_bd_port -dir O -type data lcd_rst
-create_bd_port -dir O -from 23 -to 0 -type data lcd_rgb
+create_bd_port -dir IO -from 23 -to 0 -type data lcd_rgb
 foreach p {lcd_de lcd_hs lcd_vs lcd_bl lcd_clk lcd_rst lcd_rgb} {
     connect_bd_net [get_bd_ports $p] [get_bd_pins lcd_status_0/$p]
 }

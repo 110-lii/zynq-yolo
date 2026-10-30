@@ -78,6 +78,57 @@ CASES = [
         "vid_capture_chain_tb",
         ("tools/capture_golden.py", ["--compare", "build/sim/chain_frame.bin"], "CAPTURE_MATCH_OK"),
     ),
+    (
+        "lcd_probe_core",
+        "sim/tb/io/lcd/lcd_probe_core_tb.v",
+        ["src/rtl/io/lcd/lcd_probe_core.v"],
+        "LCD_PROBE_CORE_TB_OK",
+        "lcd_probe_core_tb",
+    ),
+    (
+        "lcd_fb_reader",
+        "sim/tb/io/lcd/lcd_fb_reader_tb.v",
+        [
+            "src/rtl/io/lcd/lcd_status_top.v",
+            "src/rtl/io/lcd/lcd_timing.v",
+            "src/rtl/io/lcd/lcd_fb_reader.v",
+        ],
+        "LCD_FB_READER_TB_PASS",
+        "lcd_fb_reader_tb",
+        ("tools/bram_fb.py", ["--verify-frame", "build/sim/lcd_frame.txt",
+                              "--size", "800x480"], "BRAM_FB_FRAME_OK"),
+    ),
+    (
+        "lcd_fb_reader_latency",
+        "sim/tb/io/lcd/lcd_fb_reader_latency_tb.v",
+        [
+            "src/rtl/io/lcd/lcd_status_top.v",
+            "src/rtl/io/lcd/lcd_timing.v",
+            "src/rtl/io/lcd/lcd_fb_reader.v",
+        ],
+        "LCD_FB_READER_LATENCY_TB_PASS",
+        "lcd_fb_reader_latency_tb",
+    ),
+    (
+        "fb_reader",
+        "sim/tb/io/hdmi/fb_reader_tb.v",
+        [
+            "src/rtl/io/hdmi/video_driver.v",
+            "src/rtl/io/hdmi/fb_reader.v",
+        ],
+        "FB_READER_TB_PASS",
+        "fb_reader_tb",
+        ("tools/bram_fb.py", ["--verify-frame", "build/sim/hdmi_frame.txt",
+                              "--size", "1280x720"], "BRAM_FB_FRAME_OK"),
+    ),
+    (
+        # D026 视频环出的读侧：AXI4 读握手 / stride 换行 / 显示像素 == DDR 像素
+        "fb_scanout",
+        "sim/tb/tb_fb_scanout.v",
+        ["src/rtl/io/hdmi/fb_scanout.v"],
+        "TB_FB_SCANOUT_OK",
+        "tb_fb_scanout",
+    ),
 ]
 
 

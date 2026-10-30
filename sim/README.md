@@ -26,6 +26,9 @@
 | `vid_test_pattern` | `sim/tb/video/vid_test_pattern_tb.v` | `src/rtl/video/vid_test_pattern.v` | `VID_TEST_PATTERN_TB_PASS` | 闭式图样（无摄像头时的上板激励源） |
 | `fifo_async` | `sim/tb/common/inf_axis_async_fifo_tb.v` | `src/rtl/common/inf_axis_async_fifo.v` | `INF_AXIS_ASYNC_FIFO_TB_PASS` | 跨时钟 FWFT、随机反压、满/空、单侧复位；附带 6 个变异自检（判据能失败） |
 | `vid_capture_chain` | `sim/tb/video/vid_capture_chain_tb.v` | pattern + capture + 异步 FIFO | `VID_CAPTURE_CHAIN_TB_PASS` | **整链**：640×480 一帧、25 MHz→100 MHz 跨域、25% 反压；TB 把收到的字节 dump 成 `build/sim/chain_frame.bin`，再由 `tools/capture_golden.py --compare` 与**上板用的同一份黄金模型**对拍（`run_sim.py` 的后置校验，成功时另打 `CAPTURE_MATCH_OK`） |
+| `lcd_fb_reader` | `sim/tb/io/lcd/lcd_fb_reader_tb.v` | `lcd_timing` + `lcd_fb_reader` + `lcd_status_top` | `LCD_FB_READER_TB_PASS` | 5 种正交图案（64×64 棋盘 / 两种 1px 竖条 / 1 行横条 / 单 bit 漂移）各整场 480×800 逐像素比对；末场 dump 成 `build/sim/lcd_frame.txt`，由 `tools/bram_fb.py --verify-frame` 与 `pack_1bpp` 重算结果对拍（Python↔RTL 位序，成功时打 `BRAM_FB_FRAME_OK`） |
+| `lcd_fb_reader_latency` | `sim/tb/io/lcd/lcd_fb_reader_latency_tb.v` | 同上 | `LCD_FB_READER_LATENCY_TB_PASS` | 同一 RTL 在 BRAM 读延迟 1/2/3 拍下各跑一整场，证明预取结构不依赖固定读延迟（017 的队列版就栽在这个假设上） |
+| `fb_reader` | `sim/tb/io/hdmi/fb_reader_tb.v` | `video_driver` + `fb_reader` | `FB_READER_TB_PASS` | 3 种图案各整场 1280×720 逐像素比对；末场 dump 成 `build/sim/hdmi_frame.txt`，由 `tools/bram_fb.py --verify-frame --size 1280x720` 对拍 Python 位序（`BRAM_FB_FRAME_OK`） |
 
 ### `sim/tb/` 镜像 `src/rtl/` 子目录结构
 

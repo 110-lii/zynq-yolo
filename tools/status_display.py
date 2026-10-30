@@ -776,6 +776,10 @@ def main():
     ap.add_argument("--once", action="store_true", help="只读一遍 JSONL 就退出")
     ap.add_argument("--fb", default="", help="/dev/fb0 或 /dev/fb1")
     ap.add_argument("--fb-bram", default="", help="HDMI 1bpp BRAM 基址，如 0x40000000")
+    ap.add_argument("--lcd-cfg", default="",
+                    help="LCD 4bpp 面板（lcd_probe overlay）的 cfg 基址，如 0x41220000；"
+                         "给了就在写完帧缓存后写 cfg=0x10（帧缓存核心 + 背光亮）。"
+                         "不写它，刚装的 overlay 停在 PL 彩条图案上（cfg[4]=0）")
     ap.add_argument("--also-lcd-base", default="", help="同时写 LCD 1bpp BRAM 基址（组合 overlay），如 0x40020000")
     ap.add_argument("--hdmi-bit", default="", help="加载 hdmi_status.bit 并自动取 BRAM 基址（兼容旧名）")
     ap.add_argument("--display-bit", default="", help="加载 hdmi_status/lcd_status.bit 并自动取 BRAM 基址")
@@ -890,6 +894,17 @@ def main():
                     # 版面/格式写进令牌：写错版面只会「字叠在一起」，光看 OK 看不出来
                     print("STATUS_DISPLAY_BRAM %s layout=%dx%d bpp=%d words=%d via %s"
                           % (args.fb_bram, bw, bh, 4 if (bw, bh) == (800, 480) else 1, nw, mode))
+                if args.lcd_cfg and (bw, bh) == (800, 480) and "lcd_cfg" not in printed:
+                    # lcd_probe overlay 刚装上是 cfg=0 ⇒ 屏上是 PL 彩条图案（cfg[4]=0），
+                    # 光写帧缓存不会自己切过去。这里补一次 cfg：bit4=帧缓存、bit1=0 背光亮、bit5=0 800x480。
+                    printed.add("lcd_cfg")
+                    try:
+                        from pynq import MMIO
+                        MMIO(int(args.lcd_cfg, 0), 0x10).write(0, 0x10)
+                        print("LCD_CFG_OK %s cfg=0x10 (framebuffer, 800x480, backlight on)"
+                              % args.lcd_cfg)
+                    except Exception as exc:                      # noqa: BLE001
+                        print("LCD_CFG_FAIL %s: %s" % (type(exc).__name__, exc))
             if args.also_lcd_base:
                 from bram_fb import write_image
                 img_lcd = imgs.get((800, 480))

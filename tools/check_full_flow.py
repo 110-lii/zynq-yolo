@@ -307,12 +307,14 @@ def step_panel(board, out_dir, fb_base, jsonl=None):
             remote_jsonl = BOARD_ROOT + "/build/flow/" + Path(jsonl).name
             board_push(str(jsonl), remote_jsonl)
         argv = ["python3", "tools/status_display.py", "--size", "800x480",
-                "--fb-bram", fb_base, "--once"]
+                "--fb-bram", fb_base, "--lcd-cfg", "0x41220000", "--once"]
         if remote_jsonl:
             argv += ["--replay", remote_jsonl]
         rc, out = run_board(argv)
         tok = next((ln for ln in out if "STATUS_DISPLAY_BRAM" in ln), "")
-        step("panel", "OK" if tok else "FAIL", tok or (out[-1] if out else "rc=%d" % rc),
+        cfg_tok = next((ln for ln in out if "LCD_CFG_OK" in ln), "")
+        step("panel", "OK" if (tok and cfg_tok) else "FAIL",
+             "%s | %s" % (tok or (out[-1] if out else "rc=%d" % rc), cfg_tok or "无 LCD_CFG_OK（屏上会停在 PL 彩条）"),
              human="颜色/版面要人眼看")
         return
     rc, out = run_mod([str(HERE / "status_display.py"), "--size", "800x480",

@@ -57,6 +57,20 @@
 | 只跑 csim 没跑 csynth | csim 过、出片失败/资源爆 | csim + csynth + 出片三级门禁 |
 | 用 cosine 代替逐位 | 数值“看起来对”，边界错 | 逐字节/逐元素 `array_equal` |
 
+## 3.1 自带检查
+
+`checks/axis_stream_check.py`：AXI-Stream **握手规则检查器**（只依赖 Python 标准库）。
+把 TB 里 `$fdisplay` dump 的逐拍 trace 丢给它，能抓 R1（`tvalid&&!tready` 期间数据变化）、
+R2（握手完成前撤回 `tvalid`）、R3（连续拖欠超门限）、R4（拍数与期望不符）四类问题。
+
+```bash
+python checks/axis_stream_check.py --selftest      # AXIS_CHECK_SELFTEST OK（正例+三个负例）
+python checks/axis_stream_check.py trace.txt       # AXIS_CHECK_OK beats=N
+```
+
+> 为什么放在技能包里：这类违规在波形上肉眼几乎看不出来，而它一旦发生，
+> 「csynth 过了、逐位比也对」仍然会在整机上丢拍。
+
 ## 4. 提炼来源
 
 - `ai/sessions/005_engine_load_weight_pipeline.md`：装载裁剪、权重流水、PS 首层 float32

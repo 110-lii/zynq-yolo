@@ -724,7 +724,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     inc_01 `tracks=77 labeled=55 A=28 B=27`、inc_06 `tracks=64 labeled=53 A=21 B=32`；
     换错色板（purple/cyan）时投票轨迹从 57/77 塌到 9/77 并触发 `TEAM_EVAL_WARN`。
     ⚠️ **这不是准确率**：没有人工标注的队别真值，「两队各半」只说明链路通且没塌成单一类。
-    板上未验证；离线跟踪器 `tools/track_players.py` 仍不输出队别（轨迹为像素、未接单应）。
+    板上未验证。离线跟踪器 `tools/track_players.py` **不输出每个人的队别**（只有颜色过滤），但已新增 `--calib`：给了标定才把脚点映射到球场米制（`points[].X/Y`，输入用补偿后的 `sx/sy`），映射函数 `apply_calib()` 有主机侧单元验证（3 点 → (0,0)/(105,68)/(52.5,34)）。
 
 ---
 

@@ -143,3 +143,24 @@
 1. 所有看屏结论（4bpp 上屏、配色、按键、HDMI 环出、双屏）—— 板子离线；
 2. D015 的「PC 经以太网送视频」接收端 —— 协议/端口仍 `discussing`，属功能开发而非「补漏」；
 3. D003/D005/D006/D007 四条裁定 —— 需用户拍板，本轮只把状态写准，不替用户定。
+
+### 7.4 离线跟踪链补上单应 + HLS 技能包补检查（同日稍晚）
+
+**`tools/track_players.py --calib`**：此前该文件的轨迹只有像素（`fx/fy` 是**图像**落脚点），
+`events.py` 的米制判据在离线链上根本跑不到。现在给了 `--calib`（`field_coords.py` 产出的 `calib.json`）
+就对每个点写 `X/Y`（米），输入用**相机补偿后**的 `sx/sy`（与「标定在该机位首帧」的约定一致），
+并单独给出 `n_field` 让"没映射上"可见；不给 `--calib` 时行为与之前**逐字节一致**。
+映射逻辑抽成 `apply_calib(tracks, Hm)`，主机侧单元验证：
+已知仿射（640×360 → 105×68）三点 → `(0,0) / (105,68) / (52.5,34)`，`APPLY_CALIB_OK`。
+⚠️ 没跑真实片段（要 YOLO），也没在板上跑；`limitations` 里已如实写明。
+
+**`skill/hls_axi_stream_accel/checks/axis_stream_check.py`**：HLS 包的「握手规则检查器」
+（纯标准库），吃 TB 用 `$fdisplay` dump 的逐拍 trace，查 R1（`tvalid&&!tready` 期间数据变化）、
+R2（握手完成前撤回 `tvalid`）、R3（连续拖欠超门限）、R4（拍数不符）。
+自检 `AXIS_CHECK_SELFTEST OK`（1 正例 + 3 负例），文件级测试 `beats=2`、`--expect-beats 5` 正确报 R4。
+至此两个技能包都有 `checks/`；`skill/README.md` 清单同步。
+
+### 7.5 打包
+
+`py tools/make_submission.py`：`630 文件 / zip 22.96 MB / SUBMISSION_PACK_OK`，
+旧的 08:53 包已删，`dist/` 只留当天一份（若晚上还有改动需再出一次）。

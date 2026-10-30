@@ -141,6 +141,6 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
      主机侧 `TEAM_ASSIGN_SELFTEST OK`；真实片段（不重跑检测，直接吃已有 tracks JSON）
      inc_01 `labeled=55/77 A=28 B=27`、inc_06 `labeled=53/64 A=21 B=32`
      （`tools/check_team_assign.py`）——**这不是准确率**，没有人工队别真值。
-     **板上还没验**。离线 `tools/track_players.py` 仍不输出队别（轨迹为像素、未接单应）。
+     **板上还没验**。离线 `tools/track_players.py` 不输出每人的队别（只有颜色过滤）；`--calib` 可把脚点映射到米制（`points[].X/Y`，输入 `sx/sy`）。
   3. **显示两级判据的未做部分**见上文「边界」。
   4. 202 帧板上运行的原始 `/tmp/out.json` 未随包归档（证据链缺口）。

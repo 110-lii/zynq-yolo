@@ -388,7 +388,10 @@ def main():
                     help="队别检查的色板（默认从 ui_config 取；再缺省 A=red,B=white）")
     ap.add_argument("--scenes", nargs="?", const="", default=None,
                     help="跑分层测试集（可选给目录；不给就是 data/samples/scenes）")
-    ap.add_argument("--scenes-fps", type=float, default=2.0)
+    ap.add_argument("--scenes-fps", type=float, default=5.0,
+                    help="分层测试集的取样帧率。★ 必须与 check_scene_suite.py 的默认一致，"
+                         "否则同一条命令会给出另一组数（2 fps → 13.7%%/20.8%%，5 fps → 15.8%%/20.2%%），"
+                         "报告里引用的数就说不清是哪一档了")
     args = ap.parse_args()
 
     t0 = time.time()

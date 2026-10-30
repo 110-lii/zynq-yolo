@@ -414,3 +414,51 @@ sha256，只补不一样的；这一轮 42 个文件里只传了 6 个，20 秒�
 - 其余 15 段：板子恢复后 `py tools/scene_suite_board.py --resume --no-push --max-frames 250 --every 10`；
 - HDMI 五色卡（`check_hdmi_cards.py`）要人看屏报 `STEP1-RED`…`STEP5-BLACK`；
 - `MANIFEST.csv` 的 `human_ok` 列还空着，等 16 段对照图的人眼判断。
+
+### 7.12 晚上续（2026-10-30 20:2x–21:0x）—— HDMI 不出画面被切成两段，归因从 cache 改到配置寄存器
+
+**1. 先把「停在黑卡上」这个自造歧义修掉**
+五色卡跑完屏上是黑的，人过去看只会说「HDMI 没画面」，和真故障分不开。
+`check_hdmi_cards.py` 加了收尾横幅（白底黑字 `zynq-yolo HDMI 5/5 OK` + 上下彩带），
+默认停 30 s 并一直扫着（`HDMI_CARDS_HOLD`）。同一批还修了 `run_board_acceptance.py`
+的 `--wait 0`：`while time.time()-t0 < 0` 一次都不进，直接 `SKIP board_offline`，
+一个晚上连着两次把在线板子判成离线。
+
+**2. 人眼判据的实际收获（一半过了一半没过）**
+- **LCD 过**：用户报「LCD 是彩条」，正是 `flow_overlay.lcd_selftest()` 写的 8 条 100 px 竖彩块
+  ⇒ `LCD_VISUAL_OK` 记上；
+- **HDMI 没过**：五色卡 + 收尾横幅机器侧 `frames 6105→7916 under=0 elapsed=131s`，
+  用户报「始终没画面」。
+
+**3. 切链：用不碰 DDR 的 RTL 彩条把故障挤出显示链路**
+载 `hdmi_testpattern.bit`（`pixel_data` 完全由 `xpos/ypos` 组合逻辑算出，没有存储器）
+→ **用户报「现在可以，彩条」**。同时读它的调试寄存器：`de=1`、`locked` 20 次采样 16 次为 1
+（其余为跨域采样抖动）、`xpos/ypos` 连续变化。
+⇒ TMDS、像素时钟、引脚、显示器、线**全是好的**，故障锁定在「DDR 帧缓存 → `fb_scanout`」段。
+这条结论把之前「整屏纯白 ⇒ `allocate()` 缓存没刷」的归因降级为**待证**。
+
+**4. 机器判据：DDR 里的像素是对的，读不回来的是配置寄存器**
+`build/fb_diag.py` 写完一屏纯色后，用 `/dev/mem`（`MMIO`，绕过缓存）把同一物理地址读回：
+
+    DIAG_RB RED   addr=0x38100000 expect=0xFF0000 match=16/16
+    DIAG_RB GREEN addr=0x38500000 expect=0x00FF00 match=16/16
+    DIAG_SHOW RED addr_reg=0x02120000 pack=0x00000000
+
+- `match=16/16` ⇒ **DRAM 里确实是我们的像素，`flush()` 不是问题**（这条归因作废）；
+- `pack` 读回 **0**（写的是 `0x0D001400`），`addr` 读回的不是 `0x38100000`，
+  而且两次读的差值在独立两轮里完全一样（`0x1840000`/6 s）—— 一个「写不进去、自己还在涨」的寄存器，
+  最可能是**读到了别的东西**。对照证据：`gpio_hdmi_st`（0x41210000）读回的 `frames` 是
+  规规矩矩 60/s、`under=0`，同一条 SMC、同一个 pclk 域，所以不是「读通路全坏」。
+
+**5. 另一条被推翻的判据：`under=0` 不能证明数据对**
+`st_under` 是按「每行开始前该行缓存是否就绪」计的，读回全零时它照样是 0。
+所以「`frames` 在涨 + `under=0`」只能证明 AXI 握手与行推进在跑，**不构成画面证据**。
+这正是「`BRAM_OK` 不能替代 `VISUAL_OK`」的第二个角度：连 `BRAM_OK` 里最像样的那个数，
+在数据错的时候也不会报警。
+
+**6. 下一步（已排好的探针）**
+`build/hdmi_cfg_probe.py`：写 `0xDEADBEEF` 后立刻读回，并用两个已知好用的 GPIO
+（`0x41220000` LCD cfg、`0x41280000` 帧时钟计数）做对照。判据：
+- 若对 `0x41200000` 写什么都读不回、对照组正常 ⇒ 问题在地址/读通路，与 cache 无关；
+- 若读得回 ⇒ 配置其实进了 PL，回到 `fb_scanout` 内部找（下一步按 014 的老办法，
+  用 GPIO 把 `{cfg_en, line_ready, in_range, pixel_data}` 拉出来读）。

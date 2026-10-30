@@ -76,3 +76,37 @@ crontab -l | grep -v net_guard.sh | crontab -
 
 - **B 类（硬复位）的物理原因**：12 V 适配器供电，已排除「USB 供电不足」；日志里既无 panic 也无 MMC 错误，无软看门狗证据。下一步可查：适配器带载时的 12 V 压降、电源插头/排针接触、SD 卡在写操作时的 I/O 卡死（`dmesg` 里 FAT「not properly unmounted」每次开机都有，说明每次都是断电式退出）。
 - 板子**没有 RTC**（`timedatectl`: `RTC time: n/a`），断电后时间回到 1970/2021，日志时间不可信 —— 排查时按 `boot=` 编号对，不要按时间对。
+
+## 5. 板子回来时的最短路径（2026-10-30 16:xx 新增）
+
+**先说结论：这次不是「地址变了」，是板子没上电。** 2026-10-30 16:12 对整个
+`192.168.2.0/24` 做了 9090/22/80 三端口的全段扫描（254 个地址，128 并发），
+**一个 host 都不通** —— 本机 `192.168.2.100` 这个网口上再没有第二个活设备。
+所以不要再去 9100/8000 之类的备用端口猜，也不必怀疑 `eth0:1` 没起来：整机不在网里。
+
+上电之后**不用再一条条手工敲**，一条命令把所有板端验收按顺序跑完（`--wait` 让它自己等）：
+
+```bash
+py tools/run_board_acceptance.py --wait 2700
+```
+
+它做的事和判据：
+
+| 步 | 做什么 | 过了的样子 |
+|---|---|---|
+| `wait` | 每 15 s 探一次 9090 | `BOARD_ONLINE after Ns` |
+| `deploy` | 推 `flow_system.bit/.hwh` + 6 个工具 + 10 段分层片段 | **两端 sha256 逐文件对上**才算过 |
+| `overlay` | `flow_overlay.py --selftest` | `FLOW_OVERLAY_LCD OK` + `FLOW_OVERLAY_HDMI OK` + `FLOW_OVERLAY_OK` |
+| `hdmi` | 红/绿/蓝/白/黑五张带字色卡 | `HDMI_CARDS_DONE`（**屏上读字仍要人报**） |
+| `scenes` | 10 段 `contest`/`normal` 走 `board_pipeline` | `SCENE_BOARD_AGG contest=… normal=…` + `SCENE_BOARD_OK` |
+
+中间任何一步失败都会写进 `data/results/board_acceptance.json` 并**停下不往下跑**
+（缺文件时往下跑只会得出假结论）。跑完顺手看：
+
+```bash
+py -c "import json;print(json.dumps(json.load(open('data/results/board_acceptance.json',encoding='utf-8')),ensure_ascii=False,indent=1))"
+```
+
+**注意**：`overlay` 和 `hdmi` 两步会持续满速扫出 HDMI（这和 B 类硬复位的时间相关性最高）。
+如果它就掉在这两步上，那基本就是供电/硬件，而不是软件 —— 这本身是有用的结论，
+把 `boot=` 编号和掉线时刻记到 `ai/sessions/022` §7.8。

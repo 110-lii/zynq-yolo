@@ -14,7 +14,7 @@
 | 可复现构建脚本 | `build/scripts/bd_preproc.tcl`、`bd_conv_engine.tcl`、`bd_axi_bw.tcl`、`bd_mask_preproc.tcl` | ✅ |
 | 运行必需件（模型/标定） | `build/models/person_v8n25.{param,bin,table}`、`build/models/ball_roi.npz`、`data/calib/*.json` | ✅（`tools/make_submission.py` 显式带入） |
 | PL 跟踪辅助源码/BD | `src/hls/track/`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py`、`board/overlay/track_preproc.bit` | ✅ 已出片；✅ 上板逐位对通过（`TRACK_PREPROC_BOARD_OK`） |
-| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`docs/hdmi_video_osd.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/hdmi_video.py`、`board/overlay/*.bit` | 软件 ✅；HDMI 状态面板 **`BRAM_OK` 通过 / `VISUAL_OK` 待人眼**；LCD 4bpp 新片 **未上板**；HDMI 带框环出 **未上板**（见 §3.1、§3.2） |
+| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`docs/hdmi_video_osd.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/hdmi_video.py`、`board/overlay/*.bit` | 软件 ✅；HDMI 状态面板 **`BRAM_OK` 通过 / `VISUAL_OK` 待人眼**；LCD 4bpp **上板 `READBACK_OK bad=0` 且自证图人眼确认**；HDMI 带框环出 **上板 `under=0` 通过（机器级），画面待人眼**（见 §3.1、§3.2） |
 
 ## 2. 技能包（指南 3.3.5.2）
 
@@ -47,7 +47,7 @@
 | HDMI/LCD 状态面板 | `tools/status_display.py`（fbdev/PNG） | ✅ 自检通过；硬件看 fbdev |
 | PL 跟踪辅助 | `src/hls/track/` + `build/scripts/bd_track_preproc.tcl` + `board/overlay/track_preproc.bit` + `tools/track_preproc.py` | ✅ 已出片（WNS +2.457 ns）；✅ 上板逐位对通过（720p 32.39 ms） |
 | HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | 已出片；✅ `BRAM_OK`（整场仿真 + 上板 `HDMI_LIVE`）；⏳ `VISUAL_OK` 待人眼 |
-| LCD 状态面板（10-29 重做） | `src/rtl/io/lcd/lcd_probe_*.v` + `build/scripts/bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 已出片（4bpp/16 色/按键；WNS +1.839 ns）；⏳ 未上板（两级判据都没做） |
+| LCD 状态面板（10-29 重做） | `src/rtl/io/lcd/lcd_probe_*.v` + `build/scripts/bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 已出片（4bpp/16 色/按键；WNS +1.839 ns）；✅ **上板 `READBACK_OK bad=0 checked=10`**（10-30，两次一致）；✅ 自证图 `tag4` 人眼确认；⏳ 彩色面板/赛前 UI 画面待人眼 |
 | HDMI+LCD 合并 | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ⚠️ 比特流落后于 018–021 的新读侧，需重出片 |
 | 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ `TRACK_PREPROC_BOARD_OK`（逐字节对拍）；⚠️ 合并画面同上门槛 |
 | 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
@@ -95,6 +95,7 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
 - `make_submission.py`：**文件数与大小以当天最后一次生成为准**，正文见 `dist/` 下同名 `.zip`
   与包内 `SUBMISSION_MANIFEST.csv`（本表不再抄具体数字，避免像 10-25 版那样与实物不符）；
 - 新增自检（2026-10-30）：`py tools/check_full_flow.py --dry-run` → `FULL_FLOW_OK ok=6 skip=1 fail=0`（含队别投票步）；
+  **接板** `py tools/check_full_flow.py --board` → **`FULL_FLOW_OK ok=8 skip=0 fail=0`**（新增 deploy 步）；
   `py sim/scripts/run_sim.py` → `SIM_PASS 9/9`。
 
 ## 7. 已知开放项（不阻塞提交，但必须如实写在报告里）
@@ -108,9 +109,10 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
 4. 工具链是 Vivado 2020.2，与指南推荐 2026.1/2025.2 不同；已参数化并登记差异（§7.6）；
 5. **显示按两级判据如实登记**（2026-10-30 更正，取代此前「未通过/已通过」两种互相打架的写法）：
    - `BRAM_OK`（写得进、读得回、扫描范围/速率对）：**HDMI 状态面板已过**；
-     **LCD 4bpp 新片未上板**，这一级也没做。
-   - `VISUAL_OK`（人眼看画面）：014 在 1bpp 单屏上见过棋盘格，但 018–021 重写读侧并把 LCD
-     整体重做为 4bpp/16 色/按键之后**未再复看** ⇒ **当前不宣称任何一块屏「画面通过」**。
+     **LCD 4bpp 上板已过**（`READBACK_OK bad=0 checked=10`，PCLK 33.335 MHz）；
+     **HDMI 带框环出已过**（`HDMI_VIDEO_BOARD_OK frames=313 under=0`）。
+   - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4` 已人眼确认**（斜向 16 色条纹）；
+     **彩色状态面板、赛前 UI、HDMI 彩条/带框图尚未确认** ⇒ 这三项不宣称「画面通过」。
    - `display_both.bit` / `track_display.bit` 落后于新读侧，需重出片。
 6. **视频入口未落地（D015）**：`board_pipeline.py` 仍只吃板本地 `--video`；网络接收端
    （`stream_sender.py` / `board_net.py`）是早期 bring-up，未接主线；协议/端口在台账仍 `discussing`。

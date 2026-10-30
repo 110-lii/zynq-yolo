@@ -178,3 +178,31 @@ D003/D005/D006/D007 仍 `discussing`，按 `DECISIONS.md` 的纪律，这几条�
 最终包：`dist/zynq-yolo_submission_20261030_1105.zip`（**633 文件 / 22,966,531 B**，
 `CHECK_REPO_OK` + `SUBMISSION_PACK_OK`），已核 zip 内含 `--calib` 版 `track_players.py`、
 `checks/axis_stream_check.py` 与裁定草案；10:59 那包已删，`dist/` 只留当天一份。
+
+### 7.7 上板（2026-10-30 11:40–12:20，板子短暂在线）
+
+板子掉线多次（含用户手动重启一次），所有上板动作都在线窗口内完成并留了令牌：
+
+| 动作 | 结果 |
+|---|---|
+| 推送 | `lcd_probe.bit/.hwh`、`lcd_probe.py`、`tag4.bin`、`hdmi_video.bit/.hwh`、`hdmi_video.py`、`check_hdmi_video_board.py`；两端 sha256 一致 |
+| LCD 4bpp 读侧自证 | **`READBACK_OK bad=0 checked=10`**，PCLK **33.335 MHz**；重启前后各跑一次，结果一致 |
+| LCD 自证图 `tag4` | 用户看屏后确认「对」（斜向 16 色条纹）⇒ **该图 `VISUAL_OK` 通过** |
+| HDMI 带框环出 | **`HDMI_VIDEO_BOARD_OK frames=313 under=0`**（5 s 内 305 帧、行欠载 0）⇒ `BRAM_OK` 级通过 |
+| 整体流程 | **`FULL_FLOW_OK ok=8 skip=0 fail=0`**（clock/deploy/ui_config/team/store/stream/panel/lcd_ui 全 OK） |
+| 赛前 UI 按键 | `LCD_UI_KEYS raw=0x3 key0=1 key1=1`（空闲电平正确）；**真按键仍未按过** |
+| 彩色状态面板 | 写屏命令发出时板子掉线（`ConnectionResetError`）⇒ **未确认，不算过** |
+
+**上板暴露的三处「假失败」（已修，提交 `f7245ba`）**：
+
+1. `lcd_probe_host.py deploy` 引用未定义的 `DEPLOY` —— 第一次就在主机侧炸；
+2. `lcd_probe_host.py run` / `check_full_flow --board` 把 shell 串丢给 Jupyter 内核，
+   `cd X && python3 …` 被 `cd` 魔法当成目录名（`Errno 2`）⇒ 一律改走 `subprocess`；
+3. `check_full_flow --board` 的 panel/UI 原来在**主机**上调 `bram_fb`（Windows 无 `os.O_SYNC`）
+   ⇒ 改为先推 tools+字体+ui_config 再在板上跑，`deploy` 成为表里的一步。
+
+**判据越界（值得单独记一笔）**：`check_lcd4_board.py` 第一版把 RTL 的抓取语义理解错了 ——
+`st/cnt` 在「目标行的上一行」装载那一拍（`hit_load`）更新，且 `cap_row==0` 被 RTL 显式排除、
+`cap_row==1` 的装载行是场消隐行（`de_last` 恒 0）。于是第 0/1 行：`cap_row=0` 的寄存器**从没写过**
+（读到 0 会被判 BAD，但也可能读到上一行的陈旧值而被判 OK），`cap_row=1` 的 `de` 恒 0。
+现在这两行只判 `lb`（内容），并把例外写进脚本文件头与报告 §2.9 —— **假通过比失败更危险**。

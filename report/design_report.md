@@ -28,7 +28,7 @@
 | PS 球链路 | 白块/圆度候选 + 3 层 C 分类器 + 轨迹确认 | 候选召回 **87.3 %**；分类器 P **0.667** / R **0.848**；逐帧确认 **80 %（16/20）** |
 | 事件 | 出界（FIFA 整球过线口径）、进球、球权 | 202 帧板上运行：**144 帧**输出球场坐标球，**49 帧**给出球权，`events` 字段同步输出 |
 | PL 跟踪辅助 | `track_preproc`：预处理 + 白/运动掩码，单 IP / 4 HP | **已出片并上板逐位对通过**（LUT 7,374 / WNS +2.457 ns；720p 32.39 ms、管线 20.03 ms） |
-| 存储/显示/上位机 | SD JSONL + PC Dashboard + HDMI/LCD 面板 + **HDMI 带框环出（D026）** | 软件自检通过；HDMI/LCD overlay 已出片，**机器级**通过（BRAM 读回 + 实时扫描范围/速率，`ai/sessions/019`）；LCD 于 10-29 按用户要求**整体重做**为 4bpp/16 色调色板 + 按键，新片（WNS +1.839 ns）**尚未上板**；HDMI 带框环出 `TB_FB_SCANOUT_OK`（2048 像素逐点 0 错）、主机侧 OSD 出图正确，`hdmi_video.bit` **尚未上板** |
+| 存储/显示/上位机 | SD JSONL + PC Dashboard + HDMI/LCD 面板 + **HDMI 带框环出（D026）** | 软件自检通过；HDMI/LCD overlay 已出片；**上板实测（2026-10-30）**：LCD 4bpp 读侧 `READBACK_OK bad=0 checked=10` 且自证图经人眼确认（`BRAM_OK` + 该图 `VISUAL_OK`）、HDMI 带框环出 `HDMI_VIDEO_BOARD_OK frames=313 under=0`（`BRAM_OK` 级）、整链 `FULL_FLOW_OK ok=8 fail=0`；**尚未人眼确认**：彩色状态面板、赛前 UI 真按键、HDMI 彩条/带框图 |
 | 历史验证 | PL 通用卷积引擎 `conv_engine` | 单层逐值 **6/6 bit-exact**；整网 416/YOLOv5n **9.63 s/帧**，已退出主线 |
 
 **设计取舍一句话**：在 7020 上，PL 卷积引擎“算得动但喂不快”；把像素级预处理放 PL、
@@ -236,8 +236,15 @@ PC 端接收/回放，画 105×68 球场俯视图（球员 ID、球、事件）�
    `800×480@33.333 MHz`（配置实测 33.333 MHz），同一 bitstream 内还带 `480×272@9.000 MHz` 核心供 A/B 实测，
    由 `cfg` 寄存器切换核心/图案/帧缓存，并新增按键 `key[0]/key[1]`（`0x41260000`）。
    出片 `LCD_PROBE_BD_OK`，WNS **+1.839 ns** / WHS **+0.018 ns**（0 failing）。
-- 当前状态：**BRAM_OK 与 VISUAL_OK 均未做** —— 该片从未上板，`board/overlay/lcd_probe.bit`（10-29 23:11）
-  是待验件；机器判据脚本 `tools/check_lcd4_board.py` 已备好（期望 `READBACK_OK bad=0`，每行 `de=800`）。
+- 上板结果（2026-10-30）：`tools/check_lcd4_board.py` → **`READBACK_OK bad=0 checked=10`**
+  （重启前后各跑一次，结果一致；PCLK 实测 33.335 MHz），即帧缓存内容、字序、位序在
+  PS 与 PL 之间逐位一致 ⇒ **`BRAM_OK` 通过**。自证图 `tag4`（每行 100 条竖带、16 色按
+  `(行+字)&15` 循环、逐行错开成斜纹）经**人眼确认**（2026-10-30 用户口头确认）⇒
+  这张图的 **`VISUAL_OK` 通过**。
+  判据的例外也一并写清：帧缓存第 0/1 行只能验 `lb`（内容），`st/de` 结构性取不到 ——
+  RTL 的抓取在「目标行的上一行」装载那一拍更新（`hit_load`），且 `cap_row==0` 被显式排除、
+  `cap_row==1` 的装载行是场消隐行（`de_last` 恒 0）。不写明这点，陈旧值会假通过；
+  脚本已按此改判并写进文件头。
 
 **调色板与赛前 UI（D013）**：`tools/lcd_ui.py` 在 800×480 4bpp 屏上做赛前配置，
 按键操作 7 项（A/B 队球衣、A/B 队守门员、裁判衣服、A 队上半场方向、开始比赛），
@@ -314,7 +321,8 @@ video_driver（1280×720@30）──► dvi_transmitter_top ──► HDMI
 | 读侧逻辑 | `TB_FB_SCANOUT_OK` | 整场 2048 像素逐点 0 错；覆盖 AR/R 握手、stride≠width×4 的换行 |
 | 主机侧打包 | `HDMI_VIDEO_SELFTEST OK` | 32bpp 打包往返 `dmax=0` |
 | 出图 | 图 7（`figures/hdmi_osd_boxes.png`） | 4 个绿色球员框 + `#id`、红圈标球、顶部事件条 |
-| 上板 | — | **`hdmi_video.bit` 从未上板**；`under` 未观测 |
+| 上板（机器） | `HDMI_VIDEO_BOARD_OK frames=313 under=0` | 2026-10-30 实测：5 s 内扫描推进 305 帧、**行欠载为 0** ⇒ `BRAM_OK` 级通过 |
+| 上板（人眼） | — | 彩条 + 移动白块的 `VISUAL_OK` **尚未确认**；带框图在真屏上尚未看过 |
 
 ![HDMI 带框环出（主机侧渲染）](figures/hdmi_osd_boxes.png)
 
@@ -462,10 +470,10 @@ video_driver（1280×720@30）──► dvi_transmitter_top ──► HDMI
 | 板→PC 推送 | 本地 TCP 回环 | `RESULT_STREAM_OK sent=2`；PC 端收到 2 帧 |
 | HDMI/LCD 面板（软件） | `python tools/status_display.py --selftest` | `STATUS_DISPLAY_SELFTEST OK`，PNG 800×480 生成 |
 | HDMI 面板（PL overlay） | `bd_hdmi_status.tcl` + `bram_fb --verify-frame` | 已出片；`BRAM_FB_FRAME_OK 1280x720`；上板 `HDMI_LIVE`（扫描范围/DE/59.2 fps）⇒ **BRAM_OK 通过**；**VISUAL_OK 待人眼**（014 在人眼层面见过画面，但读侧重写后未重看） |
-| LCD 面板（PL overlay，已重做） | `bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 出片 `LCD_PROBE_BD_OK`，WNS **+1.839 ns** / WHS **+0.018 ns**；4bpp/16 色/按键；**未上板 ⇒ BRAM_OK 与 VISUAL_OK 均未做** |
+| LCD 面板（PL overlay，已重做） | `bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 出片 `LCD_PROBE_BD_OK`，WNS **+1.839 ns** / WHS **+0.018 ns**；4bpp/16 色/按键；**上板 `READBACK_OK bad=0 checked=10`（两次一致，PCLK 33.335 MHz）⇒ BRAM_OK 通过**；自证图 `tag4` 经人眼确认 ⇒ 该图 VISUAL_OK |
 | HDMI+LCD 合并 | `display_both.bit` / `track_display.bit` | 014 前结构已修并出片；018–021 重写读侧后**比特流落后于 RTL**，需重出片再验 |
-| **HDMI 带框环出（D026）** | `bd_hdmi_video.tcl` + `tools/hdmi_video.py` | `TB_FB_SCANOUT_OK`（2048 像素 0 错）、`HDMI_VIDEO_SELFTEST OK`（打包往返 dmax=0）、主机侧 OSD 出图正确；**`hdmi_video.bit` 未上板，`under` 未观测** |
-| **整体流程一条命令** | `tools/check_full_flow.py --dry-run` | `FULL_FLOW_OK ok=6 skip=1 fail=0`（skip=时间对齐，板子离线；含队别投票步）；接板版 `--board` 未跑过 |
+| **HDMI 带框环出（D026）** | `bd_hdmi_video.tcl` + `tools/hdmi_video.py` | `TB_FB_SCANOUT_OK`（2048 像素 0 错）、`HDMI_VIDEO_SELFTEST OK`（打包往返 dmax=0）、主机侧 OSD 出图正确；**上板 `HDMI_VIDEO_BOARD_OK frames=313 under=0`（2026-10-30）⇒ BRAM_OK 级通过**；画面（彩条/带框）尚待人眼 |
+| **整体流程一条命令** | `tools/check_full_flow.py` | 主机 `FULL_FLOW_OK ok=6 skip=1 fail=0`；**板上 `FULL_FLOW_OK ok=8 skip=0 fail=0`（2026-10-30，新增 deploy 步：先推 tools+字体+ui_config，再在板上写屏）** |
 | PL 跟踪辅助（PC 算法） | `python tools/check_track_preproc.py` | `TRACK_PREPROC_REF OK`（RGB/MASK 逐字节一致） |
 | PL 跟踪辅助（HLS/BD） | `export_track.py` → `bd_track_preproc.tcl` | **已出片**：LUT 7,374 / FF 8,340 / DSP 13 / BRAM 3；WNS **+2.457 ns**、WHS +0.036 ns、PW +4.870 ns |
 | PL 跟踪辅助（上板） | `tools/check_track_preproc_board.py` | **`TRACK_PREPROC_BOARD_OK`**：RGB/掩码逐字节一致；720p **32.39 ms/帧** |
@@ -638,8 +646,8 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | 板上球输出 | `tools/board_pipeline.py` + `data/calib/field_calib.json`（汇总见 `board/logs/board_pipeline_20261024.md`） | 144/202 帧球场坐标；49 帧球权；`events` 非空 |
 | 球链路（已知球评估） | `ai/sessions/009` 的 20 个已知球、15 px 容差 | 16/20 确认（80 %） |
 | HDMI 状态面板 | `board/overlay/hdmi_status.bit` + `status_display.py --fb-bram 0x40000000` | `BRAM_OK`：`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`；`VISUAL_OK` 待人眼 |
-| LCD 4bpp 面板 | `board/overlay/lcd_probe.bit` + `tools/check_lcd4_board.py` | `READBACK_OK bad=0` 且每行 `de=800`（**未跑过**）；`VISUAL_OK` 待人眼 |
-| HDMI 带框环出（D026） | `board/overlay/hdmi_video.bit` + `tools/hdmi_video.py` | `under` 稳定为 0（**未上板**）+ 人眼看框落在真人身上 |
+| LCD 4bpp 面板 | `board/overlay/lcd_probe.bit` + `tools/check_lcd4_board.py` | **`READBACK_OK bad=0 checked=10`（2026-10-30 实跑两次）**；自证图 `tag4` 人眼确认 ⇒ `VISUAL_OK`；彩色状态面板/赛前 UI 画面仍待人眼 |
+| HDMI 带框环出（D026） | `board/overlay/hdmi_video.bit` + `tools/hdmi_video.py` | **`under` 实测为 0**（`HDMI_VIDEO_BOARD_OK frames=313 under=0`）+ 画面尚待人眼 |
 | SD 存储 | `python tools/result_store.py --selftest` | `RESULT_STORE_SELFTEST OK` |
 | PC 软件 | `python tools/pc_dashboard.py --selftest` + 回放 | `PC_DASHBOARD_SELFTEST OK` |
 | HDMI/LCD 面板 | `python tools/status_display.py --selftest` | `STATUS_DISPLAY_SELFTEST OK` |
@@ -700,9 +708,12 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
    这是实测代价，不是免费加速。
 8. **显示：判据分两级，进展不均匀**。按 §2.9 的定义：
    - `BRAM_OK`（写得进、读得回、扫描范围/速率对）：**HDMI 状态面板已过**
-     （`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`）；**LCD 4bpp 新片未上板**，这一级也没做。
-   - `VISUAL_OK`（人眼看画面）：014 曾在 1bpp 单屏上见过棋盘格；但 018–021 重写了读侧、
-     并把 LCD 整体重做为 4bpp/调色板/按键，**重做后未再复看** ⇒ 当前**不宣称任何一块屏「画面通过」**。
+     （`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`）；**LCD 4bpp 新片 2026-10-30 上板通过**
+     （`READBACK_OK bad=0 checked=10`，PCLK 33.335 MHz，重启前后各一次）；**HDMI 带框环出通过**
+     （`HDMI_VIDEO_BOARD_OK frames=313 under=0`）。
+   - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4` 已由人眼确认**（斜向 16 色条纹）；
+     但**彩色状态面板、赛前 UI、HDMI 彩条/带框图在真屏上尚未确认** ⇒
+     这三项**不宣称「画面通过」**。014 的 1bpp 棋盘格是重做前的历史，不算当前实现的证据。
    - `display_both.bit` / `track_display.bit` 是在重写之前修的，**比特流落后于当前 RTL**，
      需按新读侧重出片后再验。
    现场记录见 [`../board/logs/board_display_20261025.md`](../board/logs/board_display_20261025.md)
@@ -741,12 +752,12 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | D018 扩展：SD/HDMI-LCD/PC | `tools/result_store.py`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/result_stream.py` | ✅ 软件自检通过 |
 | D019 扩展：PL 跟踪辅助 | `src/hls/track/`、`build/scripts/bd_track_preproc.tcl`、`board/overlay/track_preproc.bit`、`tools/track_preproc.py` | ✅ 已出片并上板逐位对通过（720p 32.39 ms） |
 | D020 扩展：HDMI 状态面板 | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`board/overlay/hdmi_status.bit`、`tools/bram_fb.py` | ✅ 出片；✅ `BRAM_OK`（仿真整场 + 上板 `HDMI_LIVE`）；⏳ `VISUAL_OK` 待人眼 |
-| D021 扩展：LCD 状态面板 | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_probe.tcl`、`board/overlay/lcd_probe.bit`、`tools/lcd_probe.py`、`tools/check_lcd4_board.py` | ✅ 出片（WNS +1.839 ns）；LCD 于 10-29 按用户要求整体重做为 4bpp/16 色/按键；⏳ 上板未验 |
+| D021 扩展：LCD 状态面板 | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_probe.tcl`、`board/overlay/lcd_probe.bit`、`tools/lcd_probe.py`、`tools/check_lcd4_board.py` | ✅ 出片（WNS +1.839 ns）；4bpp/16 色/按键；✅ **上板 `READBACK_OK bad=0 checked=10`**；✅ 自证图人眼确认 |
 | D022 修复：BRAM 单端口 | `bd_hdmi_status.tcl`/`bd_lcd_status.tcl` 的 `SINGLE_PORT_BRAM=1` | ✅ 根因修复；后续 RTL 已改写读侧 |
 | D023/D024 合并显示 | `bd_display_both.tcl`、`bd_track_display.tcl` | ⚠️ 比特流落后于 018–021 的新读侧，需重出片 |
 | D025 扩展：PC 端上位机 | `tools/pc_dashboard.py`（状态条 + 球场 + 事件流 + 证据帧 + CSV） | ✅ 自检与界面 PNG 已人眼核对 |
-| D026 扩展：HDMI 带框环出 | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ 仿真 `TB_FB_SCANOUT_OK`；✅ 主机侧 OSD 出图；⏳ `hdmi_video.bit` 未上板 |
-| 整体流程（新增） | `tools/check_full_flow.py` | ✅ 主机侧 `FULL_FLOW_OK ok=6 skip=1 fail=0`；⏳ `--board` 未跑 |
+| D026 扩展：HDMI 带框环出 | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ 仿真 `TB_FB_SCANOUT_OK`；✅ 主机侧 OSD 出图；✅ **上板 `HDMI_VIDEO_BOARD_OK frames=313 under=0`**；⏳ 画面待人眼 |
+| 整体流程（新增） | `tools/check_full_flow.py` | ✅ 主机侧 `FULL_FLOW_OK ok=6 skip=1 fail=0`；✅ **板上 `FULL_FLOW_OK ok=8 skip=0 fail=0`** |
 
 ---
 
@@ -757,7 +768,8 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 扩展侧交付了 SD 增量存储、PC 上位机、PL 跟踪辅助（上板逐位对通过）与 HDMI 带框环出
 （仿真与主机侧出图通过）。
 显示部分按两级口径如实表述：**HDMI 状态面板 `BRAM_OK` 通过、`VISUAL_OK` 待人眼；
-LCD 已于 10-29 整体重做为 4bpp/16 色/按键并出片，但尚未上板；HDMI 带框环出未上板**。
+LCD 4bpp 上板通过机器判据（`READBACK_OK bad=0`）且自证图经人眼确认；HDMI 带框环出上板
+`under=0`（机器级）—— 彩色面板、赛前 UI 与 HDMI 画面的 `VISUAL_OK` 仍待人眼**。
 功能侧的已知未完成项同样写清楚：视频入口仍走本地文件（D015 未落地）、
 队别与球权未接入主线、倒地只到候选层（强层精度 3/4）、球的 backfill 结构改动未落地。
 我们没有把资源花在“PL 跑整网”

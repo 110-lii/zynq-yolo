@@ -108,6 +108,15 @@ cd /d D:\zynq-yolo && build_flow_system.bat
 python3 tools/flow_overlay.py --selftest
 ```
 
+大屏的**人眼判据**单独一步（机器判据过了也要做 —— 2026-10-30 全白就是这么发现的）：
+
+```bash
+python3 tools/check_hdmi_cards.py      # 红/绿/蓝/白/黑五张卡各 12 s，循环 5 分钟
+```
+
+它会逐张打印 `HDMI_CARDS_PHASE`。**屏上能依次读到 `STEP1-RED` … `STEP5-BLACK`
+才算 HDMI 通路接通**；一直白/一直黑都另有原因（见脚本头部的判定表）。
+
 令牌：
 
 - `FLOW_OVERLAY_LCD OK ...` —— 4bpp 帧缓存写得进读得出 + pclk 计数在走；

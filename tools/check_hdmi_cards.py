@@ -53,6 +53,12 @@ CARDS = [
     ("STEP5-BLACK", (0, 0, 0)),
 ]
 
+#: 收尾卡：五张测完必须停在**有内容**的一屏上。
+#: 2026-10-30 20:30 踩到：脚本正常跑完（frames=4580 under=0），但最后一张是 STEP5-BLACK，
+#: 屏上就那么黑着 —— 人过去看，报的是「HDMI 没有画面」。黑卡是用来区分「画了黑」和
+#: 「没信号」的，但它不能是最后一眼。收尾卡给白底大字，扫不出来就真是没信号。
+BANNER = "zynq-yolo HDMI 5/5 OK"
+
 
 def card(name, bgr, w, h):
     img = np.zeros((h, w, 3), np.uint8)
@@ -65,6 +71,23 @@ def card(name, bgr, w, h):
     return img
 
 
+def banner(w, h):
+    """收尾横幅：白底、黑字、够大，目的是「跑完之后屏上一直有东西」。"""
+    img = np.full((h, w, 3), 255, np.uint8)
+    for i in range(8):                        # 上下两条彩带，顺便证明不是常数填充
+        img[0:24, i * (w // 8):(i + 1) * (w // 8)] = \
+            [(0, 0, 255), (0, 255, 0), (255, 0, 0), (0, 255, 255),
+             (255, 0, 255), (255, 255, 0), (0, 0, 0), (128, 128, 128)][i]
+        img[h - 24:h, i * (w // 8):(i + 1) * (w // 8)] = \
+            [(0, 0, 255), (0, 255, 0), (255, 0, 0), (0, 255, 255),
+             (255, 0, 255), (255, 255, 0), (0, 0, 0), (128, 128, 128)][i]
+    cv2.putText(img, BANNER, (int(w * 0.05), int(h * 0.45)),
+                cv2.FONT_HERSHEY_SIMPLEX, 2.6, (0, 0, 0), 7)
+    cv2.putText(img, "Steps 1-5 done; screen stays like this", (int(w * 0.05), int(h * 0.60)),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0, 0, 0), 3)
+    return img
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bit", default=BIT_DEFAULT)
@@ -73,6 +96,8 @@ def main():
     ap.add_argument("--st", type=lambda s: int(s, 0), default=None)
     ap.add_argument("--seconds", type=float, default=12.0, help="每张卡放多久")
     ap.add_argument("--rounds", type=int, default=5, help="循环几轮")
+    ap.add_argument("--hold", type=float, default=30.0,
+                    help="五张卡播完后停在横幅上的秒数（0 会停在黑卡上，别设）")
     args = ap.parse_args()
 
     if not Path(args.bit).is_file():
@@ -99,6 +124,7 @@ def main():
              out.pack, [getattr(b, "cacheable", "?") for b in out.bufs]))
 
     imgs = [card(n, c, W, H) for n, c in CARDS]
+    tail_img = banner(W, H)
     t_all = time.time()
     try:
         for r in range(max(1, args.rounds)):
@@ -113,6 +139,16 @@ def main():
                 s = out.status()
                 print("HDMI_CARDS_PHASE %d %-11s frames=%d under=%d shown=%d"
                       % (i + 1, name, s["frames"], s["under"], n))
+        # 收尾：停在横幅上，别停在黑卡上（见 BANNER 的注释）
+        t_end = time.time() + max(5.0, args.hold)
+        n = 0
+        while time.time() < t_end:
+            out.show(tail_img)
+            n += 1
+            time.sleep(0.12)
+        s = out.status()
+        print("HDMI_CARDS_HOLD %-20s frames=%d under=%d shown=%d"
+              % (BANNER, s["frames"], s["under"], n))
     except KeyboardInterrupt:
         print("HDMI_CARDS_NOTE interrupted")
     s = out.status()

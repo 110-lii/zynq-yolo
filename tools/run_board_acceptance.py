@@ -96,7 +96,11 @@ def wait_for_board(seconds, poll):
     t0 = time.time()
     n = 0
     wedged = 0
-    while time.time() - t0 < seconds:
+    # `--wait 0` 的语义是「立刻探一次」，但 `while time.time()-t0 < 0` 一次都不进，
+    # 直接跳过 —— 2026-10-30 连着两次「板子明明活着却 SKIP board_offline」就是这么来的。
+    # 至少给一轮的时间预算。
+    budget = max(seconds, poll)
+    while time.time() - t0 < budget:
         n += 1
         if board_alive():
             log("BOARD_ONLINE after %.0fs (%d probes)" % (time.time() - t0, n))

@@ -161,6 +161,24 @@ def render(state):
     return rgb_img[:, :, ::-1].copy(), rgb_img, p.backend
 
 
+CFG_BASE = 0x41220000      # lcd_probe overlay 的 cfg：[4]=帧缓存 [5]=480x272 [1]=背光关 [3:2]=图案
+_CFG_DONE = [False]
+
+
+def _select_framebuffer():
+    """把面板从 PL 图案切到帧缓存。刚装的 overlay 是 cfg=0（PL 彩条），
+    只写帧缓存不会自己切过去 —— 2026-10-30 上板踩到：写完面板屏上仍是彩条。"""
+    if _CFG_DONE[0]:
+        return
+    try:
+        from pynq import MMIO
+        MMIO(CFG_BASE, 0x10).write(0, 0x10)          # 帧缓存 + 800x480 + 背光亮
+        _CFG_DONE[0] = True
+        print("LCD_UI_CFG OK base=0x%08X value=0x10" % CFG_BASE)
+    except Exception as exc:                          # noqa: BLE001
+        print("LCD_UI_CFG_FAIL %s: %s" % (type(exc).__name__, exc))
+
+
 def draw(state, base=0x40000000, preview=None):
     """写屏。base=None ⇒ 只渲染不写（主机侧预览）。返回 (mode, pal, backend)。"""
     bgr, rgb, backend = render(state)
@@ -168,6 +186,7 @@ def draw(state, base=0x40000000, preview=None):
     if base is not None:
         import bram_fb
         mode, pal = bram_fb.write_image4(bgr, base, 800, 480, palette=PALETTE)
+        _select_framebuffer()
     if preview:
         from PIL import Image
         if base is None:

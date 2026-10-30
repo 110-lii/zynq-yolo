@@ -48,7 +48,8 @@
 | PL 跟踪辅助 | `src/hls/track/` + `build/scripts/bd_track_preproc.tcl` + `board/overlay/track_preproc.bit` + `tools/track_preproc.py` | ✅ 已出片（WNS +2.457 ns）；✅ 上板逐位对通过（720p 32.39 ms） |
 | HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | 已出片；✅ `BRAM_OK`（整场仿真 + 上板 `HDMI_LIVE`）；⏳ `VISUAL_OK` 待人眼 |
 | LCD 状态面板（10-29 重做） | `src/rtl/io/lcd/lcd_probe_*.v` + `build/scripts/bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 已出片（4bpp/16 色/按键；WNS +1.839 ns）；✅ **上板 `READBACK_OK bad=0 checked=10`**（10-30，两次一致）；✅ 自证图 `tag4` 人眼确认；⏳ 彩色面板/赛前 UI 画面待人眼 |
-| HDMI+LCD 合并 | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ⚠️ 比特流落后于 018–021 的新读侧，需重出片 |
+| HDMI+LCD 合并（现行） | `build/scripts/bd_flow_system.tcl` + `board/overlay/flow_system.bit` | ✅ `FLOW_SYSTEM_BD_OK`：WNS +3.042 ns / 0 失败端点、LUT 44.9%、BRAM 86/140，hwh 地址表 11 项逐条对拍一致；⚠️ **未上板**（`tools/flow_overlay.py --selftest` 待跑） |
+| HDMI+LCD 合并（旧） | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ❌ 已由 `flow_system` 取代：1bpp 文字方案，且落后于 018–021 的新读侧，不再重出片 |
 | 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ `TRACK_PREPROC_BOARD_OK`（逐字节对拍）；⚠️ 合并画面同上门槛 |
 | 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
 | 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025/D026 | ✅ |

@@ -71,7 +71,7 @@
 | # | 动作 | 机器判据 |
 |---|---|---|
 | 1 | `py tools/lcd_probe_host.py deploy`（已把 `--put` 改成新加的 `--push`，并补全 bit/hwh/bram_fb/status_display/lcd_probe/lcd_ui/tag4） | 每个文件两端 sha256 一致 |
-| 2 | `py .scratch/verify4_board.py` | `READBACK_OK bad=0`，每行 `de=800` |
+| 2 | `py tools/check_lcd4_board.py` | `READBACK_OK bad=0`，每行 `de=800` |
 | 3 | `python3 tools/status_display.py --size 800x480 --fb-bram 0x40000000 --once` | `layout=800x480 bpp=4 words=48016` |
 | 4 | `python3 tools/lcd_ui.py --keys` → `--timeout 900` | 读到合理空闲电平；按下后 `LCD_UI_COLOR/SELECT` 递增 |
 | 5 | 人眼看：tag4 彩条 / 彩色面板 / UI 配色 / HDMI 带框图 | — |

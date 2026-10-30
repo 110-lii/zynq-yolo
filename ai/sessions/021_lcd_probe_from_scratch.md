@@ -401,7 +401,7 @@ PL 加速、运行时长/帧率）写上了新屏；板端令牌 `STATUS_DISPLAY
 - `board/overlay/lcd_probe.bit` 23:11 出片，WNS **+1.839 ns**、WHS **+0.018 ns**（hold 余量很薄，留意）。
 - **未上板**：当晚板子离线（ping 100% 丢），按纪律不写「已验证」。
   待验清单：tag4 逐行读回（`READBACK_OK bad=0`、`de=800`）→ 彩色状态面板 → UI 按键 → 人眼看屏。
-- 一步步的验证脚本已备好：`.scratch/verify4_board.py`（写 tag4 + 比对 lb/st/DE），
+- 一步步的验证脚本已备好：`tools/check_lcd4_board.py`（写 tag4 + 比对 lb/st/DE），
   `tools/lcd_ui.py --keys/--script/--timeout`。
 
 **新增可沉淀：**

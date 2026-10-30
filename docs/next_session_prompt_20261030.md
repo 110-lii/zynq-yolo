@@ -81,7 +81,7 @@ board/fb/tag4.bin -> /home/xilinx/zynq-yolo/board/fb/tag4.bin
 
 **2.2 4bpp 地址/行映射自证（机器判据）**
 ```
-py .scratch/verify4_board.py
+py tools/check_lcd4_board.py
 ```
 这个脚本会：加载 overlay → 写 tag4（第 r 行第 k 字 = `0x11111111*((r+k)&15)`）+
 16 个调色板字 → 写 cfg=0x10 → 逐行读 `0x4123/0x4124/0x4125` 的抓取寄存器。

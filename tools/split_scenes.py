@@ -228,6 +228,9 @@ def main():
     ap.add_argument("--plan", action="store_true", help="只扫描打分，不切片")
     ap.add_argument("--extract", action="store_true", help="扫描 + 切片 + 写 MANIFEST")
     ap.add_argument("--prefix", default="", help="片段文件名前缀（换片子时用，如 m2_）")
+    ap.add_argument("--reuse", action="store_true",
+                    help="复用 _probe.json 里已算好的逐点打分（参数必须一致），"
+                         "只重新挑片 —— 把「再多切几段」从重扫全场降到分钟级")
     args = ap.parse_args()
 
     if not (args.plan or args.extract):
@@ -239,26 +242,45 @@ def main():
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    try:
-        from ultralytics import YOLO
-    except Exception as e:                                   # noqa: BLE001
-        print("SCENES_FAIL no_ultralytics %s" % e)
-        return 2
-    model = YOLO(args.model)
+    model = None
+    probe_file = out / "_probe.json"
+    pts = None
+    if args.reuse and probe_file.is_file():
+        # 复用的前提是「同一份扫描」：任何影响打分的参数变了，旧打分就不成立，
+        # 宁可重扫也不要在错的分布上挑片。
+        old = json.loads(probe_file.read_text(encoding="utf-8"))
+        want = {"video": str(video), "t0": args.t0, "t1": args.t1,
+                "step": args.probe_step, "imgsz": args.imgsz, "conf": args.conf,
+                "min_green": args.min_green, "max_box": args.max_box}
+        diff = {k: (old.get(k), v) for k, v in want.items() if old.get(k) != v}
+        if diff:
+            print("SCENES_REUSE_REJECT 参数与 _probe.json 不一致，改回重新扫描: %s" % diff)
+        else:
+            pts = old["points"]
+            print("SCENES_REUSE %s points=%d（未重扫）" % (probe_file.name, len(pts)))
+
+    if pts is None:
+        try:
+            from ultralytics import YOLO
+        except Exception as e:                               # noqa: BLE001
+            print("SCENES_FAIL no_ultralytics %s" % e)
+            return 2
+        model = YOLO(args.model)
 
     t_start = time.time()
     print("SCENES_BEGIN video=%s range=%.0f..%.0fs step=%.0fs model=%s"
           % (video.name, args.t0, args.t1, args.probe_step, Path(args.model).name))
-    pts = scan(video, args.t0, args.t1, args.probe_step, model, args.imgsz, args.conf,
-               args.min_green, args.max_box)
     if pts is None:
-        return 2
-    (out / "_probe.json").write_text(
-        json.dumps({"video": str(video), "t0": args.t0, "t1": args.t1,
-                    "step": args.probe_step, "imgsz": args.imgsz,
-                    "conf": args.conf, "min_players": MIN_PLAYERS,
-                    "min_green": args.min_green, "max_box": args.max_box,
-                    "points": pts}, ensure_ascii=False, indent=1), encoding="utf-8")
+        pts = scan(video, args.t0, args.t1, args.probe_step, model, args.imgsz, args.conf,
+                   args.min_green, args.max_box)
+        if pts is None:
+            return 2
+        probe_file.write_text(
+            json.dumps({"video": str(video), "t0": args.t0, "t1": args.t1,
+                        "step": args.probe_step, "imgsz": args.imgsz,
+                        "conf": args.conf, "min_players": MIN_PLAYERS,
+                        "min_green": args.min_green, "max_box": args.max_box,
+                        "points": pts}, ensure_ascii=False, indent=1), encoding="utf-8")
 
     scored = [p for p in pts if p["bunch"] is not None]
     contest = pick(pts, "contest", args.n_contest, args.clip_len, args.sep, args.t1,

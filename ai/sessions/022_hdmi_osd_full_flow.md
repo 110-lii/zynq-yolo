@@ -355,3 +355,52 @@ CPU 写完的像素只在 cache 里，PL 走 S_AXI_HP0 直接读 DDR ⇒ 读到�
 按 AGENTS.md 不做任何硬件验证；改成挂 `tools/run_board_acceptance.py --wait 2700`
 在后台等它上线，通了就自动 deploy → overlay 自证 → HDMI 五色卡 → 分层片段，
 每步落盘到 `data/results/board_acceptance.json`。**尚未跑出任何板端结论。**
+
+### 7.11 板子回来了一趟：overlay 自证过、分层跑表只跑完 1/16（2026-10-30 18:1x–19:0x）
+
+**1. 合并 overlay 的机器判据在板上过了**（`flow_overlay.py --selftest`）：
+
+    FLOW_OVERLAY_LCD  OK mode=PYNQ bad=0/16 tick 132155348→138832280
+    FLOW_OVERLAY_HDMI OK frames 564→1056 (+492) under=0 shown=21 bufs=0x38100000,0x38500000
+    FLOW_OVERLAY_OK（机器判据；屏上颜色/版面仍要人眼看）
+
+这是 `flow_system.bit` 第一次上板。等级是 `BRAM_OK`，**不是** `VISUAL_OK` —— 屏上还没人看过。
+（`board_acceptance.json` 里这一步当时记成 `FAIL`：判据写成了全等比较，而板上打印带括号注释。
+已改成前缀匹配。板子本身没问题，是判据的错。）
+
+**2. 部署的教训：60 MB 一晚上传不完，改成按 sha256 增量**
+板子 5–15 分钟掉一次，全量部署十几分钟必被截断。现在先一次往返取板端所有文件的
+sha256，只补不一样的；这一轮 42 个文件里只传了 6 个，20 秒完事。
+工具闭包也不再手写：`run_board_acceptance.py` 用 AST 把 `board_pipeline` 的 import
+递归收出来（15 个模块）。之前漏了 `team_assign`，16 段全部 `ModuleNotFoundError` 白跑一轮。
+
+**3. 分层片段上板：先纠正一个误读**
+早期每段都报 `det=8`。那是 `--max-det` 的默认值 —— **检测调用次数上限**，不是人数。
+改成 `--max-det 0`（不封顶）之后才第一次拿到有意义的量。
+
+**4. 跑完 1/16 就卡死，但这 1 段已经说明了问题**（c01 争抢段，250 帧 / 25 次检测）：
+
+| 阶段 | 数量 |
+|---|---|
+| 模型原始框 | 274（≈11 / 检测帧） |
+| 过草皮门限（框底 7×7 绿色 ≥40%） | 222（81%） |
+| 交给下游的跟踪框 | **0.12 / 帧** |
+| 球可见率 | 12% |
+| 单帧推理 | 961.8 ms（主机 26–44 ms） |
+
+**不是后处理写错了**：同一批帧上换主机 YOLOv8n，`imgsz=320` 只有 0–2 人、
+`imgsz=640` 有 0–19 人（10 个采样帧均值 8.6）。转播远景里球员在 320 输入下只有十几像素高，
+瓶颈是**输入分辨率**。所以板端这批数字**不能**和主机的 15.8%/20.2%、14.4/17.0 并排比；
+要板端的分层结论，先要 640 输入的 ncnn 人检测模型（或 PL 侧 ROI 放大）。
+
+**5. 第三种板子状态：TCP 能连、HTTP 不应答**
+第二段开始后 `192.168.2.99:9090` 的 connect 依旧成功，但 `GET /login` 和内核都不回应，
+连一条 `print()` 都要等两分钟以上。所以 `board_up()` 只能用来快速排除，不能证明可用。
+已给 `scene_suite_board.py` 加 `--clip-timeout`（默认 300 s，实测单段 ~85 s），
+超时按板子卡死处理、立刻中止并记 `SCENE_BOARD_FAIL board_wedged`。
+观察写进 `docs/board_environment.md` §「第三种状态」。
+
+**6. 剩下的**
+- 其余 15 段：板子恢复后 `py tools/scene_suite_board.py --resume --no-push --max-frames 250 --every 10`；
+- HDMI 五色卡（`check_hdmi_cards.py`）要人看屏报 `STEP1-RED`…`STEP5-BLACK`；
+- `MANIFEST.csv` 的 `human_ok` 列还空着，等 16 段对照图的人眼判断。

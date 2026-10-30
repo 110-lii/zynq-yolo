@@ -173,7 +173,11 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   故障在「DDR 帧缓存 → `fb_scanout`」这一段。`under=0` 不能证明数据对（读回全零时它同样是 0），
   `Buffer.flush()` 也**没有**修好它。定位脚本 `build/fb_diag.py`：写完一屏纯色后
   用 `/dev/mem` 绕过缓存把同一物理地址读回逐字比对（机器判），再给人眼看红/绿/蓝黄三屏。
-- **HDMI 是两处独立缺陷叠在一起**（同日夜里定位，见 `ai/sessions/022` §7.13）：
+- **HDMI 是三处独立缺陷叠在一起**（同日夜里定位，见 `ai/sessions/022` §7.13、§7.15）：
+  ⓪ `bd_flow_system.tcl` 漏了 HP0 的 DDR 地址段 —— `hdmi_video_0/m_axi` **没有地址空间**，
+  构建时只有一条 `CRITICAL WARNING [BD 41-1356]`。后果：读请求在互连里解不到从设备，
+  但 `frames` 60/s、`under=0`、cfg 写读闭环全绿，只有屏上一个颜色不变。
+  已补显式分配 + 构建期断言（分配不到直接 `FLOW_SYSTEM_BD_FAIL`）。
   ① `fb_scanout` 行推进写成 `de && (local_x == width_use-1)`，而真实时序里
   `local_x` 最大 1277 ⇒ 条件永不成立 ⇒ **每行都读第 0 条行缓存**（整屏纯色/竖条对、
   横条和文字全丢），且 `st_under` 对这个缺陷**永远报 0**；已改为按 de 拍数推进，
@@ -181,7 +185,15 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   ② `flow_system.bit` 里 `0x41200000`（HDMI cfg）写不进去、读回的是 `0x41210000`
   的状态值 —— 配置从未进过 PL，屏上必然全黑。已把 cfg 挪到外层 `axi_smc`（FCLK 域，
   与 LCD 那几个已验证可写的 GPIO 同一条总线），状态 GPIO 留 pclk 域。
-  **两处都还没拿到人眼结论**，`HDMI_VISUAL_OK` 不记。
+  **三处都还没拿到人眼结论**，`HDMI_VISUAL_OK` 不记。
+- **23:30–23:40 上板进展（§7.15）**：地址段补上后，PL 侧新增的**帧像素累加和**
+  （`gpio_hdmi_st` 通道 2，`0x41210008`）在五种纯色下各自反解出 914,087–914,335 个像素、
+  彼此一致（921,600 的 99.2%）⇒ **DDR 读回的确实是主机写进去的像素**，DDR 段通过。
+  人眼：`cfg_pack[28]` 内置彩条（不碰 DDR）**看到了，且最左段是按行灰阶** ⇒
+  TMDS / 像素时钟 / 引脚 / 显示器 / 行计数全对。切回帧缓存后画面为
+  「左边白、其余黑、白里有黑横条、还在闪」⇒ 剩余问题定位在
+  **`fb_scanout` 的行缓存↔行号映射**，不在数据也不在 TMDS。几何探针
+  `build/hdmi_geom_probe.py` 已就绪，板子 23:39 掉线，待上电重跑。
 - **板端分层跑表 16/16 段有数**（`tools/scene_suite_board.py`；8 争抢 + 8 普通，
   逐段落盘在 `data/results/scene_suite_board.json`）。每检测帧原始
   15.44（争抢）/ 20.05（普通）个框，过草皮门限后 12.30 / 16.25，

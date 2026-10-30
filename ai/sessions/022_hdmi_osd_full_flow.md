@@ -578,3 +578,81 @@ SmartConnect，差别只有 flow_system 多挂了
   输出 `players` 0.45 / 0.24，球可见率 5.5% / 22.0%，单帧推理 988 / 965 ms。
 - **报告里旧的「过 score/尺寸门限 14.9」在任何落盘数据里都查不到出处，已撤掉并加注**；
   16 段补齐后仍然复现不出来，所以不是「样本不够」的问题。
+
+### 7.15 第三处缺陷：HDMI 读主机**根本没有地址空间**（2026-10-30 23:0x–23:4x）
+
+**1. 先证明「不是网表」**
+把两片已布线 checkpoint（`flow_system` vs 能出画面的 `hdmi_video`）用
+`build/scripts/cmp_hdmi_dcp.tcl` / `cmp_hdmi_dcp2.tcl` 逐原语比对：
+
+    flow_system : OSERDESE2×8  OBUFDS×4   ODDR×(仅 LCD 的 1 个)  OBUF×30(LCD)
+    hdmi_video  : OSERDESE2×8  OBUFDS×4   ODDR×0                  OBUF×0
+    serializer_{r,g,b,clk}.pclk_x5 / pclk 负载：两边完全一致
+
+HDMI 段的实现结果**逐原语相同**，所以差异不在综合/实现，也不在 RTL。
+
+**2. 在构建日志里找到 41-1356**
+`flow_system_build_20060.backup.log`（= 板上那片 22:24 的 bit）里有 3 次：
+
+    CRITICAL WARNING: [BD 41-1356] Slave segment
+      </processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM>
+      is not assigned into address space </hdmi_video_0/m_axi>
+
+`bd_flow_system.tcl` 把地址全写成显式 `assign_bd_address`，唯独漏了 HP0 的 DDR 段；
+`bd_hdmi_video.tcl` 末尾那句**不带参数**的 `assign_bd_address`（自动分配剩余的）正好补上了它
+—— 那一版能出画面，原因就在这里。
+
+后果极隐蔽：读请求在互连里解不到从设备、回 DECERR；`fb_scanout` 照样拿到应答，
+`frames` 60/s、`under=0`、配置寄存器写读闭环通过，**任何一个机器判据都不报警**，
+只有屏上是一个不随帧缓存变化的颜色。
+
+**3. 改法 + 构建期断言**
+显式分配 `HP0_DDR_LOWOCM`，并打印地址段、为空直接判构建失败：
+
+    HDMI_M_AXI_SEG /hdmi_video_0/m_axi/SEG_processing_system7_0_HP0_DDR_LOWOCM \
+        offset=0x00000000 range=0x40000000
+
+21:5x/22:25 三次构建各 3 次 41-1356 → 新构建 **0 次**。新片 WNS **+3.553 ns**、
+WHS +0.019、0 违例（98,311 端点）。
+
+**4. 同批加的两个正交探针（RTL）**
+- `st_sum`（`hdmi_video_top` → `gpio_hdmi_st` 通道 2，地址 +0x8）：本帧显示用到的像素
+  逐个累加（模 2^32），vs 上升沿锁存 ⇒ 「PL 从 DDR 到底读到了什么」变成机器可判的数；
+- `cfg_pack[28]` = 内置彩条：送 TMDS 的是本模块用 de 拍数算出的图案，**不碰 DDR**；
+  第 0 段故意做成按行灰阶，用来暴露「每行读第 0 行」这类缺陷。
+
+**5. 上板结果（2026-10-30 23:30–23:35）**
+`build/hdmi_ddr_diag.py`：
+
+    DIAG_SUM C1/CR1/RED/GREEN/BLUE/WHITE  —— 与期望值都不是逐位相等，但换颜色就跟着变
+    DIAG_SUM_DISTINCT 4 of 4
+
+把累加和反解成「等效累加了几个像素」（`sum = N·word mod 2^32`）：
+
+| 整屏颜色 | 反解 N | 期望 N |
+|---|---|---|
+| r=1 | 914,087 | 921,600 |
+| 红 | 914,246 | 921,600 |
+| 绿 | 914,177 | 921,600 |
+| 蓝 | 914,335 | 921,600 |
+| 白 | 914,262 | 921,600 |
+
+五个独立颜色各自反解出的 N **彼此一致**（921,600 的 99.2%）⇒
+**PL 从 DDR 拿到的就是主机写进去的像素值**，DDR 段通了。
+差的 0.8%（~7,400 像素）与逐帧 ±3 的抖动说明**累加窗口本身不干净**（vs 沿附近有边界效应），
+这一条单独记，不能拿它当逐位判据。
+
+**6. 人眼：彩条（不碰 DDR）通过，帧缓存那一路暴露出行映射问题**
+- 彩条：用户报「看到了彩条，最左边是灰阶渐变」⇒ **TMDS、像素时钟、引脚、显示器、
+  以及本模块自己的行计数全部正确**。最右重复两段是彩条索引只取了 3 位（1024 px 之后绕回），
+  属图案写法，不是缺陷。
+- 切回帧缓存：本该是「左上 128×128 白块」，用户报「左边白、其余黑、白里有黑横条、还在闪」。
+  结合第 5 条的 N 已证明数据正确 ⇒ 问题在 **`fb_scanout` 的行缓存/行号映射**，
+  不在数据、不在 TMDS。`st_under=0` 在这种情况下依然是 0，再次说明它不能当判据。
+
+**7. 中断点**
+`build/hdmi_geom_probe.py`（八条横带 40 s + 八条竖带 40 s + 三点标记 90 s，
+外加静止画面累加和稳定性 6 连读）已写好，**板子在 23:39 又掉线**（9090/22 端口全不通），
+按 AGENTS.md：不做硬件验证、不声称已验证，等上电后重跑。
+
+`HDMI_VISUAL_OK` 仍不记：彩条是「不碰 DDR 的旁路」，帧缓存这一屏人眼还没通过。

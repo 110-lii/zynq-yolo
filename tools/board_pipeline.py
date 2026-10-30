@@ -47,7 +47,8 @@ from ball_track import BallTracker  # noqa: E402
 from board_detect import detect as bd_detect, detect_planar as bd_detect_planar, init_pl  # noqa: E402
 from ball_cls_np import BallClassifier  # noqa: E402
 from track_preproc import TrackPreproc  # noqa: E402
-from result_store import ResultStore  # noqa: E402
+from result_store import ResultStore
+from team_assign import Assigner as TeamAssigner, SCHEMA as MATCH_SCHEMA  # noqa: E402  # noqa: E402
 
 
 BALL_CLS_BIN = "/home/xilinx/ball_cls_c"
@@ -227,9 +228,26 @@ def main():
     ap.add_argument("--ball-predict-past-boundary", action="store_true",
                     help="预测点（tracker miss>0）允许越过球场范围 ±5 m（默认关）")
     ap.add_argument("--proposal", action="store_true", help="额外输出方案 §2.1 的 JSON 结构")
+    ap.add_argument("--ui-config", default="",
+                    help="赛前 UI 落盘的 match-config/2（默认 <repo>/board/ui_config.json；"
+                         "不存在则不输出队别）")
+    ap.add_argument("--no-team", action="store_true", help="禁用球衣颜色队别（D012/D013）")
     ap.add_argument("--out", default="/home/xilinx/tracks.json")
     args = ap.parse_args()
     global USE_PL, TRACK
+    # 队别（D012/D013）：配置缺省时保持旧行为，不报错、不猜
+    assigner = None
+    if not args.no_team:
+        _cfg = args.ui_config or os.path.join(REPO, "board", "ui_config.json")
+        try:
+            assigner = TeamAssigner.from_file(_cfg)
+        except Exception as _e:                                # noqa: BLE001
+            print("TEAM_ASSIGN_CONFIG_ERR", _e)
+            assigner = None
+        if assigner is None:
+            print("TEAM_ASSIGN_OFF config=%s（不存在或 schema 不是 %s）" % (_cfg, MATCH_SCHEMA))
+        else:
+            print("TEAM_ASSIGN_ON palette=%s" % ",".join(sorted(assigner.palette)))
     _has_pl = os.path.exists(os.path.join(REPO, "board", "overlay", "preproc.bit"))
     USE_PL = (args.pl is True) or (args.pl is None and _has_pl and not args.no_pl)
     if args.pl_track:
@@ -351,6 +369,10 @@ def main():
             if mask_small is not None and args.motion_gate:
                 tracks = [t for t in tracks
                           if hits.get(t[0], 0) > 0 or _motion_frac(mask_small, t, frame.shape) >= 0.004]
+            if assigner is not None:
+                # 只在检测帧投票；框是**原分辨率**坐标（与 torso_rect 的口径一致）
+                for _t in tracks:
+                    assigner.observe(_t[0], frame, _t[1:5])
             n_det += 1
             if ms:
                 infer_ms.append(ms)
@@ -447,7 +469,8 @@ def main():
         ev = None
         if args.proposal:
             _f = build_frame(int(round(idx * 1000.0 / fps)), rows, hits=hits,
-                             camera_valid=cam_ok, ball=ball)
+                             camera_valid=cam_ok, ball=ball,
+                             teams=(assigner.teams() if assigner is not None else None))
             _f["camera_state"] = cam_state
             _f["camera_reason"] = cam_reason
             if pl_ms is not None:
@@ -474,6 +497,7 @@ def main():
         "infer_ms_med": statistics.median(infer_ms) if infer_ms else None,
         "pl_track": TRACK is not None,
         "pl_ms_med": pl_ms_med,
+        "team_assign": (assigner.stats() if assigner is not None else None),
         "frames_out": frames,
         "proposal": prop,
     }
@@ -496,6 +520,9 @@ def main():
           % (t_det * 1e3, t_ball * 1e3, idx, pl_ms_med))
     if args.ball_predict_past_boundary:
         print("BALL_PREDICT_PAST_BOUNDARY frames=%d" % n_ball_predicted)
+    if assigner is not None:
+        _ts = assigner.stats()
+        print("TEAM_ASSIGN tracks=%d labeled=%d" % (_ts["tracks_voted"], _ts["tracks_labeled"]))
     print("PIPELINE_OK frames=%d detections=%d med_infer_ms=%s out=%s"
           % (idx, n_det, out["infer_ms_med"], args.out))
     return 0

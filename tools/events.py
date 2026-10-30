@@ -59,10 +59,20 @@ def possession(ball, players, max_r=3.0):
 
 
 def step(ball, players):
-    """一次性给出本帧事件集合（供管线直接塞进 JSON）。"""
+    """一次性给出本帧事件集合（供管线直接塞进 JSON）。
+
+    `possession_team` 取持球者所在队的队别（players[*].team，由 tools/team_assign.py 给出）；
+    没有队别信息时为 None —— **不猜**，与 classify_players 的 unknown 纪律一致。
+    """
     out, side = out_of_play(ball)
     goal, gside = is_goal(ball)
     pid, pdist = possession(ball, players)
+    pteam = None
+    if pid is not None:
+        for p in players:
+            if p.get("track_id") == pid:
+                pteam = p.get("team")
+                break
     return {
         "out_of_play": out,
         "out_side": side,
@@ -70,6 +80,7 @@ def step(ball, players):
         "goal_side": gside,
         "possession": pid,
         "possession_dist": None if pdist is None else round(pdist, 2),
+        "possession_team": pteam,
     }
 
 

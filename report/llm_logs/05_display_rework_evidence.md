@@ -117,5 +117,5 @@
 | 4bpp 上板自证 | `tools/check_lcd4_board.py` | `READBACK_OK bad=0`（每行 `de=800`） |
 | 赛前 UI | `tools/lcd_ui.py` | `py tools/lcd_ui.py --preview-only … --script …` → `LCD_UI_SAVED` |
 | HDMI 带框环出 | `src/rtl/io/hdmi/fb_scanout.v`、`tools/hdmi_video.py` | `TB_FB_SCANOUT_OK`、`HDMI_VIDEO_SELFTEST OK` |
-| 整体流程 | `tools/check_full_flow.py` | `FULL_FLOW_OK ok=5 skip=1 fail=0`（主机侧） |
+| 整体流程 | `tools/check_full_flow.py` | `FULL_FLOW_OK ok=6 skip=1 fail=0`（主机侧） |
 | 判据口径 | `report/design_report.md` §2.9、`docs/system_status.md` | 两级判据，见 §5 |

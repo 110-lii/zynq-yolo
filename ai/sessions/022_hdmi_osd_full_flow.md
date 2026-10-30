@@ -206,3 +206,35 @@ D003/D005/D006/D007 仍 `discussing`，按 `DECISIONS.md` 的纪律，这几条�
 `cap_row==1` 的装载行是场消隐行（`de_last` 恒 0）。于是第 0/1 行：`cap_row=0` 的寄存器**从没写过**
 （读到 0 会被判 BAD，但也可能读到上一行的陈旧值而被判 OK），`cap_row=1` 的 `de` 恒 0。
 现在这两行只判 `lb`（内容），并把例外写进脚本文件头与报告 §2.9 —— **假通过比失败更危险**。
+
+### 7.8 赛前 UI 真按键、HDMI 上板画面与「老掉线」的根因（2026-10-30 下午）
+
+**赛前 UI 真按键通过**（板端日志，非回放脚本）：
+
+```
+LCD_UI_COLOR item=裁判衣服 value=purple → cyan
+LCD_UI_SELECT n=5 item=A 队上半场
+LCD_UI_SELECT n=6 item=开始比赛
+LCD_UI_SAVED … a=red b=blue gk=green/purple ref=cyan side=left
+```
+
+⇒ 按键 → 换色 → 逐项 → 确认保存这条交互链在真屏真键上走通（`tools/lcd_ui.py`）。
+
+**彩色状态面板上屏通过**：第二次上板时 `STATUS_DISPLAY_BRAM … words=48000` + `LCD_CFG_OK`，
+用户看屏确认与主机侧参考图一致（橙标题栏、7 行竖色条、中文清晰）。
+⚠️ 另有一个真 bug 在此暴露：`lcd_probe` overlay 刚装时 `cfg=0`，选的是 **PL 彩条图案**，
+`status_display`/`lcd_ui` 只写帧缓存不切 `cfg` ⇒ 屏上一直是彩条。已修（`6ea9fb0`）。
+
+**HDMI 带框环出机器判据复现**：第二次上板 `HDMI_VIDEO_BOARD_OK frames=314 under=0`。
+
+**「板子老掉线」的根因**（详见 `docs/board_environment.md`）：
+
+- **A 类：网络地址丢失**。改前 `eth0` 跑 DHCP（这条链路没有 DHCP 服务器，dhclient 永远失败、
+  每轮重启 `systemd-resolved`），静态 IP 只挂在 `eth0:1` 别名上；任何一次 `ifdown`/`flush`
+  都会把地址带走 ⇒ 板子在线但不可达。证据：不可达期间心跳日志仍在逐行写（`up=` 继续涨、`link=up`）。
+- **B 类：整机硬复位**。`journalctl` 里每次 boot 都止于 DHCP 重试那一行，**没有 shutdown 序列、
+  没有 panic**；`panic=0`、`RuntimeWatchdogUSec=0` ⇒ 不是内核 panic、也不是软看门狗。
+  另外 `dhclient.conf` 里有 `reboot 3;`（重试 3 次重启整机），是镜像自带的一颗地雷。
+- 板子**没有 RTC**，断电后时间回 1970/2021，日志时间不可信，排查只能按 `boot=` 编号对。
+- 处置（可回退，备份 `.bak-20261030`）：`eth0` 改 `inet manual`（地址仍留 `eth0:1`）、
+  注释 `reboot 3`、停 dhclient、装 `net_guard.sh` + cron 每分钟兜底、心跳日志加记 IP 与 dhclient 数。

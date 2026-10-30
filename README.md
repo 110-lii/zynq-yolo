@@ -14,7 +14,9 @@
 ## 0. 当前状态（先读这段，避免误读）
 
 - 本项目是**基于 Zynq-7020 的足球比赛视频分析系统**：PC 经**以太网**送入比赛视频，板端用
-  **PL 通用 INT8 卷积引擎 + PS 前后处理**跑 YOLO，输出球员/球/轨迹/简单事件/倒地结果。
+  **PL 预处理（BGR→320×320 RGB / 运动掩码）+ PS ncnn YOLOv8n-0.25 检测**（D017），
+  输出球员/球/轨迹/简单事件/倒地候选，并做 HDMI 状态面板、HDMI 带框环出（D026）与 PC 上位机。
+  PL 通用 INT8 卷积引擎 `conv_engine` 作为历史验证资产保留（整网 9.63 s/帧，已退出主线）。
 - **输入源已于 2026-10-20 变更（D015）**：**不再使用板载摄像头**；所有视频由 PC 经网口送入。
   原 DVP 采集链（`vid_dvp_capture` 等）退出主线，仅保留为历史/回归资产。
 - 仓库已有可运行的设计真源：`conv_engine` HLS 内核（含 csim/出片）、PYNQ 驱动、球员跟踪与
@@ -364,7 +366,7 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；产物在 dist
 | [`docs/yolo_on_zynq7020_survey.md`](docs/yolo_on_zynq7020_survey.md) | **YOLO on XC7Z020 技术调研**：五条路线判定（含「Vitis AI DPU 在 7000 系不存在」一手核查）、同芯片实测锚点（ARC2020 / 1.88 fps）、开源实现清单、推荐路线与验证阶梯。**引用其数字前必读 §9 未验证项** |
 | [`ref/hardware.md`](ref/hardware.md) | **硬件能力清单**（逐条 `文件:行号`）+ **UNVERIFIED 清单** —— 写报告取数的**一手**来源 |
 | [`ref/pitfalls_from_oi.md`](ref/pitfalls_from_oi.md) | **踩坑清单 P1–P10**（现象 / 触发 / 定位 / 规避 / 出处），承旧项目已验证经验 |
-| [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) | 决策台账（`decided` 4 条 / `discussing` 5 条 / `rejected` 0 条）+ **编号纪律**（本仓库 `DNNN` 与旧项目台账不是同一命名空间） |
+| [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) | 决策台账（**`decided` 20 条 / `discussing` 4 条（D003/D005/D006/D007）/ `rejected` 0 条**）+ **编号纪律**（本仓库 `DNNN` 与旧项目台账不是同一命名空间） |
 | [`report/README.md`](report/README.md) | 设计报告必须覆盖的 7 项、优化前后对比表与权重表 |
 | [`skill/README.md`](skill/README.md) | 技能包规范（适用范围 / 使用方法 / 失效条件） |
 | [`ai/README.md`](ai/README.md) | 大模型协作三层记录体系（原始层 / 整理层 / 沉淀层） |

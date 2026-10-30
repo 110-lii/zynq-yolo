@@ -1,4 +1,4 @@
-# 系统状态（2026-10-25）
+# 系统状态（2026-10-30）
 
 ## 架构
 
@@ -12,6 +12,7 @@
  ├─ [PS] 单应 → 球场坐标（有标定时）
  ├─ [PS] 事件：出界 / 进球 / 球权（FIFA 整球过线口径，可调）
  └─ [PS] 输出：SD JSONL（result_store）/ PC Dashboard（result_stream）/ HDMI-LCD（status_display）
+        └─ [PL] HDMI 带框环出（D026：fb_scanout 经 HP0 读 DDR，pclk 74.25 MHz 同源）
 ```
 
 ## 实测指标
@@ -76,13 +77,14 @@ python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
 | SD 卡增量存储 | `tools/result_store.py`（JSONL + summary + fsync/轮转） | `RESULT_STORE_SELFTEST OK` |
 | 板上结果推 PC | `tools/result_stream.py` | 本地回环测试 `RESULT_STREAM_OK sent=2` |
 | PC 端软件 | `tools/pc_dashboard.py`（TCP/回放 + 球场画布 + CSV） | `PC_DASHBOARD_SELFTEST OK`，本地端到端 3 帧通过 |
-| HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（4.05 MB；1bpp BRAM 28,800×32，基址 0x40000000；Setup +3.938 ns / Hold +0.065 ns）；**帧缓存数字通路读回通过**（DISPLAY_BOARD_OK；D022 单端口修复）；**HDMI 画面已通过**（014：1280×720 棋盘格人眼可见）。根因是 BRAM 读口 `rstb` 极性接反——`peripheral_aresetn`（低有效）直连高有效的 `rstb`，读口全程复位、`doutb` 恒 0；另修 fb_reader 左移却取 `sr[0]`、`pixel_xpos` 从 2 起而字边界等 1 |
-| LCD 状态面板（PL overlay） | `src/rtl/io/lcd/`、`build/scripts/bd_lcd_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/lcd_status.bit`（4.05 MB；1bpp BRAM 12,000×32，基址 0x40000000；lcd_id=4384（4.3 寸 800×480）；Setup +4.283 ns / Hold +0.121 ns）；**帧缓存数字通路读回通过**（DISPLAY_BOARD_OK；D022 单端口修复）；**LCD 画面已通过**（014：800×480 棋盘格人眼可见）。与 HDMI 同一组缺陷：BRAM 读口 `rstb` 极性接反（读口常复位）+ fb_reader 移位方向 + `pixel_xpos` 偏移。**像素时钟必须 33.333 MHz**（016 更正：此前这里写的 25 MHz 是错的 —— 25 MHz + 1056×525 = 45.1 Hz，屏按 60 Hz 设计，实测表现为「几何全错」；016 改为独立 MMCM 33.333 MHz 并板上实测 33.356 MHz，地址线性覆盖全高） |
+| HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（1bpp BRAM 28,800×32，基址 0x40000000）；**BRAM_OK 通过**：`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`（扫描范围/DE/59.2 fps）；**VISUAL_OK 待人眼**。读侧已在 019 重写为预取移位寄存器（原缺陷：把「地址到数据 1 拍」写死 + `pixel_data` 寄存器输出被组合选通） |
+| LCD 状态面板（**10-29 整体重做**） | `src/rtl/io/lcd/lcd_probe_core.v`、`lcd_probe_top.v`、`build/scripts/bd_lcd_probe.tcl`、`tools/check_lcd4_board.py` | **已出片** `board/overlay/lcd_probe.bit`（10-29 23:11；800×480@33.333 MHz **4bpp/16 色**，48,000 图像字 + 16 调色板字 = 192 KB，AXI 段 256 K；480×272@9.000 MHz 核心供 A/B；cfg 切核心/图案/帧缓存；按键 `key[0]=L14/key[1]=K16` @ `0x41260000`；WNS **+1.839 ns** / WHS **+0.018 ns**）。**未上板**：BRAM_OK 与 VISUAL_OK 都没做。历史：016 把像素时钟从 25 改到 33.333 MHz（25 MHz+1056×525=45.1 Hz，屏按 60 Hz 设计）；017 复测乱码；018/020 重写读侧；020 板端 480×272 基本正确但用户要求 800×480；021 按用户要求从零重做 |
+| LCD 4bpp 赛前 UI（D013） | `tools/lcd_ui.py`、`tools/match_setup.py` | schema `zynq-yolo/match-config/2`，7 项（A/B 球衣、A/B 守门员、裁判、上半场方向、开始比赛）；确认时校验两队不同色；落盘 `board/ui_config.json`；主机侧回放 `LCD_UI_SAVED`；**真按键未按过** |
 | LCD 软件回退 | `tools/status_display.py`（fbdev/PNG） | `STATUS_DISPLAY_SELFTEST OK` |
 | SD 证据帧 | `tools/result_store.py::save_evidence`、`board_pipeline --store-evidence` | `RESULT_STORE_OK`（evidence=2；限流 6/分钟）；**未上板端到端** |
 | PC 上位机界面 | `tools/pc_dashboard.py`（状态条/球场/事件流/证据帧/12 列 CSV） | `PC_DASHBOARD_SELFTEST OK`；界面 PNG 已人眼核对 |
 | LCD/HDMI 状态面板 8 项 | `tools/status_display.py`（800x480 / 1280x720） | `STATUS_DISPLAY_SELFTEST OK`；两尺寸 PNG 已人眼核对 |
-| HDMI 视频环出（带框） | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`tools/hdmi_video.py` | 仿真 `TB_FB_SCANOUT_OK`；OOC 综合 `SYNTH_CHECK_OK BRAM=6`；**出片与时序见 build/vivado/logs**；上板待板子恢复 |
+| HDMI 视频环出（带框，D026） | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`build/scripts/bd_hdmi_video.tcl`、`tools/hdmi_video.py` | 仿真 `TB_FB_SCANOUT_OK`（2048 像素逐点 0 错，覆盖 stride≠width×4）；`HDMI_VIDEO_SELFTEST OK`（32bpp 打包往返 dmax=0）；主机侧 OSD 出图正确（图 `report/figures/hdmi_osd_boxes.png`，坐标为演示给定）；**`hdmi_video.bit` 从未上板，`under` 未观测** |
 
 板上命令（板端）：
 
@@ -111,10 +113,13 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 ```
 
 > **边界**：`status_display.py` 只负责把状态面板渲染到已存在的 framebuffer；
-> 若 PYNQ 镜像没有 `/dev/fbX`，可加载已出片的 PL 显示 overlay（D020–D024：HDMI TMDS /
-> RGB LCD / 合并双屏 / 跟踪+双屏），用 `--display-bit` 写 1bpp BRAM。帧缓存读回均已通过，
-> **单屏画面已通过（014）**；`DISPLAY_BOARD_OK` 本身只证明
-> 帧缓存数字通路，不等于画面能显示，报告 §8 已登记。
+> 若 PYNQ 镜像没有 `/dev/fbX`，可加载已出片的 PL 显示 overlay，用 `--display-bit` 写帧缓存。
+> **判据分两级，全文统一**：`BRAM_OK` = 写得进、读得回、扫描范围/速率对（机器可判）；
+> `VISUAL_OK` = 屏幕上真的看到且内容正确（只能人眼）。
+> 当前：HDMI 状态面板 `BRAM_OK` 通过；**LCD 4bpp 新片两级都没做**（未上板）；
+> 合并版 `display_both.bit`/`track_display.bit` 落后于 018–021 的新读侧，需重出片。
+> 任何一级都不得代替另一级 —— 本文件此前把 `DISPLAY_BOARD_OK` 与「画面已通过」混写，
+> 2026-10-30 已按此口径更正。
 
 ## 已有验证与待办
 
@@ -125,3 +130,12 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 - **未完成**：球 backfill 结构改动（`ai/sessions/010`）；倒地识别仍是候选粗筛：只输出**候选**，
   4 帧门槛后强层 4 个候选 = 3 真 + 1 假（#8279 弯腰误判），**精度 3/4**，
   这不是检出率、也不能外推（`docs/player_tracking_v1.md` §7）。
+- **未完成（2026-10-30 明确登记）**：
+  1. **视频入口还是本地文件**：D015 已裁定「PC 经以太网送入」，但 `board_pipeline.py` 只吃
+     `--video <板本地文件>`；`tools/stream_sender.py` / `src/ps/host/board_net.py` 是早期
+     `conv_engine` 的流式 bring-up（TCP + `ZYOL` 头），未接主线。协议/端口仍 `discussing`。
+  2. **队别与球权未接入主线**：`tools/classify_players.py` 能按人工色板分两队/裁判并做半场自动判定，
+     但 `board_pipeline.py` 未调用；`events` 的球权只是「3 m 内最近球员」，不带队别。
+     离线 `tools/track_players.py` 的轨迹是像素、未接 `field_coords.py`，且明确标注队别/球权未实现。
+  3. **显示两级判据的未做部分**见上文「边界」。
+  4. 202 帧板上运行的原始 `/tmp/out.json` 未随包归档（证据链缺口）。

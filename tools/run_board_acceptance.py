@@ -155,6 +155,9 @@ DEPLOY = [
     ("tools/bram_fb.py", BOARD_ROOT + "/tools/bram_fb.py"),
     ("tools/board_pipeline.py", BOARD_ROOT + "/tools/board_pipeline.py"),
     ("tools/scene_suite_board.py", BOARD_ROOT + "/tools/scene_suite_board.py"),
+    # 分层片段检测要用的模型：推仓库里那一份，让板端不依赖 /home/xilinx 下的旧副本
+    ("build/models/person_v8n25.param", BOARD_ROOT + "/build/models/person_v8n25.param"),
+    ("build/models/person_v8n25.bin", BOARD_ROOT + "/build/models/person_v8n25.bin"),
 ]
 
 
@@ -213,7 +216,8 @@ def do_hdmi(seconds, rounds):
 
 
 def do_scenes(max_frames):
-    p = subprocess.run([PY, str(HERE / "scene_suite_board.py"), "--resume",
+    # 片段上一步已经带 sha256 推过，这里 --no-push 不再重复传（64 MB 的 base64 很贵）
+    p = subprocess.run([PY, str(HERE / "scene_suite_board.py"), "--resume", "--no-push",
                         "--max-frames", str(max_frames)],
                        cwd=str(ROOT), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                        text=True, env=_env(), encoding="utf-8", errors="replace",

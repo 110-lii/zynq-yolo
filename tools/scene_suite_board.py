@@ -91,12 +91,19 @@ def kind_of(name):
         "normal" if Path(name).name[:1] == "n" else "unknown")
 
 
+NO_BIN = "/home/xilinx/ncnn_infer"
+#: 模型优先用**仓库里那一份**（deploy 会推过去），只有仓库里没有时才退回 /home/xilinx。
+#: 为什么：板子每次重启后 /home/xilinx 下的临时件不一定还在，仓库副本才是可复现的那个。
+PARAM = BOARD_ROOT + "/build/models/person_v8n25.param"
+MODEL = BOARD_ROOT + "/build/models/person_v8n25.bin"
+
+
 def probe_deps():
     """板上要有的东西：ncnn 推理程序 + 模型。缺了就 SKIP，不要假装跑过。"""
     rc, out = run_board(["bash", "-lc",
-                         "for f in /home/xilinx/ncnn_infer /home/xilinx/person_v8n25.param "
-                         "/home/xilinx/person_v8n25.bin; do "
-                         "[ -e $f ] && echo HAVE $f || echo MISS $f; done"], timeout=120)
+                         "for f in %s %s %s; do "
+                         "[ -e $f ] && echo HAVE $f || echo MISS $f; done"
+                         % (NO_BIN, PARAM, MODEL)], timeout=120)
     have = [ln for ln in out if ln.startswith("HAVE")]
     miss = [ln for ln in out if ln.startswith("MISS")]
     return (len(miss) == 0), have + miss
@@ -122,6 +129,8 @@ def main():
                     help="每段跑多少帧（默认 60 ≈ 10 s 片段过半）")
     ap.add_argument("--out", default=str(OUT_LOCAL))
     ap.add_argument("--resume", action="store_true", help="跳过已完成的段")
+    ap.add_argument("--no-push", action="store_true",
+                    help="假设片段已经在板上（run_board_acceptance 已带 sha256 推过），不再重复传")
     args = ap.parse_args()
 
     if not board_up():
@@ -165,14 +174,16 @@ def main():
         if not board_up():
             print("SCENE_BOARD_FAIL board_offline_during_run at=%s" % clip.name)
             break
-        rc, msg = board_push(clip, CLIP_DIR + "/" + clip.name)
-        if rc != 0 or "BOARD_PUSH" not in msg:
-            print("SCENE_BOARD_ROW %-8s %-7s push_failed %s"
-                  % (clip.stem[:8], kind_of(clip.name), msg[:80]))
-            continue
+        if not args.no_push:
+            rc, msg = board_push(clip, CLIP_DIR + "/" + clip.name)
+            if rc != 0 or "BOARD_PUSH" not in msg:
+                print("SCENE_BOARD_ROW %-8s %-7s push_failed %s"
+                      % (clip.stem[:8], kind_of(clip.name), msg[:80]))
+                continue
         argv = ["python3", "tools/board_pipeline.py",
                 "--video", CLIP_DIR + "/" + clip.name,
-                "--max-frames", str(args.max_frames)]
+                "--max-frames", str(args.max_frames),
+                "--param", PARAM, "--model", MODEL]
         t0 = time.time()
         rc, out = run_board(argv, timeout=1200)
         dok = parse_ok(out)

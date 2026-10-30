@@ -80,15 +80,32 @@ def board_up(timeout=2.5):
         s.close()
 
 
+def board_alive(timeout=25):
+    """端口通 ≠ 板子可用：内核卡死时 TCP 照样握手，但连一条 print 都不会回来。
+
+    2026-10-30 19:00 踩到：分层跑表跑到第二段，9090 一直能 connect，
+    `GET /login` 与内核都无应答 —— 光用 board_up() 会把卡死当成在线，然后干等十几分钟。
+    """
+    if not board_up():
+        return False
+    rc, out = run_board(["python3", "-c", "print('ALIVE_OK')"], timeout=timeout)
+    return any("ALIVE_OK" in ln for ln in out)
+
+
 def wait_for_board(seconds, poll):
     t0 = time.time()
     n = 0
+    wedged = 0
     while time.time() - t0 < seconds:
         n += 1
-        if board_up():
+        if board_alive():
             log("BOARD_ONLINE after %.0fs (%d probes)" % (time.time() - t0, n))
             return True
-        if n % 6 == 1:
+        if board_up():
+            wedged += 1
+            if wedged in (1, 5) or wedged % 15 == 0:
+                log("TCP 通但内核无应答 %d 次（板子卡死，需要断电重启）" % wedged)
+        elif n % 6 == 1:
             log("waiting for board… %ds / %ds" % (int(time.time() - t0), seconds))
         time.sleep(poll)
     return False

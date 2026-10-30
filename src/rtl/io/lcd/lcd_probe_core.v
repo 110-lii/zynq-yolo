@@ -338,7 +338,12 @@ assign dbg_tick = tick;
 //   dbg_lbmid = 同一拍 line_buf 中间那个字（看行内有没有错位）
 //   dbg_st0   = 该行装载那一拍（h==H_ACT1）的 stag_flat[31:0]
 //   dbg_stmid = 同拍 stag_flat 的中间字
-//   dbg_cnt   = {本帧已完成的预取次数[31:16], 上一行 DE 拍数[15:0]}
+//   dbg_cnt   = {本帧已完成的预取次数[31:16], de_last[15:0]}
+//               de_last 是**装载那一行之前一行**的 DE 拍数：抓取发生在「目标行的上一行」
+//               （hit_load），而 de_last 在每行起点更新，所以口径比目标行早两行。
+//               ⇒ target ≥ 2 时仍是有源行（恒 800）；target == 1 时撞在场消隐行（恒 0）；
+//                  target == 0 根本没有 hit_load（下面显式排除），寄存器永不更新。
+//               上板脚本 tools/check_lcd4_board.py 已按此把第 0/1 行改为只判 lb。
 //               正确设计下 DE 拍数恒为 H_DISP（800），预取次数每行 +1。
 //               只取「行尾已经结算完」的值，避免读到半行的中间态。
 // 期望值（RTL 正确时）：DE 拍数 == H_DISP、预取次数 == 1/行、

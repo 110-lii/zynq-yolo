@@ -830,3 +830,24 @@ BLOCK 那幅图只有两种像素值（0 和 0xFFFFFF），所以累加和可以
 上板脚本 `build/hdmi_geom_probe.py` 已加上 `DIAG_ROWPTR` / `DIAG_COLPTR`（9 行 + 9 列，
 约 10 秒），并给出判定行：每个源行恰好 1 次 = 行映射正确；某行 720 次 = 行号卡死；
 0 次 = 该行根本没显示。**本节全部结论来自仿真与纸面，板子上一个像素都还没看。**
+
+### 7.20 不上板也能查的那部分：`flow_overlay.py --check-hwh`
+
+板子等不到，就把「本可以离线发现」的错挡在烧板之前。新增
+`py tools/flow_overlay.py --check-hwh --bit board/overlay/flow_system.bit`，
+直接解析同名 `.hwh`，逐条核对：
+
+1. **12 个从设备地址**与 `docs/flow_overlay.md` §3 的契约一致（含 `gpio_hdmi_dbg @ 0x41290000`）；
+2. **GPIO 方向**：`gpio_hdmi_cfg` 两个通道都是输出、`gpio_hdmi_st` 两通道都是输入、
+   `gpio_hdmi_dbg` 是 32 位纯输入 —— 方向配错会让读回**恒 0**，看起来像「PL 没算」；
+3. **`HP0_DDR_LOWOCM` 真的分配给了 HDMI 读主机**（`MASTERBUSINTERFACE="m_axi"`，
+   覆盖 0x00000000–0x3FFFFFFF）。10-30 夜里那条 `[BD 41-1356]` 漏分配，
+   表现是互连 DECERR，而 `under=0`、`frames` 照涨 —— 只有屏上是一个不随内容变的颜色；
+4. `st_sum` / `st_dbg` / `st_status` / `cfg_addr` / `cfg_pack` 是否真在网表里；
+5. `.bit` 与 `.hwh` 同批（`.hwh` 比 `.bit` 新超过 60 s 就报 `batch:hwh_newer_than_bit`）。
+
+当前结果：`FLOW_OVERLAY_HWH_OK`（顺带证实 `flow_system.bit` 00:38 那片带 `st_dbg`）。
+负向测试：拿 `hdmi_video.bit` 跑同一命令 → `FLOW_OVERLAY_HWH_FAIL no_addr:... no_port:...`，
+说明它不是永远打 OK 的摆设。
+
+**它替代不了任何上板判据**，`HDMI_VISUAL_OK` 仍然不记。

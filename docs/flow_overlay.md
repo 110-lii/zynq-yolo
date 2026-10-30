@@ -106,6 +106,20 @@ GPIO → `fb_scanout` 的跨域路径被当成同步路径收敛，**实测 WNS 
 cd /d D:\zynq-yolo && build_flow_system.bat
 ```
 
+**不上板**就能做的体检（主机，读 `.bit` 同名的 `.hwh`）：
+
+```bash
+py tools/flow_overlay.py --check-hwh --bit board/overlay/flow_system.bit
+```
+
+它把「硬件契约」逐条对一遍：12 个地址是否与 §3 一致、`gpio_hdmi_cfg` 是否真的输出、
+`gpio_hdmi_st`/`gpio_hdmi_dbg` 是否真的输入（方向配错会让读回**恒 0**，看起来像 PL 没算）、
+`HP0_DDR_LOWOCM` 是否真的分配给了 HDMI 读主机（漏分配 = 互连 DECERR，而
+`under`/`frames`/`frames` 全都正常 —— 2026-10-30 夜里就是这么被骗的）、
+`st_sum`/`st_dbg`/`st_status` 是否真在网表里、`.bit` 与 `.hwh` 是否同批。
+令牌 `FLOW_OVERLAY_HWH_OK` / `FLOW_OVERLAY_HWH_FAIL <items>`。
+**它不替代任何上板判据**，只是把「本可以离线发现」的那类错挡在烧板之前。
+
 板端一条命令自证：
 
 ```bash
@@ -135,8 +149,10 @@ python3 tools/check_hdmi_cards.py      # 红/绿/蓝/白/黑五张卡各 12 s，
 | 构建脚本 `build/scripts/bd_flow_system.tcl` | ✅ 出片成功（见 §6） |
 | 约束 `build/scripts/flow_system.xdc` | = `lcd_probe.xdc` + HDMI TMDS 四根 P 脚，无冲突 |
 | 综合/实现 | ✅ `FLOW_SYSTEM_BD_OK`，WNS **+3.042 ns** / WHS **+0.028 ns**，0 失败端点 |
-| 地址表与 hwh 对拍 | ✅ 11 个从设备逐条一致（见 §3） |
-| 上板 | ❌ **未验**（板子 2026-10-30 反复硬复位，见 `docs/board_environment.md`） |
+| 地址表与 hwh 对拍 | ✅ 12 个从设备逐条一致（含 `gpio_hdmi_dbg @ 0x41290000`）；现由 `--check-hwh` 离线复核 |
+| 2026-10-31 重出片 | ✅ WNS **+3.937 ns** / WHS +0.036，0 失败端点（98,452 个终点），0 条 `[BD 41-1356]` |
+| 上板（机器判据） | ✅ 2026-10-30 `flow_overlay.py --selftest`：LCD `bad=0/16` + pclk 计数、HDMI `frames 564→1056 under=0` |
+| 上板（人眼） | ❌ **未过**：LCD 半边成立；HDMI 彩条成立，**帧缓存图是「左边白、其余黑、白上有黑横条」**。10-31 已在仿真定位并修三处 RTL 缺陷，新片尚未上板 |
 
 ## 6. 出片记录
 
@@ -146,6 +162,7 @@ python3 tools/check_hdmi_cards.py      # 红/绿/蓝/白/黑五张卡各 12 s，
 |---|---|---|---|---|---|
 | 2026-10-30 15:35 | FAIL | — | — | — | `create_bd_design` 报 `couldn't read file "init.tcl": No error` |
 | 2026-10-30 16:01 | ✅ `FLOW_SYSTEM_BD_OK` | +3.042 ns（WHS +0.028） | 23,865 (44.9%) | 86/140 (61.4%) | 建图期间 `cd $ipintegrator` 后通过 |
+| 2026-10-31 00:38 | ✅ 出片（含 dbg GPIO） | +3.937 ns（WHS +0.036） | — | — | HDMI 行号改取 `ypos-1`、末列修复、`ahead` 回绕修复、`st_dbg @ 0x41290000`；**未上板** |
 
 资源明细（2026-10-30 16:01 出片）：Slice Registers 31,255 (29.4%)、DSP 2、MMCM 2/4、
 Bonded IOB 41/125。

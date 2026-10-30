@@ -80,7 +80,103 @@ def check_map(ov):
     return bad
 
 
-def lcd_selftest():
+def check_hwh(bit=DEFAULT_BIT):
+    """**不上板**就能做的 overlay 体检：直接读 .hwh，把「硬件契约」逐条对一遍。
+
+    为什么值得单独做：2026-10-30 夜里折了两处只有上板才会暴露、但本可以离线发现的错 ——
+    ① HP0 的 DDR 段没分配地址（`BD 41-1356`），读请求在互连里 DECERR，`fb_scanout`
+    照样拿应答、`under` 照样 0、`frames` 照样涨，只有屏上是一个不随内容变化的颜色；
+    ② `st_sum`/`st_dbg` 这类输入 GPIO 的方向配错（`C_ALL_INPUTS` 漏掉）会让读回恒 0，
+    看起来像「PL 没算」。这两条在 .hwh 里都是明文。
+
+    判据：令牌 `FLOW_OVERLAY_HWH_OK` / `FLOW_OVERLAY_HWH_FAIL <items>`。
+    """
+    import re
+    p = Path(bit).with_suffix(".hwh")
+    if not p.is_file():
+        return ["no_hwh"], {}
+    s = p.read_text(encoding="utf-8", errors="replace")
+    bad = []
+    info = {"path": str(p)}
+
+    # 1) 地址表：实例名 → 基址，必须与 MAP 一致
+    want = {
+        "bram_ctrl_800": MAP["lcd_fb_800"],
+        "bram_ctrl_480": MAP["lcd_fb_480"],
+        "gpio_hdmi_cfg": MAP["hdmi_cfg"],
+        "gpio_hdmi_st":  MAP["hdmi_status"],
+        "gpio_cfg":      MAP["lcd_cfg"],
+        "gpio_d0":       MAP["lcd_dbg0"],
+        "gpio_d1":       MAP["lcd_dbg1"],
+        "gpio_d2":       MAP["lcd_dbg2"],
+        "gpio_keys":     MAP["keys"],
+        "gpio_id":       MAP["lcd_id"],
+        "gpio_t":        MAP["lcd_timing"],
+        "gpio_hdmi_dbg": 0x41290000,
+    }
+    got = {}
+    for tag in re.findall(r"<MEMRANGE[^>]*/>", s):
+        inst = re.search(r'INSTANCE="([^"]+)"', tag)
+        base = re.search(r'BASEVALUE="([^"]+)"', tag)
+        if inst and base:
+            got[inst.group(1)] = int(base.group(1), 16)
+    info["addr"] = {k: "%08X" % v for k, v in sorted(got.items())}
+    for inst, addr in sorted(want.items(), key=lambda kv: kv[1]):
+        if inst not in got:
+            bad.append("no_addr:%s" % inst)
+        elif got[inst] != addr:
+            bad.append("addr:%s=%08X!=%08X" % (inst, got[inst], addr))
+
+    # 2) GPIO 方向：输出侧必须真输出，输入侧必须真输入（否则读回恒 0）
+    gpio_want = {
+        "gpio_hdmi_cfg": {"C_IS_DUAL": "1", "C_ALL_OUTPUTS": "1", "C_ALL_OUTPUTS_2": "1"},
+        "gpio_hdmi_st":  {"C_IS_DUAL": "1", "C_ALL_INPUTS": "1", "C_ALL_INPUTS_2": "1"},
+        "gpio_hdmi_dbg": {"C_IS_DUAL": "0", "C_ALL_INPUTS": "1", "C_GPIO_WIDTH": "32"},
+        "gpio_keys":     {"C_ALL_INPUTS": "1"},
+    }
+    for inst, params in gpio_want.items():
+        m = re.search(r'<MODULE[^>]*INSTANCE="%s".*?</MODULE>' % inst, s, re.S)
+        if not m:
+            bad.append("no_module:%s" % inst)
+            continue
+        plist = dict(re.findall(r'<PARAMETER NAME="([^"]+)" VALUE="([^"]+)"', m.group(0)))
+        for k, v in params.items():
+            if plist.get(k) != v:
+                bad.append("%s.%s=%s!=%s" % (inst, k, plist.get(k), v))
+
+    # 3) HP0 的 DDR 段必须真的分配给 HDMI 读主机（DECERR 事故的根因）
+    hp = None
+    for tag in re.findall(r"<MEMRANGE[^>]*/>", s):
+        if 'ADDRESSBLOCK="HP0_DDR_LOWOCM"' in tag:
+            hp = tag
+    if hp is None:
+        bad.append("no_hp0_ddr")
+    else:
+        mst = re.search(r'MASTERBUSINTERFACE="([^"]+)"', hp)
+        hi = re.search(r'HIGHVALUE="([^"]+)"', hp)
+        info["hp0"] = {"master": mst.group(1) if mst else None,
+                       "high": hi.group(1) if hi else None}
+        if not mst or not mst.group(1):
+            bad.append("hp0_ddr_unassigned")          # 41-1356 的现场
+        if not hi or int(hi.group(1), 16) < 0x0FFFFFFF:
+            bad.append("hp0_ddr_too_small")
+
+    # 4) 三个诊断输出必须真的连在网表里（不然探针读的是不存在的寄存器）
+    for port in ("hdmi_video_0_st_sum", "hdmi_video_0_st_dbg",
+                 "hdmi_video_0_st_status", "cfg_addr", "cfg_pack"):
+        if ('NAME="%s"' % port) not in s:
+            bad.append("no_port:%s" % port)
+
+    # 5) .bit 与 .hwh 同批：.hwh 比 .bit 新说明 hwh 描述的配置不是这片 bit
+    b = Path(bit)
+    if b.is_file() and p.stat().st_mtime > b.stat().st_mtime + 60:
+        bad.append("batch:hwh_newer_than_bit")
+    info["mtime"] = {"bit": int(b.stat().st_mtime) if b.is_file() else 0,
+                     "hwh": int(p.stat().st_mtime)}
+    return bad, info
+
+
+
     """写一屏 4bpp 彩块，回读校验，再看逐行抓取寄存器是否在变（证明时序在跑）。"""
     import bram_fb
     from pynq import MMIO
@@ -151,11 +247,23 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bit", default=DEFAULT_BIT)
     ap.add_argument("--map", action="store_true", help="只打印地址表")
+    ap.add_argument("--check-hwh", action="store_true",
+                    help="不上板：直接读 .bit 同名的 .hwh，核对地址/方向/HP0 段")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--hdmi-seconds", type=float, default=12.0)
     ap.add_argument("--skip-lcd", action="store_true")
     ap.add_argument("--skip-hdmi", action="store_true")
     args = ap.parse_args()
+
+    if args.check_hwh:
+        bad, info = check_hwh(args.bit)
+        for k, v in sorted(info.items()):
+            print("FLOW_OVERLAY_HWH_INFO %-6s %s" % (k, v))
+        if bad:
+            print("FLOW_OVERLAY_HWH_FAIL %s" % " ".join(bad))
+            return 1
+        print("FLOW_OVERLAY_HWH_OK（离线体检；屏上颜色仍要上板看）")
+        return 0
 
     if not Path(args.bit).is_file():
         print("FLOW_OVERLAY_FAIL no_bit %s" % args.bit)

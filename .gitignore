@@ -305,3 +305,6 @@ board/fb/*
 !board/fb/tag4.bin
 !board/fb/tag4.png
 !board/fb/ui_preview_q.png
+
+# 板端验收的运行产物（每次跑都覆盖，SKIP 也算一次运行；真正的板端证据要它跑出 OK 之后再过目入库）
+data/results/board_acceptance.json

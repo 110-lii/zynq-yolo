@@ -9,7 +9,7 @@
    "players_max": 19,
    "ball_pct": 22.0,
    "bunch_median": 0.14710566997528074,
-   "det_ms_mean": 86.4298659999622,
+   "det_ms_mean": 56.95121000055224,
    "src_fps": 25.0,
    "clip": "c01_t01010.0.mp4",
    "kind": "contest"
@@ -20,7 +20,7 @@
    "players_max": 22,
    "ball_pct": 34.0,
    "bunch_median": 0.20593283176422117,
-   "det_ms_mean": 28.70346600015182,
+   "det_ms_mean": 24.70595799924922,
    "src_fps": 25.0,
    "clip": "c02_t01200.0.mp4",
    "kind": "contest"
@@ -31,7 +31,7 @@
    "players_max": 25,
    "ball_pct": 2.0,
    "bunch_median": 0.15590646266937255,
-   "det_ms_mean": 30.236383999799727,
+   "det_ms_mean": 30.253084000141826,
    "src_fps": 25.0,
    "clip": "c03_t01290.0.mp4",
    "kind": "contest"
@@ -42,7 +42,7 @@
    "players_max": 22,
    "ball_pct": 34.0,
    "bunch_median": 0.13038244247436523,
-   "det_ms_mean": 27.847423999919556,
+   "det_ms_mean": 25.82965799883823,
    "src_fps": 25.0,
    "clip": "c04_t01650.0.mp4",
    "kind": "contest"
@@ -53,7 +53,7 @@
    "players_max": 23,
    "ball_pct": 18.0,
    "bunch_median": 0.13941650390624996,
-   "det_ms_mean": 29.875167999998666,
+   "det_ms_mean": 24.90380000017467,
    "src_fps": 25.0,
    "clip": "c05_t01730.0.mp4",
    "kind": "contest"
@@ -64,7 +64,7 @@
    "players_max": 20,
    "ball_pct": 0.0,
    "bunch_median": 0.1875968247652054,
-   "det_ms_mean": 30.198439999949187,
+   "det_ms_mean": 26.51669800034142,
    "src_fps": 25.0,
    "clip": "c06_t02000.0.mp4",
    "kind": "contest"
@@ -75,7 +75,7 @@
    "players_max": 21,
    "ball_pct": 12.0,
    "bunch_median": 0.1415239334106445,
-   "det_ms_mean": 26.850590000103693,
+   "det_ms_mean": 25.14545200014254,
    "src_fps": 25.0,
    "clip": "c07_t02300.0.mp4",
    "kind": "contest"
@@ -86,7 +86,7 @@
    "players_max": 20,
    "ball_pct": 4.0,
    "bunch_median": 0.16765537261962893,
-   "det_ms_mean": 30.698928000274464,
+   "det_ms_mean": 25.48335000043153,
    "src_fps": 25.0,
    "clip": "c08_t02520.0.mp4",
    "kind": "contest"
@@ -97,7 +97,7 @@
    "players_max": 19,
    "ball_pct": 20.0,
    "bunch_median": 0.2737836360931396,
-   "det_ms_mean": 25.275772000095458,
+   "det_ms_mean": 25.769281999964733,
    "src_fps": 25.0,
    "clip": "n01_t00960.0.mp4",
    "kind": "normal"
@@ -108,7 +108,7 @@
    "players_max": 22,
    "ball_pct": 2.0,
    "bunch_median": 0.31971942018717525,
-   "det_ms_mean": 24.656109999705222,
+   "det_ms_mean": 24.946790000103647,
    "src_fps": 25.0,
    "clip": "n02_t01150.0.mp4",
    "kind": "normal"
@@ -119,7 +119,7 @@
    "players_max": 26,
    "ball_pct": 18.0,
    "bunch_median": 0.33759188652038574,
-   "det_ms_mean": 28.24178800008667,
+   "det_ms_mean": 25.20686200048658,
    "src_fps": 25.0,
    "clip": "n03_t01360.0.mp4",
    "kind": "normal"
@@ -130,7 +130,7 @@
    "players_max": 18,
    "ball_pct": 42.0,
    "bunch_median": 0.2841113090515137,
-   "det_ms_mean": 25.529767999760224,
+   "det_ms_mean": 25.853687999770045,
    "src_fps": 25.0,
    "clip": "n04_t01420.0.mp4",
    "kind": "normal"
@@ -141,7 +141,7 @@
    "players_max": 25,
    "ball_pct": 22.0,
    "bunch_median": 0.2844407737255097,
-   "det_ms_mean": 24.455527999889455,
+   "det_ms_mean": 25.088367999414913,
    "src_fps": 25.0,
    "clip": "n05_t01580.0.mp4",
    "kind": "normal"
@@ -152,7 +152,7 @@
    "players_max": 26,
    "ball_pct": 52.0,
    "bunch_median": 0.288785457611084,
-   "det_ms_mean": 25.378421999921557,
+   "det_ms_mean": 25.682766000245465,
    "src_fps": 25.0,
    "clip": "n06_t01690.0.mp4",
    "kind": "normal"
@@ -163,7 +163,7 @@
    "players_max": 22,
    "ball_pct": 0.0,
    "bunch_median": 0.32180403470993046,
-   "det_ms_mean": 25.946790000380133,
+   "det_ms_mean": 25.98663599957945,
    "src_fps": 25.0,
    "clip": "n07_t01920.0.mp4",
    "kind": "normal"
@@ -174,7 +174,7 @@
    "players_max": 21,
    "ball_pct": 6.0,
    "bunch_median": 0.2769661366939545,
-   "det_ms_mean": 35.12900999987323,
+   "det_ms_mean": 25.41637400019681,
    "src_fps": 25.0,
    "clip": "n08_t02640.0.mp4",
    "kind": "normal"

@@ -69,10 +69,12 @@ RTL 模块名以**子系统前缀**开头，前缀与目录一一对应，便于
 - 对应 testbench **不放这里**：`x.v` 的 testbench 命名为 `x_tb.v`，放 `sim/`（见 [`../sim/README.md`](../sim/README.md)）。
 - `src/rtl/ip/*.xci` 为 Vivado 生成配置，**只读、勿手改**。
 - 禁止把 `build/` 产物、`.bit`、`.dcp`、`__pycache__/`、`.venv/` 放进本目录（见根 `.gitignore`）。
-- **待裁定项**：核心加速器实现方式（HLS / RTL / 混合）、核心算法的具体形态与输入规格、数据集来源与许可、软硬件划分边界与 AXI 接口契约具体数值、与旧项目资产的具体复用范围 —— 全部写上 `<待用户裁定：见 docs/repo_spec.md §7>`，**不得擅自填入**。
-  > ★ 事实进展（2026-10-20，**不是状态变更**，见 [`../ai/coordination/DECISIONS.md`](../ai/coordination/DECISIONS.md) 汇总段）：
-  > D003 已按 **HLS 单内核路线**落地出片、D006 的 AXI 数值已冻结（`docs/accel_interface.md` §4），
-  > 但两者都是 Lead 的工程选择、**未经用户裁定**，台账状态仍为 `discussing`。
+- **原「待裁定项」已于 2026-10-30 全部裁定**（见 [`../ai/coordination/DECISIONS.md`](../ai/coordination/DECISIONS.md)）：
+  D003 = **混合路线**（算法核 HLS + 像素时钟/读侧时序/跨时钟/AXI 拓扑手写 RTL）；
+  D004 = YOLO 识别（参数细化到 YOLOv8n-0.25@320 单类 person）；
+  D005 = **内部使用声明**；D006 = **冻结 v1 契约**；D007 = **只复用引脚/电气资料**，不复用旧项目源码、
+  旧项目现象结论也不作为依据。
+  ⇒ 本目录的实现**可以按上述边界直接写**，但仍须遵守各自的细则（接口数值改动要新开 decision）。
   > D004 原则已裁定（YOLO 识别），参数待细化；D011 已把交付范围定为「人 + 球 + 简单事件 + 倒地 + 轨迹」，
   > 不做越位/犯规判罚；D015 已取消板载摄像头采集，视频改由 PC 经以太网送入。
 

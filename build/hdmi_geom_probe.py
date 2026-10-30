@@ -84,6 +84,23 @@ def report(tag, img, note=''):
 print('DIAG_CFG_READBACK addr=%08X pack=%08X' %
       (int(CFG.read(0)) & 0xFFFFFFFF, int(CFG.read(8)) & 0xFFFFFFFF), flush=True)
 
+# ★ 先问一句「配置到底进没进 PL」。2026-10-30 21:0x 的教训：frames 60/s、under=0
+#   全部正常，屏上什么都没有，最后查出 cfg_pack 读回是 0、cfg_addr 读回的是 status 寄存器
+#   —— 配置根本没写进去，cfg_en=0。所有「扫描在不在跑」的判据都不会报警。
+#   这里用两个魔数写-读闭环，再把 pack 拆开与应有值逐字段对一遍。
+try:
+    cc = out.check_cfg()
+    print('DIAG_CFG_WRITABLE addr=%s pack=%s' %
+          ('OK' if cc['addr'] else 'FAIL', 'OK' if cc['pack'] else 'FAIL'), flush=True)
+except Exception as e:                                     # noqa: BLE001
+    print('DIAG_CFG_WRITABLE EXC %s: %s' % (type(e).__name__, e), flush=True)
+pk = int(CFG.read(8)) & 0xFFFFFFFF
+print('DIAG_CFG_DECODE stride=%d width=%d en=%d  want=5120/1280/1 %s' %
+      (pk & 0xFFFF, (pk >> 16) & 0x7FF, (pk >> 27) & 1,
+       'OK' if (pk & 0xFFFF) == 5120 and ((pk >> 16) & 0x7FF) == W and ((pk >> 27) & 1) else 'MISMATCH'),
+      flush=True)
+
+
 # ---------------- 0. 把行号/列号本身写进像素值：累加和可**精确反解** ----------------
 # 像素字 = b | g<<8 | r<<16（24 位），所以可以直接把 0..1279 的整数当像素值写。
 # 整幅图每行同值 ⇒ 累加和 = 1280 × Σ(屏幕上实际出现的源行号)，不涉及任何推断。
@@ -111,6 +128,12 @@ elif sf < 1:
 else:
     print('DIAG_ROWCODE_VERDICT 行号打滑：Σ 差 %+.0f，折算整体偏移 %+.2f 行'
           % (sf - 258840, (sf - 258840) / H), flush=True)
+
+# 基址是否真的指向刚写的那块帧缓存（双缓冲下应等于两者之一）
+addr_now = int(CFG.read(0)) & 0xFFFFFFFF
+phys = [int(b.physical_address) for b in out.bufs]
+print('DIAG_CFG_ADDR addr=%08X bufs=%s match=%s' %
+      (addr_now, ' '.join('%08X' % a for a in phys), addr_now in phys), flush=True)
 
 # 列同理：像素值 = 列号。屏幕口径每行应贡献 0+0+0+1+…+1277 = 816,003。
 colimg = np.zeros((H, W, 3), np.uint8)

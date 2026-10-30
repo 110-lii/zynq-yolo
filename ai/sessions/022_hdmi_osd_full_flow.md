@@ -164,3 +164,17 @@ R2（握手完成前撤回 `tvalid`）、R3（连续拖欠超门限）、R4（�
 
 `py tools/make_submission.py`：`630 文件 / zip 22.96 MB / SUBMISSION_PACK_OK`，
 旧的 08:53 包已删，`dist/` 只留当天一份（若晚上还有改动需再出一次）。
+
+### 7.6 收工：四条裁定的草案 + 最终打包
+
+D003/D005/D006/D007 仍 `discussing`，按 `DECISIONS.md` 的纪律，这几条在裁定前**不能**用来
+改 `src/`、`build/`、`board/`。所以本轮只做一件事：把它们摊成
+`ai/coordination/DECISION_DRAFTS_20261030.md`（**非绑定**），每条给「现状（带证据）/ 选项 /
+建议 / 采纳后要改哪些文件」，让用户一句话就能拍板：D003 建议「算法 HLS + 时序读侧手写 RTL」
+（即现状，只是没登记）；D005 建议「现在写内部使用声明、长期换可分发数据集」，并单独标出
+**唯一我替用户判断不了的事**（片段的使用权）；D006 建议把已在用的地址/格式冻结成 v1 契约，
+改契约 = 新开一条 decision；D007 建议「复用经验、不复用源码，引用要写清哪个文件哪条结论」。
+
+最终包：`dist/zynq-yolo_submission_20261030_1105.zip`（**633 文件 / 22,966,531 B**，
+`CHECK_REPO_OK` + `SUBMISSION_PACK_OK`），已核 zip 内含 `--calib` 版 `track_players.py`、
+`checks/axis_stream_check.py` 与裁定草案；10:59 那包已删，`dist/` 只留当天一份。

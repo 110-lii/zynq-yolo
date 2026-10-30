@@ -15,12 +15,16 @@ ssh xilinx@192.168.2.99        # 免密不通时用 tools/board_jupyter.py（Jup
 
 ```bash
 # 合并版：一块 bit 上两块屏。三级阶梯按 white → chess → panel 走，别跳级
+# 两个活体探针可以一起给：--lcd-gpio（像素内容）/ --hdmi-gpio（读口地址顺序）
 sudo -E python3 tools/check_display_board.py --which both \
-    --bit board/overlay/display_both.bit --pattern white    # ① 信号通路：读回全 0xFFFFFFFF
+    --bit board/overlay/display_both.bit --pattern white \
+    --lcd-gpio 0x41210000 --hdmi-gpio 0x41200000   # ① 信号通路：读回全 0xFFFFFFFF
 sudo -E python3 tools/check_display_board.py --which both \
-    --bit board/overlay/display_both.bit --pattern chess    # ② 寻址/位序：64×64 棋盘格
+    --bit board/overlay/display_both.bit --pattern chess \
+    --lcd-gpio 0x41210000 --hdmi-gpio 0x41200000   # ② 寻址/位序：64×64 棋盘格
 sudo -E python3 tools/check_display_board.py --which both \
-    --bit board/overlay/display_both.bit --pattern panel    # ③ 状态面板
+    --bit board/overlay/display_both.bit --pattern panel \
+    --lcd-gpio 0x41210000 --hdmi-gpio 0x41200000   # ③ 状态面板
 ```
 - 机器判据：`DISPLAY_BOTH_BOARD_OK bit=display_both.bit pattern=<级>`（两块 1bpp 帧缓存**逐字**读回一致）
 - **2026-10-28 新增 LCD 活体探针**：给 `--lcd-gpio 0x41210000` 后，脚本还会读新挂的
@@ -34,6 +38,15 @@ sudo -E python3 tools/check_display_board.py --which both \
   sudo -E python3 tools/check_display_board.py --which lcd \
       --bit board/overlay/display_both.bit --pattern panel --lcd-gpio 0x41210000
   ```
+- **2026-10-28 新增 HDMI 活体探针**：给 `--hdmi-gpio 0x41200000` 后读 `dbg_gpio`
+  （`bram_addr` / `{de,pixel_ypos}`），打一行 `DISPLAY_BOARD_HDMI_LIVE OK ... fps=59.x`：
+  – 地址覆盖到帧尾（`addr_max ≥ 28600`）且行号到 720 —— 证明整场 28,800 字都被扫到
+  – `de` 占空 0.60–0.88（1280/1650≈0.776）
+  – **用地址推进量反推帧率 60±5**：读口若停住或跳着扫，帧率立刻出窗；
+    单个撕裂样本用「越界即丢弃、`Δ>500` 不计入总量」剔除，不影响判据
+- **2026-10-28 三级阶梯全部通过**（机器判据）：
+  `DISPLAY_BOTH_BOARD_OK pattern=white/chess/panel`；chess 级 LCD `pclk=33.357MHz v_uniq=524`、
+  HDMI `fps=59.2 addr_max=28799 ypos_max=720`；见 `ai/sessions/018`、`019`
 - **人眼判据**：white 级整屏发亮；chess 级两块屏都是 64×64 棋盘格；panel 级 8 项信息都在、中文不乱码
 - 2026-10-27 已补：合并版 BD 补齐 014 的三处修复（`rstb` 接常量 0、两侧 `dcm_locked`、
   LCD 走独立 clk_wiz）。**2026-10-28 更正：那个独立 clk_wiz 必须出 33.333 MHz 而不是 25 MHz** —— 25 MHz 配 1056×525 只有 45.1 Hz，实测表现为「画面能出但几何全错」；见 `ai/sessions/016_lcd_refresh_rate_and_diag.md`），并重出 `display_both.bit`

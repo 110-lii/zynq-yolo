@@ -48,18 +48,18 @@
 | 比特流 | `board/overlay/lcd_status.bit`（4,045,674 B）+ `.hwh` |
 | 时钟 | 外部 `sys_clk` U18 50 MHz → `clk_wiz` 33.333 MHz |
 | 帧缓存 | 1bpp，800×480，12,000×32-bit，AXI BRAM 基址 **0x40000000**，范围 64 KB |
-| 显示时序 | vendor `lcd_driver`，`lcd_id=16'h4384`（H 1056 / V 525） |
+| 显示时序 | `lcd_timing`（项目内，DE 模式，30 MHz，Th 928 / Tv 525，800×480） |
 | 实现报告 | `build/reports/timing/lcd_status_bd_timing.rpt`、`build/reports/resource/lcd_status_bd_util.rpt` |
 | 时序 | Setup **+4.283 ns**、Hold **+0.121 ns**、PW +5.146 ns（0 failing） |
 | 资源 | BD 报告 LUT **548** / FF **637** / DSP **1**；`blk_mem_gen` OOC 为 16×RAMB36 |
 | 验证边界 | **帧缓存读回通过（D022；DISPLAY_BOARD_OK），画面待目视** |
 
-- **时序**：800×480，pixel clock 33.3 MHz（vendor `lcd_driver.v`；DCLK/porch 见
-  `ref/hardware.md` §G.3，HS/VS 宽度与极性仍标注 UNVERIFIED，出片前需复核）。
+- **时序**：800×480，pixel clock 30.0 MHz（`lcd_timing.v`；DE 模式，HS/VS 恒高，
+  行场由 DE 划分；porch 参数与 `ref/hardware.md` §G.3 一致）。
 - **帧缓存**：1bpp 800×480 = **48,000 B**，约 **12 个 RAMB36**。
 - **引脚**：`lcd_rgb[23:0]`、`lcd_hs`、`lcd_vs`、`lcd_de`、`lcd_clk`、`lcd_bl`、`lcd_rst`
   （vendor XDC，W18…/N18/T20/U20/P19/M20/L17）。⚠️ **LCD 与 J3 互斥**（`ref/hardware.md` §F.2）。
-- **驱动**：复用 vendor `lcd_driver.v`，像素数据来自 1bpp BRAM 读侧（同 HDMI 的位图格式）。
+- **驱动**：项目内 `lcd_timing.v` + `lcd_fb_reader.v`（A/B 双行缓存预取），像素数据来自 1bpp BRAM 读侧（同 HDMI 的位图格式）。
 - **PS 接口**：同 HDMI 的 AXI-Lite 写窗口。
 
 ## 软件侧已经就绪

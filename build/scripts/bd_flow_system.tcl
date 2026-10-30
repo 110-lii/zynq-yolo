@@ -155,21 +155,28 @@ connect_bd_net $pclk_h [get_bd_pins rst_pix_h/slowest_sync_clk]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_pix_h/ext_reset_in]
 connect_bd_net [get_bd_pins clk_wiz_hdmi/locked] [get_bd_pins rst_pix_h/dcm_locked]
 
-# ---------------- AXI（FCLK 域）：9 个 LCD 从设备 + 1 个通往 pclk 域的桥 ----------------
+# ---------------- AXI（FCLK 域）：10 个从设备 ----------------
+#   其中 M09 是 HDMI 配置寄存器（gpio_hdmi_cfg），M08 是按键；
+#   ★ 2026-10-30：cfg 原本挂在「M09 → axi_cc → hdmi_smc → 2 个 GPIO」这条嵌套总线上，
+#   上板实测 0x41200000 与 0x41210000 读回**同一个值**（写 0xDEADBEEF 读回 {frames,under}），
+#   屏上全黑 —— 也就是说嵌套在时钟转换后面的那个 SmartConnect 把两个地址都解到了同一个从设备上，
+#   配置根本进不了 PL。同一条外层总线上的 0x41220000/0x41280000 读写都正常，说明外层没问题。
+#   处理：把**写侧**（cfg）挪到已经验证可写的外层 axi_smc；状态侧（st，只读、实测读通路正常）
+#   留在 pclk 域、内层 SMC 降成单主口。cfg 跨域靠 hdmi_video_top 里已有的 2 拍同步器，
+#   时钟组异步声明见 build/scripts/flow_system.xdc。
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
-set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {10}] $axi_smc
+set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {11}] $axi_smc
 connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins axi_smc/S00_AXI]
 
 set axi_cc [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_clock_converter:2.1 axi_cc]
-connect_bd_intf_net [get_bd_intf_pins axi_smc/M09_AXI] [get_bd_intf_pins axi_cc/S_AXI]
+connect_bd_intf_net [get_bd_intf_pins axi_smc/M10_AXI] [get_bd_intf_pins axi_cc/S_AXI]
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins axi_cc/s_axi_aclk]
 connect_bd_net [get_bd_pins rst_ps/peripheral_aresetn]   [get_bd_pins axi_cc/s_axi_aresetn]
 connect_bd_net $pclk_h [get_bd_pins axi_cc/m_axi_aclk]
 connect_bd_net [get_bd_pins rst_pix_h/peripheral_aresetn] [get_bd_pins axi_cc/m_axi_aresetn]
 
 set hdmi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 hdmi_smc]
-set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] $hdmi_smc
-set_property -dict [list CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}}] $hdmi_smc
+set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hdmi_smc
 connect_bd_intf_net [get_bd_intf_pins axi_cc/M_AXI] [get_bd_intf_pins hdmi_smc/S00_AXI]
 connect_bd_net $pclk_h [get_bd_pins hdmi_smc/aclk]
 connect_bd_net [get_bd_pins rst_pix_h/peripheral_aresetn] [get_bd_pins hdmi_smc/aresetn]
@@ -292,16 +299,17 @@ connect_bd_net [get_bd_pins lcd_probe_0/dbg_cnt]   [get_bd_pins gpio_d2/gpio_io_
 set gpio_hdmi_cfg [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 gpio_hdmi_cfg]
 set_property -dict [list CONFIG.C_GPIO_WIDTH {32} CONFIG.C_IS_DUAL {1} CONFIG.C_GPIO2_WIDTH {32} \
     CONFIG.C_ALL_OUTPUTS {1} CONFIG.C_ALL_OUTPUTS_2 {1}] $gpio_hdmi_cfg
-connect_bd_intf_net [get_bd_intf_pins hdmi_smc/M00_AXI] [get_bd_intf_pins gpio_hdmi_cfg/S_AXI]
+connect_bd_intf_net [get_bd_intf_pins axi_smc/M09_AXI] [get_bd_intf_pins gpio_hdmi_cfg/S_AXI]
 
 set gpio_hdmi_st [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 gpio_hdmi_st]
 set_property -dict [list CONFIG.C_GPIO_WIDTH {32} CONFIG.C_IS_DUAL {0} CONFIG.C_ALL_INPUTS {1}] $gpio_hdmi_st
-connect_bd_intf_net [get_bd_intf_pins hdmi_smc/M01_AXI] [get_bd_intf_pins gpio_hdmi_st/S_AXI]
+connect_bd_intf_net [get_bd_intf_pins hdmi_smc/M00_AXI] [get_bd_intf_pins gpio_hdmi_st/S_AXI]
 
-# 寄存器 AXI 域跟 pclk 走（理由见文件头）；gpio 输出直接进 fb_scanout，全同钟。
-connect_bd_net $pclk_h [get_bd_pins gpio_hdmi_cfg/s_axi_aclk]
+# cfg 在 FCLK 域（外层 axi_smc），跨到 pclk 由 hdmi_video_top 的 2 拍同步器处理；
+# st 留在 pclk 域，`hdmi_video_0/st_status` 与它同钟，不需要同步。
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins gpio_hdmi_cfg/s_axi_aclk]
+connect_bd_net [get_bd_pins rst_ps/peripheral_aresetn]     [get_bd_pins gpio_hdmi_cfg/s_axi_aresetn]
 connect_bd_net $pclk_h [get_bd_pins gpio_hdmi_st/s_axi_aclk]
-connect_bd_net [get_bd_pins rst_pix_h/peripheral_aresetn] [get_bd_pins gpio_hdmi_cfg/s_axi_aresetn]
 connect_bd_net [get_bd_pins rst_pix_h/peripheral_aresetn] [get_bd_pins gpio_hdmi_st/s_axi_aresetn]
 
 set hdmi [create_bd_cell -type module -reference hdmi_video_top hdmi_video_0]

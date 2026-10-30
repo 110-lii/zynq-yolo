@@ -9,6 +9,15 @@
 // 内存图案：mem[i] = {8'h5A, line[7:0], px[7:0], 8'h00}
 //   => 像素低 24 位 = {line, px, 8'h00}，用 line/px 就能反查是哪个像素。
 //
+// ★ xpos 的取值域必须与真实 video_driver 一致（0 起），否则测不出行推进的错：
+//   video_driver 里 `data_req` 比 `video_en` 早一拍，`pixel_xpos <= cnt_h+2-H_SYNC-H_BACK`
+//   只在 data_req 有效时更新，于是 de 有效的 1280 拍里 xpos = **0…1279**，
+//   fb_scanout 的 local_x = xpos-2 最大只到 1277。
+//   2026-10-30 上板就是栽在这：旧版行推进写成 `de && (local_x == width_use-1)`，
+//   那个等式在真实时序下**永远不成立** ⇒ disp_line 卡 0 ⇒ 每行都读第 0 条行缓存。
+//   而本 TB 当时喂的是 `xpos <= px + 2`（把 local_x 顶到 W-1），正好把这个边角绕过去了，
+//   4 帧全绿 —— 仿真通过、上板横条和文字全丢。故此处按真实取值域驱动。
+//
 // 判据：仿真结束打印 TB_FB_SCANOUT_OK / TB_FB_SCANOUT_FAIL <原因>
 // ============================================================================
 `timescale 1ns / 1ps
@@ -127,6 +136,7 @@ integer errs = 0;
 integer chk = 0;
 integer frame, line, px, i;
 reg [23:0] exp_pix;
+reg [10:0] src;
 reg [7:0]  pxv;
 
 task do_line(input integer line_no);
@@ -137,26 +147,38 @@ task do_line(input integer line_no);
         xpos <= 11'd0;
         ypos <= line_no[10:0];
         repeat (4) @(negedge clk);
-        // 有效像素：xpos 从 2 起（与 video_driver 一致）
+        // 有效像素：xpos 走 **0…W-1**，与 video_driver 的 de 段取值域一致。
+        // DUT 内部 local_x = max(xpos-2, 0)，所以第 xpos 拍显示的是源行第 src 列。
         for (px = 0; px < W; px = px + 1) begin
             @(negedge clk);
             de   <= 1'b1;
-            xpos <= px + 2;
+            xpos <= px;
             @(posedge clk);
             #1;
+            src = (px >= 2) ? px - 2 : 0;
             // 采样点：本地像素 px 的数据在本次时钟沿后即出现在 pixel_data 上
             if (line_no >= 0) begin
-                exp_pix = {line_no[7:0], px[7:0], 8'h00};   // mem_word 的低 24 位
+                exp_pix = {line_no[7:0], src[7:0], 8'h00};   // mem_word 的低 24 位
                 chk = chk + 1;
                 if (pixel_data !== exp_pix) begin
                     errs = errs + 1;
                     if (errs <= 8)
-                        $display("MISMATCH line=%0d px=%0d got=%h exp=%h", line_no, px, pixel_data, exp_pix);
+                        $display("MISMATCH line=%0d xpos=%0d src=%0d got=%h exp=%h",
+                                 line_no, px, src, pixel_data, exp_pix);
                 end
             end
         end
         @(negedge clk);
         de <= 1'b0;
+        // ★ 行推进断言：一行 de 走完，disp_line 必须 +1。
+        //   这一条才是 2026-10-30 那次上板事故的正面判据 —— 像素比对只查「读回来的值对不对」，
+        //   查不出「每一行都在读第 0 条行缓存」以外的退化（例如越进、跳行）。
+        if (dut.disp_line !== (line_no[10:0] + 11'd1)) begin
+            errs = errs + 1;
+            if (errs <= 8)
+                $display("DISP_LINE line=%0d disp_line=%0d exp=%0d",
+                         line_no, dut.disp_line, line_no + 1);
+        end
     end
 endtask
 

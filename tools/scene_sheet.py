@@ -29,16 +29,18 @@ ROOT = HERE.parent
 DIR_DEFAULT = ROOT / "data" / "samples" / "scenes"
 
 
-def label(img, text, scale=0.7):
+def label(img, lines, scale=0.7):
     import cv2
     h = img.shape[0]
     s = max(0.35, scale * h / 240.0)
-    y = int(h * 0.055) + int(26 * s)
-    for dx, dy in ((-2, 0), (2, 0), (0, -2), (0, 2)):
-        cv2.putText(img, text, (int(8 * s) + dx, y + dy), cv2.FONT_HERSHEY_SIMPLEX,
-                    s, (0, 0, 0), max(2, int(3 * s)), cv2.LINE_AA)
-    cv2.putText(img, text, (int(8 * s), y), cv2.FONT_HERSHEY_SIMPLEX,
-                s, (255, 255, 255), max(1, int(2 * s)), cv2.LINE_AA)
+    lh = int(30 * s)
+    for i, text in enumerate(lines):
+        y = int(h * 0.055) + int(26 * s) + i * lh
+        for dx, dy in ((-2, 0), (2, 0), (0, -2), (0, 2)):
+            cv2.putText(img, text, (int(8 * s) + dx, y + dy), cv2.FONT_HERSHEY_SIMPLEX,
+                        s, (0, 0, 0), max(2, int(3 * s)), cv2.LINE_AA)
+        cv2.putText(img, text, (int(8 * s), y), cv2.FONT_HERSHEY_SIMPLEX,
+                    s, (255, 255, 255), max(1, int(2 * s)), cv2.LINE_AA)
     return img
 
 
@@ -99,10 +101,10 @@ def main():
         canv = np.zeros((hcell, per * args.cell, 3), np.uint8)
         for j, k in enumerate(idx):
             r, img = tiles[k]
-            txt = "%s %s %s-%ss bunch=%s" % (r["scene_id"], r["kind"],
-                                             r["t_start_s"].split(".")[0],
-                                             r["t_end_s"].split(".")[0],
-                                             r["bunch_median"])
+            # 两行：id 单独一行，时间/聚集度一行。挤在一行会在 400px 格子里被截掉尾巴。
+            txt = ["%s  %s" % (r["scene_id"], r["kind"]),
+                   "%s-%ss  w=%s" % (r["t_start_s"].split(".")[0],
+                                     r["t_end_s"].split(".")[0], r["bunch_median"])]
             canv[:, j * args.cell:(j + 1) * args.cell] = label(img, txt)
         sheets.append(canv)
         i += per

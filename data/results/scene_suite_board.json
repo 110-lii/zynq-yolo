@@ -227,8 +227,17 @@
    "clip": "n08_t02640.0.mp4",
    "kind": "normal",
    "rc": 0,
-   "elapsed_s": 23.4,
-   "error": "SUITE_STAT_ERR [Errno 2] No such file or directory: '/home/xilinx/scene_n08.json'"
+   "elapsed_s": 93.5,
+   "frames": 250,
+   "det": 25.0,
+   "raw": 441.0,
+   "kept": 359.0,
+   "rows": 3336.0,
+   "rowsok": 3316.0,
+   "players": 0.0,
+   "ball_pct": 12.0,
+   "detections": 25,
+   "med_infer_ms": 991.3
   }
  ]
 }

@@ -127,13 +127,28 @@ always @(posedge pclk or negedge reset_n) begin
 end
 wire vs_rise = vs & ~vs_d;
 
+// ★ 行推进必须数「这一行发过多少拍 de」，**不能**用 `local_x == width_use-1` 判：
+//   2026-10-30 上板实测 `local_x = xpos-2` 最大只到 1277（xpos 的取值域比 width_use 少 2），
+//   那个等式永远不成立 ⇒ disp_line 卡在 0 ⇒ **每一行都读第 0 条行缓存**。
+//   现象很有欺骗性：整屏是一个颜色就对、竖条对、横条和文字全丢；同时
+//   ahead = fetch_line - disp_line 一直涨到 4 以上不再取数，ready[0] 恒为 1，
+//   于是 st_under 永远 0 —— 所有机器判据「通过」，只有人眼能发现。
+//   仿真里 TB 的 xpos/de 时序是手搓的，正好绕开了这个边角，所以没测出来。
+reg [10:0] px_adv;          // 本行已发出的有效像素数
 always @(posedge pclk or negedge reset_n) begin
     if (!reset_n) begin
         disp_line <= 11'd0;
+        px_adv    <= 11'd0;
     end else if (vs_rise) begin
         disp_line <= 11'd0;
-    end else if (de && (local_x == (width_use - 11'd1))) begin
-        disp_line <= disp_line + 11'd1;
+        px_adv    <= 11'd0;
+    end else if (de) begin
+        if (px_adv + 11'd1 >= width_use) begin
+            px_adv    <= 11'd0;
+            disp_line <= disp_line + 11'd1;
+        end else begin
+            px_adv    <= px_adv + 11'd1;
+        end
     end
 end
 

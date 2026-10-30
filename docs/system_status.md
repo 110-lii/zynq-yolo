@@ -167,15 +167,27 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   HDMI `frames 564→1056 under=0` ⇒ `BRAM_OK` 过。
   **人眼分两半**：LCD 那一屏（8 条 100 px 竖彩块）**已由用户确认** ⇒ `LCD_VISUAL_OK`；
   HDMI 那一半**未过** —— 详见下一小节「HDMI 帧缓存段」。
-- **HDMI 帧缓存段（2026-10-30 20:3x–21:0x，进行中）**：五色卡 + 收尾横幅跑完
+- **HDMI 帧缓存段（2026-10-30 20:3x–22:0x）**：五色卡 + 收尾横幅跑完
   （`frames 6105→7916 under=0`）人眼仍啥也看不到。用 `hdmi_testpattern.bit`
   （纯 RTL 彩条，不碰 DDR）切链：**人眼看到 8 条彩条** ⇒ TMDS/像素时钟/引脚/显示器全好，
   故障在「DDR 帧缓存 → `fb_scanout`」这一段。`under=0` 不能证明数据对（读回全零时它同样是 0），
   `Buffer.flush()` 也**没有**修好它。定位脚本 `build/fb_diag.py`：写完一屏纯色后
   用 `/dev/mem` 绕过缓存把同一物理地址读回逐字比对（机器判），再给人眼看红/绿/蓝黄三屏。
-- **板端分层跑表 16/16 段都有数**（`tools/scene_suite_board.py`）：每检测帧原始
-  15.4（争抢）/ 20.4（普通）个框，过草皮门限后 14.9，与主机 17.4 同量级 ⇒
+- **HDMI 是两处独立缺陷叠在一起**（同日夜里定位，见 `ai/sessions/022` §7.13）：
+  ① `fb_scanout` 行推进写成 `de && (local_x == width_use-1)`，而真实时序里
+  `local_x` 最大 1277 ⇒ 条件永不成立 ⇒ **每行都读第 0 条行缓存**（整屏纯色/竖条对、
+  横条和文字全丢），且 `st_under` 对这个缺陷**永远报 0**；已改为按 de 拍数推进，
+  TB 补了行推进断言并做了反向验证（`ERRS=1824 / UNDER=0`）。
+  ② `flow_system.bit` 里 `0x41200000`（HDMI cfg）写不进去、读回的是 `0x41210000`
+  的状态值 —— 配置从未进过 PL，屏上必然全黑。已把 cfg 挪到外层 `axi_smc`（FCLK 域，
+  与 LCD 那几个已验证可写的 GPIO 同一条总线），状态 GPIO 留 pclk 域。
+  **两处都还没拿到人眼结论**，`HDMI_VISUAL_OK` 不记。
+- **板端分层跑表 16/16 段有数**（`tools/scene_suite_board.py`；8 争抢 + 8 普通，
+  逐段落盘在 `data/results/scene_suite_board.json`）。每检测帧原始
+  15.44（争抢）/ 20.05（普通）个框，过草皮门限后 12.30 / 16.25，
+  与主机的 14.4 / 17.4 人同量级 ⇒
   **之前「瓶颈是 320 输入」的结论被自己数据推翻**；输出 `players` 接近 0 是
   `camera_state` 按设计判 `INVALID_VIEW`（`grass<0.20 → close_up_or_crowd`）后清空坐标，
-  不是检测看不见。带计数器的争抢段重跑（`rows_post` 列）只补到 4/8，板子掉线中断。
+  不是检测看不见。争抢段**当晚补齐 8/8**（`build/_contest_rows.json`），
+  `rowsok` 列同时补齐；另：报告旧版「过 score/尺寸门限 14.9」查无出处，已撤（见报告表下注）。
 - **`--max-det` 不是人数**：它是「检测调用次数上限」（默认 8）。板上跑表要 `--max-det 0`。

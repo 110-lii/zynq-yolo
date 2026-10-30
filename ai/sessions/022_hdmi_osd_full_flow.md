@@ -462,3 +462,119 @@ sha256，只补不一样的；这一轮 42 个文件里只传了 6 个，20 秒�
 - 若对 `0x41200000` 写什么都读不回、对照组正常 ⇒ 问题在地址/读通路，与 cache 无关；
 - 若读得回 ⇒ 配置其实进了 PL，回到 `fb_scanout` 内部找（下一步按 014 的老办法，
   用 GPIO 把 `{cfg_en, line_ready, in_range, pixel_data}` 拉出来读）。
+
+### 7.13 两个独立缺陷：先修「每一行都在读第 0 条行缓存」，再修「配置寄存器根本进不去」
+
+夜里这一段把 7.12 留下的两个待证项都做实了，结论是**两处独立故障叠在一起**——
+只修一处，画面照样不对。
+
+**1. 人眼二分：整屏一个颜色对、竖条对，横条和文字全丢**
+用户先后报了三次画面：「全绿、没有字」「左红右蓝有白条、没有黄条和字」。
+把三次现象对到 `fb_scanout` 的地址逻辑上，只剩一个解释：**`disp_line` 卡在 0**，
+每一行都去读第 0 条行缓存 —— 于是「第一行是什么」决定整屏：
+纯色卡 ⇒ 整屏纯色（看着像成功）；首行有竖条 ⇒ 整屏竖条；首行的横条/文字 ⇒ 全丢。
+
+根因在行推进条件的取值域：
+```verilog
+// 旧写法
+end else if (de && (local_x == width_use - 1))
+```
+而 `local_x = xpos - 2`，真实 `video_driver` 在 `de` 有效的 1280 拍里给的是
+`pixel_xpos = 0…1279`（`data_req` 比 `video_en` 早一拍，`pixel_xpos` 只在 `data_req`
+时更新），所以 `local_x` 最大只到 **1277**，`== 1279` **永远不成立**。
+顺带一个非常坏的副作用：`ahead = fetch_line - disp_line` 涨到 4 以上就不再取数，
+`ready[0]` 恒为 1 ⇒ **`st_under` 永远是 0**。所有机器判据全绿，只有人能发现。
+
+改成数「本行发过多少拍 de」：
+```verilog
+end else if (de) begin
+    if (px_adv + 11'd1 >= width_use) begin px_adv <= 0; disp_line <= disp_line + 1; end
+    else                                   px_adv <= px_adv + 1;
+end
+```
+
+**2. 仿真为什么没抓到：TB 的 `xpos` 是手搓的**
+`sim/tb/tb_fb_scanout.v` 原来喂 `xpos <= px + 2`（注释还写着「与 video_driver 一致」），
+刚好处处把 `local_x` 顶到 `width_use-1`，把上面那个边角完整绕过去。
+改成真实取值域（`xpos = 0…W-1`，期望像素取 `src = max(xpos-2,0)`），并补一条
+**行推进断言**（一行 de 走完，`disp_line` 必须 +1）。反向验证（把旧条件贴回去再跑）：
+
+    DISP_LINE line=0 disp_line=0 exp=1
+    MISMATCH line=1 xpos=0 src=0 got=000000 exp=010000
+    CHECKED=2048 ERRS=1824 UNDER=0 FRAMES=4
+
+注意 `ERRS=1824` 而 `UNDER=0` —— **欠载计数对这个缺陷完全免疫**，这条和 7.12 第 5 条
+是同一个教训的两面。恢复修复后 4 帧全对。
+
+**3. 配置寄存器：不是「没生效」，是**两个地址都解到了同一个从设备**
+
+探针一（连续读三次 `st` 与 `cfg[0]`）：
+
+    T0 cfg[0]=0x00020000 st=0x00020000 frames=2
+    T1 cfg[0]=0x003E0000 st=0x003E0000 frames=62
+    T2 cfg[0]=0x007A0000 st=0x007A0000 frames=122
+
+`frames` 以 60/s 稳定增长 ⇒ **像素域、vs、`hdmi_smc`、`axi_cc` 全是活的**（7.12 里
+「是不是复位没释放」的怀疑可以划掉）；但 `cfg[0]` 读回来的就是 `{frames, under}` 本身。
+
+探针二（写魔数 + 四个分支对照）：
+
+    BASE  hdmi_cfg r0=0x58C10000  hdmi_st r0=0x58C10000  lcd_cfg r0=0x00000000
+          gpio_keys r0=0x00000003  gpio_t  r0=0x004CB250
+    AFTER write 0xDEADBEEF to hdmi_cfg r0 → hdmi_cfg 仍是 0x58C10000
+    CTRL  write 0xCAFEBABE to lcd_cfg    → lcd_cfg 读回 0xCAFEBABE
+
+同一条外层总线上的 LCD 配置、按键、帧计数器全都正常 ⇒ 外层 `axi_smc` 与 PS 侧没问题，
+**坏在 `0x41200000` 这一支**：写进不去、读回的是状态 GPIO。屏上全黑（人眼确认），
+与 `cfg_en` 从未置起来完全一致。
+
+**4. 一个被证伪的假设（记下来，省得下次再试）**
+`bd_hdmi_video.tcl`（能读回）与 `bd_flow_system.tcl`（读不回）里是同一个 2 主口
+SmartConnect，差别只有 flow_system 多挂了
+`__experimental_features__ {disable_low_area_mode 1}`。摘掉后重出片（WNS +3.017 ns，
+0 违例）再上板：**`addr_ok=0 pack_ok=0`，屏幕仍然全黑** ⇒ 与这个实验性开关无关。
+顺便把内层 SMC 生成的段表挖出来看，`SEG000=0x41200000 / SEG001=0x41210000`、路由位也不同，
+**看起来是对的** —— 所以「译码塌陷」只是现象描述，不是寄存器配置能解释的。
+
+**5. 改法：不再赌这条嵌套总线**
+`hdmi_video_top.v` 里本来就有 cfg 的 2 拍同步器（注释写着「cfg_* 来自 PS 侧 AXI GPIO
+（83.33 MHz），本模块跑 pclk」），XDC 也留了跨域说明的位置。那就顺着这个设计意图走：
+
+- `gpio_hdmi_cfg`（**写侧**，必须可靠）挪到外层 `axi_smc` 的 M09，跑 FCLK 域；
+- `gpio_hdmi_st`（只读，实测读通路正常）留在 pclk 域，内层 SMC 降成单主口（M10）；
+- `flow_system.xdc` 补上 `clk_fpga_0` 与 `clk_out{1,2}_system_clk_wiz_hdmi_*` 的异步声明
+  （两个 HDMI 时钟必须**同一组**：serializer 在 pclk_x5 上采样 pclk 数据，那是真同步路径）。
+
+判据顺序不变：先 `HDMI_CARDS_CFG addr_ok=1 pack_ok=1`，再谈屏上的字。
+
+### 7.14 结构改完、片子出了，人眼这一步被板子卡住（2026-10-30 22:2x）
+
+按 7.13 第 5 条的改法出了新片：
+
+| 项 | 值 |
+|---|---|
+| `flow_system.bit` | 4,045,674 B，22:24 生成 |
+| WNS / TNS | **+3.654 ns / 0.000**（0 个失败端点，97,777 端点） |
+| 地址表 | `gpio_hdmi_cfg` 0x41200000、`gpio_hdmi_st` 0x41210000（未变） |
+| 结构 | `axi_smc` 11 主口：M09 → cfg（FCLK）；M10 → `axi_cc` → `hdmi_smc`(1 主口) → st（pclk） |
+
+`deploy` 成功（只重传了 bit 和 hwh 两个，其余 sha 一致），**紧接着 `hdmi` 步骤跑到一半
+连接被重置**（`WinError 10054`），随后 TCP 都不通了 —— 板子掉了。
+按 AGENTS.md：**板子离线不做任何硬件验证，也不声称「已验证」**。
+
+所以现在的状态是干净的「待验」：
+- 机器侧已过：仿真（含反向验证）、时序收敛、部署 sha 一致；
+- **人眼侧未过**：`HDMI_CARDS_CFG addr_ok/pack_ok` 还没机会跑，五色卡和横幅还没看过。
+
+上电后由 `build/hdmi_watch.py` 自动接手（它每 15 s 探一次内核，活着就
+`deploy,hdmi` 一路跑完并停在横幅上）。看到 STEP1-RED … STEP5-BLACK 和收尾横幅，
+才记 `HDMI_VISUAL_OK`；看不到就继续查，不写「应该可以」。
+
+顺带记两条当晚同一批的结论，免得以后重算：
+- 分层测试集**补齐 16/16**：争抢段 8/8（`build/_contest_rows.json`）+ 普通段 n08
+  （补进 `data/results/scene_suite_board.json`；此前这份文件被一次新跑冲成 1 行，
+  已从提交里恢复再并入 n08 —— 落盘文件不能手改，但**能重算的合并要重算**）。
+  两类合计（每检测帧）：原始框 15.44 / 20.05，过草皮门限 12.30 / 16.25，
+  输出 `players` 0.45 / 0.24，球可见率 5.5% / 22.0%，单帧推理 988 / 965 ms。
+- **报告里旧的「过 score/尺寸门限 14.9」在任何落盘数据里都查不到出处，已撤掉并加注**；
+  16 段补齐后仍然复现不出来，所以不是「样本不够」的问题。

@@ -62,6 +62,19 @@ set_clock_groups -asynchronous \
     -group [get_clocks clk_out1_system_clk_wiz_0] \
     -group [get_clocks clk_out2_system_clk_wiz_0]
 
+# ---- HDMI 域（clk_wiz_hdmi 的 74.255954 / 371.27977）----
+# 2026-10-30：HDMI 配置寄存器（gpio_hdmi_cfg）从 pclk 域挪到 FCLK 域，之后
+#   clk_fpga_0 → pclk 这条路上只剩 cfg_addr / cfg_pack，两路都在 hdmi_video_top 里
+#   过 2 拍同步（cfg_addr_s1/s2、cfg_pack_s1/s2），准静态配置字。
+#   pclk → clk_fpga_0 方向：AXI 时钟转换器（axi_cc）自带握手，无需约束。
+# ⚠️ 两个 HDMI 时钟必须放在**同一个 group**：serializer_10_to_1 在 pclk_x5 上采样 pclk
+#   域的数据，那是真实的同步路径，拆成两组会把串行器的时序检查关掉。
+# 时钟名以时序报告为准（BD 会自动加 system_ 前缀和 _0/_1 后缀，别手写）：
+#   clk_out1_system_clk_wiz_hdmi_0 / clk_out2_system_clk_wiz_hdmi_0_1 …
+set_clock_groups -asynchronous \
+    -group [get_clocks clk_fpga_0] \
+    -group [get_clocks {clk_out1_system_clk_wiz_hdmi_* clk_out2_system_clk_wiz_hdmi_*}]
+
 # 显式写出的几处（时钟组已覆盖，保留是为了读约束的人不用回头猜）：
 #   cfg[5] 选 BUFGMUX、cfg[0] 选 ODDR 相位 —— 准静态，切换瞬间可能有一拍抖动
 set_false_path -to [get_pins -hier -filter {NAME =~ *u_clk_mux/S*}]

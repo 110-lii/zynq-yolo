@@ -765,8 +765,12 @@ python3 tools/check_hdmi_cards.py
 py tools/run_board_acceptance.py --wait 2700
 
 # PC 侧：分层测试集（争抢/普通各 8 段）在板上跑 board_pipeline，逐段落盘、可 --resume
-py tools/scene_suite_board.py --resume
+# ★ 必须 --max-det 0：--max-det 是「检测调用次数」上限（默认 8），不封顶才拿得到人数
+py tools/scene_suite_board.py --resume --no-push --max-frames 250 --every 10
 ```
+
+单段实测约 85 s；`--clip-timeout`（默认 300 s）超时即判板子卡死并中止本轮
+（端口能连但内核无应答时，只能靠超时发现）。
 
 部署通道：SSH 不通，一切走 Jupyter ——
 `py tools/board_jupyter.py --push <本地> <远端>`（分片 base64，两端打印 sha256），

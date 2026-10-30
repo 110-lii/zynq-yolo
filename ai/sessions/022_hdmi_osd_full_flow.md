@@ -851,3 +851,25 @@ BLOCK 那幅图只有两种像素值（0 和 0xFFFFFF），所以累加和可以
 说明它不是永远打 OK 的摆设。
 
 **它替代不了任何上板判据**，`HDMI_VISUAL_OK` 仍然不记。
+
+### 7.21 上板前的最后一段准备（板子仍未上线）
+
+- **网口的静态地址本来就是对的**：`netsh interface ipv4 show config name="以太网"` 显示
+  `192.168.2.100/24`（另有 `192.168.1.102/24`），DHCP 关闭。所以**不需要重配任何东西**，
+  缺的只是一根插回去的网线和板子供电 —— 这条比「板子又挂了」重要得多。
+- **探针加了「配置到底进没进 PL」这一问**：两个魔数写-读闭环（`out.check_cfg()`）+ 把
+  `cfg_pack` 拆成 stride/width/en 逐字段对期望值 + 基址是否指向刚写的那块缓冲。
+  理由见 `tools/hdmi_video.py::check_cfg` 的注释：10-30 那次 `frames` 60/s、`under=0`
+  全都正常，屏上却什么都没有，根因是配置根本没写进去 —— 所有「扫描在不在跑」的判据
+  都不会报警。
+- **离线体检**：`py tools/flow_overlay.py --check-hwh` → `FLOW_OVERLAY_HWH_OK`
+  （12 个地址、GPIO 方向、HP0 段归属、诊断端口、bit/hwh 同批）。
+- **提交包**：`py tools/make_submission.py` → `dist/zynq-yolo_submission_20261031_0132.zip`
+  （665 文件 / 104.6 MB，`CHECK_REPO_OK` 6 PASS / 0 FAIL），已删除 10-30 的旧包。
+
+上板那一天只需要两条命令：
+
+    py build/hdmi_geom_probe.py --wait 300        # 先证配置、再证行/列映射
+    py tools/flow_overlay.py --selftest           # 机器判据 + LCD 半边
+
+人眼那一步（`HDMI_VISUAL_OK`）只能当场看，**在此之前不写「已验证」**。

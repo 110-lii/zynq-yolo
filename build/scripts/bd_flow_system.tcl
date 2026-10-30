@@ -21,6 +21,8 @@
 #   0x41260000   64K  keys      key[1:0]
 #   0x41270000   64K  LCD id     ← 原 0x41200000，被 HDMI cfg 占用后下移
 #   0x41280000   64K  LCD timing ← 原 0x41210000，同上
+#   0x41290000   64K  HDMI dbg   {under_lines[10:0], fetch_line[21:11], disp_line[31:22]}
+#                    —— 行映射诊断，值在 vs 沿更新（2026-10-30 加）
 #
 # 时钟
 #   sys_clk(50 MHz, U18) → clk_wiz      → 33.333 / 9.000 MHz    （LCD，两个像素域）
@@ -176,7 +178,7 @@ connect_bd_net $pclk_h [get_bd_pins axi_cc/m_axi_aclk]
 connect_bd_net [get_bd_pins rst_pix_h/peripheral_aresetn] [get_bd_pins axi_cc/m_axi_aresetn]
 
 set hdmi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 hdmi_smc]
-set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $hdmi_smc
+set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {2}] $hdmi_smc
 connect_bd_intf_net [get_bd_intf_pins axi_cc/M_AXI] [get_bd_intf_pins hdmi_smc/S00_AXI]
 connect_bd_net $pclk_h [get_bd_pins hdmi_smc/aclk]
 connect_bd_net [get_bd_pins rst_pix_h/peripheral_aresetn] [get_bd_pins hdmi_smc/aresetn]
@@ -329,6 +331,17 @@ connect_bd_net [get_bd_pins gpio_hdmi_cfg/gpio2_io_o] [get_bd_pins hdmi_video_0/
 connect_bd_net [get_bd_pins hdmi_video_0/st_status]   [get_bd_pins gpio_hdmi_st/gpio_io_i]
 connect_bd_net [get_bd_pins hdmi_video_0/st_sum]      [get_bd_pins gpio_hdmi_st/gpio2_io_i]
 
+# 行映射诊断寄存器 0x41290000：{under_lines[10:0], fetch_line[21:11], disp_line[31:22]}
+# 与 st 同在 pclk 域、同挂 hdmi_smc，不做跨时钟；值只在 vs 沿更新，静态可读。
+# 之所以单开一个 GPIO 而不是塞进 st：st 的两个通道已经用满，而这一路是
+# 「行到底走到哪儿了」的唯一可观测出口（`under` 与帧计数都已被证伪两次）。
+set gpio_hdmi_dbg [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 gpio_hdmi_dbg]
+set_property -dict [list CONFIG.C_GPIO_WIDTH {32} CONFIG.C_IS_DUAL {0} CONFIG.C_ALL_INPUTS {1}] $gpio_hdmi_dbg
+connect_bd_intf_net [get_bd_intf_pins hdmi_smc/M01_AXI] [get_bd_intf_pins gpio_hdmi_dbg/S_AXI]
+connect_bd_net $pclk_h [get_bd_pins gpio_hdmi_dbg/s_axi_aclk]
+connect_bd_net [get_bd_pins rst_pix_h/peripheral_aresetn] [get_bd_pins gpio_hdmi_dbg/s_axi_aresetn]
+connect_bd_net [get_bd_pins hdmi_video_0/st_dbg] [get_bd_pins gpio_hdmi_dbg/gpio_io_i]
+
 # AXI4 读主机 → S_AXI_HP0（AXI3）：用 smartconnect 做协议/位宽转换。
 # HP0 的 ACLK 必须与 pclk 同源 —— fb_scanout 内部没有跨时钟桥。
 if {[catch {associate_bd_net $pclk_h [get_bd_intf_pins hdmi_video_0/M_AXI]} _e]} {
@@ -376,6 +389,7 @@ assign_bd_address -offset 0x41250000 -range 64K  [get_bd_addr_segs {gpio_d2/S_AX
 assign_bd_address -offset 0x41260000 -range 64K  [get_bd_addr_segs {gpio_keys/S_AXI/Reg}]
 assign_bd_address -offset 0x41270000 -range 64K  [get_bd_addr_segs {gpio_id/S_AXI/Reg}]
 assign_bd_address -offset 0x41280000 -range 64K  [get_bd_addr_segs {gpio_t/S_AXI/Reg}]
+assign_bd_address -offset 0x41290000 -range 64K  [get_bd_addr_segs {gpio_hdmi_dbg/S_AXI/Reg}]
 
 # ★ 2026-10-30 夜里第三处缺陷：HDMI 读主机**根本没有地址空间**
 #   `validate_bd_design` 一直在报

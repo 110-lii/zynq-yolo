@@ -38,10 +38,15 @@ integer lat_cfg = 8;                       // AR → 首拍 R（可 +LAT=n 覆�
 integer gap_cfg = 4;                       // 突发间空档（可 +GAP=n 覆盖）
 localparam [31:0]  BASE   = 32'h1F00_0000;
 
-localparam integer PAT_ENC   = 0;          // 行列编码（逐像素查）
-localparam integer PAT_BLOCK = 1;          // 左上 128x128 白块（与上板 DIAG 同图）
+localparam integer PAT_ENC    = 0;         // 行列编码（逐像素查）
+localparam integer PAT_BLOCK  = 1;         // 左上 128x128 白块（与上板 DIAG 同图）
+localparam integer PAT_ROWPTR = 2;         // 单行全白（+ROW=n）：问「源行 n 被显示了几次」
+localparam integer PAT_COLPTR = 3;         // 单列全白（+COL=n）：问「源列 n 被显示了几次」
 
 integer pattern = PAT_ENC;
+integer prow    = -1;                      // +ROW=n
+integer pcol    = -1;                      // +COL=n
+integer frames_cfg = 4;                    // +FRAMES=n（单行/单列探针只需 2 帧）
 
 reg clk = 1'b0;
 reg reset_n = 1'b0;
@@ -123,6 +128,10 @@ function [31:0] mem_word(input [31:0] byte_addr);
         col = (off % STRIDE) / 4;
         if (pattern == PAT_BLOCK) begin
             mem_word = ((row < 128) && (col < 128)) ? 32'h00FFFFFF : 32'd0;
+        end else if (pattern == PAT_ROWPTR) begin
+            mem_word = (row == prow) ? 32'h00FFFFFF : 32'd0;
+        end else if (pattern == PAT_COLPTR) begin
+            mem_word = (col == pcol) ? 32'h00FFFFFF : 32'd0;
         end else begin
             mem_word = {8'h00, row[9:0], col[10:0], 3'b000};
         end
@@ -142,6 +151,10 @@ function [31:0] host_sum(input integer pat);
             for (c = 0; c < W; c = c + 1) begin
                 if (pat == PAT_BLOCK)
                     w = ((r < 128) && (c < 128)) ? 32'h00FFFFFF : 32'd0;
+                else if (pat == PAT_ROWPTR)
+                    w = (r == prow) ? 32'h00FFFFFF : 32'd0;
+                else if (pat == PAT_COLPTR)
+                    w = (c == pcol) ? 32'h00FFFFFF : 32'd0;
                 else
                     w = {8'h00, r[9:0], c[10:0], 3'b000};
                 if (c == 0)      acc = acc + w + w + w;   // 显示列 0/1/2 都是源列 0
@@ -216,6 +229,10 @@ always @(posedge clk) begin
             exp_pix = {srow[9:0], ssrc[10:0], 3'b000};
             if (pattern == PAT_BLOCK)
                 exp_pix = ((srow < 128) && (scol < 130)) ? 24'hFFFFFF : 24'h000000;
+            else if (pattern == PAT_ROWPTR)
+                exp_pix = (srow == prow) ? 24'hFFFFFF : 24'h000000;
+            else if (pattern == PAT_COLPTR)
+                exp_pix = (ssrc == pcol) ? 24'hFFFFFF : 24'h000000;
             chk = chk + 1;
             if (video_rgb !== exp_pix) begin
                 errs = errs + 1;
@@ -229,12 +246,14 @@ end
 
 // ---------------- 主流程 ----------------
 integer f;
+integer cnt_rec, cnt_exp, n;
+reg [63:0] tmp64;
 initial begin
     reset_n = 0;
     repeat (8) @(posedge clk);
     reset_n = 1;
 
-    for (f = 0; f < 4; f = f + 1) begin
+    for (f = 0; f < frames_cfg; f = f + 1) begin
         @(posedge video_vs);
         frame = frame + 1;
         $display("VS frame=%0d st_frames=%0d st_under=%0d sum=%08X dbg=%08X",
@@ -246,8 +265,31 @@ initial begin
     $display("FINAL frame=%0d st_frames=%0d under=%0d sum=%08X host_sum=%08X dbg=%08X",
              frame, st_frames, st_under, st_sum_r, host_sum(pattern), st_dbg);
     $display("CHECKED=%0d ERRS=%0d", chk, errs);
-    $display("DBG disp_line=%0d fetch_line=%0d under_lines=%0d",
+    $display("DBG under_lines=%0d behind_lines=%0d last_disp=%0d",
              st_dbg[10:0], st_dbg[21:11], st_dbg[31:22]);
+
+    // 单行/单列探针的**反解**：上板 DIAG_ROWPTR/DIAG_COLPTR 用同一个算式，这里先证明它可逆。
+    //   word = 0x00FFFFFF（奇数，与 2^32 互素）⇒ 乘法在模 2^32 下是双射，
+    //   sum = (count × 每行/每列像素数 × word) mod 2^32 可以**唯一**反解出 count。
+    //   这里直接穷举 count（≤720/1280 次 64 位乘法），与主机侧 `pow(w,-1,2**32)` 等价 ——
+    //   2026-10-31 第一版按「word ≡ -1」写成 sum=-1280*count，列探针当场算出 1,887,438
+    //   （因为 0x00FFFFFF ≠ 0xFFFFFFFF，只有 1280×2^24 恰好 ≡ 0 时行探针才凑巧对）。
+    if (pattern == PAT_ROWPTR || pattern == PAT_COLPTR) begin
+        cnt_rec = -1;
+        for (n = 0; n <= H; n = n + 1) begin
+            tmp64 = (pattern == PAT_ROWPTR)
+                  ? (n * W) * 64'd16777215     // 一行白 = 1280 个白像素
+                  : (n * H) * 64'd16777215;    // 一列白 = 720 个白像素
+            if (tmp64[31:0] == st_sum_r) cnt_rec = n;
+        end
+        cnt_exp = (pattern == PAT_ROWPTR) ? 1
+                : ((pcol == 0) ? 3 : ((pcol < W-2) ? 1 : 0));
+        $display("PTR %s=%0d sum=%08X recovered_count=%0d expected=%0d %s",
+                 (pattern == PAT_ROWPTR) ? "row" : "col",
+                 (pattern == PAT_ROWPTR) ? prow : pcol,
+                 st_sum_r, cnt_rec, cnt_exp,
+                 (cnt_rec == cnt_exp) ? "OK" : "FAIL");
+    end
     if ((errs == 0) && (chk > 800000) && (st_sum_r == host_sum(pattern)))
         $display("TB_HDMI_SCANOUT_SYS_OK");
     else
@@ -260,10 +302,18 @@ integer ok;
 initial begin
     #1;  // 让 pattern 在 t=0 之后稳定
     pattern = PAT_ENC;
-    if ($test$plusargs("block")) pattern = PAT_BLOCK;
+    if ($test$plusargs("block"))  pattern = PAT_BLOCK;
+    if ($test$plusargs("rowptr")) pattern = PAT_ROWPTR;
+    if ($test$plusargs("colptr")) pattern = PAT_COLPTR;
+    ok = $value$plusargs("ROW=%d", prow);
+    ok = $value$plusargs("COL=%d", pcol);
+    ok = $value$plusargs("FRAMES=%d", frames_cfg);
     ok = $value$plusargs("LAT=%d", lat_cfg);
     ok = $value$plusargs("GAP=%d", gap_cfg);
-    $display("PATTERN=%s LAT=%0d GAP=%0d", (pattern == PAT_BLOCK) ? "BLOCK" : "ENC", lat_cfg, gap_cfg);
+    $display("PATTERN=%s row=%0d col=%0d FRAMES=%0d LAT=%0d GAP=%0d",
+             (pattern == PAT_BLOCK) ? "BLOCK" : (pattern == PAT_ROWPTR) ? "ROWPTR" :
+             (pattern == PAT_COLPTR) ? "COLPTR" : "ENC",
+             prow, pcol, frames_cfg, lat_cfg, gap_cfg);
 end
 
 endmodule

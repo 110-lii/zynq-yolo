@@ -124,6 +124,76 @@ per_row = got / float(H)
 print('DIAG_COLCODE sum=%08X per_row=%.0f  expected=816003（屏幕口径）/814726（旧累加口径）' %
       (got, per_row), flush=True)
 
+# ---------------- 0b. 单行/单列：直接量「某个源行被显示了几次」 ----------------
+# ROWCODE 只给一个总数（Σ 行号），行号打滑和「少数行读错」在同一个 Σ 里分不开。
+# 这一节把行映射的**每个纤维**单独量出来：整幅图只有源行 r 是白的，
+# 屏幕上有几行显示它，累加和里就有几组 1280 个白像素。
+#
+#   像素字 = 0x00FFFFFF（奇数，与 2^32 互素）⇒ x ↦ x·word (mod 2^32) 是双射，
+#   白像素个数 = sum · word⁻¹ (mod 2^32) 可**精确**反解，不需要任何假设。
+#   正确值：每个源行恰好被显示 1 次 ⇒ 白像素 1280、行数 1。
+#   若某一行被显示 720 次 ⇒ 行号卡死在该行；被显示 0 次 ⇒ 该行丢失。
+# 2026-10-31 先在仿真里把同一条算式跑过：8 个探针（行 0/360/700/719、列 0/1/1277/1279）
+# 全部反解正确（含「列 0 显示 3 次、列 1279 显示 0 次」这两个边界），见
+# sim/tb/tb_hdmi_scanout_sys.v 的 +ROW=/+COL= 模式。
+WORD = 0xFFFFFF
+INV_WORD = pow(WORD, -1, 1 << 32)
+
+
+def solve_count(sumv, per_pixel):
+    """sum = count × per_pixel × WORD mod 2^32 ⇒ 反解 count；除不尽返回负数。"""
+    x = (sumv * INV_WORD) & 0xFFFFFFFF
+    if x % per_pixel:
+        return -1
+    return x // per_pixel
+
+
+def ptr_verdict(tag, r, sumv, count, expect_note):
+    ok = (count == 1)
+    print('DIAG_%s r=%-4d sum=%08X count=%d  %s  %s'
+          % (tag, r, sumv, count, '见 1 次 ✓' if ok else '与 1 不符', expect_note), flush=True)
+    return ok
+
+
+print('DIAG_ROWPTR_BEGIN 每个源行应恰好被显示 1 次', flush=True)
+rows_bad = []
+for r in (0, 1, 2, 3, 360, 716, 717, 718, 719):
+    img = np.zeros((H, W, 3), np.uint8)
+    img[r, :] = (255, 255, 255)
+    out.show(img)
+    time.sleep(0.45)
+    fr, un, got = rd()
+    cnt = solve_count(got, W)
+    if not ptr_verdict('ROWPTR', r, got, cnt, ''):
+        rows_bad.append((r, cnt))
+print('DIAG_ROWPTR_END bad=%d %s' % (len(rows_bad), rows_bad), flush=True)
+if not rows_bad:
+    print('DIAG_ROWPTR_VERDICT 行映射逐行正确（每个源行显示且仅显示 1 次）', flush=True)
+elif rows_bad[0][1] == H:
+    print('DIAG_ROWPTR_VERDICT 行号卡死在第 %d 行（屏幕 720 行全是它）' % rows_bad[0][0], flush=True)
+else:
+    print('DIAG_ROWPTR_VERDICT 行映射有错，明细见上（次数 720=卡死，0=该行没显示，其它=重复/丢失）',
+          flush=True)
+
+print('DIAG_COLPTR_BEGIN 列 0 应 3 次（屏幕列 0/1/2 都是它），1..1277 各 1 次，1278/1279 不显示',
+      flush=True)
+cols_bad = []
+for c in (0, 1, 2, 3, 4, 1276, 1277, 1278, 1279):
+    img = np.zeros((H, W, 3), np.uint8)
+    img[:, c] = (255, 255, 255)
+    out.show(img)
+    time.sleep(0.45)
+    fr, un, got = rd()
+    cnt = solve_count(got, H)
+    want = 3 if c == 0 else (1 if c <= W - 3 else 0)
+    print('DIAG_COLPTR c=%-4d sum=%08X count=%d want=%d %s' %
+          (c, got, cnt, want, '✓' if cnt == want else '与期望不符'), flush=True)
+    if cnt != want:
+        cols_bad.append((c, cnt, want))
+print('DIAG_COLPTR_END bad=%d %s' % (len(cols_bad), cols_bad), flush=True)
+if not cols_bad:
+    print('DIAG_COLPTR_VERDICT 列映射正确', flush=True)
+
 # ---------------- 1. 两个「已知会说话」的图案 ----------------
 img = np.zeros((H, W, 3), np.uint8)
 img[0:128, 0:128] = (255, 255, 255)

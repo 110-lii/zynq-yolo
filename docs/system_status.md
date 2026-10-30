@@ -202,6 +202,15 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   抓到三处真缺陷：每行最后一列恒黑（`in_range` 错与 `de` 相与）、
   `ahead` 无符号回绕会让取数**永久冻结**（放慢从机可复现）、`st_sum` 累加口径比屏幕早一拍。
   三处已修，`SIM_PASS 11/11`；**仍无任何人眼结论**，`HDMI_VISUAL_OK` 不记。
+- **10-31 稍后：BLOCK 与 VRAMP 互相矛盾，改成直接量**。VRAMP 的 `0x3ACB0000`
+  要求 `1280·S ≡ 15051 (mod 65536)`，而左边恒被 256 整除 ⇒ **无解**，
+  说明「每一行都读靠前的行」这个模型本身不完整，不能再靠解析。新增**单行/单列探针**：
+  整幅图只有源行 r 白，`sum = count·1280·0x00FFFFFF (mod 2³²)`，
+  `0x00FFFFFF` 与 2³² 互素 ⇒ `count` 唯一可反解（列同理除 720）。
+  同一条算式先在 `tb_hdmi_scanout_sys` 的 `+ROW=`/`+COL=` 模式里对真 RTL 跑过
+  8/8（含「列 0 显示 3 次、列 1279 显示 0 次」两个边界），`CHECKED=1843200 ERRS=0`；
+  探针已加进 `build/hdmi_geom_probe.py`（9 行 + 9 列，约 10 s）。
+  **仍在等板子，无上板数据。**
 - **板端分层跑表 16/16 段有数**（`tools/scene_suite_board.py`；8 争抢 + 8 普通，
   逐段落盘在 `data/results/scene_suite_board.json`）。每检测帧原始
   15.44（争抢）/ 20.05（普通）个框，过草皮门限后 12.30 / 16.25，

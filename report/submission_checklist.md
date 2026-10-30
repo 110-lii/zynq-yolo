@@ -94,7 +94,7 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
 - `check_repo.py`：`SUMMARY: 6 PASS / 0 FAIL / 0 WARN`，`CHECK_REPO_OK`；
 - `make_submission.py`：**文件数与大小以当天最后一次生成为准**，正文见 `dist/` 下同名 `.zip`
   与包内 `SUBMISSION_MANIFEST.csv`（本表不再抄具体数字，避免像 10-25 版那样与实物不符）；
-- 新增自检（2026-10-30）：`py tools/check_full_flow.py --dry-run` → `FULL_FLOW_OK ok=5 skip=1 fail=0`；
+- 新增自检（2026-10-30）：`py tools/check_full_flow.py --dry-run` → `FULL_FLOW_OK ok=6 skip=1 fail=0`（含队别投票步）；
   `py sim/scripts/run_sim.py` → `SIM_PASS 9/9`。
 
 ## 7. 已知开放项（不阻塞提交，但必须如实写在报告里）
@@ -114,8 +114,9 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
    - `display_both.bit` / `track_display.bit` 落后于新读侧，需重出片。
 6. **视频入口未落地（D015）**：`board_pipeline.py` 仍只吃板本地 `--video`；网络接收端
    （`stream_sender.py` / `board_net.py`）是早期 bring-up，未接主线；协议/端口在台账仍 `discussing`。
-7. **队别与球权未接入主线**：`classify_players.py` 可用但 `board_pipeline.py` 未调用；
-   球权不带队别；离线 `track_players.py` 轨迹为像素、未接单应。
+7. **队别已接入主线、未验证**：`tools/team_assign.py` + `board_pipeline --ui-config` 输出
+   `players[*].team` 与 `events.possession_team`（主机侧 `TEAM_ASSIGN_SELFTEST OK`）；
+   **真实画面与板上未验**；离线 `track_players.py` 仍不输出队别（像素坐标、未接单应）。
 8. **数据集来源与许可（D005）仍 `discussing`**：`data/` 内有比赛片段与训练集，
    但仓库里没有来源/许可声明；提交包只带运行必需件（模型/标定），不改变该状态。
 

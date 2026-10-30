@@ -39,7 +39,7 @@
   → 板→PC 推流(result_stream ↔ pc_dashboard --listen) → LCD 状态面板 → 赛前 UI
 ```
 
-主机侧实测：**`FULL_FLOW_TABLE ok=5 skip=1 fail=0` / `FULL_FLOW_OK`**（skip 的是 board_clock，
+主机侧实测：**`FULL_FLOW_TABLE ok=5 skip=1 fail=0` / `FULL_FLOW_OK`**（当天下午加了 team 步后为 ok=6，见 §7.2）（skip 的是 board_clock，
 板子离线）。产物：`build/flow/store/run_*.jsonl` + `summary.json`、`build/flow/status_lcd.png`、
 `build/flow/lcd_ui.png`。
 
@@ -83,3 +83,63 @@
 - **凡是需要屏幕的，一条都没有验**：4bpp 上屏、配色、按键、HDMI 环出、双屏。
   这不是「差一点」，是「没做过」——板上线后按 §5 从头走一遍。
 - 出片资源/时序没动过，不需要重出 LCD 那一片。
+
+---
+
+## 7. 同日下午续（2026-10-30 11:00 前后）—— 用户："现在做可以完成的事情"
+
+板子仍离线，所以这一轮只做**不依赖屏幕**的活：先把文档的一致性风险清掉，再把
+「能落地但一直没接」的队别接进主线。**没有一条新结论建立在看屏上。**
+
+### 7.1 文档一致性（评审第一眼看到的东西）
+
+| 问题 | 处理 | 证据 |
+|---|---|---|
+| `design_report.md` 把「HDMI 视频环出/OSD」写成**明确不做**（被 D026 推翻） | §1.2 改成第 5 项交付，并注明口径变更 | `report/design_report.md` §1.2 |
+| 报告内部三种说法打架：「HDMI 无图像」/「画面已通过（014）」/「均未修复」 | 全文统一 **BRAM_OK / VISUAL_OK 两级判据**；如实写成「HDMI 状态面板 BRAM_OK 通过、VISUAL_OK 待人眼；LCD 4bpp 新片两级都没做」 | 同上 §2.9 / §4.7 / §8 / §9 / §10 |
+| 报告缺 D026 | 新增 §2.10（结构/寄存器/两条硬约束/证据边界），补图 7（主机侧渲染，框坐标为演示给定） | 同上 §2.10 |
+| `design_report.docx` 比 md 旧 | 重生成（1,231,851 B，含两张新图） | `py tools/md_to_docx.py` |
+| `submission_checklist.md` 自相矛盾（§1 已通过 / §7 未修复） | §1、§3.1、§7 全部按两级判据重写；包统计不再抄具体数字 | 同上 |
+| `docs/system_status.md` 停在 10-25 | 更新到 10-30：LCD 三轮重做、4bpp、按键、D026、整体流程 | 同上 |
+| `docs/architecture.md` 仍写「不做 HDMI/OSD 视频输出」 | 改为 D026 要做 | 同上 |
+| `docs/repo_spec.md` 自称唯一事实源却停在 10-19 | §7 加状态同步段（第 2 项已由 D004 裁定，其余四项仍 discussing） | 同上 |
+| `DECISIONS.md` 汇总写「decided 14 条」但同句列了 20 条、且没纳入 D026 | 改为 20 条并说明双状态计法 | `ai/coordination/DECISIONS.md` |
+| 会话文件名叫 `022_d030_…`，正文从没解释 d030 | 改名 `022_hdmi_osd_full_flow.md`，更新 INDEX/TODAY_REPORT 引用 | 本文件 |
+| `report/llm_logs/` 只覆盖到 10-25 | 新增 `05_display_rework_evidence.md`（012–022，含四条被证据推翻的判断） | `report/llm_logs/05` |
+| 20+ 个受控子目录没有 README（repo_spec §3 要求） | 补 36 份（内容逐目录手写：装什么/谁产生/进 git/规则/怎么用） | `git show --stat` |
+
+自检：`py tools/check_repo.py` → `SUMMARY: 6 PASS / 0 FAIL / 0 WARN` / `CHECK_REPO_OK`。
+
+### 7.2 队别接入主线（D012/D013 的落点，主机侧可做）
+
+新增 `tools/team_assign.py`：
+
+- 读 `match-config/2`（`board/ui_config.json`，与 `lcd_ui.py` 屏上录入同一份）→
+  `{A, B, GK_A, GK_B, REF}` 色板 → 交给 `classify_players.classify()`（默认 v1 口径，门限 0.16 不动）；
+- 按 `track_id` **累积投票**：默认 ≥3 票且多数占比 ≥0.6 才出结论，否则 `unknown`（不硬猜）；
+- `board_pipeline.py` 新增 `--ui-config` / `--no-team`，默认读 `board/ui_config.json`；
+  配置不存在时打印 `TEAM_ASSIGN_OFF` 并**保持旧行为**（回归安全）；
+- `result_publisher.build_frame(teams=…)` 写 `players[*].team`；`events.step()` 新增
+  `possession_team`（取持球者的队别，无队别信息时为 None）。
+
+判据（全部主机侧，机器可判）：
+
+| 命令 | 令牌 |
+|---|---|
+| `py tools/team_assign.py --selftest` | `TEAM_ASSIGN_SELFTEST OK`（红/蓝/黄/草坪合成帧；票数不足→unknown；GK 归队） |
+| `py tools/result_publisher.py --selftest` | `PUBLISH_SELFTEST OK`（含 teams 给/不给两种路径） |
+| `py tools/events.py --selftest` | `EVENT_SELFTEST OK` |
+| `py tools/check_team_assign.py --tracks data/results/tracks/inc_01_t01154.9.json --palette A=red,B=white` | `TEAM_EVAL tracks=77 voted=57 labeled=55 A=28 B=27 unknown=22` |
+| 同上，inc_06 | `TEAM_EVAL tracks=64 voted=56 labeled=53 A=21 B=32 unknown=11` |
+| 反例：`--palette A=purple,B=cyan` | `voted=9/77` + `TEAM_EVAL_WARN low_vote_rate` |
+| 整体流程加了 team 步 | `py tools/check_full_flow.py --dry-run` → `FULL_FLOW_TABLE ok=6 skip=1 fail=0`（team 步吃 ui_config 的色板，实测 `labeled=46/77`） |
+
+★ **诚实边界**：没有人工标注的队别真值，所以上面只是「链路通、没塌成单一类」，
+**不是准确率**；真实转播里的深色球衣/逆光仍会把 v1 的 0.16 门限顶到 unknown。
+板上与真实画面的端到端（`board_pipeline --ui-config`）都还没跑。
+
+### 7.3 仍未做（本轮明确不碰）
+
+1. 所有看屏结论（4bpp 上屏、配色、按键、HDMI 环出、双屏）—— 板子离线；
+2. D015 的「PC 经以太网送视频」接收端 —— 协议/端口仍 `discussing`，属功能开发而非「补漏」；
+3. D003/D005/D006/D007 四条裁定 —— 需用户拍板，本轮只把状态写准，不替用户定。

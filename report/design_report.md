@@ -465,7 +465,7 @@ video_driver（1280×720@30）──► dvi_transmitter_top ──► HDMI
 | LCD 面板（PL overlay，已重做） | `bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 出片 `LCD_PROBE_BD_OK`，WNS **+1.839 ns** / WHS **+0.018 ns**；4bpp/16 色/按键；**未上板 ⇒ BRAM_OK 与 VISUAL_OK 均未做** |
 | HDMI+LCD 合并 | `display_both.bit` / `track_display.bit` | 014 前结构已修并出片；018–021 重写读侧后**比特流落后于 RTL**，需重出片再验 |
 | **HDMI 带框环出（D026）** | `bd_hdmi_video.tcl` + `tools/hdmi_video.py` | `TB_FB_SCANOUT_OK`（2048 像素 0 错）、`HDMI_VIDEO_SELFTEST OK`（打包往返 dmax=0）、主机侧 OSD 出图正确；**`hdmi_video.bit` 未上板，`under` 未观测** |
-| **整体流程一条命令** | `tools/check_full_flow.py --dry-run` | `FULL_FLOW_OK ok=5 skip=1 fail=0`（skip=时间对齐，板子离线）；接板版 `--board` 未跑过 |
+| **整体流程一条命令** | `tools/check_full_flow.py --dry-run` | `FULL_FLOW_OK ok=6 skip=1 fail=0`（skip=时间对齐，板子离线；含队别投票步）；接板版 `--board` 未跑过 |
 | PL 跟踪辅助（PC 算法） | `python tools/check_track_preproc.py` | `TRACK_PREPROC_REF OK`（RGB/MASK 逐字节一致） |
 | PL 跟踪辅助（HLS/BD） | `export_track.py` → `bd_track_preproc.tcl` | **已出片**：LUT 7,374 / FF 8,340 / DSP 13 / BRAM 3；WNS **+2.457 ns**、WHS +0.036 ns、PW +4.870 ns |
 | PL 跟踪辅助（上板） | `tools/check_track_preproc_board.py` | **`TRACK_PREPROC_BOARD_OK`**：RGB/掩码逐字节一致；720p **32.39 ms/帧** |
@@ -714,11 +714,17 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     `tools/stream_sender.py` / `src/ps/host/board_net.py` 是早期 `conv_engine` 的流式 bring-up
     （TCP + `ZYOL` 帧头），**没有接进主线**。走 PS GEM 还是 PL RGMII、协议与帧同步方式
     在台账里仍为 `discussing`。这是本报告范围内**最大的一条未完成功能**。
-11. **队别与球权未接入主线（D012/D013 的落点未闭合）**：`tools/classify_players.py` 已能按
-    人工设定的色板区分两队/裁判并做半场自动判定，但 `board_pipeline.py` 未调用它；
-    当前 `events` 的「球权」只是「3 m 内最近球员的 track_id」，**不带队别**。
-    离线跟踪器 `tools/track_players.py` 亦明确标注「队别与球权尚未实现」，且其轨迹单位是像素
-    （未接 `field_coords.py` 的单应）。
+11. **队别已接入主线，但只做到主机侧自证（D012/D013）**：`tools/team_assign.py` 把
+    `match-config/2` 的色板转成 `classify_players.classify()` 的 palette，并按 `track_id`
+    累积投票（≥3 票且多数占比 ≥0.6 才给结论，否则 `unknown`），产出 `players[*].team` 与
+    `events.possession_team`；`board_pipeline.py` 新增 `--ui-config/--no-team`，默认读
+    `board/ui_config.json`，不存在时打印 `TEAM_ASSIGN_OFF` 并保持旧行为。
+    主机侧：`TEAM_ASSIGN_SELFTEST OK` / `PUBLISH_SELFTEST OK` / `EVENT_SELFTEST OK`（合成帧），
+    并在**真实转播片段**上跑了两段已有跟踪结果（`tools/check_team_assign.py`，不重跑检测）：
+    inc_01 `tracks=77 labeled=55 A=28 B=27`、inc_06 `tracks=64 labeled=53 A=21 B=32`；
+    换错色板（purple/cyan）时投票轨迹从 57/77 塌到 9/77 并触发 `TEAM_EVAL_WARN`。
+    ⚠️ **这不是准确率**：没有人工标注的队别真值，「两队各半」只说明链路通且没塌成单一类。
+    板上未验证；离线跟踪器 `tools/track_players.py` 仍不输出队别（轨迹为像素、未接单应）。
 
 ---
 
@@ -740,7 +746,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | D023/D024 合并显示 | `bd_display_both.tcl`、`bd_track_display.tcl` | ⚠️ 比特流落后于 018–021 的新读侧，需重出片 |
 | D025 扩展：PC 端上位机 | `tools/pc_dashboard.py`（状态条 + 球场 + 事件流 + 证据帧 + CSV） | ✅ 自检与界面 PNG 已人眼核对 |
 | D026 扩展：HDMI 带框环出 | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ 仿真 `TB_FB_SCANOUT_OK`；✅ 主机侧 OSD 出图；⏳ `hdmi_video.bit` 未上板 |
-| 整体流程（新增） | `tools/check_full_flow.py` | ✅ 主机侧 `FULL_FLOW_OK ok=5 skip=1 fail=0`；⏳ `--board` 未跑 |
+| 整体流程（新增） | `tools/check_full_flow.py` | ✅ 主机侧 `FULL_FLOW_OK ok=6 skip=1 fail=0`；⏳ `--board` 未跑 |
 
 ---
 

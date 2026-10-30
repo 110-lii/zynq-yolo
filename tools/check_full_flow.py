@@ -124,6 +124,31 @@ def step_ui_config(path):
     return cfg
 
 
+# ---------------------------------------------------------------- 2b 队别
+def step_team(cfg, tracks_path="", palette=""):
+    """队别链路（D012/D013）：用**已有跟踪结果 + 原片**投票，不重跑检测。
+
+    没有人工队别真值 ⇒ 这里只判「链路通、且没有塌成单一类」，不判准确率。
+    """
+    tp = Path(tracks_path) if tracks_path else (ROOT / "data" / "results" / "tracks"
+                                                / "inc_01_t01154.9.json")
+    if not tp.is_file():
+        step("team", "SKIP", "no tracks json（%s）" % tp.name,
+             human="队别需要跟踪结果；先跑 tools/track_players.py")
+        return
+    if not palette:
+        t = (cfg or {}).get("teams") or {}
+        a = ((t.get("A") or {}).get("kit_color") or "").lower()
+        b = ((t.get("B") or {}).get("kit_color") or "").lower()
+        palette = ("A=%s,B=%s" % (a, b)) if (a and b) else "A=red,B=white"
+    rc, tail = run_mod(["tools/check_team_assign.py", "--tracks", str(tp),
+                        "--palette", palette])
+    line = next((ln for ln in reversed(tail) if ln.startswith("TEAM_EVAL ")), "")
+    ok = bool(line) and rc == 0 and "A=0 B=0" not in line
+    step("team", "OK" if ok else "FAIL", line or (tail[-1] if tail else "no output"),
+         human="队别准确率要人工标注，此处只证链路通")
+
+
 # ---------------------------------------------------------------- 3 结果落盘
 def _synth_rows(n=40):
     """合成一局的最小记录集：球员 + 球 + 事件，形状与 board_pipeline 的输出一致。"""
@@ -265,6 +290,10 @@ def main():
     ap.add_argument("--out", default=str(ROOT / "build" / "flow"))
     ap.add_argument("--n-synth", type=int, default=40)
     ap.add_argument("--fb-base", default="0x40000000")
+    ap.add_argument("--team-tracks", default="",
+                    help="队别检查用的 tracks JSON（默认 data/results/tracks/inc_01_*.json）")
+    ap.add_argument("--palette", default="",
+                    help="队别检查的色板（默认从 ui_config 取；再缺省 A=red,B=white）")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -275,6 +304,7 @@ def main():
     cfg = step_ui_config(args.ui_config)
     if cfg is None:
         print("FULL_FLOW_NOTE ui_config 读不出来，后续仍继续（面板/UI 不依赖它）")
+    step_team(cfg, args.team_tracks, args.palette)
     jsonl = step_store(Path(args.out) / "store", args.replay, args.n_synth)
     step_stream(jsonl)
     step_panel(args.board, args.out, args.fb_base, jsonl)

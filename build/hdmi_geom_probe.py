@@ -84,6 +84,46 @@ def report(tag, img, note=''):
 print('DIAG_CFG_READBACK addr=%08X pack=%08X' %
       (int(CFG.read(0)) & 0xFFFFFFFF, int(CFG.read(8)) & 0xFFFFFFFF), flush=True)
 
+# ---------------- 0. 把行号/列号本身写进像素值：累加和可**精确反解** ----------------
+# 像素字 = b | g<<8 | r<<16（24 位），所以可以直接把 0..1279 的整数当像素值写。
+# 整幅图每行同值 ⇒ 累加和 = 1280 × Σ(屏幕上实际出现的源行号)，不涉及任何推断。
+#   · 行映射正确：Σ = 0+1+…+719 = 258,840
+#   · 所有行都读第 0 行：Σ = 0
+#   · 行号打滑（2 行并 1 行、循环、冻结）：Σ 与 258,840 的差直接给出「整体偏移多少行」
+#   720×719×1280 = 6.6e8 < 2^32，不会回绕，反解是唯一的。
+rowimg = np.zeros((H, W, 3), np.uint8)
+rr = np.arange(H, dtype=np.uint32)
+rowimg[:, :, 0] = (rr & 0xFF).astype(np.uint8)[:, None]          # b = row & 0xFF
+rowimg[:, :, 1] = ((rr >> 8) & 0xFF).astype(np.uint8)[:, None]   # g = row >> 8
+out.show(rowimg)
+time.sleep(0.45)
+fr, un, got = rd()
+d = dbg()
+sf = got / 1280.0
+print('DIAG_ROWCODE sum=%08X frames=%d under=%d dbg(under=%d behind=%d last=%d)' %
+      (got, fr, un, d['under'], d['behind'], d['last_disp']), flush=True)
+print('DIAG_ROWCODE sigma_row=%.0f  expected=258840  mean_row=%.2f  (正确应 359.50)' %
+      (sf, sf / H), flush=True)
+if abs(sf - 258840) < 1:
+    print('DIAG_ROWCODE_VERDICT 行映射正确', flush=True)
+elif sf < 1:
+    print('DIAG_ROWCODE_VERDICT 所有行都读第 0 行（行号卡死）', flush=True)
+else:
+    print('DIAG_ROWCODE_VERDICT 行号打滑：Σ 差 %+.0f，折算整体偏移 %+.2f 行'
+          % (sf - 258840, (sf - 258840) / H), flush=True)
+
+# 列同理：像素值 = 列号。屏幕口径每行应贡献 0+0+0+1+…+1277 = 816,003。
+colimg = np.zeros((H, W, 3), np.uint8)
+cc = np.arange(W, dtype=np.uint32)
+colimg[:, :, 0] = (cc & 0xFF).astype(np.uint8)[None, :]
+colimg[:, :, 1] = ((cc >> 8) & 0xFF).astype(np.uint8)[None, :]
+out.show(colimg)
+time.sleep(0.45)
+fr, un, got = rd()
+per_row = got / float(H)
+print('DIAG_COLCODE sum=%08X per_row=%.0f  expected=816003（屏幕口径）/814726（旧累加口径）' %
+      (got, per_row), flush=True)
+
 # ---------------- 1. 两个「已知会说话」的图案 ----------------
 img = np.zeros((H, W, 3), np.uint8)
 img[0:128, 0:128] = (255, 255, 255)

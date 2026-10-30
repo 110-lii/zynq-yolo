@@ -28,7 +28,7 @@
 | PS 球链路 | 白块/圆度候选 + 3 层 C 分类器 + 轨迹确认 | 候选召回 **87.3 %**；分类器 P **0.667** / R **0.848**；逐帧确认 **80 %（16/20）** |
 | 事件 | 出界（FIFA 整球过线口径）、进球、球权 | 202 帧板上运行：**144 帧**输出球场坐标球，**49 帧**给出球权，`events` 字段同步输出 |
 | PL 跟踪辅助 | `track_preproc`：预处理 + 白/运动掩码，单 IP / 4 HP | **已出片并上板逐位对通过**（LUT 7,374 / WNS +2.457 ns；720p 32.39 ms、管线 20.03 ms） |
-| 存储/显示/上位机 | SD JSONL + PC Dashboard + HDMI/LCD 面板 + **HDMI 带框环出（D026）** | 软件自检通过；HDMI/LCD overlay 已出片；**上板实测（2026-10-30）**：LCD 4bpp 读侧 `READBACK_OK bad=0 checked=10` 且自证图经人眼确认（`BRAM_OK` + 该图 `VISUAL_OK`）、HDMI 带框环出 `HDMI_VIDEO_BOARD_OK frames=313 under=0`（`BRAM_OK` 级）、整链 `FULL_FLOW_OK ok=8 fail=0`；**尚未人眼确认**：彩色状态面板、赛前 UI 真按键、HDMI 彩条/带框图 |
+| 存储/显示/上位机 | SD JSONL + PC Dashboard + HDMI/LCD 面板 + **HDMI 带框环出（D026）** | 软件自检通过；HDMI/LCD overlay 已出片；**上板实测（2026-10-30）**：LCD 4bpp 读侧 `READBACK_OK bad=0 checked=10` 且自证图经人眼确认（`BRAM_OK` + 该图 `VISUAL_OK`）、HDMI 带框环出 `HDMI_VIDEO_BOARD_OK frames=313 under=0`（`BRAM_OK` 级）、整链 `FULL_FLOW_OK ok=8 fail=0`；**人眼已确认**（2026-10-30）：LCD 自证图、彩色状态面板、赛前 UI 按键逐项；**人眼未过**：HDMI 带框环出屏上全白（已定位为帧缓存 cacheable 未 flush，修复未复验） |
 | 历史验证 | PL 通用卷积引擎 `conv_engine` | 单层逐值 **6/6 bit-exact**；整网 416/YOLOv5n **9.63 s/帧**，已退出主线 |
 
 **设计取舍一句话**：在 7020 上，PL 卷积引擎“算得动但喂不快”；把像素级预处理放 PL、
@@ -798,9 +798,13 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
      （`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`）；**LCD 4bpp 新片 2026-10-30 上板通过**
      （`READBACK_OK bad=0 checked=10`，PCLK 33.335 MHz，重启前后各一次）；**HDMI 带框环出通过**
      （`HDMI_VIDEO_BOARD_OK frames=313 under=0`）。
-   - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4` 已由人眼确认**（斜向 16 色条纹）；
-     但**彩色状态面板、赛前 UI、HDMI 彩条/带框图在真屏上尚未确认** ⇒
-     这三项**不宣称「画面通过」**。014 的 1bpp 棋盘格是重做前的历史，不算当前实现的证据。
+   - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4` 已由人眼确认**（斜向 16 色条纹）、
+     **彩色状态面板已由人眼确认**（2026-10-30 修掉「overlay 刚装载时 `cfg=0` 显示的是 PL 彩条」之后）、
+     **赛前 UI 由人在屏上按键逐项走通**（`LCD_UI_SELECT` → `LCD_UI_SAVED`）。
+     唯一**未过人眼的是 HDMI 画面**：机器判据全过（`frames` 60 帧/s、`under=0`、帧缓存地址与
+     `pack` 解出来全对）而屏上**纯白**，已定位为 PYNQ `allocate()` 出来的帧缓存是 `cacheable=True`、
+     CPU 写完没刷到 DRAM 就被 PL 从 `S_AXI_HP0` 读走，修复（`Buffer.flush()`）**未复验**
+     ⇒ HDMI 这一项**不宣称「画面通过」**。014 的 1bpp 棋盘格是重做前的历史，不算当前实现的证据。
    - `display_both.bit` / `track_display.bit` 是在重写之前修的，**比特流落后于当前 RTL**，
      需按新读侧重出片后再验。
    现场记录见 [`../board/logs/board_display_20261025.md`](../board/logs/board_display_20261025.md)

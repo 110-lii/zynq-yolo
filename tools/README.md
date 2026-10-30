@@ -64,6 +64,7 @@
 | `pc_dashboard.py` | **PC 端软件**：TCP/回放 + 105×68 球场画布 + CSV + headless | ✅ 已创建（`PC_DASHBOARD_SELFTEST OK`） |
 | `hdmi_video.py` | **HDMI 视频环出（D026，PS 侧）**：按 JSONL 把球员绿框/#id、球红圈、顶部事件条画到真实画面上，打包 32bpp 写 DDR 帧缓存，AXI GPIO 告诉 PL 基址/跨距/宽；`--png-out` 可**不接板出图**，`--selftest` 验打包往返 | ✅ `HDMI_VIDEO_SELFTEST OK`；主机侧出图已验证（框/球/事件条都在）⚠️ **上板未验** |
 | `check_full_flow.py` | **整体流程一条命令**：时间对齐 → 赛前配置 → 结果落盘 → 板→PC 推流 → LCD 状态面板 → 赛前 UI，每步一条令牌，最后打 PASS/FAIL 表；`--dry-run` 主机跑、`--board` 含真板 | ✅ `FULL_FLOW_OK`（主机侧 ok=4 skip=2 fail=0）；板上待验 |
+| `check_lcd4_board.py` | **4bpp 读侧上板自证**：写 tag4（第 r 行第 k 字 = `0x11111111*((r+k)&15)`）+ 16 个调色板字，再逐行读 `0x4123/0x4124/0x4125` 的抓取寄存器，与期望值逐项比对（`lb==st`、`de=800`）；PS 侧读写回环自洽，只有让 PL 去读、图案自带坐标才能验地址口径 | ⚠️ 等板子上线（判据 `READBACK_OK bad=0`） |
 | `status_display.py` | **HDMI/LCD 状态面板**：800×480/1280×720，fbdev/PNG/窗口/BRAM。`--fb-bram` 的打包版面**跟着 `--size` 走**（`layout=WxH words=N` 打进令牌；写错版面不报错、只会让相邻行文字相叠，见 `ai/sessions/021`）；LCD 走 **4bpp + 语义调色板**（按类型上色：帧/人数/球/事件/相机/存储/PL/时钟各一色，`LCD_PALETTE` 显式给定，不用自动量化）；1bpp 小字用 ≤20px 加 1px 描边 | ✅ 面板已上屏人眼通过（1bpp）；⚠️ 4bpp 上色版**待上板** |
 | `board_clock.py` | **板子时间对齐（主机侧）**：`status` 看板子时间与 PS RTC 是否存在、`sync [--rtc]` 把本机时间推给板子并写进 RTC | ✅ 已创建（等上电实测） |
 | `bram_fb.py` | **帧缓存打包/写屏**：1bpp（HDMI 28,800 / LCD 12,000 字）与 **4bpp 16 色**（`pack_4bpp` / `write_image4`，可按给定调色板量化，图像字后紧跟 16 个调色板字 —— 换色只重写这 16 字，不用重新出片）；PYNQ MMIO 或 `/dev/mem` 写 AXI BRAM；`--verify-frame` 把 RTL 仿真 dump 的整场帧与 `pack_1bpp` 重算结果对拍（Python↔RTL 位序） | ✅ `BRAM_FB_SELFTEST OK` / `BRAM_FB_FRAME_OK` |

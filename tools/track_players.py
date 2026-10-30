@@ -172,6 +172,33 @@ def _open_video(path):
     return cap, float(fps), w, h
 
 
+def apply_calib(tracks, Hm):
+    """把每条轨迹的每个点映射到球场米制，写 X/Y（不覆盖 fx/fy）。
+
+    为什么用 `sx/sy` 而不是 `fx/fy`：本文件里 fx/fy 是**图像像素**的落脚点
+    （相机补偿后的 sx/sy 才在"首帧坐标系"里），而标定的约定就是「该机位首帧」。
+    只写 X/Y、并单独给出 `n_field`，是为了让"没映射上"这件事可见，
+    而不是把 0 混进一堆坐标里。
+
+    返回：成功映射的点数（全片段累计）。
+    """
+    from field_coords import apply_h
+    n_ok = 0
+    for tr in tracks:
+        nf = 0
+        for pt in tr.get("points", []):
+            f = apply_h(Hm, pt["sx"], pt["sy"])
+            if f is None:
+                pt["X"] = pt["Y"] = None
+            else:
+                pt["X"] = round(f[0], 2)
+                pt["Y"] = round(f[1], 2)
+                nf += 1
+        tr["n_field"] = nf
+        n_ok += nf
+    return n_ok
+
+
 def track_clip(model, clip_path, args):
     _pf = None
     if getattr(args, "color_filter", False):
@@ -184,6 +211,13 @@ def track_clip(model, clip_path, args):
     """
     cap, fps, W, H = _open_video(clip_path)
     stride = max(1, int(args.stride))
+    # 可选：球场单应（field_coords.py 产出的 calib.json）。给了才出 X/Y（米）。
+    Hm = None
+    if getattr(args, "calib", ""):
+        _c = json.load(open(args.calib, encoding="utf-8"))
+        Hm = _c.get("H")
+        if Hm is None:
+            print("CALIB_NO_H %s（缺 H 字段，按未标定处理）" % args.calib)
 
     rows = []                 # (frame_idx, t_sec, track_id, x1,y1,x2,y2, conf)
     cam_rows = []             # (frame_idx, kind, cc, dx, dy, scale)
@@ -309,6 +343,8 @@ def track_clip(model, clip_path, args):
         track["n_fall_weak"] = sum(1 for f in fcs if f["tier"] == "weak")
         tracks.append(track)
 
+    n_field = apply_calib(tracks, Hm) if Hm is not None else 0
+
     return {
         "clip": Path(clip_path).name,
         "clip_path": str(Path(clip_path).resolve()),
@@ -321,6 +357,8 @@ def track_clip(model, clip_path, args):
         "camera_motion": _cam_stats(cam_rows),
         "n_tracks": len(tracks),
         "n_color_drop": n_color_drop,
+        "calib": (args.calib or None),
+        "field_points": n_field,
         "tracks": tracks,
     }
 
@@ -421,6 +459,7 @@ def write_outputs(results, args):
         "decision": "D011（人+球；简单事件；倒地；可选轨迹）",
         "params": {"conf": args.conf, "iou": args.iou, "imgsz": args.imgsz,
                    "stride": args.stride, "min_box_px": MIN_BOX_PX,
+                   "calib": (args.calib or None),
                    "fall": {"min_len": FALL_MIN_LEN, "rel_drop": FALL_REL_DROP,
                             "aspect_min_strong": FALL_ASPECT_MIN,
                             "min_h_px_strong": FALL_MIN_H_PX,
@@ -430,12 +469,16 @@ def write_outputs(results, args):
         "tracker": "ultralytics ByteTrack（bytetrack.yaml）",
         "clips": [],
         "totals": {},
-        "limitations": [
-            "轨迹坐标已做相机运动补偿（首帧坐标系），但**没有**做球场单应变换 ⇒ 单位仍是像素，不是米",
+        "limitations": ([
+            "轨迹坐标已做相机运动补偿（首帧坐标系）。**未给 --calib 时单位仍是像素**，不是米；"
+            "给了 --calib 才在 points 里额外写 X/Y（米，输入为 sx/sy）",
             "倒地判据是框几何启发式，**未经人工标注验证**；候选数 != 准确率",
             "ByteTrack 在剧烈跟拍/遮挡下会 ID switch；本文件只报轨迹长度分布，无法自证 ID 一致性",
-            "队别（哪队）与球权尚未实现，属下一步",
-        ],
+            "队别：本文件只有 `--color-filter/--team-colors` 的**颜色过滤**（不输出每人的队别）；"
+            "每人队别见 tools/team_assign.py，球权见 tools/events.py",
+        ] + ([
+            "单应只对标定过的机位有效；本片段用 %s，标定残差与有效区域见该文件" % args.calib,
+        ] if getattr(args, "calib", "") else [])),
     }
 
     n_tracks = 0
@@ -556,6 +599,8 @@ def main(argv=None):
                     help="片段目录（*.mp4）或单个文件")
     ap.add_argument("--video", default="", help="直接给原视频（配合 --t0/--dur 时先切）")
     ap.add_argument("--max-clips", type=int, default=0)
+    ap.add_argument("--calib", default="",
+                    help="field_coords.py 产出的 calib.json；给了才在 points 里写 X/Y（米）")
     ap.add_argument("--stride", type=int, default=2, help="隔几帧处理（1=每帧）")
     ap.add_argument("--imgsz", type=int, default=640, help="YOLO 输入尺寸")
     ap.add_argument("--conf", type=float, default=CONF_DEFAULT)

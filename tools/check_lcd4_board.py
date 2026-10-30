@@ -8,6 +8,8 @@
 
 图案：帧缓存第 r 行第 k 字 = `0x11111111 * ((r+k) & 15)`，末尾 16 字是 16 色调色板。
 判据：面板第 R 行的 `lb0/lbmid/st0/stmid` 必须等于第 R 行的期望值，且行 DE 拍数 = 800。
+例外：R ∈ {0,1} 的 st/de 结构性取不到（装载拍在上一行；0 被 RTL 排除、1 的装载行是消隐行），
+这两行只判 lb —— 必须写明例外，否则陈旧值会假通过。
 末行 `READBACK_OK bad=0 checked=N` 或 `READBACK_FAIL ...`。
 
 用法（主机侧，板子要在线）：
@@ -67,10 +69,19 @@ for R in rows:
     e0 = 0x11111111 * (R & 15)
     em = 0x11111111 * ((R + mid) & 15)
     de = cnt & 0xFFFF
-    ok = (lb0 == e0) and (lbmid == em) and (st0 == e0) and (stmid == em) and (de == 800)
+    # st*/de 对 cap_row 0/1 是**结构性取不到**的，不是失败（2026-10-30 上板发现）：
+    #   st/cnt 在「目标行的上一行」装载那一拍更新（hit_load），且 RTL 显式要求 cap_row != 0；
+    #   于是 cap_row 0 永远不更新（陈旧值会假通过），cap_row 1 的装载行是场消隐行，
+    #   de_last 取到消隐行 => 恒为 0。这两行只判 lb（内容）。
+    # 另外 cnt 里的 de 实为「目标行上上方那一行」的 DE 拍数（见 lcd_probe_core.v 注释修正）。
+    if R >= 2:
+        ok = (lb0 == e0) and (lbmid == em) and (st0 == e0) and (stmid == em) and (de == 800)
+    else:
+        ok = (lb0 == e0) and (lbmid == em)
     bad += 0 if ok else 1
-    print("ROW %3d %s lb=[%08X|%08X] exp=[%08X|%08X] st=[%08X|%08X] de=%d fills=%d"
-          % (R, "OK " if ok else "BAD", lb0, lbmid, e0, em, st0, stmid, de, cnt >> 16))
+    print("ROW %3d %s%s lb=[%08X|%08X] exp=[%08X|%08X] st=[%08X|%08X] de=%d fills=%d"
+          % (R, "OK " if ok else "BAD", "" if R >= 2 else "(仅lb)",
+             lb0, lbmid, e0, em, st0, stmid, de, cnt >> 16))
 cfg.write(0, 0x10)
 print("READBACK_%s bad=%d checked=%d" % ("OK" if bad == 0 else "FAIL", bad, len(rows)))
 '''

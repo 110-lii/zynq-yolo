@@ -35,6 +35,12 @@ sys.path.insert(0, str(HERE))
 
 PY = sys.executable
 
+# 板端布局（AGENTS.md：只有 Jupyter 通道可用；这块目录是历次推送留下的）
+BOARD_ROOT = "/home/xilinx/zynq-yolo"
+BOARD_TOOLS = ["status_display.py", "pc_dashboard.py", "bram_fb.py", "lcd_ui.py",
+               "match_setup.py"]
+BOARD_DATA = ["data/fonts/simhei_subset.ttf", "board/ui_config.json"]
+
 RESULTS = []
 
 
@@ -66,6 +72,60 @@ def run_mod(args, timeout=300):
 
 
 # ---------------------------------------------------------------- 1 时间对齐
+def _board_env():
+    return dict(os.environ, PYTHONIOENCODING="utf-8")
+
+
+def board_push(local, remote, timeout=900):
+    """把一个文件推到板上（`board_jupyter.py --push`：分片 base64 + 两端 sha256）。"""
+    p = subprocess.run([PY, str(HERE / "board_jupyter.py"), "--push",
+                        str(local), remote], cwd=str(ROOT), stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT, text=True, env=_board_env(),
+                       encoding="utf-8", errors="replace", timeout=timeout)
+    lines = [ln for ln in p.stdout.strip().splitlines() if ln.strip()]
+    return p.returncode, lines[-2:]
+
+
+def run_board(argv, timeout=600):
+    """在板上跑一条命令（Jupyter 内核不能吃 shell 串，所以走 subprocess）。"""
+    code = ("import subprocess\n"
+            "p = subprocess.run(%r, cwd=%r, capture_output=True, text=True)\n"
+            "print(p.stdout[-4000:])\n"
+            "print('STDERR>', p.stderr[-1500:])\n"
+            "print('RC', p.returncode)\n") % (argv, BOARD_ROOT)
+    try:
+        p = subprocess.run([PY, str(HERE / "board_jupyter.py")], cwd=str(ROOT),
+                           input=code, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                           text=True, env=_board_env(), encoding="utf-8",
+                           errors="replace", timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return 124, ["timeout after %ss" % timeout]
+    lines = [ln for ln in p.stdout.strip().splitlines() if ln.strip()]
+    return p.returncode, lines
+
+
+def deploy_board():
+    """把「写真屏」这一步在板上要用的 py/字体/配置推过去，返回 (ok, 摘要)。"""
+    todo = [(HERE / n, BOARD_ROOT + "/tools/" + n) for n in BOARD_TOOLS]
+    todo += [(ROOT / rel, BOARD_ROOT + "/" + rel) for rel in BOARD_DATA]
+    bad = []
+    for local, remote in todo:
+        if not Path(local).is_file():
+            bad.append("%s(缺)" % Path(local).name)
+            continue
+        rc, out = board_push(local, remote)
+        if rc != 0 or not any("BOARD_PUSH" in ln for ln in out):
+            # 通道偶发一次失败（板子满载/内核忙）很常见，重试一次再算失败
+            time.sleep(1.0)
+            rc, out = board_push(local, remote)
+        if rc != 0 or not any("BOARD_PUSH" in ln for ln in out):
+            bad.append("%s(rc=%d %s)" % (Path(local).name, rc,
+                                         (out[-1][:80] if out else "无输出")))
+    if bad:
+        return False, "推送失败: " + "; ".join(bad)
+    return True, "tools+字体+ui_config 共 %d 个文件 sha256 对上" % len(todo)
+
+
 def step_clock(board):
     if not board:
         step("clock", "SKIP", "dry-run 不接板", human="板子在线时看时间是否正确")
@@ -240,9 +300,17 @@ def step_panel(board, out_dir, fb_base, jsonl=None):
     out_dir.mkdir(parents=True, exist_ok=True)
     png = out_dir / "status_lcd.png"
     if board:
-        rc, out = run_mod([str(HERE / "status_display.py"), "--size", "800x480",
-                           "--replay", str(jsonl or ""), "--fb-bram", fb_base,
-                           "--once"], timeout=300)
+        # 写 BRAM 只能在板上做（PYNQ MMIO / /dev/mem）；主机侧跑就是 2026-10-30 之前那个
+        # `os.O_SYNC` 假失败。这里把文件推过去、在板上跑，同一套工具、同一份版面。
+        remote_jsonl = ""
+        if jsonl and Path(jsonl).is_file():
+            remote_jsonl = BOARD_ROOT + "/build/flow/" + Path(jsonl).name
+            board_push(str(jsonl), remote_jsonl)
+        argv = ["python3", "tools/status_display.py", "--size", "800x480",
+                "--fb-bram", fb_base, "--once"]
+        if remote_jsonl:
+            argv += ["--replay", remote_jsonl]
+        rc, out = run_board(argv)
         tok = next((ln for ln in out if "STATUS_DISPLAY_BRAM" in ln), "")
         step("panel", "OK" if tok else "FAIL", tok or (out[-1] if out else "rc=%d" % rc),
              human="颜色/版面要人眼看")
@@ -264,8 +332,7 @@ def step_ui(board, out_dir, fb_base):
     out_dir.mkdir(parents=True, exist_ok=True)
     png = out_dir / "lcd_ui.png"
     if board:
-        rc, out = run_mod([str(HERE / "lcd_ui.py"), "--fb-bram", fb_base, "--once"],
-                          timeout=300)
+        rc, out = run_board(["python3", "tools/lcd_ui.py", "--fb-bram", fb_base, "--once"])
         tok = next((ln for ln in out if "LCD_UI_DRAW" in ln), "")
         step("lcd_ui", "OK" if tok else "FAIL", tok or (out[-1] if out else "rc=%d" % rc),
              human="按键操作与配色要人眼/手验")
@@ -301,6 +368,9 @@ def main():
           % (1 if args.board else 0, args.replay or "-", args.out))
 
     step_clock(args.board)
+    if args.board:
+        ok, ev = deploy_board()
+        step("deploy", "OK" if ok else "FAIL", ev)
     cfg = step_ui_config(args.ui_config)
     if cfg is None:
         print("FULL_FLOW_NOTE ui_config 读不出来，后续仍继续（面板/UI 不依赖它）")

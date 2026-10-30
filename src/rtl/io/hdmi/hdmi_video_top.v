@@ -30,6 +30,8 @@ module hdmi_video_top (
     output      [31:0]  st_status,
     // 诊断（AXI GPIO 输入通道 2）：上一整帧像素累加和（见下方「诊断 1」）
     output      [31:0]  st_sum,
+    // 诊断（另一个 GPIO）：{under_lines, fetch_line, disp_line}，vs 沿锁存
+    output      [31:0]  st_dbg,
 
     // AXI4 读主机（接 S_AXI_HP0）
     output      [31:0]  m_axi_araddr,
@@ -107,8 +109,11 @@ assign st_status = {st_frames, st_under};
 //
 //   期望值 = Σ(pixel & 0xFFFFFF) mod 2^32，遍历 1280×720 个像素
 //
-// 累加用 data_req 而不是 video_de：pixel_data 就是在 data_req 有效的拍上由
-// fb_scanout 给出的（video_de 是它晚一拍的版本），用同一拍才对得上。
+// ★ 口径必须钉在 **video_de + video_rgb** 上，即「真正送进 TMDS 的那批像素」。
+//   2026-10-31 仿真发现：原来累加的是 data_req 拍上的 pixel_data，比显示早一拍，
+//   于是采样到的列是 `0,0,0,0,1,…,1276`，而屏幕上显示的是 `0,0,0,1,…,1277` ——
+//   两者不是同一批像素，主机按屏幕口径算出来的期望值永远差一点（上板那 0.8% 里
+//   至少有一部分是这么来的）。诊断量的口径必须和它声称测的东西逐像素一致。
 // ---------------------------------------------------------------------------
 reg [31:0] px_sum;
 reg [31:0] st_sum_r;
@@ -123,8 +128,8 @@ always @(posedge pclk or negedge reset_n) begin
         if (video_vs & ~vs_d_sum) begin
             px_sum   <= 32'd0;
             st_sum_r <= px_sum;
-        end else if (data_req) begin
-            px_sum <= px_sum + {8'd0, pixel_data};
+        end else if (video_de) begin
+            px_sum <= px_sum + {8'd0, video_rgb};
         end
     end
 end
@@ -205,6 +210,7 @@ fb_scanout #(
     .pixel_data (pixel_data),
     .st_frames  (st_frames),
     .st_under   (st_under),
+    .st_dbg     (st_dbg),
     .m_araddr   (m_axi_araddr),
     .m_arlen    (m_axi_arlen),
     .m_arsize   (m_axi_arsize),

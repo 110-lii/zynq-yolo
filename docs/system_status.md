@@ -180,8 +180,9 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   已补显式分配 + 构建期断言（分配不到直接 `FLOW_SYSTEM_BD_FAIL`）。
   ① `fb_scanout` 行推进写成 `de && (local_x == width_use-1)`，而真实时序里
   `local_x` 最大 1277 ⇒ 条件永不成立 ⇒ **每行都读第 0 条行缓存**（整屏纯色/竖条对、
-  横条和文字全丢），且 `st_under` 对这个缺陷**永远报 0**；已改为按 de 拍数推进，
-  TB 补了行推进断言并做了反向验证（`ERRS=1824 / UNDER=0`）。
+  横条和文字全丢），且 `st_under` 对这个缺陷**永远报 0**。2026-10-31 改为
+  **`cur_line = ypos-1`**（`video_driver` 自己的场计数，由构造保证），不再数 de 拍——
+  前两版（等式判据、脉冲计数）都依赖推出来的相位，这是第三次也是唯一不靠推的写法。
   ② `flow_system.bit` 里 `0x41200000`（HDMI cfg）写不进去、读回的是 `0x41210000`
   的状态值 —— 配置从未进过 PL，屏上必然全黑。已把 cfg 挪到外层 `axi_smc`（FCLK 域，
   与 LCD 那几个已验证可写的 GPIO 同一条总线），状态 GPIO 留 pclk 域。
@@ -194,6 +195,13 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   「左边白、其余黑、白里有黑横条、还在闪」⇒ 剩余问题定位在
   **`fb_scanout` 的行缓存↔行号映射**，不在数据也不在 TMDS。几何探针
   `build/hdmi_geom_probe.py` 已就绪，板子 23:39 掉线，待上电重跑。
+- **10-31 离线（板子离线，无上板证据）**：把 BLOCK 那次的累加和逐位反解
+  （`M = sum·0xFFFFFF⁻¹ mod 2³²`）得 **92,978 个白像素**，正确值是 16,640 ⇒
+  屏幕上**每一行的左边 128 列都是白的**，与用户描述逐字吻合 —— 是「每行都读到靠前的行」，
+  不是少数几行错。同日仿真（新增整帧 TB + 系统级 TB，直接例化真的 `video_driver`）
+  抓到三处真缺陷：每行最后一列恒黑（`in_range` 错与 `de` 相与）、
+  `ahead` 无符号回绕会让取数**永久冻结**（放慢从机可复现）、`st_sum` 累加口径比屏幕早一拍。
+  三处已修，`SIM_PASS 11/11`；**仍无任何人眼结论**，`HDMI_VISUAL_OK` 不记。
 - **板端分层跑表 16/16 段有数**（`tools/scene_suite_board.py`；8 争抢 + 8 普通，
   逐段落盘在 `data/results/scene_suite_board.json`）。每检测帧原始
   15.44（争抢）/ 20.05（普通）个框，过草皮门限后 12.30 / 16.25，

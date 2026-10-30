@@ -129,6 +129,27 @@ CASES = [
         "TB_FB_SCANOUT_OK",
         "tb_fb_scanout",
     ),
+    (
+        # 整帧 1280x720 + 真机行消隐 + 带延迟 AXI 从机：查「哪一行送到屏幕的哪一行」。
+        # 小 TB 是 64x8、消隐 4 拍、从机零延迟，行缓存的环形队列和带宽余量都没被压到。
+        "fb_scanout_frame",
+        "sim/tb/tb_fb_scanout_frame.v",
+        ["src/rtl/io/hdmi/fb_scanout.v"],
+        "TB_FB_SCANOUT_FRAME_OK",
+        "tb_fb_scanout_frame",
+    ),
+    (
+        # 系统级：真的 video_driver + fb_scanout + 与板上同口径的帧累加和。
+        # 手搓时序的 TB 测不出 video_driver 里 data_req/xpos/video_en 互差一拍的相位错。
+        "hdmi_scanout_sys",
+        "sim/tb/tb_hdmi_scanout_sys.v",
+        [
+            "src/rtl/io/hdmi/video_driver.v",
+            "src/rtl/io/hdmi/fb_scanout.v",
+        ],
+        "TB_HDMI_SCANOUT_SYS_OK",
+        "tb_hdmi_scanout_sys",
+    ),
 ]
 
 

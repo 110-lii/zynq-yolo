@@ -46,6 +46,7 @@ reg         cfg_en = 1'b0;
 wire [23:0] pixel_data;
 wire [15:0] st_frames;
 wire [15:0] st_under;
+wire [31:0] st_dbg;      // {last_disp_line[9:0], behind_lines[21:11], under_lines[10:0]}
 
 wire [31:0] m_araddr;
 wire [7:0]  m_arlen;
@@ -65,7 +66,7 @@ fb_scanout #(
     .pclk(clk), .reset_n(reset_n),
     .vs(vs), .de(de), .xpos(xpos), .ypos(ypos),
     .cfg_addr(cfg_addr), .cfg_stride(cfg_stride), .cfg_width(cfg_width), .cfg_en(cfg_en),
-    .pixel_data(pixel_data), .st_frames(st_frames), .st_under(st_under),
+    .pixel_data(pixel_data), .st_frames(st_frames), .st_under(st_under), .st_dbg(st_dbg),
     .m_araddr(m_araddr), .m_arlen(m_arlen), .m_arsize(m_arsize), .m_arburst(m_arburst),
     .m_arvalid(m_arvalid), .m_arready(m_arready),
     .m_rdata(m_rdata), .m_rvalid(m_rvalid), .m_rready(m_rready), .m_rlast(m_rlast), .m_rresp(m_rresp)
@@ -145,7 +146,9 @@ task do_line(input integer line_no);
         @(negedge clk);
         de   <= 1'b0;
         xpos <= 11'd0;
-        ypos <= line_no[10:0];
+        // ★ ypos 是 video_driver 的**1 起算**场坐标：屏幕第 line_no 行 ⇒ ypos = line_no+1。
+        //   DUT 内部 cur_line = ypos-1，正好等于 line_no。
+        ypos <= line_no[10:0] + 11'd1;
         repeat (4) @(negedge clk);
         // 有效像素：xpos 走 **0…W-1**，与 video_driver 的 de 段取值域一致。
         // DUT 内部 local_x = max(xpos-2, 0)，所以第 xpos 拍显示的是源行第 src 列。
@@ -170,14 +173,14 @@ task do_line(input integer line_no);
         end
         @(negedge clk);
         de <= 1'b0;
-        // ★ 行推进断言：一行 de 走完，disp_line 必须 +1。
+        // ★ 行号断言：一行 de 走完，disp_line（= cur_line 的寄存副本）必须等于本行行号。
         //   这一条才是 2026-10-30 那次上板事故的正面判据 —— 像素比对只查「读回来的值对不对」，
         //   查不出「每一行都在读第 0 条行缓存」以外的退化（例如越进、跳行）。
-        if (dut.disp_line !== (line_no[10:0] + 11'd1)) begin
+        if (dut.disp_line !== line_no[10:0]) begin
             errs = errs + 1;
             if (errs <= 8)
                 $display("DISP_LINE line=%0d disp_line=%0d exp=%0d",
-                         line_no, dut.disp_line, line_no + 1);
+                         line_no, dut.disp_line, line_no);
         end
     end
 endtask
@@ -189,8 +192,9 @@ initial begin
     cfg_en  = 1'b1;
 
     for (frame = 0; frame < 4; frame = frame + 1) begin
-        // vs 脉冲
-        vs <= 1'b1;
+        // vs 脉冲；场消隐期 ypos 必须为 0（video_driver 的场计数只在有效行内更新）
+        vs   <= 1'b1;
+        ypos <= 11'd0;
         repeat (2) @(posedge clk);
         vs <= 1'b0;
         // 场消隐：真实 720p30 的场消隐约 25 行（≈430 us），这里给 300 拍，
@@ -199,6 +203,17 @@ initial begin
         for (line = 0; line < H; line = line + 1)
             do_line(line);
         repeat (4) @(posedge clk);
+    end
+
+    // 帧末快照：一帧扫完，disp_line 与 fetch_line 都应等于行数，未就绪行数应为 0。
+    // 这条判据补的是「像素值对但行号错」这一类：像素比对只能看读回来的值，
+    // 看不出「第 N 行被送到屏幕的第 M 行」。
+    $display("DBG under_lines=%0d behind_lines=%0d last_disp_line=%0d",
+             st_dbg[10:0], st_dbg[21:11], st_dbg[31:22]);
+    if (st_dbg[10:0] !== 11'd0 || st_dbg[21:11] !== 11'd0 || st_dbg[31:22] !== (H - 1)) begin
+        errs = errs + 1;
+        $display("DBG_FAIL under_lines=%0d behind_lines=%0d last_disp_line=%0d expect=0/0/%0d",
+                 st_dbg[10:0], st_dbg[21:11], st_dbg[31:22], H - 1);
     end
 
     $display("CHECKED=%0d ERRS=%0d UNDER=%0d FRAMES=%0d", chk, errs, st_under, st_frames);

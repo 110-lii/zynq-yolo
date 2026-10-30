@@ -323,10 +323,14 @@ def do_hdmi(seconds, rounds):
     save_raw("hdmi", out)
     done = tok_line(out, "HDMI_CARDS_DONE")
     ready = tok_line(out, "HDMI_CARDS_READY")
-    ok = bool(done)
+    cfg = tok_line(out, "HDMI_CARDS_CFG")
+    # 配置读回不一致 ⇒ 直接 FAIL：那种情况下 frames/under 照样好看，但屏上一定没东西
+    cfg_bad = bool(cfg) and ("pack_ok=0" in cfg or "addr_ok=0" in cfg)
+    ok = bool(done) and not cfg_bad
     step("hdmi", "OK" if ok else "FAIL",
-         ("%s | %s | 人眼待判：屏上应依次出现 STEP1-RED … STEP5-BLACK"
-          % (ready or "-", done or (out[-1] if out else "rc=%d" % rc)))[:300])
+         ("%s | %s | %s | 人眼待判：屏上应依次出现 STEP1-RED … STEP5-BLACK，最后停在横幅"
+          % (cfg or "-", ready or "-",
+             done or (out[-1] if out else "rc=%d" % rc)))[:300])
     return ok
 
 

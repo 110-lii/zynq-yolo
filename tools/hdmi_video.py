@@ -168,6 +168,29 @@ class HdmiVideoOut(object):
         self.cfg.write(0x8, pack)
         self.cfg.write(0x0, self.bufs[0].physical_address)
 
+    def check_cfg(self):
+        """写-读闭环：配置寄存器到底有没有写进去？
+
+        2026-10-30 21:0x 的教训：`frames` 60/s、`under=0` 全部正常，屏上却什么都没有，
+        最后查出 `cfg_pack` 读回是 **0**（写的是 `0x0D001400`）、`cfg_addr` 读回的是
+        `{frames, under}` —— 也就是说**配置根本没进 PL**，`cfg_en=0`，扫描输出一直关着。
+        原有判据一个都没报警，因为它们量的是「扫描在不在跑」，不是「配置有没有生效」。
+
+        这里用两个互不相同的魔数写 0x0 / 0x8 再立刻读回，最后恢复现场。
+        调用方把返回值打进日志；不一致就必须当 FAIL，而不是继续往下测。
+        """
+        magic_a, magic_p = 0xA5A5_5A5A, 0x5A5A_A5A5
+        ok_a = ok_p = None
+        try:
+            self.cfg.write(0x0, magic_a)
+            self.cfg.write(0x8, magic_p)
+            ok_a = (int(self.cfg.read(0x0)) & 0xFFFFFFFF) == magic_a
+            ok_p = (int(self.cfg.read(0x8)) & 0xFFFFFFFF) == magic_p
+        finally:                                   # 无论成败都把现场写回去
+            self.cfg.write(0x8, self.pack)
+            self.cfg.write(0x0, self.bufs[self.cur].physical_address)
+        return {"addr": bool(ok_a), "pack": bool(ok_p)}
+
     def show(self, img_bgr):
         """写一帧并切到该缓冲（PL 在 vs 沿锁存基址 ⇒ 双缓冲无撕裂）。"""
         words = pack_frame(img_bgr, self.width, self.stride_px)

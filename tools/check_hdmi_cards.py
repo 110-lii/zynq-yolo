@@ -123,6 +123,14 @@ def main():
           % (args.bit, ",".join("0x%08X" % int(b.physical_address) for b in out.bufs),
              out.pack, [getattr(b, "cacheable", "?") for b in out.bufs]))
 
+    # 先证「配置进得去」。这一步不过，后面 frames/under 再漂亮也没有意义：
+    # 2026-10-30 就是 cfg_pack 读回 0（写的是 0x0D001400）而屏上一片黑。
+    cfg_ok = out.check_cfg()
+    print("HDMI_CARDS_CFG addr_ok=%d pack_ok=%d" % (int(cfg_ok["addr"]), int(cfg_ok["pack"])))
+    if not (cfg_ok["addr"] and cfg_ok["pack"]):
+        print("HDMI_CARDS_FAIL cfg_readback_mismatch（配置没写进 PL："
+              "先查 GPIO 地址表，再谈画面）")
+
     imgs = [card(n, c, W, H) for n, c in CARDS]
     tail_img = banner(W, H)
     t_all = time.time()

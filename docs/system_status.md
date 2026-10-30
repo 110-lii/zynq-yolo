@@ -164,11 +164,18 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   bitstream，一次加载小屏大屏同时可用。地址只迁了两条（`gpio_id`/`gpio_t` →
   `0x4127/0x4128`），其余工具零改动。详见 `docs/flow_overlay.md`。
   **2026-10-30 已上板** `flow_overlay.py --selftest`：LCD `bad=0/16` + pclk 计数、
-  HDMI `frames 564→1056 under=0` ⇒ `BRAM_OK` 过；**`VISUAL_OK` 待人眼看屏**。
-- **板端分层跑表只跑完 1/16**（`tools/scene_suite_board.py`）：c01 争抢段
-  模型原始 274 框 → 草皮门限 222 → 下游跟踪框 **0.12/帧**；球 12%；推理 961.8 ms。
-  同一批帧上主机 YOLOv8n `imgsz=320` 只有 0–2 人、`640` 有 0–19 人 ⇒
-  **瓶颈是 320 输入，不是门限**。所以板端数字暂不能与主机 14.4/17.0 对比；
-  要板端结论先要 640 输入的 ncnn 人检测模型。第二段起板子卡死（TCP 能连、HTTP 无应答），
-  其余 15 段待 `--resume` 补齐。
+  HDMI `frames 564→1056 under=0` ⇒ `BRAM_OK` 过。
+  **人眼分两半**：LCD 那一屏（8 条 100 px 竖彩块）**已由用户确认** ⇒ `LCD_VISUAL_OK`；
+  HDMI 那一半**未过** —— 详见下一小节「HDMI 帧缓存段」。
+- **HDMI 帧缓存段（2026-10-30 20:3x–21:0x，进行中）**：五色卡 + 收尾横幅跑完
+  （`frames 6105→7916 under=0`）人眼仍啥也看不到。用 `hdmi_testpattern.bit`
+  （纯 RTL 彩条，不碰 DDR）切链：**人眼看到 8 条彩条** ⇒ TMDS/像素时钟/引脚/显示器全好，
+  故障在「DDR 帧缓存 → `fb_scanout`」这一段。`under=0` 不能证明数据对（读回全零时它同样是 0），
+  `Buffer.flush()` 也**没有**修好它。定位脚本 `build/fb_diag.py`：写完一屏纯色后
+  用 `/dev/mem` 绕过缓存把同一物理地址读回逐字比对（机器判），再给人眼看红/绿/蓝黄三屏。
+- **板端分层跑表 16/16 段都有数**（`tools/scene_suite_board.py`）：每检测帧原始
+  15.4（争抢）/ 20.4（普通）个框，过草皮门限后 14.9，与主机 17.4 同量级 ⇒
+  **之前「瓶颈是 320 输入」的结论被自己数据推翻**；输出 `players` 接近 0 是
+  `camera_state` 按设计判 `INVALID_VIEW`（`grass<0.20 → close_up_or_crowd`）后清空坐标，
+  不是检测看不见。带计数器的争抢段重跑（`rows_post` 列）只补到 4/8，板子掉线中断。
 - **`--max-det` 不是人数**：它是「检测调用次数上限」（默认 8）。板上跑表要 `--max-det 0`。

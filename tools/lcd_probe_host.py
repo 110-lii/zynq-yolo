@@ -21,6 +21,15 @@ JRN = ROOT / "build" / "vivado" / "logs" / "lcd_probe_build.jou"
 BIT = ROOT / "board" / "overlay" / "lcd_probe.bit"
 HWH = ROOT / "board" / "overlay" / "lcd_probe.hwh"
 BOARD = "192.168.2.99:9090"
+REMOTE_ROOT = "/home/xilinx/zynq-yolo"
+
+# deploy 要传的（远端路径与仓库内路径一致，板端脚本就按这个布局找 bit）
+DEPLOY = [
+    (BIT, REMOTE_ROOT + "/board/overlay/lcd_probe.bit"),
+    (HWH, REMOTE_ROOT + "/board/overlay/lcd_probe.hwh"),
+    (ROOT / "tools" / "lcd_probe.py", REMOTE_ROOT + "/tools/lcd_probe.py"),
+    (ROOT / "board" / "fb" / "tag4.bin", REMOTE_ROOT + "/board/fb/tag4.bin"),
+]
 
 
 def sh(cmd):
@@ -78,16 +87,25 @@ def do_deploy(_):
 
 
 def do_run(args):
-    cmd = "cd /home/xilinx/zynq-yolo && python3 tools/lcd_probe.py --size %s --pattern %d" % (
-        args.size, args.pattern)
+    argv = ["python3", "tools/lcd_probe.py", "--size", args.size,
+            "--pattern", str(args.pattern)]
     if args.fb_bin:
-        cmd += " --fb-bin %s" % args.fb_bin
+        argv += ["--fb-bin", args.fb_bin]
     if args.phase:
-        cmd += " --phase %d" % args.phase
+        argv += ["--phase", str(args.phase)]
     if args.hold:
-        cmd += " --hold %.1f" % args.hold
-    print("BOARD>", cmd)
-    return _jrun(cmd)
+        argv += ["--hold", "%.1f" % args.hold]
+    # 走 Jupyter 内核时不能给 shell 串：内核按 Python/魔法解析，
+    # "cd X && python3 ..." 会被 cd 魔法当成目录名（Errno 2）。一律用 subprocess。
+    code = (
+        "import subprocess\n"
+        "p = subprocess.run(%r, cwd=%r, capture_output=True, text=True)\n"
+        "print(p.stdout[-4000:])\n"
+        "print('STDERR>', p.stderr[-1500:])\n"
+        "print('RC', p.returncode)\n"
+    ) % (argv, REMOTE_ROOT)
+    print("BOARD>", " ".join(argv))
+    return _jrun(code)
 
 
 def main():

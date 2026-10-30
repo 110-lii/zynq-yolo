@@ -357,10 +357,26 @@ def do_scenes(max_frames, every):
     out = [ln for ln in (p.stdout or "").strip().splitlines() if ln.strip()]
     save_raw("scenes", out)
     agg = tok_line(out, "SCENE_BOARD_AGG")
-    ok = any(ln.startswith("SCENE_BOARD_OK") for ln in out)
-    step("scenes", "OK" if ok else "FAIL",
-         (agg or (out[-1] if out else "rc=%d" % p.returncode))[:300])
-    return ok
+
+    # `SCENE_BOARD_OK` 只要求两类都有；板子中途掉线时它照样会打印（剩下几段没跑）。
+    # 验收要的是**16 段都有数**，所以按落盘的段数判，而不是按令牌判。
+    done = total = 0
+    try:
+        rows = json.loads((ROOT / "data" / "results" / "scene_suite_board.json")
+                          .read_text(encoding="utf-8")).get("rows", [])
+        done = sum(1 for r in rows if "players" in r)
+        total = len([c for c in (ROOT / "data" / "samples" / "scenes").glob("*.mp4")])
+    except (OSError, ValueError):
+        pass
+    if total and done >= total:
+        status = "OK"
+    elif done:
+        status = "PARTIAL"
+    else:
+        status = "FAIL"
+    step("scenes", status, ("%d/%d 段有数 | %s" % (done, total, agg or
+                                                 (out[-1] if out else "rc=%d" % p.returncode)))[:300])
+    return status == "OK"
 
 
 def main():
@@ -401,9 +417,11 @@ def main():
 
     nfail = sum(1 for s in STEPS if s["status"] == "FAIL")
     nskip = sum(1 for s in STEPS if s["status"] == "SKIP")
-    nok = len(STEPS) - nfail - nskip
-    log("ACCEPT_DONE ok=%d fail=%d skip=%d json=%s" % (nok, nfail, nskip, OUT.name))
-    return 0 if nfail == 0 else 1
+    npart = sum(1 for s in STEPS if s["status"] == "PARTIAL")
+    nok = len(STEPS) - nfail - nskip - npart
+    log("ACCEPT_DONE ok=%d fail=%d skip=%d partial=%d json=%s"
+        % (nok, nfail, nskip, npart, OUT.name))
+    return 0 if (nfail == 0 and npart == 0) else 1
 
 
 if __name__ == "__main__":

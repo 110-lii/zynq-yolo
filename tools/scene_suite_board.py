@@ -117,9 +117,10 @@ try:
     d = json.load(open(__OUT__))
     fr = d.get('frames_out') or []
     pl = [len(f.get('tracks') or []) for f in fr]
-    print('SUITE_STAT frames=%d det=%d raw=%d kept=%d players=%.2f ball_pct=%s' % (
+    print('SUITE_STAT frames=%d det=%d raw=%d kept=%d rows=%d rowsok=%d players=%.2f ball_pct=%s' % (
         d.get('frames', 0), d.get('detections', 0),
         d.get('raw_dets') or 0, d.get('kept_dets') or 0,
+        d.get('rows_pre_filter') or 0, d.get('rows_post_filter') or 0,
         (sum(pl) / len(pl)) if pl else 0.0,
         d.get('ball_pct') if d.get('ball_pct') is not None else -1.0))
 except Exception as e:
@@ -281,9 +282,10 @@ def main():
                         "detections": int(dok.get("detections", 0)),
                         "med_infer_ms": float(dok.get("med_infer_ms", 0) or 0)})
             print("SCENE_BOARD_ROW %-8s %-7s frames=%d det=%d raw=%.0f kept=%.0f"
-                  " players=%.2f ball_pct=%.1f infer_ms=%.1f"
+                  " rows=%.0f->%.0f players=%.2f ball_pct=%.1f infer_ms=%.1f"
                   % (clip.stem[:8], rec["kind"], rec["frames"], rec["detections"],
                      rec.get("raw", 0.0), rec.get("kept", 0.0),
+                     rec.get("rows", 0.0), rec.get("rowsok", 0.0),
                      rec.get("players", 0.0), rec.get("ball_pct", 0.0), rec["med_infer_ms"]))
         else:
             rec["error"] = (out[-1] if out else "no output")[:160]
@@ -308,6 +310,7 @@ def main():
                       # 否则「板上 0 人」说不清是模型没看见还是后处理杀光了。
                       "raw_per_det": round(sum(r.get("raw", 0) for r in sel) / n_det, 2),
                       "kept_per_det": round(sum(r.get("kept", 0) for r in sel) / n_det, 2),
+                      "rows_post_per_det": round(sum(r.get("rowsok", 0) for r in sel) / n_det, 2),
                       "players": round(sum(r["players"] for r in have_pl) / len(have_pl), 2)
                       if have_pl else None,
                       "ball_pct": round(sum(r["ball_pct"] for r in have_ba) / len(have_ba), 1)

@@ -333,9 +333,9 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；产物在 dist
    **参数已由 D017 定案**：单类 `person` 的 **YOLOv8n-0.25 @320×320**（约 0.386 GMAC/帧），
    推理在 PS ncnn；D016 的 YOLOv5n@416 路线已被实测淘汰（原文保留，不删）。
    **视频来源已另行裁定（D015）**：不使用板载摄像头，视频由 PC 经以太网送入；网络端口/协议仍待定。
-3. 数据集来源与许可（台账 **D005**）。
-4. 软硬件划分边界与 AXI 接口契约的具体数值（台账 **D006**）。
-5. 与 `D:\FPGA\oi` 旧项目资产的具体复用范围（已确认原则：**复用管线，PYNQ 软硬件框架重做**；台账 **D007**）。
+3. ~~数据集来源与许可（台账 **D005**）~~ —— ✅ **已裁定 2026-10-30：(a) 内部使用声明**（仅作业内部评测、不随包分发）。
+4. ~~软硬件划分边界与 AXI 接口契约的具体数值（台账 **D006**）~~ —— ✅ **已裁定 2026-10-30：冻结为 v1 契约**（改地址/格式须新开 decision）。
+5. ~~与 `D:\FPGA\oi` 旧项目资产的具体复用范围（台账 **D007**）~~ —— ✅ **已裁定 2026-10-30：只复用引脚/电气资料**；旧项目的现象结论不再作为依据，不复用其任何 RTL/Python 源码。
 
 > 骨架已为以上每一项预留落点；**待裁定后再填内容**。本 README 的 §2 / §3 因此只放占位符。
 >
@@ -366,7 +366,7 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；产物在 dist
 | [`docs/yolo_on_zynq7020_survey.md`](docs/yolo_on_zynq7020_survey.md) | **YOLO on XC7Z020 技术调研**：五条路线判定（含「Vitis AI DPU 在 7000 系不存在」一手核查）、同芯片实测锚点（ARC2020 / 1.88 fps）、开源实现清单、推荐路线与验证阶梯。**引用其数字前必读 §9 未验证项** |
 | [`ref/hardware.md`](ref/hardware.md) | **硬件能力清单**（逐条 `文件:行号`）+ **UNVERIFIED 清单** —— 写报告取数的**一手**来源 |
 | [`ref/pitfalls_from_oi.md`](ref/pitfalls_from_oi.md) | **踩坑清单 P1–P10**（现象 / 触发 / 定位 / 规避 / 出处），承旧项目已验证经验 |
-| [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) | 决策台账（**`decided` 20 条 / `discussing` 4 条（D003/D005/D006/D007）/ `rejected` 0 条**）+ **编号纪律**（本仓库 `DNNN` 与旧项目台账不是同一命名空间） |
+| [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) | 决策台账（**`decided` 24 条 / `discussing` 0 条（只剩 D004 的参数部分待细化）/ `rejected` 0 条**；D003/D005/D006/D007 于 2026-10-30 裁定）+ **编号纪律**（本仓库 `DNNN` 与旧项目台账不是同一命名空间） |
 | [`report/README.md`](report/README.md) | 设计报告必须覆盖的 7 项、优化前后对比表与权重表 |
 | [`skill/README.md`](skill/README.md) | 技能包规范（适用范围 / 使用方法 / 失效条件） |
 | [`ai/README.md`](ai/README.md) | 大模型协作三层记录体系（原始层 / 整理层 / 沉淀层） |

@@ -73,6 +73,9 @@ python checks/axis_stream_check.py trace.txt       # AXIS_CHECK_OK beats=N
 
 ## 4. 提炼来源
 
+> **范围（D007，2026-10-30 裁定）**：本包只提炼**本仓库自己的**会话记录与实测；
+> 旧项目 `D:\FPGA\oi` 的经验**不作为来源**（只允许复用其引脚/电气资料）。
+
 - `ai/sessions/005_engine_load_weight_pipeline.md`：装载裁剪、权重流水、PS 首层 float32
   精确累加；41.4→20.8 s；
 - `ai/sessions/007_pl_mask_preproc.md`：字节→4 像素/字→16 像素/轮 + 三 bundle，

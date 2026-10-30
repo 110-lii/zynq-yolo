@@ -20,7 +20,7 @@
 | A. Vitis AI DPU（官方 IP） | ❌ **不存在** | DPU IP 只支持 Zynq **UltraScale+**/Versal；DPU-PYNQ 的 21 块支持板**无一块**是 7000 系（§2 有留档，可逐行复核） |
 | B. 纯 PS（ARM A9 软件推理） | ✅ 能跑但极慢 | 定点 C 估计 < 1 fps（**估算，本仓库未实测**）；只能当报告里的**基线对照组** |
 | C. 全网自定义加速器（ARC2020 风格 RTL） | ✅ 有**同芯片实测**数据 | 416×416 全尺寸 YOLOv3-tiny 实测 **1.88 fps**；降到 224 / 160 分辨率约 6.5 / 12.7 fps（**估算**，见 §3.1） |
-| D. 软硬分工（PL 卷积引擎 + PS 前后处理，HLS/RTL） | ✅ **推荐** | 与指南「初级组推荐 PYNQ + HLS/RTL Overlay」完全对口；可复用旧项目摄像头/LCD/OSD 管线 |
+| D. 软硬分工（PL 卷积引擎 + PS 前后处理，HLS/RTL） | ✅ **推荐** | 与指南「初级组推荐 PYNQ + HLS/RTL Overlay」完全对口；**显示/采集链在本仓库从零重写**（D007：只复用引脚/电气资料） |
 | E. FINN 数据流（极端量化 1–8bit） | ⚠️ 官方支持 7020 但装不下 YOLO | Pynq-Z1/Z2 在官方支持表内，但 FINN dataflow 要求权重进片上 BRAM，而 YOLOv3-tiny INT8 权重 **8.857 MB**（§1.1）是片上 BRAM 的 **14.5 倍** ⇒ 放不下 |
 
 ---
@@ -35,7 +35,7 @@
 | BRAM | **4.9 Mb**（= 0.613 MB；按 36 Kb/块折 **139.4 块 RAMB36**） | YOLOv3-tiny 的 INT8 权重 **8.857 MB ≈ 4.9 Mb 的 14.5 倍** ⇒ **绝无可能放片上**，必须走「DDR 权重逐层搬运」（ARC2020 正是这么做的） |
 | LUT / FF | 53.2k / 106.4k | 不是瓶颈（同类实现 24–26k LUT） |
 | DDR3 | 1 GB，**只挂 PS 侧**，PL 走 AXI HP（64-bit） | 权重/特征图经 AXI HP 往返；Zynq-7000 HP 口原生 64-bit（FINN 源码 `pynq_native_port_width["Pynq-Z2"]=64` 佐证） |
-| 摄像头 | DVP OV5640（无 MIPI D-PHY） | 旧项目已有完整采集→LCD 链可复用 |
+| 摄像头 | DVP OV5640（无 MIPI D-PHY） | ⚠️ **已退出主线（D015）**；旧项目的采集→LCD 链**不复用**（D007），引脚可查 |
 
 ★ **BRAM 口径**：一手出处只写「4.9 Mb」。**「139.4 块 RAMB36」（旧写「≈140×RAMB36」）是我按 4.9 Mb ÷ 36 Kb 算的推算值**，
 原始一手出处未给 RAMB 块数，故已登记在 [`../ref/hardware.md`](../ref/hardware.md) §K UNVERIFIED 清单第 1 条。

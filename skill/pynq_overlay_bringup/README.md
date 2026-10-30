@@ -63,6 +63,9 @@ HLS 会把 `in`/`out` 改名成 `in_r`/`out_r`（与关键字冲突），解析�
 
 ## 4. 提炼来源
 
+> **范围（D007，2026-10-30 裁定）**：本包只提炼**本仓库自己的**会话记录与实测；
+> 旧项目 `D:\FPGA\oi` 的经验**不作为来源**（只允许复用其引脚/电气资料）。
+
 - `ai/sessions/003_conv_engine_bitstream.md`：第一次自研 IP 出片与 Overlay 加载；
 - `ai/sessions/004_jtag_bringup.md`：JTAG 无 OS 路径与 PYNQ 路径的分工；
 - `ai/sessions/007_pl_mask_preproc.md`：`core_revision` 溢出、`run_ippack.tcl` 必须在 IP 目录内跑；

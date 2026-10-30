@@ -228,6 +228,7 @@ def main():
     run_board(["bash", "-lc", "mkdir -p %s" % CLIP_DIR], timeout=120)
 
     rows = list(done.values())
+    zero_streak = 0
     for clip in clips:
         if clip.name in done:
             print("SCENE_BOARD_SKIP %s (already done)" % clip.name)
@@ -292,6 +293,18 @@ def main():
             print("SCENE_BOARD_ROW %-8s %-7s FAILED rc=%d %s"
                   % (clip.stem[:8], rec["kind"], rc, rec["error"]))
         rows.append(rec)
+        # 连续两段「模型一个框都没给」时，先怀疑板子而不是片段：
+        # 2026-10-30 20:0x 那台板子进入半死状态后，ncnn_infer 每次都 SIGTRAP 返回 -5，
+        # 而 run_board_acceptance 的 wait 步（只探内核）照样认为它在线，
+        # 于是会白跑十几段。raw=0 是最早能看到信号。
+        if dok and rec.get("raw", 1) == 0:
+            zero_streak += 1
+        else:
+            zero_streak = 0
+        if zero_streak >= 2:
+            print("SCENE_BOARD_FAIL board_degraded_zero_dets at=%s"
+                  "（连续两段 raw=0：先断电重启，再 --resume）" % clip.name)
+            break
         # ★ 每段立即落盘：板子说掉就掉，不能把已跑的结果留在内存里
         out_path.write_text(json.dumps({"max_frames": args.max_frames, "rows": rows},
                                        ensure_ascii=False, indent=1), encoding="utf-8")

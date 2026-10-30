@@ -129,3 +129,29 @@ link。所以**「网卡灯亮/链路 Up」不能当成「板子活着」的证�
 - 每个片段有 `--clip-timeout`（默认 300 s，实测单段 ~85 s），超时按**板子卡死**处理、
   立刻中止本轮并记 `SCENE_BOARD_FAIL board_wedged`，不要傻等；
 - 卡死后先手动断电重启，再重新 `py tools/run_board_acceptance.py --wait …`。
+
+**第四种状态：系统级「随便一个程序都会 trap」（2026-10-30 20:0x）**。
+第三次掉线前的十几分钟里，`ncnn_infer` 稳定返回 **-5（SIGTRAP）**、不带任何输出，
+`dmesg` 一行行刷：
+
+    Unhandled prefetch abort: breakpoint debug exception (0x002) at 0x004d03d8
+    Unhandled prefetch abort: breakpoint debug exception (0x002) at 0xb6de4320
+
+地址有的在可执行文件里（`0x004d…`）、有的在共享库区（`0xb6d…`），**不是同一个崩溃点**。
+决定性证据是 **`df -h /` 也 trap**（rc 133 = 128+5，core dumped），而 `free` / `ls` /
+numpy 矩阵乘都正常 —— 说明不是某个程序的问题，是这台板子此时的**内存/执行环境已经不可信**。
+
+时间线（同一 boot，`uptime` 起算）：
+
+| 时刻 | 现象 |
+|---|---|
+| 启动后 → 19:51 | 正常：7 段片段全部跑完，ncnn 每帧 ~0.96 s |
+| 20:0x 起 | `ncnn_infer` -5；随后 `df` 也 trap；再往后 Jupyter 内核本身无响应 |
+
+**怎么处理**：这时候不要再「换模型 / 换参数 / 换路径」试 —— 先断电重启，然后
+**重启后立刻做一次最小复现**（跑一段片段，再跑一次 ncnn），确认是不是「跑过若干次
+PL overlay 之后才坏」。如果可复现，就把「一次 boot 里 `Overlay()` 加载次数」当作要控的变量
+（当前做法：每段片段起一个 `board_pipeline` 进程，各自加载一次 preproc overlay）。
+`run_board_acceptance` 的 `wait` 步只探内核，**探不出这种半死状态**，
+所以每轮跑表都要看 `SCENE_BOARD_ROW` 里的 `raw`：如果某段突然 `raw=0`，
+先怀疑板子，不要再往下跑十几段。

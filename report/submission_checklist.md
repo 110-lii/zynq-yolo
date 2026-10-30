@@ -1,4 +1,4 @@
-# 提交前检查清单（2026-10-25）
+# 提交前检查清单（2026-10-30）
 
 > 本清单按指南 **3.3.5** 的四类提交物逐项核对。勾选状态以**仓库内实际产物**为准，
 > 不以口头说明为准；每个“✅”后面都能在仓库里找到文件。
@@ -14,7 +14,7 @@
 | 可复现构建脚本 | `build/scripts/bd_preproc.tcl`、`bd_conv_engine.tcl`、`bd_axi_bw.tcl`、`bd_mask_preproc.tcl` | ✅ |
 | 运行必需件（模型/标定） | `build/models/person_v8n25.{param,bin,table}`、`build/models/ball_roi.npz`、`data/calib/*.json` | ✅（`tools/make_submission.py` 显式带入） |
 | PL 跟踪辅助源码/BD | `src/hls/track/`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py`、`board/overlay/track_preproc.bit` | ✅ 已出片；✅ 上板逐位对通过（`TRACK_PREPROC_BOARD_OK`） |
-| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`board/overlay/hdmi_status.bit` | ✅ HDMI/LCD 已出片；✅ 帧缓存数字通路读回通过；✅ **画面已通过**（014：两屏棋盘格均可见） |
+| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`docs/hdmi_video_osd.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/hdmi_video.py`、`board/overlay/*.bit` | 软件 ✅；HDMI 状态面板 **`BRAM_OK` 通过 / `VISUAL_OK` 待人眼**；LCD 4bpp 新片 **未上板**；HDMI 带框环出 **未上板**（见 §3.1、§3.2） |
 
 ## 2. 技能包（指南 3.3.5.2）
 
@@ -46,10 +46,10 @@
 | PC 端软件 | `tools/pc_dashboard.py`（TCP/回放+球场+CSV） | ✅ 自检/回放通过 |
 | HDMI/LCD 状态面板 | `tools/status_display.py`（fbdev/PNG） | ✅ 自检通过；硬件看 fbdev |
 | PL 跟踪辅助 | `src/hls/track/` + `build/scripts/bd_track_preproc.tcl` + `board/overlay/track_preproc.bit` + `tools/track_preproc.py` | ✅ 已出片（WNS +2.457 ns）；✅ 上板逐位对通过（720p 32.39 ms） |
-| HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | ✅ 已出片（Setup +3.938 ns）；✅ 数字通路读回通过；✅ 画面已通过（014） |
-| LCD 状态面板 | `src/rtl/io/lcd/` + `build/scripts/bd_lcd_status.tcl` + `tools/bram_fb.py` | ✅ 已出片（Setup +4.283 ns）；✅ 数字通路读回通过；✅ 画面已通过（014） |
-| HDMI+LCD 合并 | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ✅ 已出片（Setup +3.874 ns）；✅ `DISPLAY_BOTH_BOARD_OK`（数字通路）；⚠️ 合并版待重出片（014 只修单屏） |
-| 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ 已出片（Setup +2.918 ns）；✅ `TRACK_DISPLAY_BOARD_OK`（BRAM 读回）；⚠️ 合并版待重出片（014 只修单屏） |
+| HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | 已出片；✅ `BRAM_OK`（整场仿真 + 上板 `HDMI_LIVE`）；⏳ `VISUAL_OK` 待人眼 |
+| LCD 状态面板（10-29 重做） | `src/rtl/io/lcd/lcd_probe_*.v` + `build/scripts/bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 已出片（4bpp/16 色/按键；WNS +1.839 ns）；⏳ 未上板（两级判据都没做） |
+| HDMI+LCD 合并 | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ⚠️ 比特流落后于 018–021 的新读侧，需重出片 |
+| 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ `TRACK_PREPROC_BOARD_OK`（逐字节对拍）；⚠️ 合并画面同上门槛 |
 | 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
 | 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025/D026 | ✅ |
 
@@ -92,7 +92,10 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
 当前实测：
 
 - `check_repo.py`：`SUMMARY: 6 PASS / 0 FAIL / 0 WARN`，`CHECK_REPO_OK`；
-- `make_submission.py`：539 files（约 84.3 MB），zip 约 19.3 MB，导出目录自检通过。
+- `make_submission.py`：**文件数与大小以当天最后一次生成为准**，正文见 `dist/` 下同名 `.zip`
+  与包内 `SUBMISSION_MANIFEST.csv`（本表不再抄具体数字，避免像 10-25 版那样与实物不符）；
+- 新增自检（2026-10-30）：`py tools/check_full_flow.py --dry-run` → `FULL_FLOW_OK ok=5 skip=1 fail=0`；
+  `py sim/scripts/run_sim.py` → `SIM_PASS 9/9`。
 
 ## 7. 已知开放项（不阻塞提交，但必须如实写在报告里）
 
@@ -103,11 +106,21 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；dist/ 下 zip
    精度 **3/4**），不宣称召回、也不把候选数当检出数（§8 第 4 条）；
 3. 单应只对已标定机位有效，多机位需各标一次（§8 第 1 条）；
 4. 工具链是 Vivado 2020.2，与指南推荐 2026.1/2025.2 不同；已参数化并登记差异（§7.6）；
-5. **显示面板未通过**：HDMI/LCD 上板均无画面，`DISPLAY_BOARD_OK` 只证明帧缓存数字通路
-   （§8 第 8 条、`ai/sessions/013`）；HDMI 疑物理层故障、LCD overlay 有 bug，均未修复。
+5. **显示按两级判据如实登记**（2026-10-30 更正，取代此前「未通过/已通过」两种互相打架的写法）：
+   - `BRAM_OK`（写得进、读得回、扫描范围/速率对）：**HDMI 状态面板已过**；
+     **LCD 4bpp 新片未上板**，这一级也没做。
+   - `VISUAL_OK`（人眼看画面）：014 在 1bpp 单屏上见过棋盘格，但 018–021 重写读侧并把 LCD
+     整体重做为 4bpp/16 色/按键之后**未再复看** ⇒ **当前不宣称任何一块屏「画面通过」**。
+   - `display_both.bit` / `track_display.bit` 落后于新读侧，需重出片。
+6. **视频入口未落地（D015）**：`board_pipeline.py` 仍只吃板本地 `--video`；网络接收端
+   （`stream_sender.py` / `board_net.py`）是早期 bring-up，未接主线；协议/端口在台账仍 `discussing`。
+7. **队别与球权未接入主线**：`classify_players.py` 可用但 `board_pipeline.py` 未调用；
+   球权不带队别；离线 `track_players.py` 轨迹为像素、未接单应。
+8. **数据集来源与许可（D005）仍 `discussing`**：`data/` 内有比赛片段与训练集，
+   但仓库里没有来源/许可声明；提交包只带运行必需件（模型/标定），不改变该状态。
 
 ## 8. 签字
 
-- 报告版本：`design_report.md` v1.0（2026-10-25）
-- 提交包：`dist/zynq-yolo_submission_<YYYYMMDD_HHMM>/` + 同名 `.zip`
-- 校验：`SUBMISSION_MANIFEST.csv` 的 `sha256` 列逐文件可核。
+- 报告版本：`design_report.md` **v1.1（2026-10-30）**；`design_report.docx` 由同一 md 重新生成
+- 提交包：`dist/zynq-yolo_submission_<YYYYMMDD_HHMM>/` + 同名 `.zip`（旧包删除，只留当天一份）
+- 校验：`SUBMISSION_MANIFEST.csv` 的 `sha256` 列逐文件可核

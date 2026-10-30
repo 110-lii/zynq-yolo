@@ -11,6 +11,7 @@
 | [02](02_route_selection_and_preproc.md) | 路线选择：PL 掩码为何不划算、为什么最终选 PL 预处理 + PS ncnn | `ai/sessions/007`、`ai/sessions/009` | §4.3 / §4.5 / §5.2 |
 | [03](03_agent_workflow_and_evidence.md) | 智能体工作流与证据纪律：写范围、判据、自检门禁 | `ai/sessions/001`、`ai/sessions/002`、`ai/coordination/DECISIONS.md` | §5.3 / §6 |
 | [04](04_extensions_storage_display.md) | 提交前扩展：PL 跟踪辅助、SD 存储、PC 软件、HDMI/LCD 面板 | 本次会话（2026-10-25） | §2.9 / §4.7 / §8 |
+| [05](05_display_rework_evidence.md) | 显示两次推倒重来：读回≠画面、像素时钟、4bpp/调色板、D026 与两级判据 | `ai/sessions/012`–`022`（10-27 – 10-30） | §2.9 / §2.10 / §8 |
 
 ## 整理规则
 

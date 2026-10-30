@@ -693,6 +693,22 @@ python3 tools/status_display.py --replay /home/xilinx/out.json --size 800x480 --
 python3 tools/check_full_flow.py --dry-run
 ```
 
+**全流程固化 overlay（`flow_system.bit`）与分层测试集**：
+
+```bash
+# 板端：LCD 4bpp + 按键 + HDMI 32bpp 合一的自证（按 IP 名核对地址表），期望 FLOW_OVERLAY_OK
+python3 tools/flow_overlay.py --selftest
+
+# 板端：HDMI 人眼判据 —— 红/绿/蓝/白/黑五张带大字色卡，读到 STEP1..5 才算通
+python3 tools/check_hdmi_cards.py
+
+# PC 侧：把上面两步 + 部署 + 分层片段按顺序跑完（等板子上线、逐段落盘、两端 sha256 校验）
+py tools/run_board_acceptance.py --wait 2700
+
+# PC 侧：分层测试集（争抢/普通各 8 段）在板上跑 board_pipeline，逐段落盘、可 --resume
+py tools/scene_suite_board.py --resume
+```
+
 部署通道：SSH 不通，一切走 Jupyter ——
 `py tools/board_jupyter.py --push <本地> <远端>`（分片 base64，两端打印 sha256），
 或 `py tools/lcd_probe_host.py deploy` 一次传齐 bit/hwh/工具/自证图。
@@ -808,10 +824,20 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     ⚠️ **这不是准确率**：没有人工标注的队别真值，「两队各半」只说明链路通且没塌成单一类。
     板上未验证。离线跟踪器 `tools/track_players.py` **不输出每个人的队别**（只有颜色过滤），但已新增 `--calib`：给了标定才把脚点映射到球场米制（`points[].X/Y`，输入用补偿后的 `sx/sy`），映射函数 `apply_calib()` 有主机侧单元验证（3 点 → (0,0)/(105,68)/(52.5,34)）。
 
+12. **两个显示合成一个比特流了，但还没上过板**：`flow_system.bit`（LCD 4bpp + 按键 + HDMI 32bpp）
+    2026-10-30 出片，`FLOW_SYSTEM_BD_OK`，WNS +3.042 ns / WHS +0.028 ns，0 失败端点，
+    LUT 44.9 % / BRAM 61.4 %；生成的 `.hwh` 与设计地址表 11 个从设备逐条对拍一致。
+    但**没有上过板**，因此本报告不写「已验证」。同一批还修了一个只在真屏上暴露的缺陷：
+    HDMI 帧缓存从 `allocate()` 出来是 `cacheable=True`，CPU 写完只在 cache 里，
+    PL 走 `S_AXI_HP0` 直读 DDR 会读到旧内容 —— 表现为 **`frames` 60/s、`under=0` 一切正常但屏上纯白**。
+    已在切基址前加 `Buffer.flush()`，**修复未经复验**。
+    板端自证入口 `tools/flow_overlay.py --selftest`，人眼入口 `tools/check_hdmi_cards.py`（五张带字色卡）。
+    另：分层测试集扩到 8+8 后，「争抢画面球更难检出」这条**被自己的数据推翻**
+    （p=0.61），§2.11 已改为如实记录推翻过程，而不是留一个好看的旧数字。
+
 ---
 
 ## 9. 交付物对照（指南 3.3.5）
-
 | 指南要求 | 本仓库落点 | 状态 |
 |---|---|---|
 | 3.3.5.1 工程包：源码、仿真/验证、综合实现报告、上板工程与实测、可复现构建脚本 | `src/`、`sim/`、`build/`、`board/`、`data/` | ✅ |

@@ -301,8 +301,14 @@ set_property -dict [list CONFIG.C_GPIO_WIDTH {32} CONFIG.C_IS_DUAL {1} CONFIG.C_
     CONFIG.C_ALL_OUTPUTS {1} CONFIG.C_ALL_OUTPUTS_2 {1}] $gpio_hdmi_cfg
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M09_AXI] [get_bd_intf_pins gpio_hdmi_cfg/S_AXI]
 
+# 状态 GPIO 改成**双通道只读**（2026-10-30 诊断用）：
+#   通道 1（+0x0）{frames[15:0], under[15:0]} —— 原样保留，工具零改动
+#   通道 2（+0x8）上一整帧的像素累加和 —— 「PL 从 DDR 读到的到底是不是我们写的」
+#   地址不变（0x41210000），不新增从设备：上一版 HDMI 段已经因为地址解错吃过一次亏
+# 两路都是 pclk 域、与 hdmi_video_0 同钟，直接进 GPIO，不需要同步器。
 set gpio_hdmi_st [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 gpio_hdmi_st]
-set_property -dict [list CONFIG.C_GPIO_WIDTH {32} CONFIG.C_IS_DUAL {0} CONFIG.C_ALL_INPUTS {1}] $gpio_hdmi_st
+set_property -dict [list CONFIG.C_GPIO_WIDTH {32} CONFIG.C_IS_DUAL {1} CONFIG.C_GPIO2_WIDTH {32} \
+    CONFIG.C_ALL_INPUTS {1} CONFIG.C_ALL_INPUTS_2 {1}] $gpio_hdmi_st
 connect_bd_intf_net [get_bd_intf_pins hdmi_smc/M00_AXI] [get_bd_intf_pins gpio_hdmi_st/S_AXI]
 
 # cfg 在 FCLK 域（外层 axi_smc），跨到 pclk 由 hdmi_video_top 的 2 拍同步器处理；
@@ -321,6 +327,7 @@ connect_bd_net [get_bd_pins rst_pix_h/peripheral_aresetn] [get_bd_pins hdmi_vide
 connect_bd_net [get_bd_pins gpio_hdmi_cfg/gpio_io_o]  [get_bd_pins hdmi_video_0/cfg_addr]
 connect_bd_net [get_bd_pins gpio_hdmi_cfg/gpio2_io_o] [get_bd_pins hdmi_video_0/cfg_pack]
 connect_bd_net [get_bd_pins hdmi_video_0/st_status]   [get_bd_pins gpio_hdmi_st/gpio_io_i]
+connect_bd_net [get_bd_pins hdmi_video_0/st_sum]      [get_bd_pins gpio_hdmi_st/gpio2_io_i]
 
 # AXI4 读主机 → S_AXI_HP0（AXI3）：用 smartconnect 做协议/位宽转换。
 # HP0 的 ACLK 必须与 pclk 同源 —— fb_scanout 内部没有跨时钟桥。
@@ -369,6 +376,31 @@ assign_bd_address -offset 0x41250000 -range 64K  [get_bd_addr_segs {gpio_d2/S_AX
 assign_bd_address -offset 0x41260000 -range 64K  [get_bd_addr_segs {gpio_keys/S_AXI/Reg}]
 assign_bd_address -offset 0x41270000 -range 64K  [get_bd_addr_segs {gpio_id/S_AXI/Reg}]
 assign_bd_address -offset 0x41280000 -range 64K  [get_bd_addr_segs {gpio_t/S_AXI/Reg}]
+
+# ★ 2026-10-30 夜里第三处缺陷：HDMI 读主机**根本没有地址空间**
+#   `validate_bd_design` 一直在报
+#     CRITICAL WARNING: [BD 41-1356] Slave segment </processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM>
+#     is not assigned into address space </hdmi_video_0/m_axi>
+#   因为本文件把所有地址都写成了显式 assign，而 HP0 的 DDR 段漏了；对照
+#   `bd_hdmi_video.tcl` 末尾那句不带参数的 `assign_bd_address`（= 自动分配剩余的），
+#   它能出画面正是因为那一句把这一段补上了。
+#   后果极隐蔽：读请求在互连里解不到从设备（DECERR），`fb_scanout` 照样拿到
+#   应答、`under` 照样 0、`frames` 照样 60/s，只有屏上是**一个不随帧缓存变化的颜色**。
+#   这里显式补上，并在后面把这段的 offset/range 打出来、为空就判构建失败 ——
+#   这种缺陷不能再靠人眼发现。
+assign_bd_address -target_address_space [get_bd_addr_spaces hdmi_video_0/m_axi] \
+    [get_bd_addr_segs {processing_system7_0/S_AXI_HP0/HP0_DDR_LOWOCM}]
+# 保险网：其余未分配的段按默认分配（与 bd_hdmi_video.tcl 末尾同一手法）
+assign_bd_address
+set _hpsegs [get_bd_addr_segs -quiet -of_objects [get_bd_addr_spaces hdmi_video_0/m_axi]]
+puts "HDMI_M_AXI_SEGS [llength $_hpsegs]"
+foreach _s $_hpsegs {
+    puts "HDMI_M_AXI_SEG $_s offset=[get_property OFFSET $_s] range=[get_property RANGE $_s]"
+}
+if {[llength $_hpsegs] == 0} {
+    puts "FLOW_SYSTEM_BD_FAIL no_hp0_addr_seg"
+    return
+}
 validate_bd_design
 save_bd_design
 

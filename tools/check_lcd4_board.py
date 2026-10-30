@@ -29,16 +29,31 @@ CODE = r'''
 import time
 from pynq import Overlay, MMIO
 
-Overlay("__BIT__")
+ov = Overlay("__BIT__")
 print("OVERLAY_OK")
 
+
+def A(needle, dflt):
+    """按 IP 名从 hwh 解出物理地址。flow_system 里 gpio_id/gpio_t 挪到了
+    0x4127/0x4128（0x4120/0x4121 让给了 HDMI），硬编码会读到 HDMI 的寄存器上。"""
+    for n, i in (getattr(ov, "ip_dict", None) or {}).items():
+        if needle in str(n):
+            a = i.get("phys_addr")
+            if isinstance(a, int):
+                return a
+    return dflt
+
+
 WPR, VD = 100, 480
-mm = MMIO(0x40000000, 0x30000)      # 800x480 4bpp：192 KB（AXI 段开 256K）
-cfg = MMIO(0x41220000, 0x1000)
-d0 = MMIO(0x41230000, 0x1000)       # (lb0, lbmid)
-d1 = MMIO(0x41240000, 0x1000)       # (st0, stmid)
-d2 = MMIO(0x41250000, 0x1000)       # (fills, de_last)
-tm = MMIO(0x41210000, 0x1000)       # pclk 自由计数器
+mm = MMIO(A("bram_ctrl_800", 0x40000000), 0x30000)   # 800x480 4bpp：192 KB（AXI 段开 256K）
+cfg = MMIO(A("gpio_cfg", 0x41220000), 0x1000)
+d0 = MMIO(A("gpio_d0", 0x41230000), 0x1000)       # (lb0, lbmid)
+d1 = MMIO(A("gpio_d1", 0x41240000), 0x1000)       # (st0, stmid)
+d2 = MMIO(A("gpio_d2", 0x41250000), 0x1000)       # (fills, de_last)
+tm = MMIO(A("gpio_t", 0x41210000), 0x1000)        # pclk 自由计数器
+print("LCD_ADDR cfg=0x%08X d0=0x%08X d1=0x%08X d2=0x%08X t=0x%08X mm=0x%08X"
+      % (cfg.base_addr, d0.base_addr, d1.base_addr, d2.base_addr,
+         tm.base_addr, mm.base_addr))
 
 cfg.write(0, 0x10)                   # 帧缓存 + 800x480 核心 + 背光亮
 

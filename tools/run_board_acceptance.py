@@ -127,6 +127,15 @@ def run_board(argv, timeout=1800):
     return p.returncode, [ln for ln in (p.stdout or "").strip().splitlines() if ln.strip()]
 
 
+def save_raw(name, lines):
+    """把某一步的完整输出落盘。只留令牌的话，FAIL 之后得整轮重跑才知道为什么
+    （2026-10-30 两次踩到：`FLOW_OVERLAY_OK（机器判据…）` 被判 FAIL、片段全部
+    `ModuleNotFoundError` 而证据里只有 `RC 1`）。"""
+    d = ROOT / "build" / "accept"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / ("%s.log" % name)).write_text("\n".join(lines), encoding="utf-8")
+
+
 def step(name, status, evidence, extra=None):
     STEPS.append({"step": name, "status": status, "evidence": evidence,
                   "at": time.strftime("%Y-%m-%d %H:%M:%S")})
@@ -146,6 +155,37 @@ def tok_line(lines, prefix):
 
 
 # ------------------------------------------------------------------ 部署
+def board_tool_closure():
+    """`board_pipeline` 在板上跑起来需要的 tools/ 模块闭包（按 import 递归收）。
+
+    为什么不用手写清单：2026-10-30 就因为漏了 `team_assign`（新加的一行 import），
+    16 段片段在板上全部 `ModuleNotFoundError` 而白跑一轮。依赖关系代码里写着，
+    就别在另一个地方再维护一份。
+    """
+    import ast
+    tools = ROOT / "tools"
+    seen, todo = set(), ["board_pipeline"]
+    while todo:
+        mod = todo.pop()
+        if mod in seen:
+            continue
+        f = tools / (mod + ".py")
+        if not f.is_file():                      # 标准库/第三方：不在 tools/ 下，跳过
+            continue
+        seen.add(mod)
+        try:
+            tree = ast.parse(f.read_text(encoding="utf-8"))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and not node.level and node.module:
+                todo.append(node.module.split(".")[0])
+            elif isinstance(node, ast.Import):
+                for a in node.names:
+                    todo.append(a.name.split(".")[0])
+    return sorted(seen)
+
+
 DEPLOY = [
     ("board/overlay/flow_system.bit", BOARD_ROOT + "/board/overlay/flow_system.bit"),
     ("board/overlay/flow_system.hwh", BOARD_ROOT + "/board/overlay/flow_system.hwh"),
@@ -153,42 +193,94 @@ DEPLOY = [
     ("tools/check_hdmi_cards.py", BOARD_ROOT + "/tools/check_hdmi_cards.py"),
     ("tools/hdmi_video.py", BOARD_ROOT + "/tools/hdmi_video.py"),
     ("tools/bram_fb.py", BOARD_ROOT + "/tools/bram_fb.py"),
-    ("tools/board_pipeline.py", BOARD_ROOT + "/tools/board_pipeline.py"),
     ("tools/scene_suite_board.py", BOARD_ROOT + "/tools/scene_suite_board.py"),
     # 分层片段检测要用的模型：推仓库里那一份，让板端不依赖 /home/xilinx 下的旧副本
+    ("board/overlay/preproc.bit", BOARD_ROOT + "/board/overlay/preproc.bit"),
+    ("board/overlay/preproc.hwh", BOARD_ROOT + "/board/overlay/preproc.hwh"),
     ("build/models/person_v8n25.param", BOARD_ROOT + "/build/models/person_v8n25.param"),
     ("build/models/person_v8n25.bin", BOARD_ROOT + "/build/models/person_v8n25.bin"),
-]
+] + [("tools/%s.py" % m, BOARD_ROOT + "/tools/%s.py" % m) for m in board_tool_closure()]
+
+
+SHA_CODE = """
+import hashlib, json, os
+paths = __PATHS__
+out = {}
+for p in paths:
+    try:
+        out[p] = hashlib.sha256(open(p, 'rb').read()).hexdigest() if os.path.exists(p) else ''
+    except Exception as e:
+        out[p] = 'ERR:%s' % e
+print('SHA_MAP ' + json.dumps(out))
+"""
+
+
+def remote_sha_map(paths):
+    """一次往返拿到板端所有文件的 sha256（空的表示不存在）。
+
+    为什么需要：板子每 5–15 分钟掉一次，而完整部署要传 60 MB、十几分钟 ——
+    按「全部重传」的思路永远跑不完。先比 sha，只补缺的，一轮能压到几分钟。
+    """
+    if not paths:
+        return {}
+    # 用占位符替换而不是 %-格式化：SHA_CODE 自己带 '%s'（拼错误信息用），
+    # 和 '%% (paths,)' 撞在一起会抛 TypeError（2026-10-30 踩过）
+    rc, out = run_board(["python3", "-c", SHA_CODE.replace("__PATHS__", repr(list(paths)))],
+                        timeout=240)
+    for ln in out:
+        if ln.startswith("SHA_MAP "):
+            try:
+                return json.loads(ln[len("SHA_MAP "):])
+            except ValueError:
+                return {}
+    return {}
+
+
+def sha256_file(path):
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def do_deploy():
     bad = []
-    ok_n = 0
+    ok_n = skip_n = 0
+    pairs = []
     for rel, remote in DEPLOY:
         local = ROOT / rel
         if not local.is_file():
             bad.append("%s(缺)" % local.name)
             continue
-        ok, msg = board_push(local, remote)
+        pairs.append((local, remote))
+    clips = sorted((ROOT / "data" / "samples" / "scenes").glob("*.mp4"))
+    for c in clips:
+        pairs.append((c, BOARD_ROOT + "/data/samples/scenes/" + c.name))
+
+    remote = remote_sha_map([r for _l, r in pairs])
+    todo = []
+    for local, rpath in pairs:
+        if remote.get(rpath) and remote[rpath] == sha256_file(local):
+            skip_n += 1
+            continue
+        todo.append((local, rpath))
+    log("deploy: %d 个已在板上且 sha 一致，需要传 %d 个" % (skip_n, len(todo)))
+
+    for local, rpath in todo:
+        ok, msg = board_push(local, rpath)
         if not ok:
             time.sleep(1.0)
-            ok, msg = board_push(local, remote)
+            ok, msg = board_push(local, rpath)
         if ok:
             ok_n += 1
         else:
             bad.append("%s: %s" % (local.name, msg[:70]))
-    # 分层片段（不进 git，但板上跑必须传）
-    clips = sorted((ROOT / "data" / "samples" / "scenes").glob("*.mp4"))
-    clip_n = 0
-    for c in clips:
-        ok, msg = board_push(c, BOARD_ROOT + "/data/samples/scenes/" + c.name)
-        if ok:
-            clip_n += 1
-        else:
-            bad.append("%s: %s" % (c.name, msg[:60]))
     if bad:
         return False, "失败: " + "; ".join(bad)
-    return True, "%d/%d 个文件 + %d/%d 段片段 sha256 对上" % (ok_n, len(DEPLOY), clip_n, len(clips))
+    return True, "新传 %d 个、跳过 %d 个（sha 已一致），共 %d 个文件 + %d 段片段" % (
+        ok_n, skip_n, len(DEPLOY) + len(clips), len(clips))
 
 
 # ------------------------------------------------------------------ 各步
@@ -197,8 +289,9 @@ def do_overlay(seconds):
                          "--hdmi-seconds", str(seconds)], timeout=600)
     lcd = tok_line(out, "FLOW_OVERLAY_LCD")
     hdmi = tok_line(out, "FLOW_OVERLAY_HDMI")
-    ok = any(ln.strip() == "FLOW_OVERLAY_OK" for ln in out)
+    ok = any(ln.strip().startswith("FLOW_OVERLAY_OK") for ln in out)
     ev = "%s | %s" % (lcd or "-", hdmi or (out[-1] if out else "rc=%d" % rc))
+    save_raw("overlay", out)
     step("overlay", "OK" if ok else "FAIL", ev[:300])
     return ok
 
@@ -206,6 +299,7 @@ def do_overlay(seconds):
 def do_hdmi(seconds, rounds):
     rc, out = run_board(["python3", "tools/check_hdmi_cards.py",
                          "--seconds", str(seconds), "--rounds", str(rounds)], timeout=900)
+    save_raw("hdmi", out)
     done = tok_line(out, "HDMI_CARDS_DONE")
     ready = tok_line(out, "HDMI_CARDS_READY")
     ok = bool(done)
@@ -215,14 +309,36 @@ def do_hdmi(seconds, rounds):
     return ok
 
 
-def do_scenes(max_frames):
+QUIET_CODE = """
+import os
+from pynq import Overlay
+p = '/home/xilinx/zynq-yolo/board/overlay/preproc.bit'
+if os.path.exists(p):
+    Overlay(p)
+    print('QUIET_OVERLAY ok preproc.bit（已停掉 HDMI 扫描）')
+else:
+    print('QUIET_OVERLAY no_bit（preproc.bit 不在板上，HDMI 仍在扫描）')
+"""
+
+
+def do_scenes(max_frames, every):
+    """跑片段之前先把 HDMI 扫描停掉。
+
+    2026-10-30 观察：每次掉线都紧跟在 HDMI 满速扫描之后（色卡跑完 83 s 后不久板子就没了）。
+    flow_system 的 `fb_scanout` 一旦加载就一直在扫，不会因为没人更新帧缓存而停。
+    跑片段本来就要换 preproc overlay，顺手把这路功耗关掉 —— 掉线是硬件问题，但能少一份负载。
+    """
+    rcq, outq = run_board(["python3", "-c", QUIET_CODE], timeout=180)
+    print("[QUIET] " + (tok_line(outq, "QUIET_OVERLAY") or (outq[-1] if outq else "no output")))
+
     # 片段上一步已经带 sha256 推过，这里 --no-push 不再重复传（64 MB 的 base64 很贵）
     p = subprocess.run([PY, str(HERE / "scene_suite_board.py"), "--resume", "--no-push",
-                        "--max-frames", str(max_frames)],
+                        "--max-frames", str(max_frames), "--every", str(every)],
                        cwd=str(ROOT), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                        text=True, env=_env(), encoding="utf-8", errors="replace",
                        timeout=3600)
     out = [ln for ln in (p.stdout or "").strip().splitlines() if ln.strip()]
+    save_raw("scenes", out)
     agg = tok_line(out, "SCENE_BOARD_AGG")
     ok = any(ln.startswith("SCENE_BOARD_OK") for ln in out)
     step("scenes", "OK" if ok else "FAIL",
@@ -237,7 +353,8 @@ def main():
     ap.add_argument("--only", default="", help="只跑某一/几步（逗号分隔）")
     ap.add_argument("--hdmi-seconds", type=float, default=8.0)
     ap.add_argument("--hdmi-rounds", type=int, default=2)
-    ap.add_argument("--scene-max-frames", type=int, default=60)
+    ap.add_argument("--scene-max-frames", type=int, default=200)
+    ap.add_argument("--scene-every", type=int, default=10)
     args = ap.parse_args()
 
     LOG.write_text("", encoding="utf-8") if not LOG.exists() else None
@@ -263,7 +380,7 @@ def main():
     if do("hdmi"):
         do_hdmi(args.hdmi_seconds, args.hdmi_rounds)
     if do("scenes"):
-        do_scenes(args.scene_max_frames)
+        do_scenes(args.scene_max_frames, args.scene_every)
 
     nfail = sum(1 for s in STEPS if s["status"] == "FAIL")
     nskip = sum(1 for s in STEPS if s["status"] == "SKIP")

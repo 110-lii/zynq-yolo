@@ -163,4 +163,12 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 - **全流程固化 overlay**（`flow_system.bit`）：LCD 4bpp + 按键 + HDMI 32bpp 合进一个
   bitstream，一次加载小屏大屏同时可用。地址只迁了两条（`gpio_id`/`gpio_t` →
   `0x4127/0x4128`），其余工具零改动。详见 `docs/flow_overlay.md`。
-  **尚未上板**（板子当日反复硬复位）。
+  **2026-10-30 已上板** `flow_overlay.py --selftest`：LCD `bad=0/16` + pclk 计数、
+  HDMI `frames 564→1056 under=0` ⇒ `BRAM_OK` 过；**`VISUAL_OK` 待人眼看屏**。
+- **板端分层跑表只跑完 1/16**（`tools/scene_suite_board.py`）：c01 争抢段
+  模型原始 274 框 → 草皮门限 222 → 下游跟踪框 **0.12/帧**；球 12%；推理 961.8 ms。
+  同一批帧上主机 YOLOv8n `imgsz=320` 只有 0–2 人、`640` 有 0–19 人 ⇒
+  **瓶颈是 320 输入，不是门限**。所以板端数字暂不能与主机 14.4/17.0 对比；
+  要板端结论先要 640 输入的 ncnn 人检测模型。第二段起板子卡死（TCP 能连、HTTP 无应答），
+  其余 15 段待 `--resume` 补齐。
+- **`--max-det` 不是人数**：它是「检测调用次数上限」（默认 8）。板上跑表要 `--max-det 0`。

@@ -1,0 +1,19 @@
+{
+ "max_frames": 250,
+ "rows": [
+  {
+   "clip": "c01_t01010.0.mp4",
+   "kind": "contest",
+   "rc": 0,
+   "elapsed_s": 84.7,
+   "frames": 250,
+   "det": 25.0,
+   "raw": 274.0,
+   "kept": 222.0,
+   "players": 0.12,
+   "ball_pct": 12.0,
+   "detections": 25,
+   "med_infer_ms": 961.8
+  }
+ ]
+}

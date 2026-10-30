@@ -312,6 +312,15 @@ def main():
     ball_tr = BallTracker(min_hits=2, max_miss=_ball_max_miss, min_speed=3.0)
     ball = None
     n_ball_predicted = 0
+    # 球检出的原始计数：要能和主机跑表（COCO sports-ball 逐帧检出率）对得上，
+    # 就不能只报「球状态是否 valid」—— 状态机在没检出时会沿用上一帧，等于虚高。
+    n_ball_scan = n_ball_hit = 0
+    # 检测链路的损耗点：模型给了几个框 / 草皮门限留下几个。
+    # 不分开记的话，「板上每帧 0 人」分不清是模型看不见还是后处理杀光了。
+    n_raw_dets = n_kept_dets = 0
+    # 草皮门限之后还有两道：score>=0.30、框高>=max(16, 2%画高)。
+    # 三段加起来才说明「每帧几个人」是怎么来的。
+    n_rows_pre = n_rows_post = 0
     prev_frame = None
     t_det = t_ball = 0.0
     ball_roi = None
@@ -364,7 +373,9 @@ def main():
                 print("DETECT_FAIL:", _e)
                 dets, ms = [], None
             t_det += time.perf_counter() - _t0
+            n_raw_dets += len(dets)
             dets = [d for d in dets if _is_grass(frame, (d[0] + d[2]) / 2.0, d[3])]
+            n_kept_dets += len(dets)
             tracks = tr.step(dets, dx, dy, dt=args.every)
             if mask_small is not None and args.motion_gate:
                 tracks = [t for t in tracks
@@ -395,8 +406,10 @@ def main():
             for t in tracks:
                 hits[t[0]] = hits.get(t[0], 0) + 1
         _h = frame.shape[0]
+        n_rows_pre += len(rows)
         rows = [r for r in rows
                 if r[5] >= 0.30 and (r[4] - r[2]) >= max(16.0, 0.02 * _h)]
+        n_rows_post += len(rows)
         rows.sort(key=lambda r: (r[5], hits.get(r[0], 1)), reverse=True)
         rows = rows[:25]
         if is_det:
@@ -437,6 +450,11 @@ def main():
                 sc = cls_scores(pat)
                 bc = [bc[j] for j, s in zip(sel, sc) if s >= args.ball_cls_th]
         bt = ball_tr.step(bc, dt=(args.ball_every if args.ball_every > 0 else 1.0))
+        if _do_ball:
+            n_ball_scan += 1
+            # 只有「这一帧真有候选喂进来」才算检出；miss>0 的是跟踪器外推
+            if any(t.miss == 0 for t in bt):
+                n_ball_hit += 1
         if bt:
             b = max(bt, key=lambda t: t.hits)
             conf = round(min(1.0, b.hits / 5.0), 2)
@@ -497,6 +515,13 @@ def main():
         "infer_ms_med": statistics.median(infer_ms) if infer_ms else None,
         "pl_track": TRACK is not None,
         "pl_ms_med": pl_ms_med,
+        "raw_dets": n_raw_dets,
+        "kept_dets": n_kept_dets,
+        "rows_pre_filter": n_rows_pre,
+        "rows_post_filter": n_rows_post,
+        "ball_scan_frames": n_ball_scan,
+        "ball_hit_frames": n_ball_hit,
+        "ball_pct": (round(100.0 * n_ball_hit / n_ball_scan, 1) if n_ball_scan else None),
         "team_assign": (assigner.stats() if assigner is not None else None),
         "frames_out": frames,
         "proposal": prop,

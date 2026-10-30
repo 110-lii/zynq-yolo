@@ -98,7 +98,7 @@ py tools/run_board_acceptance.py --wait 2700
 | `deploy` | 推 `flow_system.bit/.hwh` + 6 个工具 + 10 段分层片段 | **两端 sha256 逐文件对上**才算过 |
 | `overlay` | `flow_overlay.py --selftest` | `FLOW_OVERLAY_LCD OK` + `FLOW_OVERLAY_HDMI OK` + `FLOW_OVERLAY_OK` |
 | `hdmi` | 红/绿/蓝/白/黑五张带字色卡 | `HDMI_CARDS_DONE`（**屏上读字仍要人报**） |
-| `scenes` | 10 段 `contest`/`normal` 走 `board_pipeline` | `SCENE_BOARD_AGG contest=… normal=…` + `SCENE_BOARD_OK` |
+| `scenes` | 16 段 `contest`/`normal`（8+8）走 `board_pipeline` | `SCENE_BOARD_AGG contest=… normal=…` + `SCENE_BOARD_OK` |
 
 中间任何一步失败都会写进 `data/results/board_acceptance.json` 并**停下不往下跑**
 （缺文件时往下跑只会得出假结论）。跑完顺手看：
@@ -118,3 +118,14 @@ link。所以**「网卡灯亮/链路 Up」不能当成「板子活着」的证�
 另一个本想用来分辨「板子活着但 eth0 没地址」的办法是 ping IPv6 全节点组播
 （`ping -6 ff02::1%15`），本机返回「传输失败。常见故障」，说明这块网卡上 IPv6 没启用，
 **这条路走不通**，不要去改网卡绑定来凑这个测试。
+
+**第三种状态：TCP 能连、HTTP 不应答（2026-10-30 19:00 观察）**。
+分层跑表跑到第二段时，`192.168.2.99:9090` 的 `connect()` 依旧成功，但
+`GET /login` 与 Jupyter 内核都不再回应，一条 `print()` 都要等 2 分钟以上。
+也就是说「端口开着」连「软件还活着」都保证不了 —— 内核卡在某个系统调用里时，
+监听队列照样握手。因此：
+
+- `board_up()` 只用来**快速排除**（连不上就一定没戏），不能用来证明可用；
+- 每个片段有 `--clip-timeout`（默认 300 s，实测单段 ~85 s），超时按**板子卡死**处理、
+  立刻中止本轮并记 `SCENE_BOARD_FAIL board_wedged`，不要傻等；
+- 卡死后先手动断电重启，再重新 `py tools/run_board_acceptance.py --wait …`。

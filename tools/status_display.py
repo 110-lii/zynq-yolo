@@ -397,8 +397,10 @@ def build_rows(st, ctx, zh=True):
         b = st.ball or {}
         bx, by = b.get("x"), b.get("y")
         if b.get("valid") and bx is not None and by is not None:
-            v3 = t("可见  x=%.1f  y=%.1f m" % (float(bx), float(by)),
-                   "SEEN  x=%.1f  y=%.1f m" % (float(bx), float(by)))
+            # 单位跟着 space 走：没有标定的转播机位给的是**画面像素**，写 "m" 就是错的
+            unit = "px" if b.get("space") in ("image", "px") else "m"
+            v3 = t("可见  x=%.1f  y=%.1f %s" % (float(bx), float(by), unit),
+                   "SEEN  x=%.1f  y=%.1f %s" % (float(bx), float(by), unit))
             space = b.get("space")
             if space and space != "field":
                 v3 += "  (space=%s)" % space
@@ -774,6 +776,10 @@ def main():
     ap.add_argument("--png-out", default="", help="PNG 输出路径（多尺寸时支持 {size} 占位）")
     ap.add_argument("--png", default="", help="同 --png-out（旧名，保留兼容）")
     ap.add_argument("--once", action="store_true", help="只读一遍 JSONL 就退出")
+    ap.add_argument("--frame", type=int, default=-1,
+                    help="只渲染这一帧（-1=每行都渲染）。★ 一条 250 行的回放会写 250 次屏，"
+                         "每次 48,016 个字的 MMIO 写≈0.7 s，看起来就是「卡死」；"
+                         "出演示面板时指定帧号，只写一次")
     ap.add_argument("--fb", default="", help="/dev/fb0 或 /dev/fb1")
     ap.add_argument("--fb-bram", default="", help="HDMI 1bpp BRAM 基址，如 0x40000000")
     ap.add_argument("--lcd-cfg", default="",
@@ -863,6 +869,8 @@ def main():
 
         for st, src in iterable:
             update_ctx(ctx, st, src)
+            if args.frame >= 0 and int(st.frame) != args.frame:
+                continue
             # type=event 是同一帧的「事件补充行」（board_pipeline 单独 append），
             # 只并进事件栏，不当作新的一帧重画，否则会多出一张几乎全是 — 的面板
             if str((st.raw or {}).get("type", "")) == "event":

@@ -965,3 +965,18 @@ BRAM 读是同步的，`pixel_data(C) = lbuf[addr(C−1)]`，要 `pixel_data(C) 
 这条写进 EDGES 屏的设计理由里了。
 
 至此「画面对不对」这一级第一次有了人眼证据；`HDMI_VISUAL_OK` 记录生效。
+
+### 7.24 固化 overlay 的机器侧收尾：`FLOW_OVERLAY_OK`，外加修好一个真 bug
+
+在**同一片**已人眼确认的 bit 上跑 `flow_overlay.py --selftest`（板上 `python3`）：
+
+    FLOW_OVERLAY_LCD   OK mode=PYNQ bad=0/16 tick 133696195→140374381 cnt=3285648160
+    FLOW_OVERLAY_HDMI  OK frames 390→767 (+377) under=0 shown=16 bufs=0x38100000,0x38500000
+    FLOW_OVERLAY_KEYS  raw=0x3 key0=1 key1=1
+    FLOW_OVERLAY_OK
+
+第一次跑是 `FLOW_OVERLAY_LCD FAIL exception NameError: name 'lcd_selftest' is not defined` ——
+`cd07598`（加 `--check-hwh`）那次重构把 `def lcd_selftest():` **这一行**删掉了，函数体
+还留在模块级，成了孤儿代码：语法能过、导入能过，只有真跑到 LCD 那一半才炸。
+补回一行即可。这条正是「机器判据要真跑一遍」的价值：`--check-hwh` 离线查的是地址表，
+它查不出「某个测试函数根本没定义」。

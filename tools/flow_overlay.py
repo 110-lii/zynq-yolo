@@ -176,7 +176,7 @@ def check_hwh(bit=DEFAULT_BIT):
     return bad, info
 
 
-
+def lcd_selftest():
     """写一屏 4bpp 彩块，回读校验，再看逐行抓取寄存器是否在变（证明时序在跑）。"""
     import bram_fb
     from pynq import MMIO

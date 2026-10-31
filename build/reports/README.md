@@ -27,7 +27,7 @@
 ## 怎么用
 
 ```
-# 出综合与实现报告（脚本尚不存在，Makefile 会打印 TODO）
+# 出综合与实现报告（脚本见 build/scripts/*.tcl，运行后自动导出）
 mingw32-make bit
 
 # 关键优化后打一份基线，供 report/ 对比表引用

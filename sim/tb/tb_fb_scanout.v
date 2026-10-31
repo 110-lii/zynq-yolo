@@ -67,7 +67,7 @@ fb_scanout #(
     .pclk(clk), .reset_n(reset_n),
     .vs(vs), .de(de), .xpos(xpos), .ypos(ypos),
     .cfg_addr(cfg_addr), .cfg_stride(cfg_stride), .cfg_width(cfg_width), .cfg_en(cfg_en),
-    .pixel_data(pixel_data), .st_frames(st_frames), .st_under(st_under), .st_dbg(st_dbg),
+    .pixel_data(pixel_data), .st_frames(st_frames), .st_under(st_under), .st_dbg(st_dbg), .dbg_sel(3'd0),
     .m_araddr(m_araddr), .m_arlen(m_arlen), .m_arsize(m_arsize), .m_arburst(m_arburst),
     .m_arvalid(m_arvalid), .m_arready(m_arready),
     .m_rdata(m_rdata), .m_rvalid(m_rvalid), .m_rready(m_rready), .m_rlast(m_rlast), .m_rresp(m_rresp)
@@ -207,7 +207,7 @@ initial begin
         repeat (4) @(posedge clk);
     end
 
-    // 帧末快照：一帧扫完，disp_line 与 ar_line/wr_line 都应等于行数，未就绪行数应为 0。
+    // 帧末快照：一帧扫完，disp_line 与 ar_line 都应等于行数，未就绪行数应为 0，描述符队列应为空。
     // 这条判据补的是「像素值对但行号错」这一类：像素比对只能看读回来的值，
     // 看不出「第 N 行被送到屏幕的第 M 行」。
     $display("DBG under_lines=%0d behind_lines=%0d last_disp_line=%0d",

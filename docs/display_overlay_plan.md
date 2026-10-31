@@ -1,8 +1,11 @@
-# HDMI / LCD 显示 overlay 方案（均已出片，板上显示待验证）
+# HDMI / LCD 显示 overlay 方案（历史方案：1bpp 面板）
 
 > 上级：[`../README.md`](../README.md) · 相关：[`system_status.md`](system_status.md)、
+> [`flow_overlay.md`](flow_overlay.md)、[`hdmi_video_osd.md`](hdmi_video_osd.md)、
 > [`../report/design_report.md`](../report/design_report.md) §2.9/§8。
-> 状态：**HDMI（D020）、LCD（D021）、合并双屏（D023）与跟踪+双屏（D024）均已出片/上板，帧缓存读回通过，画面待目视**。
+> 状态：**本文记录 D020–D024 的 1bpp 方案**。现行主线已改为 `flow_system.bit`
+> （LCD 4bpp + HDMI 32bpp 视频，见 `flow_overlay.md`）；1bpp 状态面板 `hdmi_status.bit`
+> 的读回通过，但**画面未做人眼终验**，不作为提交时的「已显示」证据。
 > 按 DECISIONS 纪律，Vivado 综合/出片前须用户批准。
 
 ## 为什么不能只靠 `status_display.py`

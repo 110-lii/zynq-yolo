@@ -67,7 +67,7 @@ fb_scanout #(
     .pclk(clk), .reset_n(reset_n),
     .vs(vs), .de(de), .xpos(xpos), .ypos(ypos),
     .cfg_addr(cfg_addr), .cfg_stride(cfg_stride), .cfg_width(cfg_width), .cfg_en(cfg_en),
-    .pixel_data(pixel_data), .st_frames(st_frames), .st_under(st_under), .st_dbg(st_dbg),
+    .pixel_data(pixel_data), .st_frames(st_frames), .st_under(st_under), .st_dbg(st_dbg), .dbg_sel(3'd0),
     .m_araddr(m_araddr), .m_arlen(m_arlen), .m_arsize(m_arsize), .m_arburst(m_arburst),
     .m_arvalid(m_arvalid), .m_arready(m_arready),
     .m_rdata(m_rdata), .m_rvalid(m_rvalid), .m_rready(m_rready),
@@ -198,8 +198,8 @@ task do_active_line(input integer lno, input integer do_check);
         de <= 1'b0;
         if (do_check && line_errs > 0) begin
             if (bad_lines < 12)
-                $display("BADLINE line=%0d errs=%0d disp_line=%0d ar_line=%0d wr_line=%0d ready=%b",
-                         lno, line_errs, dut.disp_line, dut.ar_line, dut.wr_line, dut.ready);
+                $display("BADLINE line=%0d errs=%0d disp_line=%0d ar_line=%0d dq=%0d ready=%b",
+                         lno, line_errs, dut.disp_line, dut.ar_line, dut.d_cnt, dut.ready);
             bad_lines = bad_lines + 1;
         end
     end

@@ -17,8 +17,9 @@
 | `README.md` | 本文件：报告必须覆盖的 7 项 + 两张预置表 + 本目录规则 |
 | `design_report.md` | **设计报告正稿（Markdown 源）**：§1–§7 对应指南 3.3.5.3 的 7 项，§8 已知边界，§9 交付物对照 |
 | `design_report.docx` | 由 `tools/md_to_docx.py` 从 Markdown 生成的提交用文档 |
+| `technical_document.md` / `.docx` / `.pdf` | **赛事门户技术文档**（按官方模板的五部分结构：作品概述 / 系统组成 / 完成情况 / 总结 / 参考文献）；docx 由 `tools/md_to_docx.py` 生成，PDF 由 `tools/make_portal_assets.py --pdf` 生成 |
 | `submission_checklist.md` | 提交前逐项核对清单（工程包/技能包/报告/目录/权重 + 4 条命令） |
-| `llm_logs/` | **大模型协作记录（提交件成品）**：5 篇成稿 + 索引，逐条回指 `ai/sessions/` |
+| `llm_logs/` | **大模型协作记录（提交件成品）**：6 篇成稿 + 索引，逐条回指 `ai/sessions/` |
 | `figures/` | `system_arch.png`、`software_pipeline.png`、`optimization.png`、`status_panel_lcd.png`、`status_panel_hdmi.png`、`pc_pitch.png`；由 `tools/make_report_figures.py` 确定性生成 |
 
 ### `report/llm_logs/` 与 `ai/` 的分工（**勿混**）
@@ -41,12 +42,14 @@
 | 2 | 设计原理与功能框图 | 原理阐述 + 功能框图 | `design_report.md` §2 + `figures/` | ✅ 已完成 |
 | 3 | 软硬件划分依据与接口设计 | 为什么这样划分；AXI/寄存器等接口契约 | `design_report.md` §3 + `../docs/architecture.md` | ✅ 已完成（D017） |
 | 4 | 优化过程（含优化前后性能与资源对比表） | 必须给出优化**前后**的性能与资源对比 | `design_report.md` §4 | ✅ 已完成（基线与优化行均标出处） |
-| 5 | **大模型协作记录** | 提示词、模型回答、**自我纠错轨迹**、智能体工作流设计（如有） | `llm_logs/`（成品）← `../ai/`（原始） | ✅ 已完成（5 篇 + 索引，覆盖 001–022 会话） |
+| 5 | **大模型协作记录** | 提示词、模型回答、**自我纠错轨迹**、智能体工作流设计（如有） | `llm_logs/`（成品）← `../ai/`（原始） | ✅ 已完成（6 篇 + 索引，覆盖 001–022 会话） |
 | 6 | 技能包的提炼过程 | 从哪些失败或观察中总结、如何验证有效、边界如何确定 | `design_report.md` §6 + `../skill/` | ✅ 已完成（2 个技能包） |
 | 7 | 复现说明 | 一份可供他人**从零开始完整执行**的操作步骤 | `design_report.md` §7 + 根 `README.md` | ✅ 已完成 |
 
-> 报告正文：`design_report.md`（Markdown 源，**v1.1 · 2026-10-30**）+ `design_report.docx`（由
-> `tools/md_to_docx.py` 生成）。已裁定项以 `../ai/coordination/DECISIONS.md` 为准；
+> 报告正文：`design_report.md`（Markdown 源，**v1.3 · 2026-10-31**）+ `design_report.docx`（由
+> `tools/md_to_docx.py` 生成）。赛事门户另要一份按官方模板排版的技术文档：
+> `technical_document.md` → `.docx` → `.pdf`（由 `tools/make_portal_assets.py --pdf` 转换）。
+> 已裁定项以 `../ai/coordination/DECISIONS.md` 为准；
 > **D003（加速器实现方式）、D005（数据集许可）、D006（AXI 契约数值）、D007（旧项目复用范围）
 > 已于 2026-10-30 由用户逐条裁定**（混合路线 / 内部使用声明 / 冻结 v1 / 只复用引脚资料），
 > 报告按裁定口径书写。未测量/未保留的数字在正文中

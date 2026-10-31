@@ -43,6 +43,7 @@ EXCLUDE_PREFIXES = (
     "build/ball_rois", "build/tracks_", "build/stream/", "build/preview_",
     "build/tflite_", "build/tf_saved_", "build/viz/",
     "build/train_student/", "build/calib_", "build/ila_",
+    "build/_", "build/hdmi_",
     "data/train/", "data/ball_roi", "data/ball_roi_full",
     "data/layers/pb160/", "data/golden/pb160/", "data/models/quant_pb160/",
     "data/results/newmatch_frames/", "data/results/viz/",
@@ -52,7 +53,7 @@ EXCLUDE_PREFIXES = (
 # 单文件排除（相对路径或后缀）
 EXCLUDE_SUFFIXES = (
     ".exe", ".pyc", ".pyo", ".jou", ".str", ".log", ".dcp", ".ltx",
-    ".npy", ".onnx", ".tflite", ".pt", ".pth", ".ckpt",
+    ".npy", ".onnx", ".tflite", ".pt", ".pth", ".ckpt", ".bak", ".out",
 )
 EXCLUDE_NAMES = {"usage_statistics_webtalk.html", "usage_statistics_webtalk.xml"}
 

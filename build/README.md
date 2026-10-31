@@ -22,8 +22,10 @@
 | `reports_prev_*/` | **报告轮转归档**：形如 `reports_prev_20261019/`（§1 规则 5：`_YYYYMMDD` 后缀） | ❌ 产物（可忽略/清理） |
 | `baseline/` | 已固化的基线报告（只读参考，用于「优化前后对比」） | ⚠️ 仅保留基线 |
 
-> 当前磁盘事实：`build/scripts/`、`build/reports/{synth,impl,timing,resource,drc}` **目录已存在但为空**。
-> 具体构建脚本尚未创建 —— 见下方 **TODO**，**不要假装已存在**。
+> 当前磁盘事实（2026-10-31）：`build/scripts/` 已有 14 个 `bd_*.tcl` 出片脚本
+> （含现行主线 `bd_flow_system.tcl`）；`build/reports/{timing,resource,drc}/` 有现行报告，
+> `synth/` 与 `impl/` 仍为空（综合/实现的利用率与 DRC 分别落在 `resource/`、`drc/`）。
+> 不要再按「脚本尚未创建」理解本目录。
 
 ## 规则
 
@@ -46,22 +48,21 @@
 ## 怎么用
 
 ```powershell
-# 0. 现状核对（当前 script/report 目录均在，脚本尚未写）
-Get-ChildItem -Recurse D:\zynq-yolo\build
+# 0. 现状核对
+Get-ChildItem -Recurse D:\zynq-yolo\build\scripts
 
-# 1. 【TODO，脚本尚未创建】轮转上一轮报告
-#    TODO: build/scripts/rotate_reports.ps1  -> reports/ 改名为 reports_prev_<YYYYMMDD>/
+# 1. 出片（每个脚本自带工程创建 -> 综合 -> 实现 -> 出比特流 -> 导出报告）
+#    现行主线：LCD 4bpp + 按键 + HDMI 32bpp 合成一片
+D:\Xilinx\Vivado\2020.2\bin\vivado.bat -mode batch -source D:\zynq-yolo\build\scripts\bd_flow_system.tcl
+#    其它阶段性 bit：bd_preproc.tcl / bd_track_preproc.tcl / bd_hdmi_video.tcl /
+#    bd_lcd_probe.tcl / bd_hdmi_status.tcl / bd_display_both.tcl ...
 
-# 2. 【TODO，脚本尚未创建】一键构建（创建工程 -> 综合 -> 实现 -> 出比特流 -> 导出报告）
-#    TODO: build/scripts/build.tcl / build.ps1
-#    期望调用形态（示意，以实际脚本为准）：
-#    vivado -mode batch -source D:\zynq-yolo\build\scripts\build.tcl -tclargs xc7z020clg400-2
-
-# 3. 判定成功：只认日志令牌
+# 2. 判定成功：只认日志令牌
 Select-String -Path D:\zynq-yolo\build\reports\*\*.log -Pattern 'DONE_OK'
 #    找到 DONE_OK 才算成功；找不到 = 失败，即使进程退出码为 0
+#    （脚本会把日志令牌同时打印到控制台，例如 FLOW_SYSTEM_BD_OK / DONE_OK）
 
-# 4. 报告去向：synth/ impl/ timing/ resource/ drc/ 各放对应阶段报告，
+# 3. 报告去向：synth/ impl/ timing/ resource/ drc/ 各放对应阶段报告，
 #    并把资源/时序关键数字填入 ../docs/repo_spec.md §6 体系与 ../report/
 ```
 

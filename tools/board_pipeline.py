@@ -190,12 +190,112 @@ def save_evidence_for(store, frame, idx, events, fall_ids, cam_state, ball):
         })
 
 
+class NetFrameSource(object):
+    """D015 输入侧：PC 经以太网送来的 JPEG 帧。
+
+    为什么要有它
+    ------------
+    D015（2026-10-20 用户裁定）要求「视频由网口从电脑上输送」，但主线一直只吃
+    `--video <板本地文件>`；`stream_sender.py` 是早期 conv_engine 的单图 bring-up，
+    从没接进主线。这里补的就是**输入这半条**（输出那半条是 `video_back.py`）。
+
+    协议（与 `tools/video_send.py` 对齐，小端）
+        magic b"ZYVI"
+        循环：[u32 len][JPEG 字节]        （len = 0 表示结束）
+    选 JPEG 而不是裸 RGB：1280×720 裸帧 2.7 MB，100 Mbit 链路只够 4 fps；
+    JPEG q80 约 100 KB，25 fps 才 2.5 MB/s。解码代价在板端 ~5 ms/帧，
+    远小于 ncnn 的 ~980 ms，不构成瓶颈。
+
+    接口故意与 `cv2.VideoCapture` 的 `read()/get()/isOpened()/release()` 一致，
+    这样主线取帧那段一行都不用改。
+    """
+
+    MAGIC = b"ZYVI"
+
+    def __init__(self, port, fps=25.0, timeout=60.0):
+        import socket
+        self.fps = float(fps)
+        self.n = 0
+        self.bytes = 0
+        self.srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.srv.bind(("0.0.0.0", int(port)))
+        self.srv.listen(1)
+        print("NET_IN_LISTEN port=%d" % int(port), flush=True)
+        self.srv.settimeout(timeout)
+        self.conn, peer = self.srv.accept()
+        self.conn.settimeout(timeout)
+        print("NET_IN_CONNECTED %s" % (peer,), flush=True)
+        if self._recv_exact(4) != self.MAGIC:
+            self.release()
+            raise ValueError("bad magic (expect ZYVI)")
+
+    # ---------------------------------------------------------------- 底层
+    def _recv_exact(self, n):
+        buf = b""
+        while len(buf) < n:
+            chunk = self.conn.recv(n - len(buf))
+            if not chunk:
+                raise EOFError("peer closed")
+            buf += chunk
+        return buf
+
+    def _recv_maybe_eof(self, n):
+        """读 n 字节；对端正常关连接时返回 None，不当异常。"""
+        try:
+            return self._recv_exact(n)
+        except EOFError:
+            return None
+
+    # ---------------------------------------------------- VideoCapture 兼容
+    def isOpened(self):
+        return True
+
+    def get(self, prop):
+        return self.fps if prop == cv2.CAP_PROP_FPS else 0.0
+
+    def read(self):
+        hdr = self._recv_maybe_eof(4)
+        if hdr is None:
+            return False, None
+        (ln,) = __import__("struct").unpack("<I", hdr)
+        if ln == 0:
+            return False, None
+        buf = self._recv_exact(ln)
+        img = cv2.imdecode(np.frombuffer(buf, np.uint8), cv2.IMREAD_COLOR)
+        if img is None:
+            # 坏帧不中断整条流：跳过它，让后面继续
+            print("NET_IN_BADFRAME n=%d bytes=%d" % (self.n, ln), flush=True)
+            return self.read()
+        self.n += 1
+        self.bytes += ln
+        return True, img
+
+    def release(self):
+        for attr in ("conn", "srv"):
+            o = getattr(self, attr, None)
+            if o is not None:
+                try:
+                    o.close()
+                except OSError:
+                    pass
+                setattr(self, attr, None)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--video", required=True)
+    ap.add_argument("--video", required=False, default="")
     ap.add_argument("--every", type=int, default=15)
     ap.add_argument("--max-det", type=int, default=8)
     ap.add_argument("--max-frames", type=int, default=0)
+    # ---- D015 输入侧：视频由 PC 经以太网送入（与 --video 二选一）
+    ap.add_argument("--listen", type=int, default=0,
+                    help="监听端口，接收 tools/video_send.py 送来的 JPEG 帧（D015）；"
+                         "给了它就忽略 --video")
+    ap.add_argument("--net-fps", type=float, default=25.0,
+                    help="网络源的标称帧率（只用于 ball_lost_sec 之类的时间换算）")
+    ap.add_argument("--net-timeout", type=float, default=120.0,
+                    help="等连接/等帧的超时秒数（PC 端起得慢时给大一点）")
     ap.add_argument("--bin", default="/home/xilinx/ncnn_infer")
     ap.add_argument("--param", default="/home/xilinx/person_v8n25.param")
     ap.add_argument("--model", default="/home/xilinx/person_v8n25.bin")
@@ -290,10 +390,22 @@ def main():
     elif args.store_evidence and not args.proposal:
         print("STORE_EVIDENCE_NOTE 未开 --proposal：events 不生成，本次只有 fall 证据帧")
 
-    cap = cv2.VideoCapture(args.video)
-    if not cap.isOpened():
-        print("PIPELINE_FAIL video_open")
+    if not args.video and not args.listen:
+        print("PIPELINE_FAIL need --video or --listen")
         return 1
+    if args.listen:
+        # D015 输入侧。构造时就阻塞等 PC 连上来，所以调用方要先把这一行起在后台。
+        try:
+            cap = NetFrameSource(args.listen, fps=args.net_fps, timeout=args.net_timeout)
+        except Exception as e:                  # noqa: BLE001 — 任何失败都要给判据
+            print("PIPELINE_FAIL net_in: %s" % e)
+            return 1
+        args.video = args.video or ("net://0.0.0.0:%d" % args.listen)
+    else:
+        cap = cv2.VideoCapture(args.video)
+        if not cap.isOpened():
+            print("PIPELINE_FAIL video_open")
+            return 1
 
     H = None
     hull = None

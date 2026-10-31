@@ -182,7 +182,7 @@ task do_active_line(input integer lno, input integer do_check);
             @(posedge clk);
             #1;
             if (do_check) begin
-                src     = (px >= 2) ? (px[10:0] - 11'd2) : 11'd0;
+                src     = px[10:0];            // DUT 读地址 = xpos ⇒ 第 px 拍拿到源列 px
                 exp_pix = {lno[9:0], src, 3'b000};
                 chk = chk + 1;
                 if (pixel_data !== exp_pix) begin
@@ -198,8 +198,8 @@ task do_active_line(input integer lno, input integer do_check);
         de <= 1'b0;
         if (do_check && line_errs > 0) begin
             if (bad_lines < 12)
-                $display("BADLINE line=%0d errs=%0d disp_line=%0d fetch_line=%0d ready=%b",
-                         lno, line_errs, dut.disp_line, dut.fetch_line, dut.ready);
+                $display("BADLINE line=%0d errs=%0d disp_line=%0d ar_line=%0d wr_line=%0d ready=%b",
+                         lno, line_errs, dut.disp_line, dut.ar_line, dut.wr_line, dut.ready);
             bad_lines = bad_lines + 1;
         end
     end

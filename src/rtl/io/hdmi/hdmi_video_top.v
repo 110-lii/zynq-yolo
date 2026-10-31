@@ -195,7 +195,7 @@ fb_scanout #(
     .H_ACTIVE (1280),
     .V_ACTIVE (720),
     .LBUF     (2048),
-    .BURST    (64)
+    .BURST    (255)
 ) u_fb_scanout (
     .pclk       (pclk),
     .reset_n    (reset_n),

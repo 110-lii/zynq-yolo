@@ -81,11 +81,6 @@ module fb_scanout #(
     input       [1:0]   m_rresp
 );
 
-localparam [2:0] S_IDLE  = 3'd0;
-localparam [2:0] S_AR    = 3'd1;   // 发起突发
-localparam [2:0] S_ARW   = 3'd2;   // 等 ARREADY（ARVALID 必须保持到握手完成）
-localparam [2:0] S_RDATA = 3'd3;
-
 assign m_arsize  = 3'b010;   // 4 字节 / 拍
 assign m_arburst = 2'b01;    // INCR
 
@@ -95,12 +90,29 @@ assign m_arburst = 2'b01;    // INCR
 reg [31:0] lbuf [0:4*LBUF-1];
 
 reg [3:0]  ready;            // bit[k] = 第 k 条行缓存已装满一行
-reg [10:0] fetch_line;
-reg [10:0] fetch_ptr;
 reg [10:0] disp_line;        // 调试用：最近一次 de 拍上的显示行号
-reg [31:0] line_addr;
 
-wire [1:0]  fbuf = fetch_line[1:0];
+// ★ 2026-10-31 上板后重写取数引擎：**两条游标 + 允许突发在飞**
+//
+//   旧写法每行发 20 个 64 拍突发，而且每个突发要**等它的数据全部回来**才发下一个，
+//   于是一行的时间 = 1280 拍 + 20 × DDR 读延迟。屏是 720p60，一行只有 1650 个 pclk，
+//   只要读延迟超过 18 拍，取数就**永远追不上**显示：缓冲被回头重写，屏上一段段黑横条、
+//   画面在跳，而 `under` 照样 0（行首那一刻缓冲还就绪）、`frames` 照样涨。
+//   2026-10-31 上板实测：四条横带基本对，但被 13 条黑横条切开、画面跳动；
+//   仿真 `+LAT=40` 当场复现同一现象（under=180、98% 像素错），`+LAT=8` 则全绿。
+//
+//   新结构：请求游标（ar_line/ar_ptr）与写入游标（wr_line/wr_ptr）解耦，
+//   允许最多 MAX_OUT 个读突发同时在路上 ⇒ 每行的固定开销从「20 × 延迟」降到「≈1 × 延迟」。
+localparam integer MAX_OUT = 4;   // 在飞读突发上限（Zynq HP0 支持 8）
+
+reg [10:0] ar_line;          // 请求游标：下一个要取的源行
+reg [10:0] ar_ptr;           //   行内下一拍
+reg [31:0] ar_line_addr;     //   该行起始字节地址
+reg [10:0] ar_len_q;         // 已发未握手突发的拍数（握手时用它推进游标）
+reg [10:0] wr_line;          // 写入游标：下一个要写进缓存的源行
+reg [10:0] wr_ptr;
+reg [3:0]  outstanding;      // 已发未回的突发数
+reg        flush_pending;    // vs 沿时还有突发在飞 ⇒ 等它们回完再重置游标
 
 // ★ 显示行号**由 video_driver 的 ypos 决定**，不再自己数 de 拍。
 //   2026-10-30 上板两轮都栽在这里：先是 `local_x == width_use-1` 永远不成立（卡第 0 行），
@@ -116,7 +128,26 @@ wire [10:0] cur_line = ((ypos == 11'd0) || (ypos > V_ACTIVE[10:0])) ? 11'd0 : (y
 wire [1:0]  dbuf     = cur_line[1:0];
 
 wire [10:0] width_use = (cfg_width == 11'd0) ? H_ACTIVE[10:0] : cfg_width;
-wire [10:0] local_x   = (xpos >= 11'd2) ? (xpos - 11'd2) : 11'd0;
+
+// ★★ 2026-10-31 上板人眼第二次改：读地址 = xpos **本身**，不是 xpos-2 ★★
+//
+// 旧写法 `local_x = (xpos>=2) ? xpos-2 : 0` 我是按「xpos 从 2 开始」推的，但真机上
+// video_driver 给出来的是：
+//     xpos(t) = cnt_h(t) - 259        （见 video_driver 里 pixel_xpos 的两级寄存）
+//     data_req / video_de 有效拍 cnt_h ∈ [260, 1540)
+//   ⇒ 在 de 拍 C（cnt_h = 260+C）上 xpos = C+1，即 xpos ∈ 1..1281。
+// BRAM 读是**同步**的：pixel_data(C) = lbuf[ addr(C-1) ]，所以要让
+//     pixel_data(C) = 源列 C
+// 就必须 addr(C-1) = C，而 xpos(C-1) = C —— **addr 直接取 xpos**。
+// 用 xpos-2 的真实后果：屏幕列 C 显示源列 max(C-2,0)，整幅图右移 2 像素，
+// 最左 3 列重复源列 0，源列 1278/1279 永远不显示。上板现象正是
+// 「白色/蓝色块不贴左边缘」「右边缘那一列的颜色出现在最左边」。
+//
+// 旧的 local_x 仍保留语义相近的 disp_x（= 屏幕列 C = xpos-1），只给欠载统计与
+// 调试用；**取数地址另算**，两者不要再混用 —— 上一版就是把它们当成同一个量。
+wire [10:0] disp_x = (xpos == 11'd0) ? 11'd0 : (xpos - 11'd1);   // 屏幕列 C
+wire        rd_v   = (xpos < width_use);                         // 本拍读出的这一项是否有效
+wire [10:0] rd_x   = rd_v ? xpos : 11'd0;
 
 // ★ 取数提前量必须用**有符号**比较。写成 11 位无符号减法时，
 //   一旦取数落后于显示（DDR 抖动、主机抢带宽），`ahead` 会回绕成 2000 多，
@@ -124,29 +155,31 @@ wire [10:0] local_x   = (xpos >= 11'd2) ? (xpos - 11'd2) : 11'd0;
 //   而 ready[] 一直是 1，`under` 一直是 0 —— 所有机器判据都「通过」。
 //   ahead[12] 置位 = 取数落在显示后面。写成 `wire signed` 再比较，在 iverilog 下
 //   实测被当成无符号比，负数直接判成「超前很多」⇒ 冻结；改成显式判最高位，不靠记号的推断。
-wire [12:0] ahead  = {2'b00, fetch_line} - {2'b00, cur_line};
+wire [12:0] ahead  = {2'b00, ar_line} - {2'b00, cur_line};
 wire        behind = ahead[12];
 // 允许取数：只要不超前 3 行以上（4 条缓存的上限）。落后时同样放行 —— 它必须能追。
-// 注意**不能**再加 `ahead != 0` 之类的守卫：帧首 fetch_line == cur_line == 0，
+// 注意**不能**再加 `ahead != 0` 之类的守卫：帧首 ar_line == cur_line == 0，
 // 那条守卫会把第 0 行自己锁死，整帧一行都取不出来（2026-10-31 仿真里就是这么死的）。
-// 取数正好落在当前显示行时，下面的 ready 清除判断 `fetch_line != cur_line` 会保护它。
 wire        can_fetch = behind | (ahead <= 13'd3);
 
-// 索引必须用 **fbuf*LBUF + 列** 而不是位拼接 {fbuf, 列}：
+// 索引必须用 **行号[1:0]*LBUF + 列** 而不是位拼接 {行号[1:0], 列}：
 // 拼接隐含的步长是 2^11=2048，LBUF 取 1536/256 时会落到数组外（写丢、读回 X）。
-wire [12:0] wr_idx = fbuf * LBUF[12:0] + fetch_ptr;
-wire [12:0] rd_idx = dbuf * LBUF[12:0] + local_x;
+wire [12:0] wr_idx = wr_line[1:0] * LBUF[12:0] + wr_ptr;
+wire [12:0] rd_idx = dbuf * LBUF[12:0] + rd_x;
 
-// 显示侧：BRAM 1 拍延迟。读地址只用此刻的 cur_line（= ypos-1），天然对准本行；
-// 行尾那一像素在 ypos 变化前发出，所以不会串到下一行的缓存。
+// 显示侧：BRAM 1 拍延迟。地址见文件上方 rd_x 的推导；
+// `rd_valid` 与 rd_q 同拍寄存，于是「第 C 个 de 拍用的地址是否越界」跟着像素一起
+// 传一拍，门控才不会错位一列（上一版就是门控与数据差一拍，最右一列永远黑）。
 reg  [31:0] rd_q;
+reg         rd_valid;
 always @(posedge pclk) begin
-    rd_q <= lbuf[rd_idx];
+    rd_q      <= lbuf[rd_idx];
+    rd_valid  <= rd_v;
 end
 
 // ★ 写端口必须**独立、无复位**：把数组写放在带异步复位的 FSM always 块里，
 //   Vivado 会报 "Unable to infer a block/distributed RAM ... memory pattern not supported"。
-wire       wr_en = (st == S_RDATA) && m_rvalid;   // 组合使能：与 m_rdata 同拍
+wire       wr_en = m_rvalid && m_rready && !flush_pending;   // 组合使能：与 m_rdata 同拍
 always @(posedge pclk) begin
     if (wr_en) lbuf[wr_idx] <= m_rdata;
 end
@@ -157,7 +190,7 @@ wire line_ready = ready[dbuf];
 //   1280 宽的屏上就是一条竖线；`tb_hdmi_scanout_sys` 每行抓到恰好 1 个错像素
 //   （col=1279）才发现。消隐期输出什么无所谓：video_driver 那边
 //   `video_rgb = video_de ? pixel_data : 0` 已经门控过。
-wire in_range   = cfg_en && (local_x < width_use) && line_ready;
+wire in_range   = cfg_en && rd_valid && line_ready;
 assign pixel_data = in_range ? rd_q[23:0] : 24'h000000;
 
 // ---------------------------------------------------------------------------
@@ -184,101 +217,95 @@ always @(posedge pclk or negedge reset_n) begin
 end
 
 // ---------------------------------------------------------------------------
-// 取数引擎（AXI4 读）
+// 取数引擎（AXI4 读）：请求游标与写入游标解耦，最多 MAX_OUT 个突发在飞
 // ---------------------------------------------------------------------------
-reg [2:0]  st;
-reg [7:0]  beats_left;
+wire [10:0] line_left = width_use - ar_ptr;
+wire [10:0] burst_now = (line_left > BURST[10:0]) ? BURST[10:0] : line_left;
+
+wire        ar_hs      = m_arvalid && m_arready;
+wire        r_hs       = m_rvalid  && m_rready;
+wire        r_last_hs  = r_hs && m_rlast;
+wire [3:0]  out_next   = outstanding + {3'b000, ar_hs} - {3'b000, r_last_hs};
+wire        may_issue  = !m_arvalid && !flush_pending && cfg_en && (cfg_width != 11'd0)
+                       && (ar_line < V_ACTIVE[10:0]) && can_fetch
+                       && (outstanding < MAX_OUT[3:0]);
 
 always @(posedge pclk or negedge reset_n) begin
     if (!reset_n) begin
-        st         <= S_IDLE;
-        m_araddr   <= 32'd0;
-        m_arlen    <= 8'd0;
-        m_arvalid  <= 1'b0;
-        m_rready   <= 1'b1;
-        fetch_line <= 11'd0;
-        fetch_ptr  <= 11'd0;
-        line_addr  <= 32'd0;
-        ready      <= 4'b0000;
-        beats_left <= 8'd0;
-        st_frames  <= 16'd0;
-        st_under   <= 16'd0;
-    end else if (vs_rise) begin
-        // 帧边界：锁存基址、行号归零、丢在飞的突发（半行写入的缓存不能再用）
-        st         <= (cfg_en && (cfg_width != 11'd0)) ? S_AR : S_IDLE;
-        m_arvalid  <= 1'b0;
-        m_rready   <= 1'b1;
-        fetch_line <= 11'd0;
-        fetch_ptr  <= 11'd0;
-        line_addr  <= cfg_addr;
-        ready      <= 4'b0000;
-        beats_left <= 8'd0;
-        st_frames  <= st_frames + 16'd1;
+        m_araddr     <= 32'd0;
+        m_arlen      <= 8'd0;
+        m_arvalid    <= 1'b0;
+        m_rready     <= 1'b1;
+        ar_line      <= 11'd0;
+        ar_ptr       <= 11'd0;
+        ar_line_addr <= 32'd0;
+        ar_len_q     <= 11'd0;
+        wr_line      <= 11'd0;
+        wr_ptr       <= 11'd0;
+        outstanding  <= 4'd0;
+        flush_pending<= 1'b0;
+        ready        <= 4'b0000;
+        st_frames    <= 16'd0;
+        st_under     <= 16'd0;
     end else begin
-        case (st)
-        S_IDLE: begin
-            if (cfg_en && (cfg_width != 11'd0)) begin
-                fetch_line <= 11'd0;
-                fetch_ptr  <= 11'd0;
-                line_addr  <= cfg_addr;
-                ready      <= 4'b0000;
-                st         <= S_AR;
+        // ---- 帧边界 ----
+        // 还在飞的突发属于上一帧，它们的行号已经没意义：等它们全部回完（期间数据丢弃、
+        // 不发新请求），再把两条游标一起归零。屏上这几行会是黑的，但只在「帧末还没追平」
+        // 时发生；追平之后每个 vs 都是零等待。
+        if (vs_rise) begin
+            st_frames    <= st_frames + 16'd1;
+            ar_line_addr <= cfg_addr;
+            if ((outstanding != 4'd0) || m_arvalid) begin
+                flush_pending <= 1'b1;
+            end else begin
+                ar_line <= 11'd0; ar_ptr <= 11'd0;
+                wr_line <= 11'd0; wr_ptr <= 11'd0;
+                ready   <= 4'b0000;
             end
         end
 
-        S_AR: begin
-            // 最多提前 3 行取（4 条缓存的上限）：这个提前量就是 DDR 抖动/握手间隙的余量。
-            // can_fetch 用有符号比较，取数落后时放行追、正好等于当前行时按住（见上方注释）
-            if ((fetch_line < V_ACTIVE[10:0]) && can_fetch) begin
-                // 开始取一行时先把该行的 ready 清掉：否则本行没取完时，
-                // 显示会拿到这一条缓存里**上一轮**的旧行数据（比黑屏更糟：错行）
-                if ((fetch_ptr == 11'd0) && (fetch_line != cur_line)) begin
-                    ready[fbuf] <= 1'b0;
-                end
-                m_araddr <= line_addr + {20'd0, fetch_ptr, 2'b00};
-                if (width_use - fetch_ptr > BURST[10:0]) begin
-                    m_arlen    <= BURST[7:0] - 8'd1;
-                    beats_left <= BURST[7:0];
-                end else begin
-                    m_arlen    <= (width_use - fetch_ptr) - 11'd1;
-                    beats_left <= width_use - fetch_ptr;
-                end
-                m_arvalid <= 1'b1;
-                st        <= S_ARW;
+        // ---- R 通道：推进写入游标（数据本身在上面那个无复位块里写进 BRAM）----
+        if (r_hs && !flush_pending) begin
+            if ((wr_ptr == 11'd0) && (wr_line != cur_line))
+                ready[wr_line[1:0]] <= 1'b0;      // 开始重写这一行：先摘掉就绪位
+            if (wr_ptr + 11'd1 >= width_use) begin
+                ready[wr_line[1:0]] <= 1'b1;
+                wr_line <= wr_line + 11'd1;
+                wr_ptr  <= 11'd0;
+            end else begin
+                wr_ptr <= wr_ptr + 11'd1;
             end
         end
 
-        S_ARW: begin
-            // ARVALID 保持到 ARREADY —— 提前撤会丢突发（AXI4 协议）
-            if (m_arready) begin
-                m_arvalid <= 1'b0;
-                st        <= S_RDATA;
+        // ---- AR 通道：握手后推进请求游标 ----
+        if (ar_hs) begin
+            if (ar_ptr + ar_len_q >= width_use) begin
+                ar_line      <= ar_line + 11'd1;
+                ar_ptr       <= 11'd0;
+                ar_line_addr <= ar_line_addr + {16'd0, cfg_stride};
+            end else begin
+                ar_ptr <= ar_ptr + ar_len_q;
             end
+            m_arvalid <= 1'b0;
         end
 
-        S_RDATA: begin
-            m_rready <= 1'b1;
-            if (m_rvalid) begin
-                fetch_ptr  <= fetch_ptr + 11'd1;
-                beats_left <= beats_left - 8'd1;
-                if (m_rlast || beats_left == 8'd1) begin
-                    // ★ rready 不在这里撤销：撤销而 R 通道还有最后一拍没握手完，
-                    //   主机等 ARREADY、从机等 RREADY —— 双向死锁（首版仿真就死在这）
-                    if (fetch_ptr + 11'd1 >= width_use) begin
-                        ready[fbuf] <= 1'b1;
-                        fetch_line  <= fetch_line + 11'd1;
-                        fetch_ptr   <= 11'd0;
-                        line_addr   <= line_addr + {16'd0, cfg_stride};
-                        st          <= S_AR;
-                    end else begin
-                        st <= S_AR;   // 同一行还要再来一拍
-                    end
-                end
-            end
+        // ---- 发起下一个突发（此时 ar_line/ar_ptr 都已稳定）----
+        if (may_issue) begin
+            m_araddr  <= ar_line_addr + {20'd0, ar_ptr, 2'b00};
+            m_arlen   <= burst_now[7:0] - 8'd1;
+            ar_len_q  <= burst_now;
+            m_arvalid <= 1'b1;
         end
 
-        default: st <= S_IDLE;
-        endcase
+        outstanding <= out_next;
+
+        // ---- flush 完成：游标归零，从第 0 行重新取 ----
+        if (flush_pending && (out_next == 4'd0) && !m_arvalid) begin
+            flush_pending <= 1'b0;
+            ar_line <= 11'd0; ar_ptr <= 11'd0;
+            wr_line <= 11'd0; wr_ptr <= 11'd0;
+            ready   <= 4'b0000;
+        end
     end
 end
 
@@ -291,7 +318,7 @@ always @(posedge pclk or negedge reset_n) begin
         under_seen <= 1'b0;
     end else if (vs_rise) begin
         under_seen <= 1'b0;
-    end else if (de && (local_x == 11'd0)) begin
+    end else if (de && (disp_x == 11'd0)) begin
         if (!line_ready && !under_seen) begin
             under_seen <= 1'b1;
             st_under   <= st_under + 16'd1;
@@ -319,7 +346,7 @@ always @(posedge pclk or negedge reset_n) begin
         st_dbg       <= {dbg_disp, behind_lines, under_lines};
         behind_lines <= 11'd0;
         under_lines  <= 11'd0;
-    end else if (de && (local_x == 11'd1)) begin
+    end else if (de && (disp_x == 11'd1)) begin
         dbg_disp <= cur_line[9:0];
         // 两个独立口径：行首没数据（欠载）／取数被显示甩在后面（冻结风险）
         if (!line_ready && (under_lines != 11'd2047))

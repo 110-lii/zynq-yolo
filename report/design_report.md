@@ -949,6 +949,10 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     把带框画面按 JPEG 逐帧回传，实测 `VIDEO_BACK_OK 250 19.61 5.1`（250 帧 / 19.61 MB / 5.1 fps）；
     缺的只是**PC → 板**的视频**输入**这一向。所以「视频经以太网」不是零，是半条：输出半条可用，
     输入半条未接主线。本项目的交付演示因此采用「板端跑本地片段 → 网口回传带框视频 → PC 看」。
+    **2026-10-31 夜上板复验**（含今天修的空中球）：c03 跑 `PIPELINE_OK frames=250 detections=17`，
+    落盘 20 行带球（帧 100–114、140–144）；回传 `VIDEO_BACK_OK 190 19.65 5.0`，
+    帧 105 屏上有球员绿框与球的红圈（`BALL` 位于 (739, 212)，与 JSONL 的 `ball` 字段一致），
+    证据图 `report/figures/video_back_c03_ball_20261031.png`。
 11. **队别已接入主线，但只做到主机侧自证（D012/D013）**：`tools/team_assign.py` 把
     `match-config/2` 的色板转成 `classify_players.classify()` 的 palette，并按 `track_id`
     累积投票（≥3 票且多数占比 ≥0.6 才给结论，否则 `unknown`），产出 `players[*].team` 与

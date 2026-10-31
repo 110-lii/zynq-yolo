@@ -174,9 +174,12 @@ HDMI 显示带框视频；PC 端显示球场画布与事件流。
   `fb_scanout`/`video_driver`、LCD 4bpp 读侧与调色板、AXI BRAM/GPIO。
 - 出片与实现报告：`build/reports/resource/*.rpt`、`build/reports/timing/*.rpt`、
   `build/reports/drc/*.rpt`；现行 `flow_system.bit` 与 `.hwh` 在 `board/overlay/`。
-- 上板实测：LCD `READBACK_OK bad=0 checked=10`；HDMI 静态六屏人眼通过
-  （`HDMI_VISUAL_OK`，2026-10-31 13:56）；HDMI 真视频环出 25 帧 `under=0`
-  （`HDMI_VIDEO_OK`，机器级）。
+- 上板实测：LCD `READBACK_OK bad=0 checked=10`（自证图、彩色状态面板、赛前 UI 已人眼确认）；
+  HDMI 真视频环出 25 帧 `under=0`（`HDMI_VIDEO_OK`，机器级）。
+  **HDMI 静态六屏曾记 `HDMI_VISUAL_OK`，现已撤回**：同片复测出现整行循环移位，定量为
+  恒定 `+313` 列，属间歇性缺陷（证据文件 `data/results/hdmi_visual_ok.json` 现为
+  `HDMI_VISUAL_RETRACTED`）。HDMI 通路的 `BRAM_OK` 成立、`VISUAL_OK` 不成立，
+  **不作为交付演示通道**。
 
 > 【待补电路/板卡照片：开发板与排线、HDMI/LCD 接线、按键操作】
 

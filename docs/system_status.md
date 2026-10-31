@@ -86,8 +86,8 @@ python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
 | PL 跟踪辅助（预处理+运动/白块掩码，单 IP） | `src/hls/track/src/track_preproc.cpp`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py` | **已出片** `board/overlay/track_preproc.bit`（4.05 MB；BD LUT 7,374 / FF 8,340 / DSP 13 / BRAM 3，WNS **+2.457 ns**）；**上板逐位对通过**（TRACK_PREPROC_BOARD_OK；720p 32.39 ms；管线内 20.03 ms） |
 | SD 卡增量存储 | `tools/result_store.py`（JSONL + summary + fsync/轮转） | `RESULT_STORE_SELFTEST OK` |
 | 板上结果推 PC | `tools/result_stream.py` | 本地回环测试 `RESULT_STREAM_OK sent=2` |
-| PC 端软件 | `tools/pc_dashboard.py`（TCP/回放 + 球场画布 + CSV） | `PC_DASHBOARD_SELFTEST OK`，本地端到端 3 帧通过 |
-| HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（1bpp BRAM 28,800×32，基址 0x40000000）；**BRAM_OK 通过**：`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`（扫描范围/DE/59.2 fps）；**VISUAL_OK 待人眼**（10-31 的 `HDMI_VISUAL_OK` 只覆盖 `flow_system.bit` 的视频通路，不含本 1bpp 状态面板）。读侧已在 019 重写为预取移位寄存器（原缺陷：把「地址到数据 1 拍」写死 + `pixel_data` 寄存器输出被组合选通） |
+| PC 端软件 | `tools/pc_dashboard.py`（TCP/回放 + 球场画布 + **比赛画面视图** + CSV） | `PC_DASHBOARD_SELFTEST OK`，本地端到端 3 帧通过；2026-10-31 增 `--video`：左栏直接显示真比赛画面 + 检测框 + 球（`space=px` 时按画面坐标画圈），与 LCD/HDMI 共用同一份 JSONL；无球场坐标时用框中心当画面坐标（修掉「视频 15 个框、顶栏人数 0」） |
+| HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（1bpp BRAM 28,800×32，基址 0x40000000）；**BRAM_OK 通过**：`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`（扫描范围/DE/59.2 fps）；**VISUAL_OK 待人眼**（10-31 曾记的 `HDMI_VISUAL_OK` 既只覆盖 `flow_system.bit` 的视频通路、不含本 1bpp 状态面板，**且已于当日 20:23 撤回**）。读侧已在 019 重写为预取移位寄存器（原缺陷：把「地址到数据 1 拍」写死 + `pixel_data` 寄存器输出被组合选通） |
 | LCD 状态面板（**10-29 整体重做**） | `src/rtl/io/lcd/lcd_probe_core.v`、`lcd_probe_top.v`、`build/scripts/bd_lcd_probe.tcl`、`tools/check_lcd4_board.py` | **已出片** `board/overlay/lcd_probe.bit`（10-29 23:11；800×480@33.333 MHz **4bpp/16 色**，48,000 图像字 + 16 调色板字 = 192 KB，AXI 段 256 K；480×272@9.000 MHz 核心供 A/B；cfg 切核心/图案/帧缓存；按键 `key[0]=L14/key[1]=K16` @ `0x41260000`；WNS **+1.839 ns** / WHS **+0.018 ns**）。**10-30 上板**：`READBACK_OK bad=0 checked=10`（重启前后各一次，PCLK 33.335 MHz）⇒ `BRAM_OK` 过；`tag4` 自证图**人眼确认**（斜向 16 色条纹）⇒ 该图 `VISUAL_OK` 过。判据例外：第 0/1 行只判 `lb`（RTL 的 `st/cnt` 在上一行装载拍更新，0 被排除、1 撞消隐行），脚本已写清。历史：016 把像素时钟从 25 改到 33.333 MHz；017 复测乱码；018/020 重写读侧；020 板端 480×272 基本正确但用户要求 800×480；021 从零重做 |
 | LCD 4bpp 赛前 UI（D013） | `tools/lcd_ui.py`、`tools/match_setup.py` | schema `zynq-yolo/match-config/2`，7 项（A/B 球衣、A/B 守门员、裁判、上半场方向、开始比赛）；确认时校验两队不同色；落盘 `board/ui_config.json`；主机侧回放 `LCD_UI_SAVED`；**真按键未按过** |
 | LCD 软件回退 | `tools/status_display.py`（fbdev/PNG） | `STATUS_DISPLAY_SELFTEST OK` |
@@ -242,8 +242,8 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   `SIM_PASS 12/12`，**但本机网口在部署前断了（以太网「媒体已断开连接」），这一版还没上过板** ——
   **13:50 上电后部署该片，13:56 人眼确认「全对」**（EDGES 左边缘纯白、右边缘纯红、
   绿方块居中；8 横带/8 竖带顺序与厚度正确、无黑横条、不跳；45 横 + 80 竖线一条不少；
-  运动方块无撕裂）⇒ **`HDMI_VISUAL_OK` 记录生效**，证据 `data/results/hdmi_visual_ok.json`
-  （绑定 sha256 `ad628200…104a`）。
+  运动方块无撕裂）⇒ 当时记 **`HDMI_VISUAL_OK`**，证据 `data/results/hdmi_visual_ok.json`
+  （绑定 sha256 `ad628200…104a`）。**该记录已于当日 20:23 撤回，见下条。**
 - **`--max-det` 不是人数**：它是「检测调用次数上限」（默认 8）。板上跑表要 `--max-det 0`。
 - **`HDMI_VISUAL_OK`（13:56）当时有效，但没有覆盖后来暴露的相位缺陷**：17:40 前后用户三次报
   「右侧画面跑到左边」，`build/hdmi_pixel_probe.py` 在旧片上读到 `px=(c+425) mod 1280`

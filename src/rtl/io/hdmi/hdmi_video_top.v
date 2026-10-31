@@ -28,9 +28,14 @@ module hdmi_video_top (
     input       [31:0]  cfg_pack,
     // 状态（AXI GPIO 输入通道）：{st_frames[15:0], st_under[15:0]}
     output      [31:0]  st_status,
-    // 诊断（AXI GPIO 输入通道 2）：上一整帧像素累加和（见下方「诊断 1」）
+    // 诊断（AXI GPIO 输入通道 2）：**`cfg_pack[31:29]==0` 时是上一整帧像素累加和**（老口径，
+    //   仿真 TB 用这一路）；`==7` 时是位置加权和 Σ(列号)×像素；其余值转发 fb_scanout 的 st_dbg。
+    //   为什么挤在这一个口上：`gpio_hdmi_dbg @ 0x41290000` 实测读不到（见下方 ★★），
+    //   而 0x41210008 这条读回路径是被实测验证过的。
     output      [31:0]  st_sum,
-    // 诊断（另一个 GPIO）：{under_lines, fetch_line, disp_line}，vs 沿锁存
+    // 诊断（另一个 GPIO）：{under_lines, fetch_line, disp_line}，vs 沿锁存。
+    //   ★ 2026-10-31 16:05 实测这个 GPIO 的地址 0x41290000 **由 gpio_hdmi_st 应答**，
+    //     所以本口目前读不到；诊断量请走 st_sum（见上）。
     output      [31:0]  st_dbg,
 
     // AXI4 读主机（接 S_AXI_HP0）
@@ -133,7 +138,47 @@ always @(posedge pclk or negedge reset_n) begin
         end
     end
 end
-assign st_sum = st_sum_r;
+// ★★ 2026-10-31 16:05 实测：诊断口 `gpio_hdmi_dbg @ 0x41290000` **读出来的是 gpio_hdmi_st**。
+//   证据（同一片 15:57 的 bit，板上三连测）：
+//     0x41290000 = 0x41210000 = {frames, under}（frames 每 0.4 s 刚好 +24 = 60 fps × 0.4 s）；
+//     0x41290008 = 0x41210008 = st_sum（换上 0x7F7F7F 的纯灰帧后两者同时变成 F0E9F000）；
+//     写 cfg_pack[31:29] = 5（选「帧首写入数据」）后 0x41290000 照旧是 frames —— 选哪一路都没用。
+//   而 BD 生成的 system.bd 里 `hdmi_video_0/st_dbg → gpio_hdmi_dbg/gpio_io_i` **是连对的**、
+//   地址表也对（hwh: 0x41290000 / 64K），所以坏在地址解码这一段（hdmi_smc 的 M01 没人应答，
+//   读到的是 M00 上 st 那一片），不是 RTL 连线。
+//   教训：**诊断量不能只挂在一条没被验证过的读回路径上** —— 这一条此前从未被读出过，
+//   之前几次「读 st_dbg 得到 719/0/0」的结论其实读的是 {frames, under}，是假的。
+//   兜底：sel = 000 时这个口仍出累加和（老口径逐位不变，仿真 TB 用的就是这一路）；
+//        sel ≠ 000 时改出 st_dbg 选中的那一路诊断。PS 侧：写 cfg_pack[31:29]=sel，再读 0x41210008。
+assign st_sum = (cfg_pack_q[31:29] == 3'd0) ? st_sum_r
+              : (cfg_pack_q[31:29] == 3'd7) ? st_pos_r
+              :                               st_dbg;
+
+// ---------------------------------------------------------------------------
+// 诊断 1b（sel=111）：**位置加权和** Σ (屏幕列号) × 像素，模 2^32
+//
+// 为什么还缺这一味：整帧累加和 Σpixel 对任何「改变像素顺序」的映射都是瞎的
+// （2026-10-31 三次踩到：屏上整幅转了 1024 列，累加和逐位相等）。把屏幕列号乘进去，
+// 「第 c 列显示的是源第几列」就变成一个**与顺序有关、却只需读一个数**的量：
+//   · 主机按 `Σ_c (c+1) × word[c]` 算期望，word[c] = 源帧第 c 列 → 一一对应时逐位相等；
+//   · 若整行循环移了 k 列（word[c] = 源[(c+1024) mod 1280]），期望值随 k 单调变化，
+//     主机把 1280 个 k 全算一遍就能**反解出 k**，不必再看屏。
+// 权重取 11 位屏幕列号（1 起算），与 `pixel_xpos` 同源，不受任何行内计数推断影响。
+// 乘加不在像素通路上（只挂一支旁路），74.25 MHz 下一拍乘是轻松的。
+// ---------------------------------------------------------------------------
+reg [31:0] px_pos;
+reg [31:0] st_pos_r;
+always @(posedge pclk or negedge reset_n) begin
+    if (!reset_n) begin
+        px_pos   <= 32'd0;
+        st_pos_r <= 32'd0;
+    end else if (video_vs & ~vs_d_sum) begin
+        px_pos   <= 32'd0;
+        st_pos_r <= px_pos;
+    end else if (video_de) begin
+        px_pos   <= px_pos + ({21'd0, pixel_xpos} * {8'd0, video_rgb});
+    end
+end
 
 // ---------------------------------------------------------------------------
 // 诊断 2：内置彩条（不碰 DDR）
@@ -195,7 +240,10 @@ fb_scanout #(
     .H_ACTIVE (1280),
     .V_ACTIVE (720),
     .LBUF     (2048),
-    .BURST    (255)
+    // ★ BURST 255 → 128：AXI4 规定 INCR 突发**不许跨 4 KB 边界**，而一行 5120 字节的行基址
+    //   加 4080 字节处的 1020 字节突发会跨 4096（每 4 行出现一次）。512 字节突发且行基址
+    //   5120 = 512×10 天然 512 对齐 ⇒ 永不跨界。
+    .BURST    (128)
 ) u_fb_scanout (
     .pclk       (pclk),
     .reset_n    (reset_n),
@@ -211,6 +259,7 @@ fb_scanout #(
     .st_frames  (st_frames),
     .st_under   (st_under),
     .st_dbg     (st_dbg),
+    .dbg_sel    (cfg_pack_q[31:29]),
     .m_araddr   (m_axi_araddr),
     .m_arlen    (m_axi_arlen),
     .m_arsize   (m_axi_arsize),

@@ -94,7 +94,7 @@ fb_scanout #(
     .pclk(clk), .reset_n(reset_n),
     .vs(video_vs), .de(data_req), .xpos(pixel_xpos), .ypos(pixel_ypos),
     .cfg_addr(cfg_addr), .cfg_stride(cfg_stride), .cfg_width(cfg_width), .cfg_en(cfg_en),
-    .pixel_data(pixel_data), .st_frames(st_frames), .st_under(st_under), .st_dbg(st_dbg),
+    .pixel_data(pixel_data), .st_frames(st_frames), .st_under(st_under), .st_dbg(st_dbg), .dbg_sel(3'd0),
     .m_araddr(m_araddr), .m_arlen(m_arlen), .m_arsize(m_arsize), .m_arburst(m_arburst),
     .m_arvalid(m_arvalid), .m_arready(m_arready),
     .m_rdata(m_rdata), .m_rvalid(m_rvalid), .m_rready(m_rready),

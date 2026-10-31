@@ -210,6 +210,9 @@ def main():
                     help="组合 overlay 的 bit 路径（如 track_display.bit）；空=track_preproc.bit")
     ap.add_argument("--motion-gate", action="store_true",
                     help="用 PL 运动掩码过滤无运动的新轨迹（去静态误检）")
+    ap.add_argument("--no-camera-gate", action="store_true",
+                    help="镜头判为 INVALID_VIEW 时**不清空本帧坐标**（只给展示/回传用）。"
+                         "默认清空是为了不输出无标定下的错坐标；出带框演示视频时要关掉")
     ap.add_argument("--store-dir", default="",
                     help="SD 卡增量存储目录（如 /mnt/sd/zynq-yolo）；空=不存")
     ap.add_argument("--store-prefix", default="run")
@@ -471,7 +474,7 @@ def main():
             if roi_miss > 25:
                 ball_roi = None
         t_ball += time.perf_counter() - _tb
-        if cam_state == "INVALID_VIEW":
+        if cam_state == "INVALID_VIEW" and not args.no_camera_gate:
             rows = []              # 镜头无效（特写/回放）：不输出坐标，避免错误数据
         keep_ids = {r[0] for r in rows}
         tracks = [t for t in tracks if t[0] in keep_ids]

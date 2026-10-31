@@ -671,6 +671,7 @@ pclk 在计数（`tick 132155348→138832280`）、HDMI 侧 `frames 564→1056�
 | 5 | “板端 TFLite / OpenCV DNN 可直接跑 YOLOv8” | 工程记录：TFLite runtime 崩溃、`cv2.dnn` 对 opset 11/12 报同一断言（完整日志未保留） | 改 ncnn |
 | 6 | “球候选多了，补轨迹就能提高确认率” | 两次 backfill 试验把 144 帧回退到极少帧、球权归零；根因是球路径每 2 帧一次，5 次丢失只覆盖 0.4 s（`ai/sessions/010`） | 已回滚稳定版，结构改动待做（不是已解决） |
 | 7 | “纯 CV 颜色/形状/帧差能替代球检测” | 三级过滤后确认的仍是场边静态白块；候选召回高但单帧判别不足 | 改为“候选 + 小 CNN + 轨迹” |
+| 8 | “`under=0`、帧号累加、cfg 读回一致 ⇒ 显示正常” | 10-31 三处叠加缺陷（HP0 地址段缺失、行推进条件永不成立、cfg 挂在错的总线域）：机器全绿而屏上一个颜色都不变（`ai/sessions/022` §7.16） | 判据改为「源行/源列各显示恰好一次」等可反解指标，先仿真 8/8 再上板 |
 
 > 第 6 条是**未完成项**，如实记录：当前稳定版是 144/202 帧；backfill 结构改动
 > （`--ball-every 1`、按秒计丢失窗口、预测位置绕过标定边界过滤）尚未落地。
@@ -898,10 +899,14 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
    - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4` 已由人眼确认**（斜向 16 色条纹）、
      **彩色状态面板已由人眼确认**（2026-10-30 修掉「overlay 刚装载时 `cfg=0` 显示的是 PL 彩条」之后）、
      **赛前 UI 由人在屏上按键逐项走通**（`LCD_UI_SELECT` → `LCD_UI_SAVED`）。
-     唯一**未过人眼的是 HDMI 画面**：机器判据全过（`frames` 60 帧/s、`under=0`、帧缓存地址与
-     `pack` 解出来全对）而屏上**纯白**，已定位为 PYNQ `allocate()` 出来的帧缓存是 `cacheable=True`、
-     CPU 写完没刷到 DRAM 就被 PL 从 `S_AXI_HP0` 读走，修复（`Buffer.flush()`）**未复验**
-     ⇒ HDMI 这一项**不宣称「画面通过」**。014 的 1bpp 棋盘格是重做前的历史，不算当前实现的证据。
+     唯一曾经未过人眼的是 HDMI 画面：2026-10-30 机器判据全过（`frames` 60 帧/s、`under=0`、帧缓存地址与
+     `pack` 解出来全对）而屏上**纯白**，后定位为「DDR 帧缓存 → `fb_scanout`」段的三处叠加缺陷
+     （HP0 地址段缺失、行推进判据永不成立、cfg 写错总线）。三处修复后 2026-10-31 13:56
+     用户对 13:37 片当场确认「全对」：EDGES / HBANDS / VBANDS / GRID / MOTION / MARKERS
+     六屏全部正确 ⇒ **`HDMI_VISUAL_OK`**（证据 `data/results/hdmi_visual_ok.json`，绑定 sha256
+     `ad628200…104a`）。**边界**：该证据覆盖「帧缓存 → `fb_scanout` → TMDS → 显示器」的静态画面，
+     不含 PS 侧实时叠框回放；实时环出目前只到机器级（`HDMI_VIDEO_OK` 25 帧 `under=0`），
+     不宣称「真人检测框已在屏上目视通过」。014 的 1bpp 棋盘格是重做前的历史，不算当前实现的证据。
    - `display_both.bit` / `track_display.bit` 是在重写之前修的，**比特流落后于当前 RTL**，
      需按新读侧重出片后再验。
    现场记录见 [`../board/logs/board_display_20261025.md`](../board/logs/board_display_20261025.md)
@@ -925,7 +930,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     ⚠️ **这不是准确率**：没有人工标注的队别真值，「两队各半」只说明链路通且没塌成单一类。
     板上未验证。离线跟踪器 `tools/track_players.py` **不输出每个人的队别**（只有颜色过滤），但已新增 `--calib`：给了标定才把脚点映射到球场米制（`points[].X/Y`，输入用补偿后的 `sx/sy`），映射函数 `apply_calib()` 有主机侧单元验证（3 点 → (0,0)/(105,68)/(52.5,34)）。
 
-12. **两个显示合成一个比特流了，机器判据上板通过、人眼还没过**：`flow_system.bit`（LCD 4bpp + 按键 + HDMI 32bpp）
+12. **两个显示合成一个比特流了：机器判据上板通过，HDMI 视频通路的人眼判据也已过**：`flow_system.bit`（LCD 4bpp + 按键 + HDMI 32bpp）
     2026-10-30 出片，`FLOW_SYSTEM_BD_OK`，WNS +3.042 ns / WHS +0.028 ns，0 失败端点，
     LUT 44.9 % / BRAM 61.4 %；生成的 `.hwh` 与设计地址表 11 个从设备逐条对拍一致。
     当天上板 `flow_overlay.py --selftest`：LCD `bad=0/16`、pclk 在计数、HDMI `frames 564→1056（+492）`
@@ -940,10 +945,16 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     证明 TMDS/时钟/引脚/显示器全好，故障在「DDR 帧缓存 → `fb_scanout`」段；
     而 `under=0` 本身不构成证据（读回全零时它照样是 0）。当前按 `build/fb_diag.py` 三段
     （刷新缓存 / 换基址 / MMIO 直写物理地址）逐段看屏定性，结论待补。
+    **2026-10-31 收尾（同片，`ai/sessions/022` §7.22）**：最终定位到三处叠加缺陷 ——
+    ① `bd_flow_system.tcl` 漏了 HP0 的 DDR 地址段（构建只报 `CRITICAL WARNING [BD 41-1356]`）；
+    ② `fb_scanout` 行推进用 `de && local_x==width-1`，而真实 `local_x` 最大 1277 ⇒ 每行都读第 0 条行缓存；
+    ③ `0x41200000` 的 cfg 写进了错误的总线域。三处修复后 13:37 新片（WNS 4.184 ns）于 13:56
+    由用户当场确认六屏「全对」⇒ **`HDMI_VISUAL_OK`**；随后在同一片固化 overlay 上跑真视频环出，
+    `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级）。**实时叠框回放的人工确认仍单列，不并进静态六屏证据。**
     另：分层测试集扩到 8+8 后，「争抢画面球更难检出」这条**被自己的数据推翻**
     （p=0.61），§2.11 已改为如实记录推翻过程，而不是留一个好看的旧数字。
 
-13. **板端分层跑表 15/16（n08 未跑），且「0.45 人/帧」已查明不是检测问题**：见 §2.12。
+13. **板端分层跑表 16/16 段有数，且「0.45 人/帧」已查明不是检测问题**：见 §2.12。
     模型每检测帧给 15.4（争抢）/ 20.4（普通）个框，过门限后 14.9 个跟踪目标/帧，
     与主机 17.4 同量级；**「0.45 人」是机位有效性判定在没给 `--calib` 时按设计清空坐标**
     （`n_det≥8 且 valid_frac<0.10 -> INVALID_VIEW/calibration_mismatch`）。
@@ -967,7 +978,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | D022 修复：BRAM 单端口 | `bd_hdmi_status.tcl`/`bd_lcd_status.tcl` 的 `SINGLE_PORT_BRAM=1` | ✅ 根因修复；后续 RTL 已改写读侧 |
 | D023/D024 合并显示 | `bd_display_both.tcl`、`bd_track_display.tcl` | ⚠️ 比特流落后于 018–021 的新读侧，需重出片 |
 | D025 扩展：PC 端上位机 | `tools/pc_dashboard.py`（状态条 + 球场 + 事件流 + 证据帧 + CSV） | ✅ 自检与界面 PNG 已人眼核对 |
-| D026 扩展：HDMI 带框环出 | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ 仿真 `TB_FB_SCANOUT_OK`；✅ 主机侧 OSD 出图；✅ **上板 `HDMI_VIDEO_BOARD_OK frames=313 under=0`**；⏳ 画面待人眼 |
+| D026 扩展：HDMI 带框环出 | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ 仿真 `TB_FB_SCANOUT_OK`；✅ 主机侧 OSD 出图；✅ **上板 `HDMI_VIDEO_BOARD_OK frames=313 under=0`**；✅ **静态六屏 `HDMI_VISUAL_OK`（2026-10-31 13:56 人眼）**；⚠️ 实时叠框回放只到机器级（`HDMI_VIDEO_OK` 25 帧 `under=0`） |
 | 整体流程（新增） | `tools/check_full_flow.py` | ✅ 主机侧 `FULL_FLOW_OK ok=6 skip=1 fail=0`；✅ **板上 `FULL_FLOW_OK ok=8 skip=0 fail=0`** |
 
 ---
@@ -978,9 +989,10 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 球链路 80 % 确认（16/20，PC 侧已知球评估）、144/202 帧球场坐标与 49 帧球权输出；
 扩展侧交付了 SD 增量存储、PC 上位机、PL 跟踪辅助（上板逐位对通过）与 HDMI 带框环出
 （仿真与主机侧出图通过）。
-显示部分按两级口径如实表述：**HDMI 状态面板 `BRAM_OK` 通过、`VISUAL_OK` 待人眼；
-LCD 4bpp 上板通过机器判据（`READBACK_OK bad=0`）且自证图经人眼确认；HDMI 带框环出上板
-`under=0`（机器级）—— 彩色面板、赛前 UI 与 HDMI 画面的 `VISUAL_OK` 仍待人眼**。
+显示部分按两级口径如实表述：**HDMI 状态面板 `BRAM_OK` 通过、1bpp 文字面板的 `VISUAL_OK` 仍待人眼；
+LCD 4bpp 上板通过机器判据（`READBACK_OK bad=0`），自证图、彩色状态面板与赛前 UI 已经人眼确认；
+HDMI 带框环出（`flow_system.bit`）的静态六屏 `HDMI_VISUAL_OK` 已过，实时叠框回放只到
+`HDMI_VIDEO_OK` 25 帧 `under=0`（机器级），不宣称画面已目视通过**。
 功能侧的已知未完成项同样写清楚：视频入口仍走本地文件（D015 未落地）、
 队别与球权未接入主线、倒地只到候选层（强层精度 3/4）、球的 backfill 结构改动未落地。
 我们没有把资源花在“PL 跑整网”

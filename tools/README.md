@@ -12,7 +12,7 @@
 ## 内容
 
 > ⚠️ 本节原写「`tools/` 为空目录、脚本一个都没创建」——**早已过时**（2026-10-20 更正）。
-> 现状：**118 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径，2026-10-25 复核）已落地。
+> 现状：**143 个自有 `.py`**（`tools/check_repo.py` 的 check f 实测口径，2026-10-31 复核）已落地。
 > 下表只列关键脚本；完整清单看目录。状态列**如实**标注，**不要假装已存在/已运行**。
 
 | 路径 | 说明 | 状态 |
@@ -22,6 +22,7 @@
 | `md_to_docx.py` | **报告渲染**：把 `report/design_report.md` 渲染为 `.docx`（标题/表格/图片/代码块） | ✅ 已创建 |
 | `make_report_figures.py` | **报告图**：系统框图、软件流水线、检测路线耗时对比（确定性输出到 `report/figures/`） | ✅ 已创建 |
 | `make_submission.py` | **提交包**：按 git 边界 + 运行必需件导出，生成 manifest/SHA256 并在导出目录跑 `check_repo.py` | ✅ 已创建（令牌 `SUBMISSION_PACK_OK`） |
+| `make_portal_assets.py` | **门户提交件**：docx→PDF（Word COM）、出包目录→RAR（WinRAR `Rar.exe`），并核对 50/200/300 MB 上限与 GitHub 未推送提交 | ✅ 已创建（令牌 `PORTAL_PDF_OK` / `PORTAL_RAR_OK` / `PORTAL_CHECK_OK`） |
 | `ball_visibility_sweep.py` | **球可见性扫描**（D010 范围收缩依据之一） | ✅ 已创建 |
 | `ball_cv.py` | **传统 CV 球定位可行性原型**：结论 `no_work`（人眼 2/10，判据假绿分析） | ✅ 已创建（结果 `data/results/ball_cv.json`） |
 | `ball_policy.py` | **球链路策略纯函数**：丢失窗口按秒换算、预测点越界放置；供 `board_pipeline.py` 与离线自检共用同一判据 | ✅ 已创建（`--ball-lost-sec` / `--ball-predict-past-boundary` 的默认值与原逻辑逐字段一致） |

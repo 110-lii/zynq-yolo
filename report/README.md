@@ -20,7 +20,7 @@
 | `technical_document.md` / `.docx` / `.pdf` | **赛事门户技术文档**（按官方模板的五部分结构：作品概述 / 系统组成 / 完成情况 / 总结 / 参考文献）；docx 由 `tools/md_to_docx.py` 生成，PDF 由 `tools/make_portal_assets.py --pdf` 生成 |
 | `submission_checklist.md` | 提交前逐项核对清单（工程包/技能包/报告/目录/权重 + 4 条命令） |
 | `llm_logs/` | **大模型协作记录（提交件成品）**：6 篇成稿 + 索引，逐条回指 `ai/sessions/` |
-| `figures/` | `system_arch.png`、`software_pipeline.png`、`optimization.png`、`status_panel_lcd.png`、`status_panel_hdmi.png`、`pc_pitch.png`；由 `tools/make_report_figures.py` 确定性生成 |
+| `figures/` | `system_arch.png`、`software_pipeline.png`、`optimization.png`、`status_panel_lcd.png`、`status_panel_hdmi.png`、`pc_pitch.png`（由 `tools/make_report_figures.py` 确定性生成）；`pc_dashboard_video_ball.png`、`lcd_panel_ball_20261031.png`、`hdmi_osd_boxes.png`（由板上 JSONL 实帧渲染，非合成） |
 
 ### `report/llm_logs/` 与 `ai/` 的分工（**勿混**）
 

@@ -31,8 +31,10 @@ HDMI 带框环出上显示。
 - **球员检测与跟踪**：逐检测帧输出球员框、跟踪 ID、置信度，用轻量 SORT 维持 ID，并用相位相关补偿机位平移。
 - **球场坐标映射**：人工标定 6 点后用 DLT 单应换算到米制；未标定或机位无效时明确不输出坐标。
 - **足球定位**：白块/圆度候选 → 3 层 C 分类器 → 轨迹确认；球通常只有 4–12 px。
+  候选同时扫**草场内**与**草场外（空中）**——球飞在广告牌上方时，只看草场内的掩膜会把它整块抹掉。
 - **事件判定**：按 FIFA「整球过线」口径判出界，另有进球与球权。
-- **存储与上位机**：板上 JSONL + summary + fsync 增量落盘；PC 端显示球场画布、事件流与 CSV。
+- **存储与上位机**：板上 JSONL + summary + fsync 增量落盘；PC 端显示**真比赛画面 + 检测框 + 球**、
+  球场画布、事件流与 CSV。
 - **显示**：LCD 800×480 4bpp 状态面板与赛前 UI；HDMI 1280×720 带框环出；两者可合并在同一片 `flow_system.bit`。
 
 ### 应用领域
@@ -186,11 +188,15 @@ HDMI 显示带框视频；PC 端显示球场画布与事件流。
 #### 3.2.3 软件成果
 
 - 板上管线、SD 存储、TCP 推流、PC Dashboard、状态面板、赛前 UI、HDMI 带框渲染全部可运行；
+- **PC 端可直接看真比赛**：`pc_dashboard.py --video` 左栏显示原始比赛画面与检测框、球，
+  与 LCD 面板、HDMI 环出共用**同一份** JSONL，三处显示不再各说各话；
 - 主机侧自检令牌：`FULL_FLOW_OK`（ok=6 skip=1 fail=0）、`RESULT_STORE_OK`、
   `PC_DASHBOARD_SELFTEST OK`、`STATUS_DISPLAY_SELFTEST OK`、`TEAM_ASSIGN_SELFTEST OK`；
-- 界面截图见 `report/figures/`（PC 球场、LCD 状态面板、HDMI 带框图、赛前 UI）。
+- 界面截图见 `report/figures/`（PC 球场、PC 比赛画面 + 球、LCD 状态面板与同帧面板、HDMI 带框图、赛前 UI）。
 
 ![PC 上位机球场画布](figures/pc_pitch.png)
+![PC 比赛画面 + 检测框 + 球（帧 106）](figures/pc_dashboard_video_ball.png)
+![LCD 800×480 面板，同一份 JSONL 同一帧](figures/lcd_panel_ball_20261031.png)
 ![LCD 状态面板](figures/status_panel_lcd.png)
 ![HDMI 带框环出（主机侧渲染）](figures/hdmi_osd_boxes.png)
 

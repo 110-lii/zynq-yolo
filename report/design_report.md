@@ -961,7 +961,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     ⚠️ **这不是准确率**：没有人工标注的队别真值，「两队各半」只说明链路通且没塌成单一类。
     板上未验证。离线跟踪器 `tools/track_players.py` **不输出每个人的队别**（只有颜色过滤），但已新增 `--calib`：给了标定才把脚点映射到球场米制（`points[].X/Y`，输入用补偿后的 `sx/sy`），映射函数 `apply_calib()` 有主机侧单元验证（3 点 → (0,0)/(105,68)/(52.5,34)）。
 
-12. **两个显示合成一个比特流了：机器判据上板通过，HDMI 视频通路的人眼判据也已过**：`flow_system.bit`（LCD 4bpp + 按键 + HDMI 32bpp）
+12. **两个显示合成一个比特流了：机器判据上板通过；LCD 侧人眼已过，HDMI 侧人眼判据不成立（已撤回）**：`flow_system.bit`（LCD 4bpp + 按键 + HDMI 32bpp）
     2026-10-30 出片，`FLOW_SYSTEM_BD_OK`，WNS +3.042 ns / WHS +0.028 ns，0 失败端点，
     LUT 44.9 % / BRAM 61.4 %；生成的 `.hwh` 与设计地址表 11 个从设备逐条对拍一致。
     当天上板 `flow_overlay.py --selftest`：LCD `bad=0/16`、pclk 在计数、HDMI `frames 564→1056（+492）`

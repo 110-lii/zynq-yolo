@@ -20,7 +20,7 @@
 | [`display_overlay_plan.md`](display_overlay_plan.md) | **HDMI/LCD 显示 overlay**：1bpp BRAM + TMDS/LCD 驱动、引脚/资源/出片门禁 | ✅ 均已出片；LCD 读回/人眼已过，HDMI 1bpp 状态面板待目视（现行方案见 `flow_overlay.md` / `hdmi_video_osd.md`） |
 | [`flow_overlay.md`](flow_overlay.md) | **全流程固化 overlay（2026-10-30）**：LCD 4bpp + 按键 + HDMI 32bpp 合成一片，地址表/资源/上板命令与两级判据 | ✅ 已出片并上板；LCD 侧人眼通过；**HDMI 静态六屏 `HDMI_VISUAL_OK` 已撤回**（间歇整行移位，见文内 20:23 记录） |
 | [`hdmi_video_osd.md`](hdmi_video_osd.md) | **HDMI 带框环出（D026）**：PS 画 32bpp → DDR → `fb_scanout` → TMDS 的数据通路、寄存器与验收记录 | ⚠️ `BRAM_OK` 通过；实时叠框回放机器级 `HDMI_VIDEO_OK`；**`VISUAL_OK` 不成立**（间歇整行移位，`+313` 列） |
-| [`demo_video_plan.md`](demo_video_plan.md) | **演示视频制作方案**：门户硬要求、实拍镜头清单、既有素材、分镜与 ffmpeg 命令 | ⏳ 待拍摄/剪辑 |
+| [`demo_video_plan.md`](demo_video_plan.md) | **演示视频制作方案**：门户硬要求、实拍镜头清单、既有素材、分镜与 ffmpeg 命令 | ⏳ 待拍摄/剪辑；**HDMI 镜头已删**（改用网口回传），逐镜头命令见 `report/demo_video_storyboard.md` |
 | [`amd_official_layout.md`](amd_official_layout.md) | **AMD 官方布局与版本控制建议查证记录**：UG949 受控源文件清单、AMD 5/6 种版本控制方法论、PYNQ 官方模板逐字要点、本仓库选 Foundational 派的理由与代价 | ✅ 已完成 |
 | [`yolo_on_zynq7020_survey.md`](yolo_on_zynq7020_survey.md) | **YOLO 在 XC7Z020 上的技术调研**：五条路线判定（含「Vitis AI DPU 在 7000 系不存在」的一手核查）、同芯片实测锚点（ARC2020，1.88 fps）、开源实现清单、推荐路线 D 与验证阶梯；**§9 是引用本文数字前必读的未验证项清单** | ✅ 已完成 |
 | [`accel_interface.md`](accel_interface.md) | **`conv_engine` 加速器接口契约**：AXIS 流格式、`tuser`/`tlast` 语义、int8 量化口径、单层吞吐与资源实测、§9 逐字节一致性用例 | ✅ 数值已冻结，待用户确认（D006） |

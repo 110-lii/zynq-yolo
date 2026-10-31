@@ -7,9 +7,9 @@
 
 | # | 上传项 | 门户要求 | 当前产物 | 状态 |
 |---|---|---|---|---|
-| 1 | 演示视频 | MP4 / AVC(H.264) / ≤3 min / ≤300 MB | **尚无**；分镜脚本已出（`report/demo_video_storyboard.md`） | ⛔ **待拍摄/剪辑**（需板子与屏的实拍，脚本可照拍） |
+| 1 | 演示视频 | MP4 / AVC(H.264) / ≤3 min / ≤300 MB | **尚无**；分镜脚本已出并**逐条上板验证过命令**（`report/demo_video_storyboard.md`），含 `VIDEO_BACK_OK 190 19.65 5.0` 与带球截图 | ⛔ **待拍摄/剪辑**（只能人工拍；脚本可直接照拍） |
 | 2 | 技术文档 | PDF / ≤50 MB | `report/technical_document.docx` + `.pdf`（0.9 MB，2026-10-31 22:1x 按修订后正文重生成） | ⚠️ **正文已复核并改掉已撤回的 `HDMI_VISUAL_OK`**；实物照片仍待补（文中 `【待补…】` 标记） |
-| 3 | 全部代码 | RAR / ≤200 MB | `dist/zynq-yolo_submission_20261031_2211.rar`（23.2 MB）+ 同名 `.zip`（28.8 MB） | ✅ **已出包**（`SUBMISSION_PACK_OK`，678 文件） |
+| 3 | 全部代码 | RAR / ≤200 MB | `dist/zynq-yolo_submission_<日期_时分>.rar`（约 26 MB）+ 同名 `.zip`（约 32 MB），只留当天最新一份 | ✅ **已出包**（`SUBMISSION_PACK_OK`，682 文件；RAR `PORTAL_RAR_OK`） |
 | 4 | 承诺及使用授权书 | PDF / ≤50 MB | 官方空白模板已给（`D:\xiazai\…pdf`） | ⛔ **需打印、全体签名、扫描上传**（只能人工） |
 | 5 | 作品海报（选填） | PDF / PPT / ≤50 MB | 尚无 | ⏳ 选填，可后补 |
 | 6 | GitHub 链接 | 仓库地址 | `https://github.com/110-lii/zynq-yolo.git` | ✅ **已 push**，`ahead_of_origin_main=0` |

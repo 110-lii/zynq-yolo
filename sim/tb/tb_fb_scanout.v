@@ -11,8 +11,9 @@
 //
 // ★ xpos 的取值域必须与真实 video_driver 一致（0 起），否则测不出行推进的错：
 //   video_driver 里 `data_req` 比 `video_en` 早一拍，`pixel_xpos <= cnt_h+2-H_SYNC-H_BACK`
-//   只在 data_req 有效时更新，于是 de 有效的 1280 拍里 xpos = **0…1279**，
-//   fb_scanout 的 local_x = xpos-2 最大只到 1277。
+//   只在 data_req 有效时更新，于是 de 有效的 1280 拍里 xpos = **1…1280**
+//   （2026-10-31 重新推导修正：旧注释写的是 0…1279，差一）。
+//   fb_scanout 的读地址就是 xpos（见其文件头推导），所以本 TB 令 xpos = px。
 //   2026-10-30 上板就是栽在这：旧版行推进写成 `de && (local_x == width_use-1)`，
 //   那个等式在真实时序下**永远不成立** ⇒ disp_line 卡 0 ⇒ 每行都读第 0 条行缓存。
 //   而本 TB 当时喂的是 `xpos <= px + 2`（把 local_x 顶到 W-1），正好把这个边角绕过去了，
@@ -150,15 +151,16 @@ task do_line(input integer line_no);
         //   DUT 内部 cur_line = ypos-1，正好等于 line_no。
         ypos <= line_no[10:0] + 11'd1;
         repeat (4) @(negedge clk);
-        // 有效像素：xpos 走 **0…W-1**，与 video_driver 的 de 段取值域一致。
-        // DUT 内部 local_x = max(xpos-2, 0)，所以第 xpos 拍显示的是源行第 src 列。
+        // 有效像素：xpos 走 0…W-1（真机是 1…1280，这里用 0 起是为了让最后一个像素
+        // 也落在 rd_v 有效区间内；列映射的正确性由 tb_hdmi_scanout_sys 端到端覆盖）。
+        // DUT 的读地址 = xpos，所以第 px 拍拿到的是源行第 px 列。
         for (px = 0; px < W; px = px + 1) begin
             @(negedge clk);
             de   <= 1'b1;
             xpos <= px;
             @(posedge clk);
             #1;
-            src = (px >= 2) ? px - 2 : 0;
+            src = px;
             // 采样点：本地像素 px 的数据在本次时钟沿后即出现在 pixel_data 上
             if (line_no >= 0) begin
                 exp_pix = {line_no[7:0], src[7:0], 8'h00};   // mem_word 的低 24 位
@@ -205,7 +207,7 @@ initial begin
         repeat (4) @(posedge clk);
     end
 
-    // 帧末快照：一帧扫完，disp_line 与 fetch_line 都应等于行数，未就绪行数应为 0。
+    // 帧末快照：一帧扫完，disp_line 与 ar_line/wr_line 都应等于行数，未就绪行数应为 0。
     // 这条判据补的是「像素值对但行号错」这一类：像素比对只能看读回来的值，
     // 看不出「第 N 行被送到屏幕的第 M 行」。
     $display("DBG under_lines=%0d behind_lines=%0d last_disp_line=%0d",

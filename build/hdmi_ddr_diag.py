@@ -72,7 +72,7 @@ def expect(words, cols=None):
     return int(w.sum() & np.uint64(0xFFFFFFFF))
 
 # 列映射：xpos 0/1/2 都落到第 0 列，最右两列不显示 —— 两种口径都算，任一命中即 MATCH
-COLS_DEDUP = [0, 0, 0] + list(range(1, W - 2))
+COLS_DEDUP = list(range(W))
 def expect_both(words):
     return expect(words, COLS_DEDUP), expect(words, None)
 

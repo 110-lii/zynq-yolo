@@ -150,6 +150,22 @@ CASES = [
         "TB_HDMI_SCANOUT_SYS_OK",
         "tb_hdmi_scanout_sys",
     ),
+    (
+        # 顶层：真的 hdmi_video_top（cfg 两拍同步 / cfg_test 彩条切换 / st_status /
+        # st_sum / st_dbg 三个诊断量的拼法）。上面那个 TB 例化的是两个子模块，
+        # 而板上跑的恰好是这一层 —— 2026-10-31 的第三处缺陷（st_sum 累加拍错位）
+        # 就出在这里，当时只能靠手算发现。
+        # TB 自带同名 dvi_transmitter_top 空壳（OSERDESE2 无仿真模型），故不编译 dvi 源。
+        "hdmi_video_top",
+        "sim/tb/tb_hdmi_video_top.v",
+        [
+            "src/rtl/io/hdmi/video_driver.v",
+            "src/rtl/io/hdmi/fb_scanout.v",
+            "src/rtl/io/hdmi/hdmi_video_top.v",
+        ],
+        "TB_HDMI_VIDEO_TOP_OK",
+        "tb_hdmi_video_top",
+    ),
 ]
 
 

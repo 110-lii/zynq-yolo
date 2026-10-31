@@ -62,7 +62,7 @@ def dbg():
     return dict(under=v & 0x7FF, behind=(v >> 11) & 0x7FF, last_disp=(v >> 22) & 0x3FF)
 
 # 累加口径 = 屏幕口径：显示列 0/1/2 都取源列 0，源列 1278/1279 不显示
-COLS = [0, 0, 0] + list(range(1, W - 2))
+COLS = list(range(W))
 def expect(words):
     w = np.asarray(words, dtype=np.uint64) & np.uint64(0xFFFFFF)
     return int(w[:, COLS].sum() & np.uint64(0xFFFFFFFF))
@@ -135,7 +135,7 @@ phys = [int(b.physical_address) for b in out.bufs]
 print('DIAG_CFG_ADDR addr=%08X bufs=%s match=%s' %
       (addr_now, ' '.join('%08X' % a for a in phys), addr_now in phys), flush=True)
 
-# 列同理：像素值 = 列号。屏幕口径每行应贡献 0+0+0+1+…+1277 = 816,003。
+# 列同理：像素值 = 列号。屏幕列 C ↔ 源列 C，每行应贡献 0+1+…+1279 = 818,560。
 colimg = np.zeros((H, W, 3), np.uint8)
 cc = np.arange(W, dtype=np.uint32)
 colimg[:, :, 0] = (cc & 0xFF).astype(np.uint8)[None, :]
@@ -144,7 +144,7 @@ out.show(colimg)
 time.sleep(0.45)
 fr, un, got = rd()
 per_row = got / float(H)
-print('DIAG_COLCODE sum=%08X per_row=%.0f  expected=816003（屏幕口径）/814726（旧累加口径）' %
+print('DIAG_COLCODE sum=%08X per_row=%.0f  expected=818560（每列显示 1 次）' %
       (got, per_row), flush=True)
 
 # ---------------- 0b. 单行/单列：直接量「某个源行被显示了几次」 ----------------
@@ -163,22 +163,30 @@ WORD = 0xFFFFFF
 INV_WORD = pow(WORD, -1, 1 << 32)
 
 
-def solve_count(sumv, per_pixel):
-    """sum = count × per_pixel × WORD mod 2^32 ⇒ 反解 count；除不尽返回负数。"""
-    x = (sumv * INV_WORD) & 0xFFFFFFFF
-    if x % per_pixel:
-        return -1
-    return x // per_pixel
+def white_pixels(sumv):
+    """sum = 白像素数 × WORD（模 2^32）；WORD 与 2^32 互素 ⇒ 精确反解。"""
+    return (sumv * INV_WORD) & 0xFFFFFFFF
 
 
-def ptr_verdict(tag, r, sumv, count, expect_note):
-    ok = (count == 1)
-    print('DIAG_%s r=%-4d sum=%08X count=%d  %s  %s'
-          % (tag, r, sumv, count, '见 1 次 ✓' if ok else '与 1 不符', expect_note), flush=True)
-    return ok
+def ptr_line(tag, label, n, sumv, per_row, want):
+    """per_row：一行/一列全白时贡献的白像素数（行探针 1280，列探针 720）。
+
+    打印**原始白像素数**而不只是整除后的次数：如果某些行只显示了一部分
+    （欠载/末列黑），白像素数就不是 per_row 的整数倍，余数正是缺了多少。
+    10-30 的 VRAMP 数 `0x3ACB0000` 用任何「每行整行显示某一行」的模型都推不出来
+    （要求 1280·S ≡ 15051 mod 65536，左边恒被 256 整除），正好说明当时屏上
+    **不一定每行都是整行**，所以这里必须把余数露出来，不能悄悄整除掉。
+    """
+    x = white_pixels(sumv)
+    cnt, rem = divmod(x, per_row)
+    ok = (cnt == want and rem == 0)
+    print('DIAG_%s %s=%-4d sum=%08X white=%-7d => %d 次(%d 像素/次) + 余 %d  want=%d %s'
+          % (tag, label, n, sumv, x, cnt, per_row, rem, want, '✓' if ok else '← 不符'),
+          flush=True)
+    return ok, cnt, rem
 
 
-print('DIAG_ROWPTR_BEGIN 每个源行应恰好被显示 1 次', flush=True)
+print('DIAG_ROWPTR_BEGIN 每个源行应恰好被显示 1 次（每次 = 整行 1280 个白像素）', flush=True)
 rows_bad = []
 for r in (0, 1, 2, 3, 360, 716, 717, 718, 719):
     img = np.zeros((H, W, 3), np.uint8)
@@ -186,19 +194,22 @@ for r in (0, 1, 2, 3, 360, 716, 717, 718, 719):
     out.show(img)
     time.sleep(0.45)
     fr, un, got = rd()
-    cnt = solve_count(got, W)
-    if not ptr_verdict('ROWPTR', r, got, cnt, ''):
-        rows_bad.append((r, cnt))
+    ok, cnt, rem = ptr_line('ROWPTR', 'r', r, got, W, 1)
+    if not ok:
+        rows_bad.append((r, cnt, rem))
 print('DIAG_ROWPTR_END bad=%d %s' % (len(rows_bad), rows_bad), flush=True)
 if not rows_bad:
     print('DIAG_ROWPTR_VERDICT 行映射逐行正确（每个源行显示且仅显示 1 次）', flush=True)
-elif rows_bad[0][1] == H:
+elif rows_bad[0][1] == H and rows_bad[0][2] == 0:
     print('DIAG_ROWPTR_VERDICT 行号卡死在第 %d 行（屏幕 720 行全是它）' % rows_bad[0][0], flush=True)
+elif any(b[2] for b in rows_bad):
+    print('DIAG_ROWPTR_VERDICT 有行只显示了半截（余数≠0）⇒ 欠载或末列黑，先看 under_lines',
+          flush=True)
 else:
     print('DIAG_ROWPTR_VERDICT 行映射有错，明细见上（次数 720=卡死，0=该行没显示，其它=重复/丢失）',
           flush=True)
 
-print('DIAG_COLPTR_BEGIN 列 0 应 3 次（屏幕列 0/1/2 都是它），1..1277 各 1 次，1278/1279 不显示',
+print('DIAG_COLPTR_BEGIN 每个源列都应恰好被显示 1 次（屏幕列 C ↔ 源列 C）',
       flush=True)
 cols_bad = []
 for c in (0, 1, 2, 3, 4, 1276, 1277, 1278, 1279):
@@ -207,12 +218,10 @@ for c in (0, 1, 2, 3, 4, 1276, 1277, 1278, 1279):
     out.show(img)
     time.sleep(0.45)
     fr, un, got = rd()
-    cnt = solve_count(got, H)
-    want = 3 if c == 0 else (1 if c <= W - 3 else 0)
-    print('DIAG_COLPTR c=%-4d sum=%08X count=%d want=%d %s' %
-          (c, got, cnt, want, '✓' if cnt == want else '与期望不符'), flush=True)
-    if cnt != want:
-        cols_bad.append((c, cnt, want))
+    want = 1
+    ok, cnt, rem = ptr_line('COLPTR', 'c', c, got, H, want)
+    if not ok:
+        cols_bad.append((c, cnt, rem, want))
 print('DIAG_COLPTR_END bad=%d %s' % (len(cols_bad), cols_bad), flush=True)
 if not cols_bad:
     print('DIAG_COLPTR_VERDICT 列映射正确', flush=True)
@@ -220,7 +229,7 @@ if not cols_bad:
 # ---------------- 1. 两个「已知会说话」的图案 ----------------
 img = np.zeros((H, W, 3), np.uint8)
 img[0:128, 0:128] = (255, 255, 255)
-report('BLOCK', img, '正确显示时白像素应恰好 128*(128+2)=16640')
+report('BLOCK', img, '正确显示时白像素应恰好 128*128=16384')
 
 img = np.zeros((H, W, 3), np.uint8)
 yy = np.arange(H, dtype=np.uint32) & 0xFF

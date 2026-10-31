@@ -33,7 +33,7 @@ localparam integer W      = 1280;
 localparam integer H      = 720;
 localparam integer STRIDE = 5120;          // = W*4，与主机 pack_frame 一致
 localparam integer LBUF   = 2048;
-localparam integer BURST  = 64;
+localparam integer BURST = 255;    // 与 hdmi_video_top 的实际参数一致
 integer lat_cfg = 8;                       // AR → 首拍 R（可 +LAT=n 覆盖）
 integer gap_cfg = 4;                       // 突发间空档（可 +GAP=n 覆盖）
 localparam [31:0]  BASE   = 32'h1F00_0000;
@@ -139,9 +139,8 @@ function [31:0] mem_word(input [31:0] byte_addr);
 endfunction
 
 // 主机算式（与 tools/hdmi_video.py + build/hdmi_ddr_diag.py 的 COLS_DEDUP 口径一致，模 2^32）
-//   DUT 累加发生在 data_req 拍上，此时 xpos = 0..1279、local_x = 0,0,0,1,...,1277：
-//   第 0 列被采 3 次，第 1278/1279 列永远采不到 —— 主机必须用同一个列映射算期望值，
-//   否则两边差的不是「读错了」而是「压根不是同一批像素」。上板 DIAG 里那 0.8% 就是这么来的。
+//   屏幕列 C ↔ 源列 C 一一对应（读地址 = xpos 的直接推论）：
+//   第 0 列到第 1279 列各被采 1 次，不多不少。
 function [31:0] host_sum(input integer pat);
     integer r, c;
     reg [31:0] acc, w;
@@ -157,60 +156,98 @@ function [31:0] host_sum(input integer pat);
                     w = (c == pcol) ? 32'h00FFFFFF : 32'd0;
                 else
                     w = {8'h00, r[9:0], c[10:0], 3'b000};
-                if (c == 0)      acc = acc + w + w + w;   // 显示列 0/1/2 都是源列 0
-                else if (c < W-2) acc = acc + w;          // 源列 1..1277
+                acc = acc + w;                            // 屏幕列 C ↔ 源列 C（一一对应）
             end
         end
         host_sum = acc;
     end
 endfunction
 
-localparam [1:0] SL_IDLE = 2'd0, SL_LAT = 2'd1, SL_DATA = 2'd2, SL_GAP = 2'd3;
+// ---------------- AXI 从机模型：**支持多突发在飞**（2026-10-31 改） ----------------
+// 旧模型每个突发都要「等它的数据全部发完，再接受下一个 AR」，于是主设备侧的取数提前量
+// 完全用不上 —— 那正是上板前仿真全绿、上板却黑横条的原因之一：模型把代价算错了。
+// 真机（DDR3 + HP0 + smartconnect）支持多个未完成读事务。这里改成 4 深 AR 队列：
+// AR 一到就排进队列，数据引擎连续发拍，突发之间只留 GAP；只有队列空时才吃一次 LAT。
+localparam integer QDEPTH = 4;
+reg [31:0] q_addr [0:QDEPTH-1];
+reg [8:0]  q_len  [0:QDEPTH-1];
+reg [2:0]  q_wr, q_rd, q_cnt;
+
+localparam [1:0] SL_IDLE = 2'd0, SL_LAT = 2'd1, SL_DATA = 2'd2;
+
 reg [1:0]  sl;
 reg [31:0] rd_addr;
 reg [8:0]  rd_left;
 reg [9:0]  cnt;
-reg        m_arready_r, m_rvalid_r, m_rlast_r;
-reg [31:0] m_rdata_r;
+reg        arready_r, rvalid_r, rlast_r;
+reg [31:0] rdata_r;
 
-assign m_arready = m_arready_r;
-assign m_rvalid  = m_rvalid_r;
-assign m_rdata   = m_rdata_r;
-assign m_rlast   = m_rlast_r;
+assign m_arready = arready_r;
+assign m_rvalid  = rvalid_r;
+assign m_rdata   = rdata_r;
+assign m_rlast   = rlast_r;
 
+// AR 队列
 always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
-        sl <= SL_IDLE; m_arready_r <= 1; m_rvalid_r <= 0; m_rlast_r <= 0;
-        m_rdata_r <= 0; rd_addr <= 0; rd_left <= 0; cnt <= 0;
+        q_wr <= 0; q_rd <= 0; q_cnt <= 0; arready_r <= 1'b1;
+    end else begin
+        if (m_arvalid && arready_r) begin
+            q_addr[q_wr] <= m_araddr;
+            q_len[q_wr]  <= {1'b0, m_arlen} + 9'd1;
+            q_wr   <= (q_wr + 3'd1) % QDEPTH;
+            q_cnt  <= q_cnt + 3'd1;
+        end
+        if (m_rlast && rvalid_r && m_rready) begin
+            q_rd  <= (q_rd + 3'd1) % QDEPTH;
+            q_cnt <= q_cnt - 3'd1;
+        end
+        arready_r <= ((q_cnt + (m_arvalid && arready_r ? 3'd1 : 3'd0)
+                       - (m_rlast && rvalid_r && m_rready ? 3'd1 : 3'd0)) < QDEPTH);
+    end
+end
+
+// 数据引擎：队列里有货就连续发。队列里**还有下一条**时只吃 2 拍间隙（相当于控制器预取），
+// 队列空了才吃满 LAT —— 这样「主设备提前把 AR 发出来」才在模型里真正省时间。
+localparam [1:0] SL_GAP = 2'd3;
+always @(posedge clk or negedge reset_n) begin
+    if (!reset_n) begin
+        sl <= SL_IDLE; rvalid_r <= 0; rlast_r <= 0; rdata_r <= 0;
+        rd_addr <= 0; rd_left <= 0; cnt <= 0;
     end else case (sl)
     SL_IDLE: begin
-        m_arready_r <= 1'b1;
-        if (m_arvalid && m_arready_r) begin
-            rd_addr <= m_araddr; rd_left <= {1'b0, m_arlen} + 9'd1;
-            m_arready_r <= 1'b0; cnt <= lat_cfg[9:0]; sl <= SL_LAT;
+        rvalid_r <= 1'b0; rlast_r <= 1'b0;
+        if (q_cnt != 0) begin
+            rd_addr <= q_addr[q_rd];
+            rd_left <= q_len[q_rd];
+            cnt <= (q_cnt > 3'd1) ? 10'd2 : lat_cfg[9:0];
+            sl <= SL_LAT;
         end
     end
     SL_LAT: begin
         if (cnt <= 10'd1) begin
-            m_rvalid_r <= 1'b1; m_rdata_r <= mem_word(rd_addr);
-            m_rlast_r <= (rd_left == 9'd1); sl <= SL_DATA;
+            rvalid_r <= 1'b1; rdata_r <= mem_word(rd_addr); sl <= SL_DATA;
         end else cnt <= cnt - 10'd1;
     end
     SL_DATA: begin
-        if (m_rvalid_r && m_rready) begin
-            if (rd_left == 9'd1) begin
-                m_rvalid_r <= 1'b0; m_rlast_r <= 1'b0;
-                cnt <= gap_cfg[9:0]; sl <= SL_GAP;
+        if (rvalid_r && m_rready) begin
+            if (rd_left <= 9'd1) begin
+                rvalid_r <= 1'b0; rlast_r <= 1'b1; rd_left <= 9'd0;
+                cnt <= (gap_cfg == 0) ? 10'd1 : gap_cfg[9:0];
+                sl <= SL_GAP;
+            end else if (rd_left == 9'd2) begin
+                rd_left <= 9'd1; rd_addr <= rd_addr + 32'd4;
+                rlast_r <= 1'b1; rdata_r <= mem_word(rd_addr + 32'd4);
             end else begin
                 rd_left <= rd_left - 9'd1; rd_addr <= rd_addr + 32'd4;
-                m_rdata_r <= mem_word(rd_addr + 32'd4);
-                m_rlast_r <= (rd_left == 9'd2);
+                rdata_r <= mem_word(rd_addr + 32'd4);
             end
         end
     end
     SL_GAP: begin
+        rlast_r <= 1'b0;
         if (cnt <= 10'd1) sl <= SL_IDLE;
-        else             cnt <= cnt - 10'd1;
+        else cnt <= cnt - 10'd1;
     end
     endcase
 end
@@ -225,10 +262,10 @@ always @(posedge clk) begin
         srow = u_vd.cnt_v - 25;                        // 屏幕行
         scol = u_vd.cnt_h - 260;                       // 屏幕列
         if ((srow >= 0) && (srow < H) && (scol >= 0) && (scol < W)) begin
-            ssrc = (scol < 2) ? 0 : (scol - 2);        // DUT 内部 local_x = xpos-2
+            ssrc = scol;                               // DUT 读地址 = xpos ⇒ 屏幕列 C 显示源列 C
             exp_pix = {srow[9:0], ssrc[10:0], 3'b000};
             if (pattern == PAT_BLOCK)
-                exp_pix = ((srow < 128) && (scol < 130)) ? 24'hFFFFFF : 24'h000000;
+                exp_pix = ((srow < 128) && (scol < 128)) ? 24'hFFFFFF : 24'h000000;
             else if (pattern == PAT_ROWPTR)
                 exp_pix = (srow == prow) ? 24'hFFFFFF : 24'h000000;
             else if (pattern == PAT_COLPTR)
@@ -282,8 +319,7 @@ initial begin
                   : (n * H) * 64'd16777215;    // 一列白 = 720 个白像素
             if (tmp64[31:0] == st_sum_r) cnt_rec = n;
         end
-        cnt_exp = (pattern == PAT_ROWPTR) ? 1
-                : ((pcol == 0) ? 3 : ((pcol < W-2) ? 1 : 0));
+        cnt_exp = 1;                       // 每个源行/源列都恰好被显示 1 次
         $display("PTR %s=%0d sum=%08X recovered_count=%0d expected=%0d %s",
                  (pattern == PAT_ROWPTR) ? "row" : "col",
                  (pattern == PAT_ROWPTR) ? prow : pcol,

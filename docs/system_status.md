@@ -241,10 +241,14 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   `ready[]` 只按 `line & 3` 索引，4 的整数倍的行滞后隐形；取数落后时还会去写正在显示的槽。
 - **19:24 新片（sha256 `1397ce6813f9…`，时序全收敛）**：每槽加 11 位行号标签 `ltag`、
   落后即刻 `skip_now` 对准当前显示行、`MAX_OUT 4→8`、`BURST 255→128`（不跨 4 KB）、
-  `QDEP 12→16`。上板 `hdmi_pixel_probe` **28/28 全 `OK`**（`px == c` 恒等映射，含 c=0/1279 与
-  r=0/719）。列方向**已由机器证明修好**；**行方向任何整帧标量都测不出**（possum 只含列号），
-  必须人眼看屏 —— 真视频环出 `HDMI_VIDEO_OK 559 25.0 under=0`（n03）/ `status under=0`（c03），
-  **等人眼结论，未记 `HDMI_VISUAL_OK`**。
+  `QDEP 12→16`。19:27 上板 `hdmi_pixel_probe` 读到 28/28 `OK`（`px == c`），用户 19:50 前后
+  也确认「现在可以了」；**但 20:23 同一片 bit 再测又变成 `px ≈ c + 437`，用户同步报
+  「又变成之前那样」** ⇒ 缺陷是**间歇的**：行号标签挡住了「显示错行」，没挡住「整行内容被
+  旋转 k 列」，k 随运行变化（425/399/437/440/441，也出现过 0），依赖取数与扫描的相位。
+  `HDMI_VISUAL_OK` **不成立**，证据文件已改为 `HDMI_VISUAL_RETRACTED`。
+  演示通道改用网口回传（`tools/video_back.py`）；HDMI 下一步要写「多笔在飞」的从机 TB 先复现
+  —— 现有四个 TB 的从机都是单笔在飞，相位类缺陷在那种模型里不存在，所以仿真一直是绿的。
+  行方向任何整帧标量都测不出（possum 只含列号），只能人眼看屏。
 - **带框视频回传（网口，用户授权的退路）**：`tools/video_back.py`；板端要 `--no-pl`、
   `--max-det 0`，无标定时加 `--no-camera-gate`（否则 `INVALID_VIEW` 会清空全部坐标），
   `--tracks` 必须给 **全流程 JSONL**（`build/flow/*.jsonl`），给 summary `.json` 会静默不出框。

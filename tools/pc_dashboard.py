@@ -148,15 +148,24 @@ def normalize(obj):
                 "id": p.get("track_id", p.get("id", -1)),
                 "x": _num(x), "y": _num(y),
                 "conf": _num(p.get("confidence", 0.0)),
+                "space": p.get("space", "field"),
             })
     elif isinstance(obj.get("tracks"), list):
+        # tracks = [id, x1, y1, x2, y2, score, (fx, fy)]。
+        # ★ 没有标定时 board_pipeline 只写到第 6 项（没有球场坐标）。以前这里要求
+        #   len >= 8，于是转播机位下的每一行都被丢掉：视频里明明画着 20 个框，
+        #   顶栏却写「人数 0」—— 这就是用户说的「面板和显示的不一致」。
+        #   有 (fx,fy) 才算球场坐标；没有就用框中心当**画面坐标**（space=px）。
         for t in obj["tracks"]:
-            if not isinstance(t, (list, tuple)) or len(t) < 8:
+            if not isinstance(t, (list, tuple)) or len(t) < 5:
                 continue
-            if t[6] is None or t[7] is None:
-                continue
-            players.append({"id": t[0], "x": _num(t[6]), "y": _num(t[7]),
-                            "conf": _num(t[5])})
+            if len(t) >= 8 and t[6] is not None and t[7] is not None:
+                x, y, space = _num(t[6]), _num(t[7]), "field"
+            else:
+                x, y, space = (_num(t[1]) + _num(t[3])) * 0.5, _num(t[4]), "px"
+            players.append({"id": t[0], "x": x, "y": y, "conf": _num(t[5]),
+                            "space": space,
+                            "box": (_num(t[1]), _num(t[2]), _num(t[3]), _num(t[4]))})
     st.players = players
     st.ball = obj.get("ball") or {}
     ev = obj.get("events")
@@ -565,6 +574,8 @@ def draw_pitch(st: FrameState, w=PITCH_W, h=PITCH_H, margin=30):
     ev = st.events or {}
     pid = ev.get("possession")
     for p in st.players[:25]:
+        if p.get("space", "field") != "field":       # 画面坐标的球员画不到顶视图上
+            continue
         if not (-5 <= p["x"] <= PITCH_X + 5 and -5 <= p["y"] <= PITCH_Y + 5):
             continue
         px, py = X(p["x"]), Y(p["y"])
@@ -644,8 +655,73 @@ def _draw_status_bar(img, tb, st, conn):
     _chip(img, tb, x, y, RIGHT_X1 - x, h, "机位", cam, _cam_color(cam))
 
 
-def _draw_pitch_panel(img, tb, st):
+class VideoSource:
+    """按帧号取画面（顺读；跳帧才 seek）。转播素材没有球场标定时，用画面代替俯视图。"""
+
+    def __init__(self, path):
+        import cv2 as _cv
+        self.cv = _cv
+        self.path = str(path)
+        self.cap = _cv.VideoCapture(self.path)
+        self.ok = self.cap.isOpened()
+        self.pos = -1
+
+    def get(self, idx):
+        if not self.ok or idx is None or idx < 0:
+            return None
+        if idx != self.pos + 1:
+            self.cap.set(self.cv.CAP_PROP_POS_FRAMES, int(idx))
+        ok, f = self.cap.read()
+        self.pos = int(idx) if ok else -1
+        return f if ok else None
+
+
+def _draw_video_panel(img, tb, st, video):
+    """比赛画面 + 检测框（像素坐标直接画在缩略图上）。"""
     import cv2
+    cv2.rectangle(img, (LEFT_X0, PANEL_Y0), (LEFT_X1, PANEL_Y1), COL_PANEL, -1)
+    tb.add((LEFT_X0 + 14, PANEL_Y0 + 14), "比赛画面 · 带框（转播机位，无需标定）",
+           14, COL_TEXT, "la", bold=True)
+    f = video.get(st.frame) if (st is not None and video is not None) else None
+    if f is None:
+        cv2.rectangle(img, (PITCH_OX, PITCH_OY), (PITCH_OX + PITCH_W, PITCH_OY + PITCH_H),
+                      (46, 54, 64), -1)
+        tb.add((PITCH_OX + PITCH_W // 2, PITCH_OY + PITCH_H // 2),
+               "等待画面…" if video is not None else "未给 --video", 18, COL_DIM, "mm")
+        return
+    h, w = f.shape[:2]
+    s = min(PITCH_W / float(w), PITCH_H / float(h))
+    nw, nh = max(1, int(w * s)), max(1, int(h * s))
+    small = cv2.resize(f, (nw, nh), interpolation=cv2.INTER_AREA)
+    for t in ((st.raw or {}).get("tracks") or []):
+        try:
+            tid, x1, y1, x2, y2 = (int(float(t[0])), float(t[1]), float(t[2]),
+                                   float(t[3]), float(t[4]))
+        except (IndexError, TypeError, ValueError):
+            continue
+        p1 = (int(x1 * s), int(y1 * s))
+        p2 = (int(x2 * s), int(y2 * s))
+        cv2.rectangle(small, p1, p2, (80, 240, 80), 2)
+        cv2.putText(small, "#%s" % tid, (p1[0], max(10, p1[1] - 3)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (80, 240, 80), 1)
+    b = (st.ball or {}) if st is not None else {}
+    if b.get("valid") and b.get("space", "field") in ("image", "px") and b.get("x") is not None:
+        bx, by = int(_num(b["x"]) * s), int(_num(b["y"]) * s)
+        cv2.circle(small, (bx, by), 12, (0, 0, 255), 2)
+        cv2.circle(small, (bx, by), 2, (0, 0, 255), -1)
+        cv2.putText(small, "BALL", (bx + 15, max(12, by - 6)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+    ox = PITCH_OX + (PITCH_W - nw) // 2
+    oy = PITCH_OY + (PITCH_H - nh) // 2
+    img[oy:oy + nh, ox:ox + nw] = small
+
+
+def _draw_pitch_panel(img, tb, st, video=None):
+    import cv2
+    if video is not None:
+        _draw_video_panel(img, tb, st, video)
+        _draw_pitch_footer(img, tb, st)
+        return
     cv2.rectangle(img, (LEFT_X0, PANEL_Y0), (LEFT_X1, PANEL_Y1), COL_PANEL, -1)
     tb.add((LEFT_X0 + 14, PANEL_Y0 + 14), "球场态势 · 105 × 68 m（顶视图）", 14, COL_TEXT,
            "la", bold=True)
@@ -658,6 +734,11 @@ def _draw_pitch_panel(img, tb, st):
         img[PITCH_OY:PITCH_OY + PITCH_H, PITCH_OX:PITCH_OX + PITCH_W] = \
             draw_pitch(st, PITCH_W, PITCH_H)
 
+    _draw_pitch_footer(img, tb, st)
+
+
+def _draw_pitch_footer(img, tb, st):
+    """球场/画面下方那一行：球权 · 球 · 出界/进球。两条视图共用。"""
     ev = (st.events or {}) if st is not None else {}
     b = (st.ball or {}) if st is not None else {}
     y = PITCH_OY + PITCH_H + 16
@@ -671,9 +752,14 @@ def _draw_pitch_panel(img, tb, st):
 
     bx, by = b.get("x"), b.get("y")
     if b.get("valid") and bx is not None:
-        btxt = "球：%.1f, %.1f m" % (_num(bx), _num(by))
+        if b.get("space", "field") in ("image", "px"):
+            btxt = "球：画面 (%d, %d) px" % (int(_num(bx)), int(_num(by)))
+        else:
+            btxt = "球：%.1f, %.1f m" % (_num(bx), _num(by))
     elif b:
         btxt = "球：不可见"
+    elif st is not None:
+        btxt = "球：无数据（本帧未扫球）"
     else:
         btxt = "球：无数据"
     tb.add((LEFT_X0 + 16 + text_width(poss, 13, True) + 28, y), btxt, 13, COL_DIM, "la")
@@ -753,14 +839,14 @@ def _draw_evidence(img, tb, st, base_dir):
 
 
 def render_dashboard(st=None, log=None, conn=CONN_IDLE, base_dir=None,
-                     csv_path="", source=""):
+                     csv_path="", source="", video=None):
     """把状态 + 事件 + 证据帧渲染成一张 BGR 位图（GUI 与 PNG 共用同一份逻辑）。"""
     import numpy as np
     img = np.full((CANVAS_H, CANVAS_W, 3), COL_BG, dtype=np.uint8)
     log = log or EventLog()
     tb = TextBatch()
     _draw_status_bar(img, tb, st, conn)
-    _draw_pitch_panel(img, tb, st)
+    _draw_pitch_panel(img, tb, st, video)
     _draw_footer(img, tb, log, csv_path, source)
     _draw_events(img, tb, log)
     _draw_evidence(img, tb, st, base_dir)
@@ -775,7 +861,7 @@ class Dashboard:
     这里，GUI 与 --headless / --dump-png 复用同一套逻辑与同一个渲染函数。
     """
 
-    def __init__(self, csv_path=None, base_dir=None, source=""):
+    def __init__(self, csv_path=None, base_dir=None, source="", video=None):
         self.state = None
         self.log = EventLog(MAX_EVENTS)
         self.conn = CONN_IDLE
@@ -783,6 +869,7 @@ class Dashboard:
         self.base_dir = Path(base_dir) if base_dir else None
         self.csv_path = str(csv_path) if csv_path else ""
         self.source = source
+        self.video = video
         self.writer = CsvWriter(csv_path) if csv_path else None
 
     def status(self, text):
@@ -807,7 +894,7 @@ class Dashboard:
 
     def render(self):
         return render_dashboard(self.state, self.log, self.conn, self.base_dir,
-                                self.csv_path, self.source)
+                                self.csv_path, self.source, self.video)
 
     def close(self):
         if self.writer:
@@ -965,6 +1052,12 @@ def _selftest():
          "tracks": [[7, 10, 10, 20, 40, 0.80, 60.0, 20.0],
                     [9, 12, 12, 24, 44, 0.72, 30.0, 18.0]],
          "ball": {}, "events": {}},
+        # 第 6 帧：转播机位没有标定 —— tracks 只有 6 项（像素框），球是画面坐标。
+        # 以前这种行整行被丢：视频上画着框、顶栏写「人数 0」。
+        {"type": "frame", "frame": 6, "timestamp": 2000, "camera_state": "-",
+         "tracks": [[12, 100, 200, 140, 320, 0.55]],
+         "ball": {"x": 824.0, "y": 184.0, "valid": True, "space": "image"},
+         "events": {}},
     ]
 
     # 1) 解析：players 与 tracks 两种格式都要认
@@ -974,6 +1067,10 @@ def _selftest():
     check(len(parsed[4].players) == 2 and parsed[4].players[0]["id"] == 7,
           "tracks 格式解析错误")
     check(parsed[4].camera_state == "INVALID_VIEW", "camera_state 解析错误")
+    # 无标定的短 tracks（6 项）也要出人：框中心当画面坐标
+    check(len(parsed[5].players) == 1 and parsed[5].players[0]["space"] == "px",
+          "短 tracks（无球场坐标）解析错误")
+    check(abs(parsed[5].players[0]["x"] - 120.0) < 1e-6, "短 tracks 框中心算错")
     check(parsed[2].evidence.endswith("evidence_f3.jpg"), "evidence 字段未取到")
     check(parsed[1].evidence == "", "无 evidence 时不该有值")
 
@@ -987,7 +1084,7 @@ def _selftest():
     check(dash.conn == CONN_REPLAY, "连接状态未更新（%s）" % dash.conn)
     check(kinds.count("out") == 1, "出界事件应恰好 1 条，实际 %s" % kinds)
     check(kinds.count("poss") == 3, "球权变化应恰好 3 条（3→7→3），实际 %s" % kinds)
-    check(dash.frames == 5, "帧计数应为 5，实际 %d" % dash.frames)
+    check(dash.frames == 6, "帧计数应为 6，实际 %d" % dash.frames)
 
     # 3) 渲染：尺寸固定，中文与缩略图都不能崩
     img = dash.render()
@@ -1006,7 +1103,7 @@ def _selftest():
     with open(csv_path, "r", encoding="utf-8-sig") as f:
         rows = list(csv.reader(f))
     check(rows[0] == CsvWriter.FIELDS, "CSV 表头不符：%s" % rows[0])
-    check(len(rows) == 6, "CSV 应有 1 表头 + 5 行，实际 %d 行" % len(rows))
+    check(len(rows) == 7, "CSV 应有 1 表头 + 6 行，实际 %d 行" % len(rows))
     if len(rows) >= 5:
         check(rows[4][6] == "True" and rows[4][7] == "right", "CSV 出界列不对：%s" % rows[4])
 
@@ -1024,11 +1121,16 @@ def main():
     ap = argparse.ArgumentParser(description="Zynq-7020 足球分析上位机面板")
     ap.add_argument("--listen", default="", help="host:port，例如 0.0.0.0:5005")
     ap.add_argument("--replay", default="", help="JSONL 结果文件")
+    ap.add_argument("--video", default="", help="配一段比赛视频：左侧改画「带框画面」而不是球场俯视图"
+                    "（转播机位没有球场标定时用这个）")
     ap.add_argument("--csv", default="", help="把每帧写成 CSV（列固定）")
     ap.add_argument("--speed", type=float, default=1.0, help="回放倍速，0=不限速")
     ap.add_argument("--loop", action="store_true", help="回放循环")
     ap.add_argument("--headless", action="store_true", help="不打开 GUI，只打印摘要")
     ap.add_argument("--dump-png", default="", help="把（最后）一帧渲染成 PNG 后退出")
+    ap.add_argument("--dump-frame", type=int, default=-1,
+                    help="配合 --dump-png：回放到该帧号就停（-1=放到最后）。"
+                         "出「球刚到画面里」这类截图时用")
     ap.add_argument("--selftest", action="store_true", help="无显示器自检")
     args = ap.parse_args()
 
@@ -1044,13 +1146,17 @@ def main():
         rp = Path(args.replay)
         if not rp.is_file():
             ap.error("找不到回放文件：%s" % args.replay)
-        dash = Dashboard(csv_path=args.csv or None, base_dir=rp.parent, source=rp.name)
+        _vid = VideoSource(args.video) if args.video else None
+        dash = Dashboard(csv_path=args.csv or None, base_dir=rp.parent, source=rp.name,
+                         video=_vid)
         dash.status("REPLAY_START")
         n = 0
         try:
             for st in read_jsonl(rp):
                 dash.frame(st)
                 n += 1
+                if args.dump_frame >= 0 and st.frame >= args.dump_frame:
+                    break
                 if args.speed > 0:
                     time.sleep(1.0 / (10.0 * args.speed))
         finally:
@@ -1077,7 +1183,11 @@ def main():
                          args=(rp, q, stop, args.speed, args.loop), daemon=True).start()
         base_dir, source = rp.parent, rp.name
 
-    dash = Dashboard(csv_path=args.csv or None, base_dir=base_dir, source=source)
+    _vid = VideoSource(args.video) if args.video else None
+    if _vid is not None and not _vid.ok:
+        ap.error("打不开视频：%s" % args.video)
+    dash = Dashboard(csv_path=args.csv or None, base_dir=base_dir, source=source,
+                     video=_vid)
 
     # ---- 无窗口路径：--headless 摘要，或 --listen 收流后出 PNG
     if args.headless or args.dump_png:

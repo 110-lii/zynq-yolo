@@ -12,7 +12,7 @@ from ball_cv_probe import candidates
 
 
 class BallTrack:
-    __slots__ = ("tid", "x", "y", "vx", "vy", "hits", "miss", "age")
+    __slots__ = ("tid", "x", "y", "vx", "vy", "hits", "miss", "age", "score")
 
     def __init__(self, tid, x, y):
         self.tid = tid
@@ -21,6 +21,10 @@ class BallTrack:
         self.hits = 1
         self.miss = 0
         self.age = 1
+        #: 最近一次命中候选的**分类器得分**（候选没带就沿用上一次）。
+        #: 用来在「老的白球衣轨迹」和「刚锁上的空中球」之间选后者 ——
+        #: 只按 hits 选，永远选中误检那条。
+        self.score = 0.0
 
     def predict(self):
         return self.x + self.vx, self.y + self.vy
@@ -36,20 +40,33 @@ class BallTracker:
         self.next_id = 1
         self.tracks = []
 
-    def step(self, cands, dt=1.0):
+    def step(self, cands, dt=1.0, weak=None):
+        """weak：**只用来续跟**的低分候选（分类器没过阈值、但形状像球）。
+
+        ★ 2026-10-31 板上实测：球从草坪飞向看台时背景变暗，同一个球的分类器
+          得分从 0.97 掉到 0.15，于是轨迹在飞行中途断掉 —— 而肉眼全程看得见。
+          做法：轨迹**确认之后**（hits >= min_hits）允许用弱候选接续，门限收窄到
+          0.6×gate；弱候选**永远不能新建**轨迹，所以不会引入新的误检来源。
+        """
+        weak = list(weak or [])
+        pool = list(cands) + weak
+        n_strong = len(cands)
         used = set()
         for t in self.tracks:
             px, py = t.predict()
             best = None
-            for i, c in enumerate(cands):
+            for i, c in enumerate(pool):
                 if i in used:
                     continue
+                if i >= n_strong and t.hits < self.min_hits:
+                    continue                       # 弱候选只给已确认轨迹续命
+                gate = self.gate if i < n_strong else self.gate * 0.6
                 d = ((c["x"] - px) ** 2 + (c["y"] - py) ** 2) ** 0.5
-                if d < self.gate and (best is None or d < best[0]):
+                if d < gate and (best is None or d < best[0]):
                     best = (d, i)
             if best:
                 i = best[1]
-                c = cands[i]
+                c = pool[i]
                 nvx = (c["x"] - t.x) / max(1.0, dt)
                 nvy = (c["y"] - t.y) / max(1.0, dt)
                 speed_prev = (t.vx ** 2 + t.vy ** 2) ** 0.5
@@ -63,6 +80,10 @@ class BallTracker:
                     t.x, t.y = c["x"], c["y"]
                     t.hits += 1
                     t.miss = 0
+                    if "cls" in c:
+                        # 记**峰值**得分：弱候选续跟会把瞬时得分拉低，
+                        # 但「这条轨迹曾经有多像球」不该随之失效
+                        t.score = max(t.score, float(c["cls"]))
                     used.add(i)
                 else:
                     t.miss += 1

@@ -223,9 +223,15 @@ def main():
     ap.add_argument("--store-evidence-rate", type=int, default=6,
                     help="证据帧每分钟上限（默认 6，防刷屏；0=不限）")
     ap.add_argument("--ball-scan", action="store_true", help="用单帧滑窗找球（慢但召回高）")
+    ap.add_argument("--no-ball-air", action="store_true",
+                    help="不扫草场之外的空中球。默认扫：球离地时（射门/门球/解围）"
+                         "本来就在广告牌/看台上方的深色背景里，只在草场掩膜内找永远是 0")
     ap.add_argument("--ball-every", type=int, default=0, help="球路径独立节奏（0=跟随主检测）")
     ap.add_argument("--ball-cls-th", type=float, default=0.50,
                     help="球候选的 C 分类器阈值（默认 0.50；调高可压误检，代价是召回）")
+    ap.add_argument("--ball-cls-weak", type=float, default=0.12,
+                    help="**续跟**用的低分下限（默认 0.12，0=关闭）：已确认的轨迹可以用"
+                         "这一档的候选接续，球飞进暗背景时得分会从 0.9 掉到 0.15")
     ap.add_argument("--ball-lost-sec", type=float, default=None,
                     help="球丢失容忍窗口（秒，按视频帧换算）；默认 None=沿用 max_miss=4")
     ap.add_argument("--ball-predict-past-boundary", action="store_true",
@@ -431,6 +437,11 @@ def main():
         _do_ball = is_det if args.ball_every <= 0 else (idx % max(1, args.ball_every) == 0)
         _tb = time.perf_counter()
         bt = []
+        # ★ `bc` 必须每帧清零：以前它只在 _do_ball 时赋值，非扫球帧就把**上一帧的
+        #   候选**原样再喂给跟踪器 —— 等于同一批候选被重复计为命中，轨迹位置冻住
+        #   好几十帧（板上 JSONL 里 f105–f109 同一个坐标重复就是这么来的）。
+        bc = []
+        bc_weak = []
         if _do_ball and args.ball_scan and ball_clf is not None:
             bc = slide_ball(frame, ball_clf)          # 已自带分数与距离抑制
         elif _do_ball:
@@ -439,7 +450,8 @@ def main():
                 g1 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 g0 = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
                 bdiff = cv2.GaussianBlur(cv2.absdiff(g1, g0), (3, 3), 0)
-            bc = ball_cands(frame, bdiff, roi=ball_roi)   # 传帧差：静态白块（线/广告/鞋）在这里被挡掉
+            bc = ball_cands(frame, bdiff, roi=ball_roi,        # 传帧差：静态白块（线/广告/鞋）在这里被挡掉
+                            air_search=not args.no_ball_air)   # 草场外的小白块（空中球）
             if os.path.exists(BALL_CLS_BIN) and bc:
                 pat, sel = [], []
                 for j, c in enumerate(bc):
@@ -451,15 +463,25 @@ def main():
                     pat.append(patch)
                     sel.append(j)
                 sc = cls_scores(pat)
-                bc = [bc[j] for j, s in zip(sel, sc) if s >= args.ball_cls_th]
-        bt = ball_tr.step(bc, dt=(args.ball_every if args.ball_every > 0 else 1.0))
+                # 把得分留在候选上：跟踪器要按「谁更像球」在轨迹之间挑，而不是按 hits
+                _all = [dict(bc[j], cls=s) for j, s in zip(sel, sc)]
+                bc = [c for c in _all if c["cls"] >= args.ball_cls_th]
+                if args.ball_cls_weak > 0:
+                    # 低分档只用于给**已确认**的轨迹续跟（球飞进暗背景时得分会掉一个量级）
+                    bc_weak = [c for c in _all
+                               if args.ball_cls_weak <= c["cls"] < args.ball_cls_th]
+        bt = ball_tr.step(bc, dt=(args.ball_every if args.ball_every > 0 else 1.0),
+                          weak=bc_weak)
         if _do_ball:
             n_ball_scan += 1
             # 只有「这一帧真有候选喂进来」才算检出；miss>0 的是跟踪器外推
             if any(t.miss == 0 for t in bt):
                 n_ball_hit += 1
         if bt:
-            b = max(bt, key=lambda t: t.hits)
+            # ★ 2026-10-31：原来按 hits 选 —— 老的白球衣误检轨迹 hits 常年 20+，
+            #   刚锁上的空中球只有 2–3 次，永远选不中。改成先比**分类器得分**，
+            #   得分相同再比 hits（真实球 0.85–0.95，白球衣 0.5–0.68）。
+            b = max(bt, key=lambda t: (round(t.score, 2), t.hits))
             conf = round(min(1.0, b.hits / 5.0), 2)
             f_xy = None
             if H is not None:
@@ -468,6 +490,12 @@ def main():
                               allow_predict_past_boundary=args.ball_predict_past_boundary)
             if ball.get("predicted"):
                 n_ball_predicted += 1
+        elif _do_ball:
+            # ★ 没有确认轨迹时必须清空：以前 `ball` 保留上一次的值一直到片尾，
+            #   于是 250 帧里 150 帧都「有球」，坐标还是几分钟前的 ——
+            #   面板上「球：可见」因此在骗人。跟踪器自己会外推 miss<=max_miss 的几帧，
+            #   到这儿 bt 为空就是真的丢了。非扫球帧沿用上一次结果（最多 ball_every 帧旧）。
+            ball = None
         prev_frame = frame
         if not bt:
             roi_miss += 1
@@ -482,6 +510,13 @@ def main():
         fall_ids = (fall_candidates(rows, fall_hist)
                     if (args.store_evidence and store is not None) else [])
         rec = {"frame": idx, "detected": is_det, "tracks": rows}
+        # ★ 2026-10-31：球和机位以前只在 --proposal 的行里，于是 **落盘的 JSONL 没有球** ——
+        #   回放这段 JSONL（PC 面板 / HDMI 环出）时球永远显示「无数据」，
+        #   哪怕管线里已经检出。不加 --proposal 也必须带上。
+        if ball is not None:
+            rec["ball"] = ball
+        if cam_state:
+            rec["camera_state"] = cam_state
         if pl_ms is not None:
             rec["pl_ms"] = round(pl_ms, 2)
         if mask_small is not None:

@@ -131,9 +131,16 @@ def draw_frame(frame, st, calib=None):
         cv2.putText(img, "#%s" % p["id"], (x1, max(12, y1 - 4)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, COL_BOX, 1)
     if st["ball"]:
-        bx, by = _img_from_field(st["ball"]["x"], st["ball"]["y"], calib)
+        # 没有标定时 board_pipeline 给的是**画面坐标**（space=image），
+        # 以前一律当球场坐标投影 —— 球会被画到屏幕中间偏左上，跟真球没关系
+        if st["ball"].get("space", "field") in ("image", "px"):
+            bx, by = int(st["ball"]["x"]), int(st["ball"]["y"])
+        else:
+            bx, by = _img_from_field(st["ball"]["x"], st["ball"]["y"], calib)
         if bx >= 0:
-            cv2.circle(img, (bx, by), 10, COL_BALL, 2)
+            cv2.circle(img, (bx, by), 12, COL_BALL, 2)
+            cv2.putText(img, "BALL", (bx + 14, max(14, by - 8)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, COL_BALL, 1)
     ev = st["events"] or {}
     tags = []
     if ev.get("out_of_play"):

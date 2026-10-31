@@ -63,13 +63,21 @@ def _in_corner(x, y, w, h):
 
 
 def candidates(bgr, diff=None, reject_corners=True, min_area=12, max_area=1500, roi=None,
-               grass_fallback=False, grass_min_frac=0.08):
+               grass_fallback=False, grass_min_frac=0.08,
+               air_search=False, air_min_area=25, air_max_area=420, air_max_dim=28):
     """白球候选。
 
     grass_fallback：草场包围盒占画面不足 grass_min_frac 时，改为**全幅**找白块。
     这一条是为「球出界」场景加的：球越过边线后落在广告牌/看台背景上，
     原逻辑（只在草场包围盒内找）会直接返回空表 —— 而那正是最需要看见球的时刻。
     默认关闭，保持板上主线的行为不变。
+
+    air_search：再扫一遍**草场掩膜之外**的小白块（默认关闭）。
+    ★ 2026-10-31 查「球从来没找到」的直接原因：不是球看不见，是它飞在了草场外面。
+      c03 第 140–158 帧肉眼可见一个 10×10 px 的白块从 (769,182) 平滑下落到
+      (857,235) —— 正落在广告牌上方的深色背景里。`white & grass` 把它整块抹掉，
+      所以候选表一直是 0。空中球用更紧的形状门限（小、接近圆、不细长），
+      静态的广告字/看台细节交给帧差（diff）和跟踪器的 min_hits 挡。
     """
     ox = oy = 0
     if roi is not None:
@@ -86,7 +94,7 @@ def candidates(bgr, diff=None, reject_corners=True, min_area=12, max_area=1500, 
     hh, ww = bgr.shape[:2]
     full_frame = False
     if bw <= 0 or bh <= 0:
-        if not grass_fallback:
+        if not grass_fallback and not air_search:
             return []
         full_frame = True
     elif bw * bh < grass_min_frac * ww * hh:
@@ -125,7 +133,40 @@ def candidates(bgr, diff=None, reject_corners=True, min_area=12, max_area=1500, 
             continue
         out.append({"x": cx, "y": cy, "w": w, "h": h,
                     "area": round(a, 1), "circ": round(circ, 2)})
-    out.sort(key=lambda d: -d["area"])
+
+    if air_search:
+        if full_frame:
+            wair = white
+        else:
+            # 草场外的小白块：形状门限比场内更紧（球在空中时孤立、圆、直径 6–16 px）
+            wair = cv2.bitwise_and(white_mask(bgr),
+                                   cv2.bitwise_not(cv2.dilate(grass, np.ones((5, 5), np.uint8))))
+        acnts, _ = cv2.findContours(wair, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for c in acnts:
+            a = cv2.contourArea(c)
+            if a < air_min_area or a > air_max_area:
+                continue
+            x, y, w, h = cv2.boundingRect(c)
+            if w == 0 or h == 0 or w > air_max_dim or h > air_max_dim:
+                continue
+            ar = w / float(h)
+            if not (0.6 <= ar <= 1.7):
+                continue
+            per = cv2.arcLength(c, True)
+            circ = 4 * np.pi * a / (per * per) if per > 0 else 0
+            if circ < 0.55:
+                continue
+            if diff is not None:
+                patch = diff[max(0, y - 2):y + h + 2, max(0, x - 2):x + w + 2]
+                if patch.size == 0 or float(patch.mean()) < 4.0:
+                    continue   # 静止的白点：广告字/看台/鞋
+            cx, cy = x + w / 2 + ox, y + h / 2 + oy
+            if reject_corners and roi is None and _in_corner(cx, cy, bgr.shape[1], bgr.shape[0]):
+                continue
+            out.append({"x": cx, "y": cy, "w": w, "h": h,
+                        "area": round(a, 1), "circ": round(circ, 2), "src": "air"})
+
+    out.sort(key=lambda d: (-d["area"]))
     return out
 
 

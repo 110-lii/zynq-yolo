@@ -940,11 +940,15 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
    与 `ai/sessions/013`–`021`。
 9. **SD 路径依赖挂载**：`--store-dir` 默认示例 `/home/xilinx/zynq-yolo`；若 SD 卡挂载点不同，
    由启动脚本传入；存储失败会打印 `STORE_UNAVAILABLE` 并继续跑（不静默丢结果）。
-10. **视频入口仍是本地文件，不是网络流（D015 未落地）**：D015 已裁定「视频由 PC 经以太网送入」，
-    但主线的 `tools/board_pipeline.py` 只接受 `--video <板本地文件>`；
-    `tools/stream_sender.py` / `src/ps/host/board_net.py` 是早期 `conv_engine` 的流式 bring-up
-    （TCP + `ZYOL` 帧头），**没有接进主线**。走 PS GEM 还是 PL RGMII、协议与帧同步方式
-    在台账里仍为 `discussing`。这是本报告范围内**最大的一条未完成功能**。
+10. **视频入口：输入侧已实现、上板未验（D015）**：D015 已裁定「视频由 PC 经以太网送入」，
+    子项的选型由 **D027（2026-10-31）**落定：走 **PS 侧 GEM + TCP + JPEG 帧 + `ZYVI` 帧头**，
+    默认端口 5007。实现为 `tools/video_send.py`（PC 送）↔ `board_pipeline.py --listen`（板收），
+    接收端 `NetFrameSource` 与 `cv2.VideoCapture` 同接口，主线取帧逻辑一行未改。
+    **边界**：JPEG 有损，板上看到的像素与文件源不完全相同 —— 判据只能说「帧数/量级一致」，
+    不能说「逐位一致」。**验证状态**：主机回环 `VIDEO_SEND_SELFTEST OK`（6 帧，字节数正确）；
+    **上板等价性未验**（登记本条的当晚板子离线，100 % 丢包），因此本条**不宣称已上板跑通**。
+    `tools/stream_sender.py` / `src/ps/host/board_net.py` 仍是早期 `conv_engine` 的流式 bring-up
+    （TCP + `ZYOL` 帧头），未接主线、也不再是唯一路径。
     **方向要说清**：以太网上**板 → PC**这一向是通的、且已上板实测 —— `tools/video_back.py`
     把带框画面按 JPEG 逐帧回传，实测 `VIDEO_BACK_OK 250 19.61 5.1`（250 帧 / 19.61 MB / 5.1 fps）；
     缺的只是**PC → 板**的视频**输入**这一向。所以「视频经以太网」不是零，是半条：输出半条可用，

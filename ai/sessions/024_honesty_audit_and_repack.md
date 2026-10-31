@@ -136,6 +136,51 @@
 
 ---
 
+## 轮次 6 — D015 输入侧：PC 经以太网送视频进主线
+
+用户指令（逐字）：「**现在先git，然后去做第一条**」。「第一条」= 本会话盘点里
+功能缺口的第 1 条 = **PC → 板 的视频输入**。
+
+**先登记决策，再改代码**：D015 的状态是 `decided（原则）/ discussing（端口与协议）`，
+按本仓库硬规则（`discussing` 不得据以改动 `src/`、`build/`、`board/`），不能直接开写。
+所以先在 `ai/coordination/DECISIONS.md` 登记 **D027**，把选型一次定死：
+
+| 子项 | 定为 | 理由 |
+|---|---|---|
+| 走 GEM 还是 RGMII | **PS 侧 GEM** | PYNQ Linux 自带网络栈；不动 PL、不出新片 |
+| 协议 | **TCP** | 与已有的输出半条 `video_back.py` 同构，现场只维护一套认知 |
+| 帧格式 | **JPEG q80** | 720p 裸帧 2.7 MB → 100 Mbit 只够 4 fps；JPEG ~100 KB，25 fps 才 2.5 MB/s，板端解码 ~5 ms，相对 ncnn 980 ms 不是瓶颈 |
+| 同步 | **TCP 流顺序 + 长度前缀** | `magic b"ZYVI"` + `[u32 len][JPEG]`，`len=0` 结束；不做时间戳 |
+
+**D027 明写了代价**：JPEG 有损，板上像素与文件源不完全相同，判据只能说「帧数/量级一致」，
+**不能说「逐位一致」**。
+
+### 改动
+
+| 文件 | 内容 |
+|---|---|
+| `tools/board_pipeline.py` | 新增 `NetFrameSource`：`read()/get()/isOpened()/release()` 与 `cv2.VideoCapture` 同接口 ⇒ **主线取帧那段一行未改**；新增 `--listen/--net-fps/--net-timeout`；`--video` 改为非必填（与 `--listen` 二选一） |
+| `tools/video_send.py` | 新增。PC 端发送：`--video <文件>` 或 `--camera N`（演示「实时送」用摄像头）、`--fps` 上限、`--scale`、重试连接；判据 `VIDEO_SEND_OK` |
+| `tools/video_send.py --selftest` | 本机回环自检，**不需要板子**：起一个接收线程 + 发 6 帧可辨识图，校验帧数、形状、均值单调、字节计数 ⇒ `VIDEO_SEND_SELFTEST OK` |
+
+### 验证到哪一步（说实话）
+
+| 判据 | 结果 |
+|---|---|
+| 本机传输回环（20 帧真实片段） | `VIDEO_SEND_OK 20 1.39 13.97 200.8`，接收端 20/20 解码，1280×720 |
+| `VIDEO_SEND_SELFTEST` | `OK frames=6 bytes=9521` |
+| `check_repo.py` | `SUMMARY: 6 PASS / 0 FAIL / 0 WARN`（144 个 .py） |
+| **上板等价性** | ⛔ **未做** —— 推板时板子离线（ping 100 % 丢包、Jupyter 超时） |
+
+按 AGENTS.md「板子离线时不做任何硬件验证，也不要声称已验证」，**本条只记主机侧通过，
+不写上板通过**。板子回来后要补的判据（已写进 checklist §7 第 6 条）：
+
+> 同一段 `c03_t01290.0.mp4` 分别走 `--video`（文件）与 `--listen`（网络），
+> 两者的 `frames` 必须相等（250）；`detections` 应相等或相差 ±1（JPEG 有损）；
+> 落盘 JSONL 行数相等。
+
+---
+
 ## 未决 / 下一步
 
 1. **人眼终验**：LCD 面板、PC 面板本轮的图只有机器判据 + PNG，上板后要人眼看屏（AGENTS.md 第 5 条）。

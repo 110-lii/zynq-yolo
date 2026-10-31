@@ -138,10 +138,12 @@ python tools/make_portal_assets.py --check --video <demo.mp4> --auth <授权书.
      对整行旋转都是瞎的，不能拿来替代人眼。
      **1bpp HDMI 状态面板与实时叠框回放仍未人眼确认**，不宣称「画面通过」。
    - `display_both.bit` / `track_display.bit` 落后于新读侧，需重出片。
-6. **视频入口未落地（D015），但只有一半**：`board_pipeline.py` 仍只吃板本地 `--video`；
-   PC→板的网络**输入**端（`stream_sender.py` / `board_net.py`）是早期 bring-up，未接主线；
-   协议/端口在台账仍 `discussing`。**板→PC 的网络输出端已上板通过**
-   （`video_back.py`，`VIDEO_BACK_OK 250 19.61 5.1`），交付演示走这一向。
+6. **视频入口（D015）：两个方向都已实现，上板验证进度不同**
+   - **板 → PC（输出）**：`video_back.py`，**已上板通过**（`VIDEO_BACK_OK 200 21.56 4.9`、
+     `VIDEO_BACK_OK 190 19.65 5.0`，后者屏上有框有球），交付演示走这一向。
+   - **PC → 板（输入）**：`video_send.py` ↔ `board_pipeline.py --listen`（D027：PS GEM + TCP +
+     JPEG + `ZYVI`，端口 5007）。**主机回环 `VIDEO_SEND_SELFTEST OK`；上板等价性未验**
+     （实现当晚板子离线）。JPEG 有损，判据只能比「帧数/量级」，不能比「逐位」。
 7. **队别已接入主线、未验证**：`tools/team_assign.py` + `board_pipeline --ui-config` 输出
    `players[*].team` 与 `events.possession_team`（主机侧 `TEAM_ASSIGN_SELFTEST OK`）；
    **真实画面与板上未验**；离线 `track_players.py` 仍不输出队别（像素坐标、未接单应）。

@@ -104,9 +104,17 @@ WNS 4.184 ns，`SIM_PASS 12/12`。
 - MOTION：运动方块无撕裂；
 - MARKERS：三色块贴边、不外溢。
 
-⇒ **`HDMI_VISUAL_OK`**，证据 `data/results/hdmi_visual_ok.json`（绑定 bit 的
+⇒ 当时记为 **`HDMI_VISUAL_OK`**，证据 `data/results/hdmi_visual_ok.json`（绑定 bit 的
 sha256 `ad628200…104a`）。随后在同一片 overlay 上跑真视频环出：
 `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级）。
+
+> **⚠️ 追记（同日 20:23，本篇的第二个自我纠错）**：上面这个 `HDMI_VISUAL_OK` **已撤回**。
+> 同一片 bit 在 19:24 的新片上 19:27 探针 28/28 `OK`、19:50 前后用户确认「现在可以了」，
+> **20:23 再测又变成 `px ≈ c + 437`**，用户同步报「又变成之前那样」。今天是第三次测量，
+> 恒定 `+313` 列（21 源列 × 7 行一致，`sum=1`）。⇒ 这是**间歇性**缺陷，`k` 随运行相位变化
+> （425/399/437/440/441，也出现过 0）。本节其余三处缺陷（地址段、行推进、cfg 总线域）
+> 的修复仍然成立；**只有「六屏人眼 ⇒ 通路可用」这一步结论不成立**。
+> 证据文件已改为 `HDMI_VISUAL_RETRACTED`；演示通道改用 `tools/video_back.py`（网口回传）。
 
 ## 5. 沉淀成纪律
 
@@ -126,5 +134,5 @@ sha256 `ad628200…104a`）。随后在同一片 overlay 上跑真视频环出�
 | 行缓存行号 | `src/rtl/io/hdmi/fb_scanout.v` | `sim/scripts/run_sim.py`（`SIM_PASS 12/12`） |
 | 取数吞吐 | 同上 | 单行/单列探针 `CHECKED=1843200 ERRS=0` |
 | cfg 总线域 | `build/scripts/bd_flow_system.tcl` | 构建期地址断言 + cfg 读回 |
-| 静态六屏 | `tools/flow_overlay.py`、`data/results/hdmi_visual_ok.json` | `HDMI_VISUAL_OK` |
+| 静态六屏 | `tools/flow_overlay.py`、`data/results/hdmi_visual_ok.json` | ~~`HDMI_VISUAL_OK`~~ → **`HDMI_VISUAL_RETRACTED`**（间歇整行旋转） |
 | 真视频环出 | `tools/hdmi_video.py` | `HDMI_VIDEO_OK frames=25 under=0` |

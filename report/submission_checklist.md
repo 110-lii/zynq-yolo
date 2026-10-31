@@ -7,13 +7,13 @@
 
 | # | 上传项 | 门户要求 | 当前产物 | 状态 |
 |---|---|---|---|---|
-| 1 | 演示视频 | MP4 / AVC(H.264) / ≤3 min / ≤300 MB | **尚无**；参考样片已给（`D:\xiazai\…mp4`，102 s），只说明风格 | ⛔ **待拍摄/剪辑**（需板子与屏的实拍） |
-| 2 | 技术文档 | PDF / ≤50 MB | `report/technical_document.docx` + `.pdf`（11 页 / 0.9 MB） | ⚠️ **初稿已按官方模板生成**，实物照片待补、事实待 HDMI 会话收尾后复核 |
-| 3 | 全部代码 | RAR / ≤200 MB | `dist/` 出包（ZIP 约 23 MB）；RAR 工具已备（`tools/make_portal_assets.py --rar`） | ⚠️ **待最终出包后生成 RAR**（HDMI 修复尚未合入） |
-| 4 | 承诺及使用授权书 | PDF / ≤50 MB | 官方空白模板已给（`D:\xiazai\…pdf`） | ⛔ **需打印、全体签名、扫描上传** |
+| 1 | 演示视频 | MP4 / AVC(H.264) / ≤3 min / ≤300 MB | **尚无**；分镜脚本已出（`report/demo_video_storyboard.md`） | ⛔ **待拍摄/剪辑**（需板子与屏的实拍，脚本可照拍） |
+| 2 | 技术文档 | PDF / ≤50 MB | `report/technical_document.docx` + `.pdf`（0.9 MB，2026-10-31 22:1x 按修订后正文重生成） | ⚠️ **正文已复核并改掉已撤回的 `HDMI_VISUAL_OK`**；实物照片仍待补（文中 `【待补…】` 标记） |
+| 3 | 全部代码 | RAR / ≤200 MB | `dist/zynq-yolo_submission_20261031_2211.rar`（23.2 MB）+ 同名 `.zip`（28.8 MB） | ✅ **已出包**（`SUBMISSION_PACK_OK`，678 文件） |
+| 4 | 承诺及使用授权书 | PDF / ≤50 MB | 官方空白模板已给（`D:\xiazai\…pdf`） | ⛔ **需打印、全体签名、扫描上传**（只能人工） |
 | 5 | 作品海报（选填） | PDF / PPT / ≤50 MB | 尚无 | ⏳ 选填，可后补 |
-| 6 | GitHub 链接 | 仓库地址 | `https://github.com/110-lii/zynq-yolo.git` | ⛔ **本地领先 origin/main 56 个提交，提交前必须 push** |
-| 7 | 作品全貌图 | 系统全貌 | `report/figures/system_arch.png` 是框图，不是实物照 | ⛔ **待拍摄**（正面 + 斜 45°） |
+| 6 | GitHub 链接 | 仓库地址 | `https://github.com/110-lii/zynq-yolo.git` | ✅ **已 push**，`ahead_of_origin_main=0` |
+| 7 | 作品全貌图 | 系统全貌 | `report/figures/system_arch.png` 是框图，不是实物照 | ⛔ **待拍摄**（正面 + 斜 45°，只能人工） |
 
 > 门户红字：视频、技术文档**不得出现学校名称、指导教师姓名**等与作品无关的信息。
 > 仓库正文已核对无此类信息；视频与实物照片拍摄时同样注意。
@@ -29,7 +29,7 @@
 | 可复现构建脚本 | `build/scripts/bd_preproc.tcl`、`bd_conv_engine.tcl`、`bd_axi_bw.tcl`、`bd_mask_preproc.tcl` | ✅ |
 | 运行必需件（模型/标定） | `build/models/person_v8n25.{param,bin,table}`、`build/models/ball_roi.npz`、`data/calib/*.json` | ✅（`tools/make_submission.py` 显式带入） |
 | PL 跟踪辅助源码/BD | `src/hls/track/`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py`、`board/overlay/track_preproc.bit` | ✅ 已出片；✅ 上板逐位对通过（`TRACK_PREPROC_BOARD_OK`） |
-| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`docs/flow_overlay.md`、`docs/hdmi_video_osd.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/hdmi_video.py`、`board/overlay/*.bit` | 软件 ✅；HDMI 状态面板 **`BRAM_OK` 通过 / 1bpp `VISUAL_OK` 待人眼**；LCD 4bpp **上板 `READBACK_OK bad=0` 且自证图/彩色面板/赛前 UI 人眼确认**；HDMI 带框环出 **静态六屏 `HDMI_VISUAL_OK`（2026-10-31 13:56）+ 真视频 `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级）**（见 §3.1、§3.2） |
+| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`docs/flow_overlay.md`、`docs/hdmi_video_osd.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/hdmi_video.py`、`board/overlay/*.bit` | 软件 ✅；HDMI 状态面板 **`BRAM_OK` 通过 / 1bpp `VISUAL_OK` 待人眼**；LCD 4bpp **上板 `READBACK_OK bad=0` 且自证图/彩色面板/赛前 UI 人眼确认**；PC 面板 ✅ 含比赛画面视图（`--video`）；HDMI 带框环出 **`BRAM_OK` 通过、`VISUAL_OK` 不成立**（13:56 曾记 `HDMI_VISUAL_OK`，20:23 复测出现整行循环移位，**当日撤回**；今日定量为恒定 `+313` 列，间歇缺陷）——**演示不走 HDMI**（见 §3.1、§3.2、§7.5） |
 
 ## 2. 技能包（指南 3.3.5.2）
 
@@ -63,7 +63,7 @@
 | PL 跟踪辅助 | `src/hls/track/` + `build/scripts/bd_track_preproc.tcl` + `board/overlay/track_preproc.bit` + `tools/track_preproc.py` | ✅ 已出片（WNS +2.457 ns）；✅ 上板逐位对通过（720p 32.39 ms） |
 | HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | 已出片；✅ `BRAM_OK`（整场仿真 + 上板 `HDMI_LIVE`）；⏳ `VISUAL_OK` 待人眼 |
 | LCD 状态面板（10-29 重做） | `src/rtl/io/lcd/lcd_probe_*.v` + `build/scripts/bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 已出片（4bpp/16 色/按键；WNS +1.839 ns）；✅ **上板 `READBACK_OK bad=0 checked=10`**（10-30，两次一致）；✅ 自证图 `tag4` 人眼确认；⏳ 彩色面板/赛前 UI 画面待人眼 |
-| HDMI+LCD 合并（现行） | `build/scripts/bd_flow_system.tcl` + `board/overlay/flow_system.bit` | ✅ `FLOW_SYSTEM_BD_OK`（10-30：WNS +3.042 ns、LUT 44.9%、BRAM 86/140）+ 10-31 修复片 **WNS +4.184 ns**、六屏 `HDMI_VISUAL_OK`（13:56 人眼，sha256 `ad628200…104a`）；✅ 上板 `flow_overlay.py --selftest`：LCD `bad=0/16`、HDMI `frames +492 under=0`；✅ **真视频环出 `HDMI_VIDEO_OK` 25 帧 `under=0`**（机器级；实时叠框回放未见人眼结论） |
+| HDMI+LCD 合并（现行） | `build/scripts/bd_flow_system.tcl` + `board/overlay/flow_system.bit` | ✅ `FLOW_SYSTEM_BD_OK`（10-30：WNS +3.042 ns、LUT 44.9%、BRAM 86/140）+ 10-31 修复片 **WNS +4.184 ns**；✅ 上板 `flow_overlay.py --selftest`：LCD `bad=0/16`、HDMI `frames +492 under=0`；✅ **真视频环出 `HDMI_VIDEO_OK` 25 帧 `under=0`**（机器级）。❌ **静态六屏 `HDMI_VISUAL_OK` 已于 20:23 撤回**（13:56 人眼记过，同片复测出现整行循环移位；今日定量恒定 `+313` 列，间歇缺陷，sha256 仍为 `ad628200…104a`）；实时叠框回放仍无人眼结论 |
 | HDMI+LCD 合并（旧） | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ❌ 已由 `flow_system` 取代：1bpp 文字方案，且落后于 018–021 的新读侧，不再重出片 |
 | 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ `TRACK_PREPROC_BOARD_OK`（逐字节对拍）；⚠️ 合并画面同上门槛 |
 | 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
@@ -76,7 +76,7 @@
 | SD 证据帧落盘 | `tools/result_store.py::save_evidence`、`board_pipeline --store-evidence` | ✅ `RESULT_STORE_OK`（含每分钟限流 6 张） | ⛔ 待板 |
 | PC 上位机界面 | `tools/pc_dashboard.py`（状态条 + 球场 + 事件流 + 证据帧 + 12 列 CSV） | ✅ `PC_DASHBOARD_SELFTEST OK`；界面 PNG 已人眼核对 | 无需板 |
 | LCD 状态面板信息 | `tools/status_display.py`（8 项，800x480 / 1280x720） | ✅ `STATUS_DISPLAY_SELFTEST OK`；两尺寸 PNG 已人眼核对 | ⛔ 待板（fbdev/BRAM 通路） |
-| HDMI 视频环出（带框画面） | `src/rtl/io/hdmi/fb_scanout.v`+`hdmi_video_top.v`、`build/scripts/bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ `TB_FB_SCANOUT_OK`（2048 像素逐点 0 错）；✅ PS 侧 PNG 预览；✅ **静态六屏 `HDMI_VISUAL_OK`（2026-10-31）**；✅ **真视频 `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级）** | ⚠️ 实时叠框回放未做人眼确认 |
+| HDMI 视频环出（带框画面） | `src/rtl/io/hdmi/fb_scanout.v`+`hdmi_video_top.v`、`build/scripts/bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ `TB_FB_SCANOUT_OK`（2048 像素逐点 0 错）；✅ PS 侧 PNG 预览；✅ **真视频 `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级）**；❌ **静态六屏 `HDMI_VISUAL_OK` 已撤回**（20:23 复现整行循环移位；`under=0` 与累加和在整行移位时照样成立，不构成画面正确的证据） | ❌ **上板画面不成立**：恒定 `+313` 列整行旋转。实时叠框回放亦未做人眼确认 |
 
 ## 4. 目录与命名（指南 3.3.5.4）
 
@@ -131,12 +131,17 @@ python tools/make_portal_assets.py --check --video <demo.mp4> --auth <授权书.
      **LCD 4bpp 上板已过**（`READBACK_OK bad=0 checked=10`，PCLK 33.335 MHz）；
      **HDMI 带框环出已过**（`HDMI_VIDEO_BOARD_OK frames=313 under=0`）。
    - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4`、彩色状态面板、赛前 UI（真按键）已人眼确认**；
-     **HDMI 带框环出静态六屏已过**（`HDMI_VISUAL_OK`，2026-10-31 13:56，证据
-     `data/results/hdmi_visual_ok.json`）；**1bpp HDMI 状态面板与实时叠框回放仍未人眼确认**，
-     这两项不宣称「画面通过」。
+     **HDMI 带框环出静态六屏 `HDMI_VISUAL_OK` 已于当日 20:23 撤回** —— 13:56 人眼记过一次
+     （证据当时在 `data/results/hdmi_visual_ok.json`），同片复测又出现整行循环移位
+     （`px = c + 437 / +441`），今日定量为恒定 `+313` 列；证据文件现为 `HDMI_VISUAL_RETRACTED`。
+     ⇒ **HDMI 侧 `VISUAL_OK` 不成立**，且 `under=0`、累加和、「每源列 1 次」这三类判据
+     对整行旋转都是瞎的，不能拿来替代人眼。
+     **1bpp HDMI 状态面板与实时叠框回放仍未人眼确认**，不宣称「画面通过」。
    - `display_both.bit` / `track_display.bit` 落后于新读侧，需重出片。
-6. **视频入口未落地（D015）**：`board_pipeline.py` 仍只吃板本地 `--video`；网络接收端
-   （`stream_sender.py` / `board_net.py`）是早期 bring-up，未接主线；协议/端口在台账仍 `discussing`。
+6. **视频入口未落地（D015），但只有一半**：`board_pipeline.py` 仍只吃板本地 `--video`；
+   PC→板的网络**输入**端（`stream_sender.py` / `board_net.py`）是早期 bring-up，未接主线；
+   协议/端口在台账仍 `discussing`。**板→PC 的网络输出端已上板通过**
+   （`video_back.py`，`VIDEO_BACK_OK 250 19.61 5.1`），交付演示走这一向。
 7. **队别已接入主线、未验证**：`tools/team_assign.py` + `board_pipeline --ui-config` 输出
    `players[*].team` 与 `events.possession_team`（主机侧 `TEAM_ASSIGN_SELFTEST OK`）；
    **真实画面与板上未验**；离线 `track_players.py` 仍不输出队别（像素坐标、未接单应）。

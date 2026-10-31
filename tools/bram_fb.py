@@ -167,6 +167,15 @@ def _nearest_index(img_bgr, palette):
     b = arr[:, :, 0].astype(np.uint32)
     packed = (r << 16) | (g << 8) | b
     uniq, inv = np.unique(packed, return_inverse=True)
+    if uniq.size > 20000:
+        # 照片类输入（几十万种颜色）时 np.unique 反而更贵；退回 5 位 LUT（近似）。
+        # 界面面板只有几十到几千种颜色，走不到这一支。
+        lv = (np.arange(32, dtype=np.int32) << 3) + 4
+        grid = np.stack(np.meshgrid(lv, lv, lv, indexing="ij"), axis=-1).reshape(-1, 3)
+        d = ((grid[:, None, :] - pal[None, :, :]) ** 2).sum(axis=2)
+        lut = d.argmin(axis=1).astype(np.uint8)
+        key = ((r >> 3).astype(np.uint32) << 10) | ((g >> 3).astype(np.uint32) << 5) | (b >> 3)
+        return lut[key]
     ur = ((uniq >> 16) & 0xFF).astype(np.int32)
     ug = ((uniq >> 8) & 0xFF).astype(np.int32)
     ub = (uniq & 0xFF).astype(np.int32)

@@ -980,3 +980,21 @@ BRAM 读是同步的，`pixel_data(C) = lbuf[addr(C−1)]`，要 `pixel_data(C) 
 还留在模块级，成了孤儿代码：语法能过、导入能过，只有真跑到 LCD 那一半才炸。
 补回一行即可。这条正是「机器判据要真跑一遍」的价值：`--check-hwh` 离线查的是地址表，
 它查不出「某个测试函数根本没定义」。
+
+### 7.25 同一片上的「真视频跑一遍」：`HDMI_VIDEO_OK 25 12.0 ... frames=6825 under=0`
+
+    python3 tools/hdmi_video.py --video data/samples/scenes/n05_t01580.0.mp4 --fps 12 --timeout 20
+    HDMI_VIDEO_OK 25 12.0 status={'frames': 6825, 'under': 0}
+
+PS 侧解 25 帧真转播画面按 12 fps 写进 DDR 帧缓存（双缓冲 + flush），PL 侧 720p60 扫描输出，
+全程 `under=0`。这条走的是**和产品完全相同**的一条路（PS 打包 → DDR → HP0 → 行缓存 → TMDS），
+与 §7.23 的静态图案人眼结论互为补充：
+
+| 判据 | 级别 | 结论 |
+|---|---|---|
+| 六屏静态图案（几何/颜色/无撕裂） | **人眼** | ✅ `HDMI_VISUAL_OK` |
+| LCD 回读 + pclk 计数 / HDMI frames / 按键 | 机器 | ✅ `FLOW_OVERLAY_OK` |
+| 真视频 25 帧经固化 overlay 环出 | 机器 | ✅ `HDMI_VIDEO_OK`，`under=0` |
+| 真视频的**人眼**结论 | 人眼 | ⏳ 未做（人当时不在屏前），不记 |
+
+按项目口径，最后一行不算过，也不拿前三行去顶它。

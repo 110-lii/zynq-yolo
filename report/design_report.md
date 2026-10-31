@@ -940,19 +940,26 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
    与 `ai/sessions/013`–`021`。
 9. **SD 路径依赖挂载**：`--store-dir` 默认示例 `/home/xilinx/zynq-yolo`；若 SD 卡挂载点不同，
    由启动脚本传入；存储失败会打印 `STORE_UNAVAILABLE` 并继续跑（不静默丢结果）。
-10. **视频入口：输入侧已实现、上板未验（D015）**：D015 已裁定「视频由 PC 经以太网送入」，
-    子项的选型由 **D027（2026-10-31）**落定：走 **PS 侧 GEM + TCP + JPEG 帧 + `ZYVI` 帧头**，
-    默认端口 5007。实现为 `tools/video_send.py`（PC 送）↔ `board_pipeline.py --listen`（板收），
+10. **视频入口：两个方向都已接主线，输入侧已上板验等价（D015 / D027）**：D015 已裁定
+    「视频由 PC 经以太网送入」，子项选型由 **D027（2026-10-31）**落定：走 **PS 侧 GEM +
+    TCP + JPEG 帧 + `ZYVI` 帧头**，默认端口 5007。实现为 `tools/video_send.py`（PC 送，
+    支持 `--video` 文件与 `--camera` 摄像头）↔ `board_pipeline.py --listen`（板收），
     接收端 `NetFrameSource` 与 `cv2.VideoCapture` 同接口，主线取帧逻辑一行未改。
-    **边界**：JPEG 有损，板上看到的像素与文件源不完全相同 —— 判据只能说「帧数/量级一致」，
-    不能说「逐位一致」。**验证状态**：主机回环 `VIDEO_SEND_SELFTEST OK`（6 帧，字节数正确）；
-    **上板等价性未验**（登记本条的当晚板子离线，100 % 丢包），因此本条**不宣称已上板跑通**。
-    `tools/stream_sender.py` / `src/ps/host/board_net.py` 仍是早期 `conv_engine` 的流式 bring-up
-    （TCP + `ZYOL` 帧头），未接主线、也不再是唯一路径。
-    **方向要说清**：以太网上**板 → PC**这一向是通的、且已上板实测 —— `tools/video_back.py`
-    把带框画面按 JPEG 逐帧回传，实测 `VIDEO_BACK_OK 250 19.61 5.1`（250 帧 / 19.61 MB / 5.1 fps）；
-    缺的只是**PC → 板**的视频**输入**这一向。所以「视频经以太网」不是零，是半条：输出半条可用，
-    输入半条未接主线。本项目的交付演示因此采用「板端跑本地片段 → 网口回传带框视频 → PC 看」。
+    **上板等价性（当夜补验）**：同一段 `c03` 走文件源与网络源，两边都是
+    `PIPELINE_OK frames=250 detections=17`，落盘 250 行，带球帧集合**完全相同**
+    （100–114、140–144 共 20 帧）；传送侧 `VIDEO_SEND_OK 250 58.74 0.53 2.2`，
+    吞吐被板端 ncnn（~980 ms/帧）反压，`--fps` 只是上限。
+    **边界（有损压缩会改变判决，不止是「有点糊」）**：JPEG 有损 ⇒ 判据只比「帧数/判决」，
+    不比「逐位」。而且档位**本身就是决策变量**：q80 时同一段 c03 在板上比文件源多出
+    10 帧假球（f45–54），人工抠图核对是球员的**白鞋**，被低质量压缩抹成类球纹理；
+    改成 q95 后假球消失、带球帧与文件源逐帧一致。因此 `--quality` 默认定为 **95**（约 235 KB/帧）。
+    这个坑主机回环测不出来，只有上板才暴露。**仍未验**：摄像头源 `--camera` 与长时段连续传输
+    下的丢帧/超时行为。
+    **输出半条**：`tools/video_back.py` 把带框画面按 JPEG 逐帧回传，实测
+    `VIDEO_BACK_OK 250 19.61 5.1`（250 帧 / 19.61 MB / 5.1 fps），屏上有框有球。
+    `tools/stream_sender.py` / `src/ps/host/board_net.py` 仍是早期 `conv_engine` 的流式
+    bring-up（TCP + `ZYOL` 帧头），不进主线。交付演示走「板端跑片段 → 网口回传带框视频 → PC 看」，
+    也可现场用 `--camera` 送电脑摄像头画面（发送端只做过文件源联调，摄像头源未验）。
     **2026-10-31 夜上板复验**（含今天修的空中球）：c03 跑 `PIPELINE_OK frames=250 detections=17`，
     落盘 20 行带球（帧 100–114、140–144）；回传 `VIDEO_BACK_OK 190 19.65 5.0`，
     帧 105 屏上有球员绿框与球的红圈（`BALL` 位于 (739, 212)，与 JSONL 的 `ball` 字段一致），

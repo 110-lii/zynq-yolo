@@ -171,6 +171,22 @@ py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/
 > `_is_grass` 36 中只剩 2），所以出演示画面时用 PS 检测路径。PL 预处理本身（18.8 ms/帧、LUT 7%）
 > 仍是设计的一部分，但**这一段不演示它**，字幕和旁白都不能让人以为这段画面经过 PL 预处理。
 
+**可选加强（时间够才做，不挤占已定 155 s）**：S4 也可以拍成「视频从 PC 经以太网送进板子」
+（D015 输入侧，2026-10-31 已上板验过等价：文件源与网络源均 `frames=250 detections=17`，
+带球帧同为 100–114、140–144）。先起板端监听、再在 PC 上送：
+
+```bash
+py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/board_pipeline.py','--listen','5007','--every','15','--max-det','0','--no-pl','--no-camera-gate','--ball-every','5','--bin','/home/xilinx/ncnn_infer','--param','/home/xilinx/zynq-yolo/build/models/person_v8n25.param','--model','/home/xilinx/zynq-yolo/build/models/person_v8n25.bin','--store-dir','build/flow','--store-prefix','netdemo','--out','/home/xilinx/netdemo.json'],cwd='/home/xilinx/zynq-yolo',stdout=subprocess.PIPE,stderr=subprocess.STDOUT,universal_newlines=True);print(p.stdout[-3000:])"
+```
+
+```bash
+py tools/video_send.py --video data/samples/scenes/c03_t01290.0.mp4 --host 192.168.2.99 --port 5007 --fps 25
+```
+
+> 预期：发送端 `VIDEO_SEND_OK 250 …`，板端 `PIPELINE_OK frames=250`。**别用 `--quality 80`**：
+> q80 会让板端多出 10 帧假球（球员白鞋），默认 95 是量出来的。这一段是可选镜头，
+> 若不拍，旁白不要提「以太网送视频进板」。
+
 ### S5 网口回传带框视频（00:51–01:21，30 s）
 
 | 字段 | 内容 |

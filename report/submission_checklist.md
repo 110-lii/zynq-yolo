@@ -8,7 +8,7 @@
 | # | 上传项 | 门户要求 | 当前产物 | 状态 |
 |---|---|---|---|---|
 | 1 | 演示视频 | MP4 / AVC(H.264) / ≤3 min / ≤300 MB | **尚无**；分镜脚本已出并**逐条上板验证过命令**（`report/demo_video_storyboard.md`），含 `VIDEO_BACK_OK 190 19.65 5.0` 与带球截图 | ⛔ **待拍摄/剪辑**（只能人工拍；脚本可直接照拍） |
-| 2 | 技术文档 | PDF / ≤50 MB | `report/technical_document.docx` + `.pdf`（0.9 MB，2026-10-31 22:1x 按修订后正文重生成） | ⚠️ **正文已复核并改掉已撤回的 `HDMI_VISUAL_OK`**；实物照片仍待补（文中 `【待补…】` 标记） |
+| 2 | 技术文档 | PDF / ≤50 MB | `report/technical_document.docx` + `.pdf`（1.1 MB / 13 页，2026-10-31 23:0x 按修订后正文重生成） | ⚠️ **正文已复核并改掉已撤回的 `HDMI_VISUAL_OK`**；实物照片仍待补（文中 `【待补…】` 标记） |
 | 3 | 全部代码 | RAR / ≤200 MB | `dist/zynq-yolo_submission_<日期_时分>.rar`（约 26 MB）+ 同名 `.zip`（约 32 MB），只留当天最新一份 | ✅ **已出包**（`SUBMISSION_PACK_OK`，682 文件；RAR `PORTAL_RAR_OK`） |
 | 4 | 承诺及使用授权书 | PDF / ≤50 MB | 官方空白模板已给（`D:\xiazai\…pdf`） | ⛔ **需打印、全体签名、扫描上传**（只能人工） |
 | 5 | 作品海报（选填） | PDF / PPT / ≤50 MB | 尚无 | ⏳ 选填，可后补 |
@@ -142,8 +142,11 @@ python tools/make_portal_assets.py --check --video <demo.mp4> --auth <授权书.
    - **板 → PC（输出）**：`video_back.py`，**已上板通过**（`VIDEO_BACK_OK 200 21.56 4.9`、
      `VIDEO_BACK_OK 190 19.65 5.0`，后者屏上有框有球），交付演示走这一向。
    - **PC → 板（输入）**：`video_send.py` ↔ `board_pipeline.py --listen`（D027：PS GEM + TCP +
-     JPEG + `ZYVI`，端口 5007）。**主机回环 `VIDEO_SEND_SELFTEST OK`；上板等价性未验**
-     （实现当晚板子离线）。JPEG 有损，判据只能比「帧数/量级」，不能比「逐位」。
+     JPEG + `ZYVI`，端口 5007）。✅ **上板等价性已验**（2026-10-31 当夜补验）：同一段 c03
+     走文件源与网络源都是 `frames=250 detections=17`，带球帧集合完全相同（100–114、140–144）；
+     `VIDEO_SEND_OK 250 58.74 0.53 2.2`。⚠️ **JPEG 有损，档位会改变判决**：q80 时多出 10 帧
+     假球（f45–54，实为球员白鞋），故默认质量定为 **95**。判据只比「帧数/判决」，不比「逐位」；
+     **未验**：`--camera` 摄像头源、长时段连续传输的丢帧/超时。
 7. **队别已接入主线、未验证**：`tools/team_assign.py` + `board_pipeline --ui-config` 输出
    `players[*].team` 与 `events.possession_team`（主机侧 `TEAM_ASSIGN_SELFTEST OK`）；
    **真实画面与板上未验**；离线 `track_players.py` 仍不输出队别（像素坐标、未接单应）。
@@ -153,7 +156,7 @@ python tools/make_portal_assets.py --check --video <demo.mp4> --auth <授权书.
 ## 8. 签字
 
 - 报告版本：`design_report.md` **v1.3（2026-10-31）**；`design_report.docx` 由同一 md 重新生成
-- 门户技术文档：`report/technical_document.md` → `.docx` → `.pdf`（11 页 / 0.9 MB）
+- 门户技术文档：`report/technical_document.md` → `.docx` → `.pdf`（13 页 / 1.1 MB）
 - 提交包：`dist/zynq-yolo_submission_<YYYYMMDD_HHMM>/` + 同名 `.zip`（旧包删除，只留当天一份）
 - 门户代码包：同一目录打成 `.rar`（`tools/make_portal_assets.py --rar …`）
 - 校验：`SUBMISSION_MANIFEST.csv` 的 `sha256` 列逐文件可核

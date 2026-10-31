@@ -44,6 +44,9 @@ EXCLUDE_PREFIXES = (
     "build/tflite_", "build/tf_saved_", "build/viz/",
     "build/train_student/", "build/calib_", "build/ila_",
     "build/_", "build/hdmi_",
+    # 演示视频的原始素材（S01…S10、逐帧静帧）只留本机，成片单独走门户上传，
+    # 见 report/demo_video_storyboard.md §5.4；上一版曾因它让包凭空多出 13 MB。
+    "build/demo_raw/",
     "data/train/", "data/ball_roi", "data/ball_roi_full",
     "data/layers/pb160/", "data/golden/pb160/", "data/models/quant_pb160/",
     "data/results/newmatch_frames/", "data/results/viz/",

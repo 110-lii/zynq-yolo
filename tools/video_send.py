@@ -12,9 +12,14 @@ D015（2026-10-20 用户裁定「现在不需要摄像头一切的视频由网�
     magic b"ZYVI"
     循环：[u32 len][JPEG 字节]      （len = 0 表示结束）
 为什么是 JPEG：1280×720 裸 RGB 一帧 2.7 MB，100 Mbit 链路只够 4 fps；
-JPEG q80 约 100 KB，25 fps 才 2.5 MB/s，板端解一帧 ~5 ms，不是瓶颈。
+JPEG q95 实测约 235 KB/帧（q80 约 110 KB），25 fps 约 5.9 MB/s，仍在 100 Mbit 内；
+板端解一帧 ~5 ms，相对 ncnn 的 ~980 ms 不是瓶颈。
 （ncnn 检测本身 ~980 ms/帧，所以**实际吞吐由板子决定**——发送端会被 TCP
-反压自然限速，`--fps` 只是上限，不是保证。）
+反压自然限速，实测 2.2–2.3 fps，`--fps` 只是上限，不是保证。）
+
+**质量默认 95 是量出来的，不是拍脑袋**：q80 时同一段 c03 在板上比文件源多出 10 帧
+假球（f45–54），人工核对是球员的白鞋；q95 下球帧与文件源**逐帧一致**。
+仍要记住 JPEG 是有损的：它能对齐本片的判决，不等于「板上像素与文件逐位相同」。
 
 用法
     PC：
@@ -107,7 +112,10 @@ def main():
     ap.add_argument("--port", type=int, default=5007)
     ap.add_argument("--fps", type=float, default=25.0,
                     help="发送速率上限；0 = 不限（会被板子反压限速）")
-    ap.add_argument("--quality", type=int, default=80, help="JPEG 质量")
+    ap.add_argument("--quality", type=int, default=95,
+                    help="JPEG 质量。**默认 95 不是随手写的**：q80 时同一段 c03 在板上"
+                         "多出 10 帧假球（f45–54，人工核对是球员的白鞋，见 ai/sessions/024）；"
+                         "q95 下球帧与文件源逐帧一致（100–114、140–144）")
     ap.add_argument("--max-frames", type=int, default=0)
     ap.add_argument("--scale", type=float, default=1.0,
                     help="送之前按比例缩小（长宽同时乘）；1.0 = 原样")

@@ -1,0 +1,67 @@
+{
+ "token": "HDMI_VISUAL_OK",
+ "at": "2026-10-31 13:56",
+ "by": "用户当场口头确认（原话：「全对」）",
+ "bit": {
+  "path": "board/overlay/flow_system.bit",
+  "size": 4045674,
+  "sha256": "ad6282006ce6a08e42e13e1dc59ffe8e6e4d9a6a45fbb08b0ca3a3cc8a8f104a",
+  "built": "2026-10-31 13:37",
+  "wns_ns": 4.184,
+  "whs_ns": 0.036
+ },
+ "screens": [
+  {
+   "tag": "EDGES",
+   "sum_expect": "8DA6F4C0",
+   "sum_got": "8DA6F4C0",
+   "look": "源列 0..3 白、1276..1279 红、正中绿方块 —— 左边缘纯白、右边缘纯红、绿方块居中"
+  },
+  {
+   "tag": "HBANDS",
+   "sum_expect": "FFF8F800",
+   "sum_got": "FFF8F800",
+   "look": "白青绿黄蓝红品红黑 8 条横带，等宽、顺序正确、无黑横条、不跳动"
+  },
+  {
+   "tag": "VBANDS",
+   "sum_expect": "FFF8F800",
+   "sum_got": "FFF8F800",
+   "look": "同样 8 色竖带，第 1 条白贴左边缘"
+  },
+  {
+   "tag": "GRID",
+   "sum_expect": "D2FD2F00",
+   "sum_got": "D2FD2F00",
+   "look": "45 条绿横线 + 80 条蓝竖线，线直、间距匀、一条不少"
+  },
+  {
+   "tag": "MOTION",
+   "sum_expect": null,
+   "sum_got": "3FFFC7C0",
+   "look": "白块自上而下匀速移动 40 s，无撕裂、无跳格"
+  },
+  {
+   "tag": "MARKERS",
+   "sum_expect": "1FDF3E00",
+   "sum_got": "1FDF3E00",
+   "look": "左上白、右上红、左下蓝，三块贴边、不外溢"
+  }
+ ],
+ "machine_oracles": {
+  "col_code_per_row": 818560,
+  "row_code_sigma": 258840,
+  "every_source_col_shown_once": true,
+  "every_source_row_shown_once": true,
+  "under": 0,
+  "cfg_writable": true
+ },
+ "what_this_does_not_cover": [
+  "只覆盖「帧缓存 → fb_scanout → TMDS → 显示器」这段静态画面，不含 PS 侧实时叠框回放",
+  "本片之前的两处缺陷（取数吞吐、读地址错 2）已在同一片上修复，结论只对 sha256 上这片成立"
+ ],
+ "evidence_logs": [
+  "build/hdmi_visual_check.log",
+  "build/hdmi_geom_probe.log"
+ ]
+}

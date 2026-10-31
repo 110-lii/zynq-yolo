@@ -230,6 +230,8 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   根因是 `video_driver` 的 `xpos` 在 de 拍上取 **C+1**（不是旧注释写的 0…1279），
   同步 BRAM 读要求读地址**就是 `xpos`**，不能减 2。已改（13:37 新 bit，WNS 4.184 ns），
   `SIM_PASS 12/12`，**但本机网口在部署前断了（以太网「媒体已断开连接」），这一版还没上过板** ——
-  按 AGENTS.md 不写「已验证」，`HDMI_VISUAL_OK` 仍然不记。下次上板第一屏看 `EDGES`：
-  源列 0..3 白 / 1276..1279 红，左边缘应纯白、右边缘应纯红。
+  **13:50 上电后部署该片，13:56 人眼确认「全对」**（EDGES 左边缘纯白、右边缘纯红、
+  绿方块居中；8 横带/8 竖带顺序与厚度正确、无黑横条、不跳；45 横 + 80 竖线一条不少；
+  运动方块无撕裂）⇒ **`HDMI_VISUAL_OK` 记录生效**，证据 `data/results/hdmi_visual_ok.json`
+  （绑定 sha256 `ad628200…104a`）。
 - **`--max-det` 不是人数**：它是「检测调用次数上限」（默认 8）。板上跑表要 `--max-det 0`。

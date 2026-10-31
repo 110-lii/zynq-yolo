@@ -940,3 +940,28 @@ BRAM 读是同步的，`pixel_data(C) = lbuf[addr(C−1)]`，要 `pixel_data(C) 
 下次上板第一步就是 `py tools/run_board_acceptance.py --only deploy`，然后
 `py build/hdmi_visual_check.py --hold 50`——第一屏 `EDGES` 就是给这个缺陷准备的读数：
 源列 0..3 涂白、1276..1279 涂红，**左边缘应纯白、右边缘应纯红**，左边见红 = 回卷，左边见黑 = 少列。
+
+### 7.23 13:50 上板：EDGES 屏对上，人眼确认「全对」——`HDMI_VISUAL_OK` 记下
+
+用户重新上电后（本机 `以太网` 恢复，`HOST_LINK_OK src=192.168.2.100`）部署 13:37 那片，
+`build/hdmi_visual_check.py --hold 45` 六屏：
+
+| 屏 | 期望累加和 | 实际 | |
+|---|---|---|---|
+| EDGES（源列 0..3 白 / 1276..1279 红 / 正中绿方块） | 8DA6F4C0 | 8DA6F4C0 | MATCH |
+| HBANDS | FFF8F800 | FFF8F800 | MATCH |
+| VBANDS | FFF8F800 | FFF8F800 | MATCH |
+| GRID | D2FD2F00 | D2FD2F00 | MATCH |
+| MARKERS | 1FDF3E00 | 1FDF3E00 | MATCH |
+| under | 0 | 0 | ✓ |
+
+**人眼当场结论：「全对」**（2026-10-31 13:56）。落到 `data/results/hdmi_visual_ok.json`
+（记 sha256 `ad628200…104a`、六屏的期望/实际与逐屏描述、以及本结论**不覆盖**什么）。
+
+顺带一条方法论上的更正：上一版 VBANDS / GRID / MARKERS 报 MISMATCH，**不是硬件错，
+是期望值按旧口径（`xpos-2`）算的**。同一批数据在改成「列 ↔ 列一一对应」后全对 ——
+说明当时屏幕上唯一真实存在的缺陷就是那 2 像素位移，而**累加和对位移是瞎的**
+（它只知道某列被显示了几次，不知道显示在哪一列）。位置类的判据只能人眼量，
+这条写进 EDGES 屏的设计理由里了。
+
+至此「画面对不对」这一级第一次有了人眼证据；`HDMI_VISUAL_OK` 记录生效。

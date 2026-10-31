@@ -1,67 +1,44 @@
 {
- "token": "HDMI_VISUAL_OK",
- "at": "2026-10-31 13:56",
- "by": "用户当场口头确认（原话：「全对」）",
+ "token": "HDMI_VISUAL_RETRACTED",
+ "at": "2026-10-31 20:23",
+ "why": "同一片 bit 在 19:50 前后被人眼确认「现在可以了」，20:23 再测又出现列循环移位（px = c + 437 / +441）。**这不是已修好，是间歇性缺陷。** 本文件此前记的 HDMI_VISUAL_OK 作废。",
  "bit": {
   "path": "board/overlay/flow_system.bit",
   "size": 4045674,
-  "sha256": "ad6282006ce6a08e42e13e1dc59ffe8e6e4d9a6a45fbb08b0ca3a3cc8a8f104a",
-  "built": "2026-10-31 13:37",
-  "wns_ns": 4.184,
-  "whs_ns": 0.036
+  "sha256": "1397ce6813f9d407eef6a3391ff2dbbd3d4c97cbf9a72a7bb91db23b8add714d",
+  "built": "2026-10-31 19:24",
+  "timing": "All user specified timing constraints are met"
  },
- "screens": [
+ "observations_same_bit": [
   {
-   "tag": "EDGES",
-   "sum_expect": "8DA6F4C0",
-   "sum_got": "8DA6F4C0",
-   "look": "源列 0..3 白、1276..1279 红、正中绿方块 —— 左边缘纯白、右边缘纯红、绿方块居中"
+   "at": "2026-10-31 19:27",
+   "tool": "build/hdmi_pixel_probe.py",
+   "result": "28/28 OK，px == c（恒等映射）"
   },
   {
-   "tag": "HBANDS",
-   "sum_expect": "FFF8F800",
-   "sum_got": "FFF8F800",
-   "look": "白青绿黄蓝红品红黑 8 条横带，等宽、顺序正确、无黑横条、不跳动"
+   "at": "2026-10-31 19:50 前后",
+   "by": "用户当场确认（原话：「现在可以了」）",
+   "screen": "真实比赛片段环出（c03，25 fps，带框），比分牌在左上角原位、右侧画面不再跑到左边"
   },
   {
-   "tag": "VBANDS",
-   "sum_expect": "FFF8F800",
-   "sum_got": "FFF8F800",
-   "look": "同样 8 色竖带，第 1 条白贴左边缘"
+   "at": "2026-10-31 20:23",
+   "tool": "build/hdmi_pixel_probe.py",
+   "result": "28/28 SHIFT：c=0 → 437、c=640 → 1077/1081、c=1279 → 440（即 px ≈ c + 437…441）"
   },
   {
-   "tag": "GRID",
-   "sum_expect": "D2FD2F00",
-   "sum_got": "D2FD2F00",
-   "look": "45 条绿横线 + 80 条蓝竖线，线直、间距匀、一条不少"
-  },
-  {
-   "tag": "MOTION",
-   "sum_expect": null,
-   "sum_got": "3FFFC7C0",
-   "look": "白块自上而下匀速移动 40 s，无撕裂、无跳格"
-  },
-  {
-   "tag": "MARKERS",
-   "sum_expect": "1FDF3E00",
-   "sum_got": "1FDF3E00",
-   "look": "左上白、右上红、左下蓝，三块贴边、不外溢"
+   "at": "2026-10-31 20:24",
+   "by": "用户",
+   "screen": "「现在 HDMI 显示又变成之前那样了」"
   }
  ],
- "machine_oracles": {
-  "col_code_per_row": 818560,
-  "row_code_sigma": 258840,
-  "every_source_col_shown_once": true,
-  "every_source_row_shown_once": true,
-  "under": 0,
-  "cfg_writable": true
- },
- "what_this_does_not_cover": [
-  "只覆盖「帧缓存 → fb_scanout → TMDS → 显示器」这段静态画面，不含 PS 侧实时叠框回放",
-  "本片之前的两处缺陷（取数吞吐、读地址错 2）已在同一片上修复，结论只对 sha256 上这片成立"
+ "conclusion": "行号标签挡住了「显示错行」，但没挡住「整行内容被旋转 k 列」；k 每次上电/每次运行不同（历史值 425/399/437/440/441，也出现过 0）。k 随运行变化 ⇒ 依赖取数与扫描之间的相位，而不是某个固定地址算错。",
+ "next": [
+  "在**多笔在飞**的 AXI 从机模型下复现（现有 TB 是单笔在飞，所以仿真一直是绿的）",
+  "检查 vs 边沿那一刻：队列里残留的突发、ar_ptr 的残值和 d_col 是否会让新帧首行的写起点不在第 0 列",
+  "在没复现之前，演示走网口回传（tools/video_back.py），不把 HDMI 当交付通道"
  ],
- "evidence_logs": [
-  "build/hdmi_visual_check.log",
-  "build/hdmi_geom_probe.log"
+ "does_not_cover": [
+  "1bpp HDMI 状态面板（hdmi_status.bit）",
+  "LCD 4bpp 赛前 UI 的版面"
  ]
 }

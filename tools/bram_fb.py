@@ -153,6 +153,33 @@ def quantize_palette(img_bgr, n=PAL_N):
     return idx, pal
 
 
+def _nearest_index(img_bgr, palette):
+    """BGR 图 → 最近调色板索引（uint8, h×w）。
+
+    用 32³ 的查找表：把 RGB 各取高 5 位当格号。表按调色板内容缓存，
+    换色板才重算（32768×16 次平方距离，几毫秒）。
+    """
+    pal = np.asarray([[int(c) & 0xFF for c in p] for p in list(palette)[:PAL_N]],
+                     dtype=np.int32)
+    arr = np.asarray(img_bgr)
+    r = arr[:, :, 2].astype(np.uint32)
+    g = arr[:, :, 1].astype(np.uint32)
+    b = arr[:, :, 0].astype(np.uint32)
+    packed = (r << 16) | (g << 8) | b
+    uniq, inv = np.unique(packed, return_inverse=True)
+    ur = ((uniq >> 16) & 0xFF).astype(np.int32)
+    ug = ((uniq >> 8) & 0xFF).astype(np.int32)
+    ub = (uniq & 0xFF).astype(np.int32)
+    best = np.zeros(uniq.size, dtype=np.uint8)
+    bestd = np.full(uniq.size, 1 << 30, dtype=np.int32)
+    for i in range(pal.shape[0]):                    # 16 次向量比较，逐色**精确**
+        d = (ur - pal[i, 0]) ** 2 + (ug - pal[i, 1]) ** 2 + (ub - pal[i, 2]) ** 2
+        m = d < bestd
+        bestd = np.where(m, d, bestd)
+        best = np.where(m, np.uint8(i), best)
+    return best[inv.reshape(-1)].reshape(arr.shape[0], arr.shape[1])
+
+
 def pack_4bpp(img_bgr, w, h, palette=None):
     """BGR 图 -> (图像字, 调色板字)。各 ((w//8)*h,) / (16,) uint32。
 
@@ -162,10 +189,15 @@ def pack_4bpp(img_bgr, w, h, palette=None):
         idx, palette = quantize_palette(img_bgr, PAL_N)
     else:
         # 指定调色板时按最近色落位（界面自己给了色表的情况）
-        rgb = np.asarray(img_bgr, dtype=np.uint8)[:, :, ::-1].astype(np.int32)
-        pal = np.asarray(palette, dtype=np.int32)[:PAL_N]
-        d = ((rgb[:, :, None, :] - pal[None, None, :, :]) ** 2).sum(axis=3)
-        idx = d.argmin(axis=2).astype(np.uint8)
+        #
+        # ★ 2026-10-31 面板刷新慢到 3.6 s/帧，就是这一行：
+        #   `rgb[:,:,None,:] - pal[None,None,:,:]` 会当场开一个
+        #   h×w×16×3 的 int32 数组（480×800 时 73 MB），A9 上光分配+遍历就要几秒。
+        #   改成**按 5-3-2 位量化的查找表**：32³ 个格子 × 16 色的距离只在
+        #   调色板变化时算一次，之后每像素只是一次整数索引。
+        #   量化误差只在相邻色的中点附近（调色板里 10 种球衣色彼此离得远），
+        #   而界面本身是用**调色板里的原色**画的，原色落格仍然精确。
+        idx = _nearest_index(img_bgr, palette)
     if idx.shape[0] != h or idx.shape[1] != w:
         raise ValueError("expect %dx%d, got %s" % (w, h, idx.shape))
     words = np.zeros((w // 8) * h, dtype=np.uint32)

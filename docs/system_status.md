@@ -143,9 +143,15 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   4 帧门槛后强层 4 个候选 = 3 真 + 1 假（#8279 弯腰误判），**精度 3/4**，
   这不是检出率、也不能外推（`docs/player_tracking_v1.md` §7）。
 - **未完成（2026-10-30 明确登记）**：
-  1. **视频入口还是本地文件**：D015 已裁定「PC 经以太网送入」，但 `board_pipeline.py` 只吃
-     `--video <板本地文件>`；`tools/stream_sender.py` / `src/ps/host/board_net.py` 是早期
-     `conv_engine` 的流式 bring-up（TCP + `ZYOL` 头），未接主线。协议/端口仍 `discussing`。
+  1. ~~**视频入口还是本地文件**~~ → **2026-10-31 已接主线（D027）**：`board_pipeline.py --listen 5007`
+     用 `NetFrameSource` 收 PC 经以太网送来的 JPEG 帧（`magic b"ZYVI"` + `[u32 len][JPEG]`），
+     与 `cv2.VideoCapture` **同接口**，主线取帧逻辑一行未改；PC 端 `tools/video_send.py`
+     （`--video` 文件或 `--camera` 摄像头）。**上板等价性已验**：同一段 c03 走文件源与网络源
+     都是 `frames=250 detections=17`，带球帧同为 20 帧（100–114、140–144）。
+     要注意的是 **JPEG 有损**：q80 时板上多出 10 帧假球（f45–54，人工核对是球员白鞋），
+     所以 `--quality` 默认定 **95**（q95 下与文件源逐帧一致）；判据只比「帧数/判决」，
+     不比「逐位」。早期 `tools/stream_sender.py` / `src/ps/host/board_net.py`（TCP + `ZYOL` 头）
+     是 `conv_engine` 的 bring-up，仍是历史资产，不进主线。
   2. **队别已接入主线但未在真实画面/板上验证**：`tools/team_assign.py` 把 `match-config/2` 色板
      转成 `classify_players.classify()` 的 palette，并按 `track_id` 投票（≥3 票、多数占比 ≥0.6）；
      `board_pipeline.py` 新增 `--ui-config/--no-team`（默认读 `board/ui_config.json`），

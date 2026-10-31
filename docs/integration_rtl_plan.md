@@ -83,7 +83,7 @@ PC 侧是读文件还是实时推流；板端从「网络接收」往后完全�
 
 | 模块 | 目录 | 状态 | 判据 |
 |---|---|---|---|
-| **网络视频接收 + 帧重组** | `src/ps/host/` 或 `src/ps/pynq_driver/`（待定） | ⬜ **待实现**（D015 后的新主线入口） | 待定：PC 发送已知测试片段，板端收到的帧逐字节/逐帧号一致 |
+| **网络视频接收** | `tools/board_pipeline.py::NetFrameSource` + `tools/video_send.py` | ✅ **已实现并上板验等价**（D027：PS GEM + TCP + JPEG + `ZYVI`，端口 5007） | 同段 c03 文件源/网络源均 `frames=250 detections=17`、带球帧集合相同；**不为逐字节一致**（JPEG 有损，默认 q95） |
 | `conv_engine` | `src/hls/accel/` | ✅ 已实现 + csim 通过 + 出片（83.33 MHz 时序收敛） | `CSIM_ALL_OK` / `BOARD_LAYER_OK` |
 | `vid_dvp_capture` | `src/rtl/video/` | ⛔ **退出主线**（D015；保留为历史资产） | 原判据 `VID_DVP_CAPTURE_TB_PASS` 仅用于回归 |
 | `vid_test_pattern` | `src/rtl/video/` | ⛔ **退出主线**（D015；保留为历史资产） | 原判据 `VID_TEST_PATTERN_TB_PASS` 仅用于回归 |
@@ -142,12 +142,12 @@ PC 侧是读文件还是实时推流；板端从「网络接收」往后完全�
 
 ## 7. 未决问题
 
-1. **★ 网络入口（D015 的未定子项，先解）**：
-   - **走哪个网口**：**PS 侧 GEM（YT8521S）** 还是 **PL 侧 RGMII（YT8531）**？
-     默认倾向 PS GEM：Linux 网络栈现成、不占 PL LUT；若选 PL RGMII，则要自写 MAC/UDP/ARP，
-     并重新评估与 `conv_engine` 的 LUT/DSP 预算冲突。**未裁定前不写 PL 以太网 RTL。**
-   - **传输协议**：TCP / UDP / RTSP 等；以及 PC 侧是发明文帧还是发压缩码流。
-   - **帧边界与同步**：靠数据内的帧号/长度字段，不靠外部计时；需要丢帧检测与重同步。
+1. ~~**★ 网络入口（D015 的未定子项）**~~ → **已由 D027 落定（2026-10-31）**：
+   - **网口**：**PS 侧 GEM**（Linux 网络栈现成，不动 PL、不出新片）；PL RGMII 方案不采用。
+   - **协议**：**TCP**（与输出半条 `video_back.py` 同构）+ **JPEG 帧**（默认 q95）。
+   - **帧边界与同步**：`magic b"ZYVI"` + 循环 `[u32 len][JPEG]`，`len=0` 结束；靠 TCP 流顺序，
+     不做时间戳。**仍未做**：丢帧检测/重同步的显式机制（目前靠 TCP 保证不丢）。
+   - 实现与上板判据见 `docs/system_status.md`「视频入口」一条、`ai/sessions/024` 轮次 7。
 2. **帧缓冲像素格式**：PC 送 RGB888（3 B/px）、RGB565（2 B/px，PS 侧展开）还是压缩码流？
    前两者省去解码；压缩码流省网络带宽但吃 PS CPU。**由 PC 侧推流规格决定**。
 3. **letterbox 灰边值**：必须与量化输入口径一致（114？0？`zp_in`？）。PL 不碰，但报告要写清，

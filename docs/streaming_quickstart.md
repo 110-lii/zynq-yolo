@@ -13,6 +13,7 @@
 | 白屏 | `IDLE_OVERLAY_OK` + `IDLE_HDMI_WHITE_OK frames=31 under=0` |
 | **真重启后自启** | `reboot` 后 18 s：`IDLE_HDMI_WHITE_OK frames=35 under=0`，两个服务 `active` |
 | 重启后推流 | PC 推 20 帧 → 板端 `PIPELINE_OK`、落盘 `net_*_00.jsonl` 20 行 |
+| **一条命令闭环**（`pc_dashboard --push`） | 推 45 帧 → `BOARD_RESULT_READY lines=45` → `PULL_OK sha256=…` → 回放 45 帧，画面 7–10 人带框 |
 | 白屏**人眼** | ⏳ **未确认** —— 机器只说明配置生效、扫描在跑；屏上是不是白的，要人看一眼 |
 
 > 两个只有上板才会踩到的坑（已写进 `install_boot.py`）：
@@ -44,6 +45,47 @@ py tools/video_send.py --video data/samples/scenes/c03_t01290.0.mp4 --host 192.1
 - 默认 **JPEG q95**。别改成 80：q80 会让板端多出 10 帧假球（球员白鞋被压缩成类球纹理，见 `ai/sessions/024` 轮次 7）。
 - `--fps` 只是**上限**：板端 ncnn 约 0.98 s/帧，实际吞吐由板子反压决定（实测 2.2–2.3 fps）。
 - 结尾会打印 `VIDEO_SEND_OK <帧数> <MB> <MB/s> <fps>`。
+
+## 2.5 一条命令走完：推流 → 板端处理 → 拉回 → 看带框画面（演示用这个）
+
+推流和取结果本来要两个终端（`video_send.py` 推、再上板捞 `net_*.jsonl`）。
+现在 `pc_dashboard.py --push` 把它们串成一条：
+
+```bash
+py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_04_015min.mp4" --push-start 60 --push-max-frames 45
+```
+
+它会依次做四件事，屏上先显示进度、后显示带框画面：
+
+1. 拍一张板端结果目录的「文件→字节数」快照；
+2. 推流（`video_send.push_frames`，与命令行**同一份**协议实现），状态条显示 `推流中 25 帧 …`；
+3. 轮询板端，等那份 JSONL 的行数稳定下来；
+4. 用 sha256 校验着拉回本地 `build/pull/`，然后走普通回放路径。
+
+| 参数 | 作用 |
+|---|---|
+| `--push <视频>` | 要推的视频；同时作为画面源（帧号才和检测框对得上） |
+| `--push-start <秒>` | 从第几秒开始推（跳过片头/中场休息），画面会自动平移帧号 |
+| `--push-max-frames <N>` | 只推前 N 帧。**演示必填**：板端约 2–3 fps，5 分钟片段要推半小时 |
+| `--push-fps` / `--push-quality` | 同 `video_send.py`；质量别降到 95 以下 |
+| `--board` / `--jupyter` | 板端推流口与 Jupyter 口（默认 `192.168.2.99:5007`、`:9090`） |
+| `--store-dir` / `--store-prefix` | 板端结果目录与文件前缀（与 `zynq-stream` 服务一致） |
+
+实测（2026-11-01，clip_04 第 60 秒起推 45 帧）：
+
+```
+PUSH_FRAME_OFFSET start_frame=1500
+PUSH_DONE frames=45 mb=3.9 fps=5.5
+BOARD_RESULT_READY /home/xilinx/zynq-yolo/build/flow/net_20261030_222520_00.jsonl lines=45 bytes=16210
+PULL_OK D:\zynq-yolo\build\pull\net_20261030_222520_00.jsonl lines=45 sha256=5fde1f820920c7be
+PIPELINE_OK frames=45 detections=3 med_infer_ms=…
+```
+
+三个**只有上板才会暴露**的坑（都已写进代码注释，别「优化」掉）：
+
+- **不能比时间戳**：板子不对时，板端 mtime 停在 10-30，与主机时间没法比；判据改成「文件变长了」。
+- **不能只认新建文件**：`zynq-stream` 在**服务启动时**就把 `net_*.jsonl` 建好，推流数据写进这个已有文件。
+- **空文件不算结果**：`ResultStore` 是攒着写的，推完那一刻文件可能还是 0 行 0 字节。
 
 ## 3. 推电脑摄像头（现场「实拍进板」）
 
@@ -101,7 +143,10 @@ py tools/install_boot.py --uninstall   # 撤掉（文件保留）
 
 不想用 HDMI 的话，另外两条路子仍然可用：
 
-- **PC 侧**：推流结束后用 `tools/pc_dashboard.py --replay <JSONL>` 看那一段的分析画面；
+- **PC 侧（最省事）**：`py tools/pc_dashboard.py --push <视频> --push-start <秒> --push-max-frames <N>`，
+  推完自动拉回结果并回放带框画面（见 §2.5）。这是**演示主路径**：画面在 PC 上，不受
+  HDMI 那个整行旋转缺陷影响。
+- **PC 侧（拆开做）**：推流结束后用 `tools/pc_dashboard.py --replay <JSONL>` 看那一段的分析画面；
 - **网口回传**：板端另跑 `tools/video_back.py`（走 5006），PC 上 `pc_dashboard --listen` 接。
   这条路已上板验过（`VIDEO_BACK_OK`），但它需要**板本地**的视频源，所以是「板上跑文件 + 回传」，
   不是「PC 推流 + 回传」的闭环。**闭环（推流进板、带框图直接从网口回来）没实现**，

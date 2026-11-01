@@ -226,6 +226,16 @@ LCD 面板、HDMI 环出与 PC 面板，三处显示因此不会再各说各话�
 > 图 6b：`pc_dashboard --replay data/results/ball_air_c03_20261031.jsonl --video c03 --dump-frame 106`。
 > 顶栏人数 15、球「可见」，底栏「球：画面 (739, 212) px」与画面里的红圈一致。
 
+**2026-11-01 新增：推流也进上位机**。`pc_dashboard.py --push <视频>` 一条命令完成
+「推流 → 等板端落盘 → 校验拉回 → 回放带框画面」，演示时不用再开第二个终端
+（细节与三个上板才暴露的判据坑见 §8 第 15 条）。
+
+![PC 面板：推流闭环（板上现跑的 JSONL 拉回后渲染）](figures/pc_push_loop_20261101.png)
+
+> 图 6d：`pc_dashboard --push clips_5min/clip_04_015min.mp4 --push-start 60 --push-max-frames 45` 的输出。
+> 45 帧全部是**板上现跑**出来的：绿框 `#id` 落在球员身上，记分牌 00:55 与 `start_frame=1500`
+> 对得上（帧号偏移生效）。这一帧球不可见，属已知边界（远处球只有几个像素），不是本次改动引入。
+
 ![LCD 800×480 面板：同帧（板上 `status_display --frame 106 --fb-bram`）](figures/lcd_panel_ball_20261031.png)
 
 > 图 6c：同一份 JSONL、同一帧号写进 `lcd_fb_800`（48,016 字，9.9 s），
@@ -1012,6 +1022,17 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     （`HDMI_PREVIEW_ON` → `HDMI_PREVIEW_OFF white_restored` → `PIPELINE_OK frames=30`）。
     **边界**：白屏与回显**都只有机器判据，画面未经人眼确认**；且 HDMI 有间歇整行旋转缺陷，
     回显画面不能作为验收依据，验收仍走 PC 侧 JSONL 回放。
+
+15. **推流与上位机合成一条命令（2026-11-01）**：`pc_dashboard.py --push <视频>` 依次完成
+    ①快照板端结果目录 → ②推流（与 `video_send.py` 共用同一个 `push_frames()`）→ ③等板端
+    落盘 → ④sha256 校验拉回 → ⑤按普通回放渲染带框画面；`--push-start` 跳过片头并把画面
+    帧号自动平移（板端 `frame=0` 对应原视频的 `start_frame`）。**实测**（clip_04 第 60 秒起
+    45 帧）：`PUSH_DONE frames=45` → `BOARD_RESULT_READY lines=45` → `PULL_OK sha256=5fde1f82…`，
+    出图 7–10 人带框，记分牌与 `start_frame=1500` 对齐。**三个坑写进代码注释**：`create_connection`
+    的 5 s 超时会留在 socket 上（板端反压即误判失败）；板端**在服务启动时就建好** JSONL，
+    「新建文件」判据整段失效（改为「快照比增长」）；`ResultStore` 攒写，推完那一刻文件可能是
+    0 行（空文件不算结果）。**边界**：板端约 2–3 fps，整段 5 分钟要推半小时，演示用
+    `--push-max-frames` 限长；只拉最新一段，不拼接；GUI 窗口本身未人眼。
 
 ---
 

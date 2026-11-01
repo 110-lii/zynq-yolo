@@ -43,6 +43,7 @@
 | [023](023_pc_video_view_ball_air.md) | 2026-10-31 | PC 端视频视图、球的空中候选、三屏统一到一份数据 ★ | `mythos-magpie-5487751739`（客户端 `claude`） | ① 「人数 0」根因：`normalize()` 要求 `tracks` 有 8 项（球场坐标），转播机位只有 6 项 ⇒ 整行被丢；改成框中心当画面坐标后与画面框数一致（13 / 15）；② 球不是看不见，是飞在草场掩膜外（c03 f140–158 白块 769,182→857,235）—— 板上 C 分类器对真球给 0.92–0.97，对白球衣 0.5–0.68；③ 顺带修两个既有 bug：`bc` 不清零（候选重复计命中）、`ball` 永不清空（150/250 帧假「可见」）；④ 三屏同一份 c03e JSONL：LCD 9.9 s 一屏、HDMI 375 帧 under=0、PC 出图见红圈；⑤ HDMI 仍整行 +313 列（21 列 × 7 行全 SHIFT、sum=1 无丢点）⇒ 022 §7.31 的间歇缺陷未解 |
 | [024](024_honesty_audit_and_repack.md) | 2026-10-31 | 撤回结论的全文清理；按修订后的事实重出文档与交付包 ★ | `mythos-magpie-5487751739`（客户端 `claude`） | ① `HDMI_VISUAL_OK` 已于 20:23 撤回，但 5 个提交件（设计报告 6 处、清单 4 处、技术文档、docs 2 个、llm_logs 2 处）仍在宣称它成立 —— 全部降级为「当时记录、现已撤回」，并写明 `under=0`/累加和/「每源列 1 次」三类判据**对整行旋转都是瞎的**；② 修报告内部矛盾（§12 说队别未接主线 vs §8 说已接）；③ 补今日事实与边界（球 20/50 扫球帧、D015 只落地输出半条 `VIDEO_BACK_OK 250 19.61 5.1`、PC 比赛画面视图两张图）；④ 并发跑完 14 项自检 + `SIM_PASS 12/12`；⑤ 重出 docx/pdf/图，`SUBMISSION_PACK_OK` 678 文件 28.8 MB + RAR 23.2 MB，旧包删除，push 后 ahead=0 |
 | [025](025_boot_idle_stream_ui_removal.md) | 2026-11-01 | 删选色 UI、HDMI 待机白屏、上电即用、PC 推流 ★ | `mythos-magpie-5487751739`（客户端 `claude`） | ① 按 D013-a 自己的判据判定「选颜色 UI」对识别无用（不影响检测、只产出队别标签、队别无真值）⇒ D028 删除 `tools/lcd_ui.py`，同步 8 个文档与分镜（删 S8，155 s→139 s）；② D029：`board_idle.py` 常驻白屏 + `install_boot.py` 装两个 systemd 服务，**上板并真重启验过**（`BOOT_SERVICE_STATE active active`、`IDLE_HDMI_WHITE_OK frames=31/35 under=0`、重启后推流 `PIPELINE_OK`），踩到并修掉「系统 python 没有 pynq」「systemd 无 XILINX_XRT」两个坑；③ 新增 `docs/streaming_quickstart.md`（电脑推流手册）；⏳ 白屏仍待人眼 |
+| [026](026_pc_push_integration_and_clips.md) | 2026-11-01 | 推流集成进上位机（一条命令闭环）、整场回放切 10 段 ★ | `mythos-magpie-5487751739`（客户端 `claude`） | ① `video_send.push_frames()` 抽成共用实现，`pc_dashboard.py --push` 串起「推 → 等落盘 → sha256 校验拉回 → 回放」，上板实测 clip_04 第 60 秒起 45 帧：`PUSH_DONE frames=45` → `BOARD_RESULT_READY lines=45` → `PULL_OK sha256=5fde1f82…`，出图 7–10 人带框、记分牌 00:55 与 `start_frame=1500` 对齐；② ★ 四个只有上板才暴露的坑：`%` 模板转义、`create_connection` 的 5 s 超时留在 socket 上导致 sendall 超时且线程静默死亡、`ResultStore` 攒写导致空文件被当成结果、板端**在服务启动时就建好** JSONL 使「新建文件」判据整段失效 ⇒ 改为「快照比增长」，并顺带否掉「拿主机时间比板端 mtime」（板端时钟停在 10-30）；③ 整场 2 GB 回放 `-c copy` 切 10 段 5 分钟（05:00.08–05:00.34），按草皮占比量出只有 clip_04 起是比赛画面；⏳ GUI 窗口未人眼 |
 
 > **统计**：共 **23** 条记录；带自我纠错轨迹（★）**16** 条。
 > 编号连续、不复用；下一条应为 `026_<slug>.md`。
@@ -64,7 +65,7 @@
 ## 怎么加一条记录
 
 ```powershell
-# 1) 复制模板，编号取本表 max+1（当前 max=025 ⇒ 下一个是 026）
+# 1) 复制模板，编号取本表 max+1（当前 max=026 ⇒ 下一个是 027）
 Copy-Item D:\zynq-yolo\ai\sessions\_TEMPLATE.md D:\zynq-yolo\ai\sessions\005_<slug>.md
 # 2) 逐项填写（字段不得删；「原文位置」必须真实）
 # 3) 回到本文件，在上表追加一行（顺序不可反）

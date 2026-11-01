@@ -65,7 +65,32 @@ def _login():
         raise SystemExit("login failed: %s" % code)
 
 
+def configure(host=None, password=None):
+    """改默认板端地址/密码（`pc_dashboard --jupyter 192.168.2.99:9090` 用）。"""
+    global HOST, BASE, PASSWORD
+    if host:
+        HOST = host
+        BASE = "http://" + HOST
+    if password:
+        PASSWORD = password
+
+
 def run(code, timeout=900.0):
+    return _exec(code, timeout)
+
+
+def run_capture(code, timeout=900.0):
+    """同 run()，但把 stdout 收成字符串：返回 (rc, text)。
+
+    为什么要它：`run()` 直接写 `sys.stdout.buffer`，调用方拿不到内容；
+    而「把板端某个 JSONL 拉回来看」这种用途必须拿到文本（见 pc_dashboard --push）。
+    """
+    sink = []
+    rc = _exec(code, timeout, sink)
+    return rc, "".join(sink)
+
+
+def _exec(code, timeout=900.0, sink=None):
     _login()
     _, raw = _call("GET", "/api/kernels")
     alive = [k for k in json.loads(raw) if k.get("execution_state") in ("idle", "busy", "starting")]
@@ -97,8 +122,12 @@ def run(code, timeout=900.0):
             continue
         mt = msg.get("msg_type")
         if mt == "stream":
-            sys.stdout.buffer.write(msg["content"].get("text", "").encode("utf-8", "replace"))
-            sys.stdout.flush()
+            text = msg["content"].get("text", "")
+            if sink is None:
+                sys.stdout.buffer.write(text.encode("utf-8", "replace"))
+                sys.stdout.flush()
+            else:
+                sink.append(text)
         elif mt == "error":
             sys.stderr.write("\n".join(msg["content"].get("traceback", [])))
         elif mt == "execute_reply":

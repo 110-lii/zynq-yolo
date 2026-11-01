@@ -179,6 +179,21 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   **屏上对不对要人眼看** —— 与 10-31 `HDMI_VISUAL_OK` 撤回同一条纪律。
 - 电脑侧怎么推流：见 [`streaming_quickstart.md`](streaming_quickstart.md)。
 
+## 推流 + 取结果合成一条命令（2026-11-01）
+
+- `tools/pc_dashboard.py --push <视频> --push-start <秒> --push-max-frames <N>`：推流 → 等板端
+  落盘 → sha256 校验拉回 `build/pull/` → 自动回放带框画面。推流实现抽成
+  `video_send.push_frames()`，命令行走的也是这一份。
+- **实测**（`clips_5min/clip_04_015min.mp4` 第 60 秒起 45 帧）：
+  `PUSH_DONE frames=45` → `BOARD_RESULT_READY lines=45 bytes=16210` →
+  `PULL_OK sha256=5fde1f820920c7be` → 回放 45 帧，画面 7–10 人带框。
+- **三个上板才暴露的坑**：① `create_connection(timeout=5)` 的超时会留在 socket 上，
+  板端反压 5 s 就误判失败（改 120 s，并把线程异常兜成 `PUSH_FAIL`）；② 板端**在服务启动时**
+  就建好 `net_*.jsonl`，推流数据写进已有文件 ⇒「只认新建文件」整段漏（改为「快照比增长」）；
+  ③ `ResultStore` 攒着写，推完那一刻可能是 0 行 ⇒ 空文件不算结果。另：板端时钟停在 10-30，
+  **不能拿主机时间比 mtime**。
+- **边界**：板端约 2–3 fps，整段 5 分钟要推半小时；只拉最新一段；GUI 窗口未人眼。
+
 ## 分层测试集与全流程 overlay（2026-10-30）
 
 - **测试集分层**（`tools/split_scenes.py`）：从整场比赛按「人员聚集度」切成

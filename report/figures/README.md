@@ -15,6 +15,7 @@
 | `system_arch.png` | 系统功能框图 |
 | `optimization.png` | 优化前后对比 |
 | `hdmi_osd_boxes.png` | HDMI 带框环出的主机侧渲染（框坐标为演示给定） |
+| `pc_push_loop_20261101.png` | PC 面板：**推流闭环**（`pc_dashboard --push` 把板上现跑的 JSONL 拉回后渲染；2026-11-01 上板实测） |
 
 ## 规则
 

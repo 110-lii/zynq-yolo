@@ -32,6 +32,9 @@
     # 5) 自检：自造 5 帧（含一条出界）走完整渲染链路，不需要板子和显示器
     py tools/pc_dashboard.py --selftest
 
+    # 6) 一条命令走完「推流 → 板上处理 → 拉回结果 → 看带框画面」（需板端 zynq-stream 在听）
+    py tools/pc_dashboard.py --push clips_5min/clip_04_015min.mp4 --push-start 60 --push-max-frames 45
+
 判据令牌（脚本/文档只认这几个串，改动时不要换词）
 --------------------------------------------------
     PC_DASHBOARD_SELFTEST OK   自检通过（解析→事件→渲染→CSV→证据帧→PNG 全链路）
@@ -94,6 +97,7 @@ CONN_ON = "TCP 已连接"
 CONN_OFF = "TCP 已断开"
 CONN_REPLAY = "回放中"
 CONN_DONE = "回放结束"
+CONN_PUSH = "推流中"
 
 _SIDE_CN = {"left": "左端线", "right": "右端线", "top": "上边线", "bottom": "下边线"}
 _GOAL_CN = {"left": "左球门", "right": "右球门"}
@@ -614,7 +618,7 @@ def _chip(img, tb, x, y, w, h, label, value, color):
 def _conn_color(conn):
     if conn == CONN_ON:
         return COL_OK
-    if conn in (CONN_WAIT, CONN_REPLAY):
+    if conn in (CONN_WAIT, CONN_REPLAY, CONN_PUSH):
         return COL_WARN
     if conn == CONN_OFF:
         return COL_BAD
@@ -658,17 +662,20 @@ def _draw_status_bar(img, tb, st, conn):
 class VideoSource:
     """按帧号取画面（顺读；跳帧才 seek）。转播素材没有球场标定时，用画面代替俯视图。"""
 
-    def __init__(self, path):
+    def __init__(self, path, start=0):
         import cv2 as _cv
         self.cv = _cv
         self.path = str(path)
         self.cap = _cv.VideoCapture(self.path)
         self.ok = self.cap.isOpened()
         self.pos = -1
+        # 帧号偏移：推流时若从第 N 秒开始送，板端的 frame=0 对应本视频的第 start 帧
+        self.start = int(start)
 
     def get(self, idx):
         if not self.ok or idx is None or idx < 0:
             return None
+        idx = int(idx) + self.start
         if idx != self.pos + 1:
             self.cap.set(self.cv.CAP_PROP_POS_FRAMES, int(idx))
         ok, f = self.cap.read()
@@ -884,6 +891,12 @@ class Dashboard:
             self.conn = CONN_DONE
         elif t.startswith("REPLAY"):
             self.conn = CONN_REPLAY
+        elif t.startswith("PUSH_FAIL"):
+            self.conn = CONN_OFF
+        elif t.startswith("PUSH"):
+            # 推流阶段板端还没有结果，屏上只显示「推流中 12/300」这样的进度
+            detail = t[5:].strip()
+            self.conn = ("%s %s" % (CONN_PUSH, detail)) if detail else CONN_PUSH
 
     def frame(self, st: FrameState):
         self.state = st
@@ -916,6 +929,231 @@ def write_png(dash, path):
         raise RuntimeError("cv2.imencode 失败：%s" % p)
     p.write_bytes(buf.tobytes())
     return str(p.resolve())
+
+
+# ------------------------------------------------- 推流到板子 + 把结果拉回来
+# 为什么把这一步搬进上位机：`video_send.py` 只负责「送」，送完板端 JSONL 还在板子上，
+# 要 SSH/Jupyter 再捞一遍才能看。演示时不该让人切两个终端。这里把
+# 「推 → 等落盘 → 拉回 → 回放」串成一条，屏上先显示推流进度，再显示带框画面。
+#
+# 板端的时间不可信（没对时，实测停在 10-30），所以**不比较时间戳**：推流前先记下
+# 目录里每个文件的字节数，推完只认「比快照变长、且有内容」的那个文件。
+_BOARD_LIST = r'''
+import glob, os
+d = %(dir)r
+files = glob.glob(os.path.join(d, %(pat)r))
+files.sort(key=os.path.getmtime)
+print("N %%d" %% len(files))
+for p in files:
+    with open(p, "rb") as f:
+        n = sum(1 for _ in f)
+    print("F %%s %%d %%d" %% (p, n, os.path.getsize(p)))
+'''
+
+_BOARD_PULL = r'''
+import base64, hashlib
+p = %(remote)r
+d = open(p, "rb").read()
+print("INFO %%d %%s" %% (len(d), hashlib.sha256(d).hexdigest()))
+b = base64.b64encode(d).decode("ascii")
+for i in range(0, len(b), 65536):
+    print("CHUNK " + b[i:i + 65536])
+print("END")
+'''
+
+
+def _board_mod(jupyter):
+    """懒加载 board_jupyter（它依赖 websocket-client，纯本地回放时不该被拖进来）。"""
+    import importlib.util
+    here = Path(__file__).resolve().parent
+    spec = importlib.util.spec_from_file_location("board_jupyter",
+                                                  str(here / "board_jupyter.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    if jupyter:
+        mod.configure(jupyter, None)
+    return mod
+
+
+def board_snapshot(store_dir, pattern="net_*.jsonl", jupyter="192.168.2.99:9090"):
+    """推流前拍一张「目录里每个文件多大」。返回 {远程路径: 字节数}。
+
+    为什么不比较时间戳：板子不对时（2026-11-01 实测板端时钟停在 10-30），
+    拿主机时间去和板端 mtime 比毫无意义；比「文件有没有变长」不需要同步时钟。
+    为什么不只认「新建文件」：`zynq-stream` 是在**服务启动时**就把 `net_*.jsonl`
+    建出来的，推流数据写进的是这个已有文件，所以新建判据会整段漏掉（同样实测踩到）。
+    """
+    bj = _board_mod(jupyter)
+    rc, text = bj.run_capture(_BOARD_LIST % {"dir": store_dir, "pat": pattern},
+                              timeout=120.0)
+    if rc != 0:
+        raise RuntimeError("板端列目录失败（rc=%s）" % rc)
+    return {p: v[1] for p, v in _parse_list(text).items()}
+
+
+def _parse_list(text):
+    out = {}
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("F "):
+            continue
+        try:
+            _tag, path, n, size = line.split(" ", 3)
+            out[path] = (int(n), int(size))
+        except ValueError:
+            continue
+    return out
+
+
+def _pick_grown(items, before):
+    """从一次目录快照里挑「比推流前变长、且有内容」的文件。
+
+    items: {path: (lines, size)}；before: {path: size}（推流前的快照）。
+    返回 (delta, path, lines, size) 或 None。抽成函数是为了能被 --selftest 直接覆盖：
+    这套判据踩过两次坑（空文件、已有文件长数据），不该只靠上板才能验证。
+    """
+    grown = []
+    for p, (n, size) in items.items():
+        delta = size - before.get(p, 0)
+        if delta > 0 and n > 0:
+            grown.append((delta, p, n, size))
+    if not grown:
+        return None
+    grown.sort()
+    return grown[-1]
+
+
+def board_wait_results(before, store_dir, pattern="net_*.jsonl",
+                       jupyter="192.168.2.99:9090", timeout=180.0,
+                       poll=2.0, log=None):
+    """等板端把这次推流的结果写稳，返回 (remote_path, lines, size)。
+
+    判据：选**相对快照增长最多**的那个文件，且它的「行数+字节数」在连续两次轮询里
+    不变、且有内容。空文件不算数——板端先建文件后写内容，且 `ResultStore` 是攒着
+    写的，开局那一刻文件确实就是 0 行（实测 pull 回来过空文件）。
+    """
+    bj = _board_mod(jupyter)
+    deadline = time.time() + timeout
+    last = None
+    stable = 0
+    while time.time() < deadline:
+        rc, text = bj.run_capture(_BOARD_LIST % {"dir": store_dir, "pat": pattern},
+                                  timeout=120.0)
+        items = _parse_list(text) if rc == 0 else {}
+        pick = _pick_grown(items, before)
+        if pick is not None:
+            _delta, path, n, size = pick
+            cur = (path, n, size)
+            if cur == last:
+                stable += 1
+                if stable >= 1:
+                    if log:
+                        log("BOARD_RESULT_READY %s lines=%d bytes=%d"
+                            % (cur[0], cur[1], cur[2]))
+                    return cur
+            else:
+                stable = 0
+            last = cur
+        time.sleep(poll)
+    raise RuntimeError("板端结果没有落定（timeout=%ss, last=%s）" % (timeout, last))
+
+
+def board_pull_jsonl(remote, local, jupyter="192.168.2.99:9090", timeout=300.0):
+    """把板端一个 JSONL 拉回本地并校验 sha256。返回本地路径。"""
+    import base64
+    import hashlib
+    bj = _board_mod(jupyter)
+    rc, text = bj.run_capture(_BOARD_PULL % {"remote": remote}, timeout=timeout)
+    if rc != 0:
+        raise RuntimeError("板端读文件失败（rc=%s）：%s" % (rc, remote))
+    want_len = want_sha = None
+    chunks = []
+    for line in text.splitlines():
+        if line.startswith("INFO "):
+            _tag, n, sha = line.split(" ", 2)
+            want_len, want_sha = int(n), sha.strip()
+        elif line.startswith("CHUNK "):
+            chunks.append(line[6:].strip())
+        elif line.strip() == "END":
+            break
+    if want_len is None or not chunks:
+        raise RuntimeError("板端没有返回内容：%s" % remote)
+    raw = base64.b64decode("".join(chunks))
+    got_sha = hashlib.sha256(raw).hexdigest()
+    if len(raw) != want_len or got_sha != want_sha:
+        raise RuntimeError("回传校验失败 len=%d/%d sha=%s/%s"
+                           % (len(raw), want_len, got_sha[:12], (want_sha or "")[:12]))
+    p = Path(local)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(raw)
+    return p, got_sha
+
+
+def push_worker(video, q, stop, host="192.168.2.99", port=5007,
+                jupyter="192.168.2.99:9090",
+                store_dir="/home/xilinx/zynq-yolo/build/flow",
+                pattern="net_*.jsonl", out_dir="build/pull",
+                fps=25.0, quality=95, max_frames=0, scale=1.0, speed=1.0,
+                start_sec=0.0, video_src=None, log=print):
+    """线程体：推流 → 等板端落盘 → 拉回 → 交给回放线程。
+
+    一切进度都通过队列 (`("status", ...)` / `("frame", ...)`) 回报，
+    与 `--replay` / `--listen` 走同一条渲染路径，GUI 与 headless 都不用改。
+    video_src 传进来是为了把帧号偏移写回去：从第 N 秒开始推时，板端 frame=0
+    对应原视频的某一帧，画面与检测框对不上就白看了。
+    """
+    try:
+        _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
+                       out_dir, fps, quality, max_frames, scale, speed,
+                       start_sec, video_src, log)
+    except Exception as e:                                   # noqa: BLE001
+        # 线程里抛出去的异常不会有人接：不在这里兜住，屏上就会永远停在「推流中」
+        # （2026-11-01 实测：sendall 超时后界面静默十分钟）。宁可报错也要说出来。
+        q.put(("status", "PUSH_FAIL 异常：%s: %s" % (type(e).__name__, e)))
+
+
+def _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
+                   out_dir, fps, quality, max_frames, scale, speed,
+                   start_sec, video_src, log):
+    q.put(("status", "PUSH 连接板子"))
+    before = board_snapshot(store_dir, pattern, jupyter)
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from video_send import push_frames
+
+    def _prog(d):
+        q.put(("status", "PUSH %d 帧 %.1f MB %.1f fps"
+               % (d["frames"], d["mb"], d["fps"])))
+
+    q.put(("status", "PUSH 开始推送"))
+    res = push_frames(video, host=host, port=port, fps=fps, quality=quality,
+                      max_frames=max_frames, scale=scale, start_sec=start_sec,
+                      on_progress=_prog, stop=stop)
+    if not res["ok"]:
+        q.put(("status", "PUSH_FAIL 推流失败：%s" % res["reason"]))
+        return
+    if video_src is not None:
+        video_src.start = int(res.get("start_frame") or 0)
+        if log:
+            log("PUSH_FRAME_OFFSET start_frame=%d" % video_src.start)
+    if log:
+        log("PUSH_DONE frames=%d mb=%.1f fps=%.1f"
+            % (res["frames"], res["bytes"] / 1e6, res["fps"]))
+
+    q.put(("status", "PUSH 等板端落盘"))
+    remote, lines, _size = board_wait_results(before, store_dir, pattern,
+                                              jupyter, log=log)
+
+    q.put(("status", "PUSH 拉回结果 %d 行" % lines))
+    out = Path(out_dir).expanduser()
+    if not out.is_absolute():
+        out = Path.cwd() / out
+    local, sha = board_pull_jsonl(remote, out / Path(remote).name, jupyter)
+    if log:
+        log("PULL_OK %s lines=%d sha256=%s" % (local, lines, sha[:16]))
+
+    # 到这里数据已经在本机：后面的回放与 `--replay` 完全一样
+    replay_worker(local, q, stop, speed=speed, loop=False)
 
 
 # ---------------------------------------------------------------- 回放线程
@@ -1111,6 +1349,18 @@ def _selftest():
     png = write_png(dash, tmp / "selftest_dashboard.png")
     check(Path(png).is_file() and Path(png).stat().st_size > 5000, "PNG 未写出或过小")
 
+    # 7) 推流拉回判据（--push）：只认「相对快照变长、且有内容」的文件。
+    #    这两条都是 2026-11-01 上板踩出来的：空文件被当成结果；数据写进的是
+    #    服务启动时就建好的旧文件，所以「新建文件」这个判据整段漏。
+    items = {"/flow/a.jsonl": (20, 1728), "/flow/b.jsonl": (0, 0),
+             "/flow/c.jsonl": (5, 400)}
+    pick = _pick_grown(items, {"/flow/c.jsonl": 400})
+    check(pick is not None and pick[1] == "/flow/a.jsonl", "增长判据选错文件：%s" % (pick,))
+    check(_pick_grown(items, {"/flow/a.jsonl": 1728, "/flow/c.jsonl": 400}) is None,
+          "没有增长时不该给出结果")
+    check(_parse_list("N 1\nF /flow/a.jsonl 20 1728\n") == {"/flow/a.jsonl": (20, 1728)},
+          "_parse_list 解析错误")
+
     print("PC_DASHBOARD_SELFTEST", "OK" if ok else "FAIL")
     print("PC_DASHBOARD_SELFTEST_PNG", png)
     return 0 if ok else 1
@@ -1132,12 +1382,38 @@ def main():
                     help="配合 --dump-png：回放到该帧号就停（-1=放到最后）。"
                          "出「球刚到画面里」这类截图时用")
     ap.add_argument("--selftest", action="store_true", help="无显示器自检")
+    ap.add_argument("--push", default="", metavar="VIDEO",
+                    help="把这段视频推到板子上（板端 zynq-stream 在听 5007），"
+                         "等板端落盘后自动把结果拉回来回放；会自动把它当作画面源")
+    ap.add_argument("--board", default="192.168.2.99:5007", help="板端推流地址 host:port")
+    ap.add_argument("--jupyter", default="192.168.2.99:9090",
+                    help="板端 Jupyter host:port（只用来跑板端命令与拉结果）")
+    ap.add_argument("--store-dir", default="/home/xilinx/zynq-yolo/build/flow",
+                    help="板端结果目录（zynq-stream 的 --store-dir）")
+    ap.add_argument("--store-prefix", default="net",
+                    help="只认这个前缀的 JSONL（zynq-stream 的 --store-prefix）")
+    ap.add_argument("--push-max-frames", type=int, default=0,
+                    help="只推前 N 帧（演示/试跑用；0=整段）")
+    ap.add_argument("--push-start", type=float, default=0.0,
+                    help="从第几秒开始推（跳过片头/中场休息）；画面会自动对齐帧号")
+    ap.add_argument("--push-fps", type=float, default=25.0,
+                    help="推流速率上限；实际吞吐由板子反压决定（约 2–3 fps）")
+    ap.add_argument("--push-quality", type=int, default=95,
+                    help="JPEG 质量；默认 95 是量出来的（q80 会多出假球），别往下调")
+    ap.add_argument("--pull-dir", default="build/pull", help="拉回的 JSONL 存在哪")
     args = ap.parse_args()
 
     if args.selftest:
         raise SystemExit(_selftest())
-    if not args.listen and not args.replay:
-        ap.error("需要 --listen 或 --replay")
+    if args.push:
+        if args.listen or args.replay:
+            ap.error("--push 不能与 --listen / --replay 同用（推完会自动回放）")
+        if not Path(args.push).is_file():
+            ap.error("找不到要推的视频：%s" % args.push)
+        if not args.video:
+            args.video = args.push          # 画面与结果同源，帧号才对得上
+    if not args.listen and not args.replay and not args.push:
+        ap.error("需要 --listen / --replay / --push 之一")
     if args.listen and args.replay:
         ap.error("--listen 与 --replay 只能二选一")
 
@@ -1170,11 +1446,30 @@ def main():
     q = queue.Queue()
     stop = threading.Event()
 
+    # 画面源要先建出来：push_worker 拿到帧号偏移后直接写回它
+    _vid = VideoSource(args.video) if args.video else None
+    if _vid is not None and not _vid.ok:
+        ap.error("打不开视频：%s" % args.video)
+
     if args.listen:
         host, port = args.listen.rsplit(":", 1)
         threading.Thread(target=recv_lines, args=(host, int(port), q, stop),
                          daemon=True).start()
         base_dir, source = None, "TCP %s" % args.listen
+    elif args.push:
+        bhost, bport = args.board.rsplit(":", 1)
+        threading.Thread(target=push_worker, args=(args.push, q, stop),
+                         kwargs=dict(host=bhost, port=int(bport),
+                                     jupyter=args.jupyter,
+                                     store_dir=args.store_dir,
+                                     pattern="%s_*.jsonl" % args.store_prefix,
+                                     out_dir=args.pull_dir,
+                                     fps=args.push_fps, quality=args.push_quality,
+                                     max_frames=args.push_max_frames,
+                                     start_sec=args.push_start,
+                                     video_src=_vid,
+                                     speed=args.speed), daemon=True).start()
+        base_dir, source = None, "推流 %s" % Path(args.push).name
     else:
         rp = Path(args.replay)
         if not rp.is_file():
@@ -1183,9 +1478,6 @@ def main():
                          args=(rp, q, stop, args.speed, args.loop), daemon=True).start()
         base_dir, source = rp.parent, rp.name
 
-    _vid = VideoSource(args.video) if args.video else None
-    if _vid is not None and not _vid.ok:
-        ap.error("打不开视频：%s" % args.video)
     dash = Dashboard(csv_path=args.csv or None, base_dir=base_dir, source=source,
                      video=_vid)
 
@@ -1201,7 +1493,9 @@ def main():
                 if kind == "status":
                     dash.status(payload)
                     print("STATUS", payload)
-                    if str(payload).startswith("REPLAY_DONE") or str(payload) == "DISCONNECTED":
+                    if (str(payload).startswith("REPLAY_DONE")
+                            or str(payload).startswith("PUSH_FAIL")
+                            or str(payload) == "DISCONNECTED"):
                         break
                 elif kind == "frame":
                     dash.frame(payload)

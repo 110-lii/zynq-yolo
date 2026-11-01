@@ -171,9 +171,21 @@ py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/
 > `_is_grass` 36 中只剩 2），所以出演示画面时用 PS 检测路径。PL 预处理本身（18.8 ms/帧、LUT 7%）
 > 仍是设计的一部分，但**这一段不演示它**，字幕和旁白都不能让人以为这段画面经过 PL 预处理。
 
-**可选加强（时间够才做，不挤占已定 155 s）**：S4 也可以拍成「视频从 PC 经以太网送进板子」
+**可选加强（时间够才做，不挤占已定 139 s）**：S4 也可以拍成「视频从 PC 经以太网送进板子」
 （D015 输入侧，2026-10-31 已上板验过等价：文件源与网络源均 `frames=250 detections=17`，
-带球帧同为 100–114、140–144）。先起板端监听、再在 PC 上送：
+带球帧同为 100–114、140–144）。**2026-11-01 起有更省事的一条命令**：推流、取回结果、回放
+带框画面合成一步，屏上先显示 `推流中 25 帧 …` 再直接出画面（细节见
+`docs/streaming_quickstart.md` §2.5）：
+
+```bash
+py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_04_015min.mp4" --push-start 60 --push-max-frames 45
+```
+
+> 预期：`PUSH_DONE frames=45` → `BOARD_RESULT_READY lines=45` → `PULL_OK sha256=…` → 回放 45 帧，
+> 画面 7–10 人带框、记分牌与 `start_frame=1500` 对齐（2026-11-01 实测）。
+> 用整段 5 分钟片段之前先看 `--push-max-frames`：板端约 2–3 fps，整段要推半小时。
+
+若要拍「板子自己在处理」的镜头，仍可以先起板端监听、再在 PC 上送：
 
 ```bash
 py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/board_pipeline.py','--listen','5007','--every','15','--max-det','0','--no-pl','--no-camera-gate','--ball-every','5','--bin','/home/xilinx/ncnn_infer','--param','/home/xilinx/zynq-yolo/build/models/person_v8n25.param','--model','/home/xilinx/zynq-yolo/build/models/person_v8n25.bin','--store-dir','build/flow','--store-prefix','netdemo','--out','/home/xilinx/netdemo.json'],cwd='/home/xilinx/zynq-yolo',stdout=subprocess.PIPE,stderr=subprocess.STDOUT,universal_newlines=True);print(p.stdout[-3000:])"

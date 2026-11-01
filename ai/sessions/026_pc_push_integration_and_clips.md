@@ -158,6 +158,26 @@ c03（1280×720）结果，并说明是另一段素材。
 
 产物：`docs/demo_run_sheet.md`（开场检查、逐秒预期、板端证据、四档降级、不能说的话）。
 
+## 轮次 7 — 「是不是什么事件都检测不出来」：三层原因，逐层实测
+
+用户问得很准：排练里事件流一直是空的。查下来不是一件事，是三层叠在一起：
+
+| 层 | 事实 | 怎么证的 |
+|---|---|---|
+| ① **装机服务根本不跑事件代码** | `zynq-stream` 的 ExecStart 没有 `--proposal`，而 `events` 只在 `--proposal` 分支里算 | 拉回的 `net_*.jsonl` 每行只有 `frame/detected/tracks/camera_state`，**没有 `events` 键** |
+| ② **服务也没有标定** | 出界/进球/球权都基于球场坐标 | `journalctl` 里从没出现过 `STORE_DIR` 之外的 `--calib`；`camera_state` 恒为 `LIMITED_FIELD_VIEW` |
+| ③ **有标定也未必有事件** | 用 `--proposal --calib data/calib/field_calib_ball.json` 推 `build/ball_clip.mp4` 202 帧：16 帧球场坐标球、`VALID_FIELD_VIEW`、**`events` 对象正常产出**；但最近球员 **7.12 m（最小 3.6 m）> 2 m 判据** ⇒ `possession=None`、`out_of_play=False` | `build/pull_evt/evt_20261030_225312_00.jsonl`（已入库） |
+
+另测了「标定错配」的样子：拿 c03 的标定去推 854×480 转播画面，球投影到 y≈93 m（场地只有 68 m），
+系统按设计退回画面坐标 —— 这说明**换素材必须重新标定**，不能借用。
+
+**证据链缺口（如实记）**：报告里「202 帧 144 坐标球 / 49 帧球权」那次是
+`--calib field_calib.json --proposal` 跑的，`/tmp/out.json` 没归档；仓库里现存的
+`data/results/*.jsonl` **没有一份带 `events`**。今天这份 `pull_evt` 是唯一在库的、带 `events` 的板上输出。
+
+**处置**：不为了演示去调 `possession` 的 2 m 判据；演示词按 `docs/demo_run_sheet.md`
+新增的「评委问事件呢」一行照实说。
+
 ## 未决 / 下一步
 
 1. **人眼**：HDMI 白屏与回显、LCD 面板、PC 面板窗口——仍要人看。

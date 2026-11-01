@@ -194,6 +194,24 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   **不能拿主机时间比 mtime**。
 - **边界**：板端实测 3.2 fps（开 HDMI 回显）/ 4.4 fps（关回显），整段 5 分钟要推 28–39 分钟；只拉最新一段；GUI 窗口未人眼。
 
+## 事件链路：为什么演示里看不到事件（2026-11-01 实测）
+
+三层原因，逐层验证过：
+
+| 层 | 事实 | 判据 |
+|---|---|---|
+| ① 装机服务不跑事件代码 | `zynq-stream` 的 ExecStart 没有 `--proposal`，而 `events` 只在 `--proposal` 分支里计算 | `build/pull/*.jsonl` 每行只有 `frame/detected/tracks/camera_state`，**没有 `events` 键** |
+| ② 转播素材没有匹配标定 | 出界/进球/球权都基于球场坐标；服务也没带 `--calib` | 同一段画面用 c03 的标定投影，球落点 y≈93 m > 场地 68 m，按设计落回画面坐标 |
+| ③ 有标定也不一定有事件 | `--proposal --calib field_calib_ball.json` 推 `build/ball_clip.mp4` 202 帧：16 帧球场坐标球、`camera_state=VALID_FIELD_VIEW`、**`events` 对象正常产出**，但最近球员 **7.12 m（最小 3.6 m）> 2 m 判据** ⇒ `possession=None`、`out_of_play=False` | `build/pull_evt/evt_20261030_225312_00.jsonl` |
+
+**结论**：事件代码是活的（③ 证明 `events` 字段会产出），但**演示用的装机服务不计算事件**，
+而转播素材也不具备触发几何事件的条件。报告里「202 帧 144 坐标球 / 49 帧球权」来自
+2026-10-24 的一次 `--calib field_calib.json --proposal` 运行，**该次原始 JSON 未随包归档**，
+是已知证据缺口（§8 已登记）。
+
+> 想现场展示事件，必须同时满足：服务加 `--proposal` + 匹配标定 + 一段球贴脚/出界的同机位素材。
+> 不为演示去调 `possession` 的 2 m 判据。
+
 ## 分层测试集与全流程 overlay（2026-10-30）
 
 - **测试集分层**（`tools/split_scenes.py`）：从整场比赛按「人员聚集度」切成

@@ -98,6 +98,7 @@ head -5 build/demo_session.csv
 | 第 0 步不是 `active` / ping 不通 | **断电重启**板子，等 60–90 s 再跑第 0 步；期间先讲架构图 |
 | 推流卡在 `推流中` 不动超过 60 s | 看 HDMI 是否已成白屏：成白屏说明板端已处理完，等 `等板端落盘` 那步；连续两次超时就 Ctrl-C，走下行 |
 | 板子彻底掉线 | 回放**已经拉回来**的结果：`py tools/pc_dashboard.py --replay build/pull/net_20261030_224217_00.jsonl --video "D:/yt-dlp/downloads/964262880/clips_5min/clip_04_015min.mp4" --video-start 60` —— 画面照出、框对得上（`--video-start 60` 必须带，否则会从片头开始画，框和画面对不上），明确说「这段是刚才板上跑出来的结果」 |
+| 评委问「事件呢」 | **照实说**：这条装机的 `zynq-stream` 没开 `--proposal`、也没有匹配标定，所以事件流本来就不会有内容（`events` 恒为空）。出界/进球/球权需要「球 + 球场坐标 + 匹配标定」，本片源 854×480 转播远景三者都不满足。已实测：`--proposal --calib` 的球片段能产出 `events` 对象，但最近球员 3.6 m > 2 m 判据 ⇒ 球权仍不成立（见 `ai/sessions/026` 轮次 7） |
 | 想展示**球** | 本片源是 854×480 转播远景，球只有几个像素，**这一路没检出球**（435 帧实测 0 帧）。要展示球请用已有结果回放：`py tools/pc_dashboard.py --replay data/results/ball_air_c03_20261031.jsonl --video data/samples/scenes/c03_t01290.0.mp4 --dump-frame 106`，并说明这是**另一段素材**（1280×720）跑出来的 |
 
 ⚠️ **不能说的话**（报告里已撤回或没验过的）：

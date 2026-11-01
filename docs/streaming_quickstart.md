@@ -68,6 +68,30 @@ py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_0
 | `--push-start <秒>` | 从第几秒开始推（跳过片头/中场休息），画面会自动平移帧号 |
 | `--push-max-frames <N>` | 只推前 N 帧。**演示必填**：板端 3.2–4.4 fps，5 分钟片段（7500 帧）要推 28–39 分钟 |
 | `--push-fps` / `--push-quality` | 同 `video_send.py`；质量别降到 95 以下 |
+
+### 2.5.1 要看**事件**（出界/进球/球权）：加 `--event`
+
+装机服务 `zynq-stream` **不开 `--proposal`、也不带标定**，所以它的 JSONL 里
+`events` 恒为空（这是设计，不是坏了：主路径不吃标定，换素材不用重标）。
+想看事件就加一个开关，它会**在板上另起一条**带 `--proposal --calib` 的管线（5009 口），
+推完自动停掉、清掉 HDMI 占屏标记：
+
+```bash
+py tools/pc_dashboard.py --event --event-every 5 --push build/ball_clip.mp4 --csv build/demo_events.csv
+```
+
+| 参数 | 说明 |
+|---|---|
+| `--event` | 起/停板端事件管线（只作用于 `--push`）；202 帧**预计约 2 分钟**（按板端单帧成本估算，⚠️ 2026-11-01 板子掉线，这条路径的板上实跑还没做，见 `docs/system_status.md` 的事件小节） |
+| `--calib` | 标定文件，**必须与素材配对**：`build/ball_clip.mp4` 配 `data/calib/field_calib_ball.json` |
+| `--event-every` | 检测间隔。25 = 验收口径；推演示素材时用 5，球员坐标更新更勤（非检测帧靠跟踪器外推，越拖越偏） |
+| `--event-ball-every` | 扫球间隔，默认 2；别再调大，202 帧片段实测调大就采不到球 |
+| `--event-no-hdmi` | 不回显到 HDMI（默认回显，屏上能看到框 + 球） |
+
+结果同上：面板「事件」栏会出现 `球权 #id（1.2 m）`，CSV 的 `球权ID / 球权距离` 两列有值。
+**只有 `build/ball_clip.mp4`（1280×720 中圈机位）这一路同时满足「球被检出 + 有配对标定」**；
+854×480 的转播素材这一路一球未检出，事件必然为空（见 §2.5 的边界说明）。
+
 | `--board` / `--jupyter` | 板端推流口与 Jupyter 口（默认 `192.168.2.99:5007`、`:9090`） |
 | `--store-dir` / `--store-prefix` | 板端结果目录与文件前缀（与 `zynq-stream` 服务一致） |
 

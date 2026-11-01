@@ -970,6 +970,47 @@ for i in range(0, len(b), 65536):
 print("END")
 '''
 
+# 「事件模式」的板端管线：装机服务（zynq-stream）**不带** --proposal、也没有标定，
+# 所以它的 JSONL 里永远没有 events。要现场看到出界/球权，得另起一条带 --proposal
+# 的管线（另一个端口），推完就杀掉。命令行与装机服务分开，是为了不把演示素材
+# 用的标定/参数拖慢主路径（--ball-every 2 比服务里的 5 慢一倍多）。
+_BOARD_START = r'''
+import subprocess, time
+argv = %(argv)r
+log = open(%(log)r, "w")
+p = subprocess.Popen(argv, cwd=%(cwd)r, stdout=log, stderr=subprocess.STDOUT)
+open(%(pidfile)r, "w").write(str(p.pid))
+time.sleep(2.0)
+print("BOARD_PIPELINE_START pid=%%d alive=%%s" %% (p.pid, p.poll() is None))
+txt = open(%(log)r, "r", errors="replace").read()[-600:]
+if txt:
+    print("BOARD_LOG " + txt.replace("\n", " | "))
+'''
+
+_BOARD_STOP = r'''
+import os, signal, time, subprocess
+pid = None
+try:
+    pid = int(open(%(pidfile)r).read().strip())
+except Exception:
+    pass
+if pid is None:
+    print("BOARD_PIPELINE_STOP no_pid")
+else:
+    try:
+        os.kill(pid, signal.SIGTERM)
+        print("BOARD_PIPELINE_STOP pid=%%d" %% pid)
+    except ProcessLookupError:
+        print("BOARD_PIPELINE_STOP pid=%%d already_gone" %% pid)
+time.sleep(1.5)
+# 被 SIGTERM 打断的管线走不到自己的收尾分支，/tmp/hdmi_preview.active 会留在盘上，
+# 于是 zynq-idle 以为「有人占着屏」，白屏永远回不来。这里替它清掉。
+try:
+    os.remove(%(flag)r)
+except OSError:
+    pass
+'''
+
 
 def _board_mod(jupyter):
     """懒加载 board_jupyter（它依赖 websocket-client，纯本地回放时不该被拖进来）。"""
@@ -1098,23 +1139,77 @@ def board_pull_jsonl(remote, local, jupyter="192.168.2.99:9090", timeout=300.0):
     return p, got_sha
 
 
+EVENT_CALIB_DEFAULT = "data/calib/field_calib_ball.json"
+EVENT_PY = "/usr/local/share/pynq-venv/bin/python3"
+EVENT_REPO = "/home/xilinx/zynq-yolo"
+EVENT_PREVIEW_FLAG = "/tmp/hdmi_preview.active"
+
+
+def _event_argv(port=5009, calib=EVENT_CALIB_DEFAULT,
+                store_dir="/home/xilinx/zynq-yolo/build/flow", prefix="evt",
+                hdmi=True, py=EVENT_PY, every=25, ball_every=2):
+    """事件模式板端管线（与装机服务分开起）：参数是 2026-10-31 板上验收那一组。
+
+    `--every 25 --ball-every 2 --max-det 0` 三个都不能省，省了就采不到东西：
+      · `--max-det 0`：默认 8 只做前 8 次检测，之后球员全靠跟踪器外推，越推越散；
+      · `--ball-every 2`：不给就退回「只在检测帧扫球」，202 帧只剩十几次机会；
+      · `--every 25`：与验收/报告里的数字同口径，别单独改。
+    `--proposal` 是 events 的唯一开关；`--calib` 必须与素材配对（中圈片段配
+    `field_calib_ball.json`，配错了球会退回画面坐标、events 恒空）。
+    """
+    argv = [py, "tools/board_pipeline.py",
+            "--listen", str(int(port)),
+            "--every", str(int(every)), "--ball-every", str(int(ball_every)),
+            "--max-det", "0",
+            "--proposal", "--calib", calib,
+            "--no-pl", "--no-camera-gate",
+            "--store-dir", store_dir, "--store-prefix", prefix]
+    if hdmi:
+        argv.append("--hdmi-preview")
+    return argv
+
+
+def board_start_pipeline(argv, jupyter="192.168.2.99:9090",
+                         log="/tmp/pc_event_run.log", pidfile="/tmp/pc_event.pid"):
+    """在板上后台起一条管线，返回它的日志/pid 路径。失败抛 RuntimeError。"""
+    bj = _board_mod(jupyter)
+    rc, text = bj.run_capture(_BOARD_START % {"argv": list(argv), "log": log,
+                                             "pidfile": pidfile, "cwd": EVENT_REPO},
+                              timeout=120.0)
+    if rc != 0 or "BOARD_PIPELINE_START" not in text:
+        raise RuntimeError("板端起管线失败：%s" % (text or ("rc=%s" % rc))[-400:])
+    return {"log": log, "pidfile": pidfile, "text": text}
+
+
+def board_stop_pipeline(jupyter="192.168.2.99:9090",
+                        pidfile="/tmp/pc_event.pid", log=None):
+    """停掉板上那条管线，并把 HDMI 占屏标记清掉（否则白屏回不来）。"""
+    bj = _board_mod(jupyter)
+    rc, text = bj.run_capture(_BOARD_STOP % {"pidfile": pidfile,
+                                            "flag": EVENT_PREVIEW_FLAG},
+                              timeout=120.0)
+    return rc, text
+
+
 def push_worker(video, q, stop, host="192.168.2.99", port=5007,
                 jupyter="192.168.2.99:9090",
                 store_dir="/home/xilinx/zynq-yolo/build/flow",
                 pattern="net_*.jsonl", out_dir="build/pull",
                 fps=25.0, quality=95, max_frames=0, scale=1.0, speed=1.0,
-                start_sec=0.0, video_src=None, log=print):
+                start_sec=0.0, video_src=None, log=print, event=None):
     """线程体：推流 → 等板端落盘 → 拉回 → 交给回放线程。
 
     一切进度都通过队列 (`("status", ...)` / `("frame", ...)`) 回报，
     与 `--replay` / `--listen` 走同一条渲染路径，GUI 与 headless 都不用改。
     video_src 传进来是为了把帧号偏移写回去：从第 N 秒开始推时，板端 frame=0
     对应原视频的某一帧，画面与检测框对不上就白看了。
+    event 给定时（`--event`），推流前先在板上另起一条 `--proposal --calib` 管线，
+    推完拉完再把它停掉；不给就走装机服务 `zynq-stream`（没有事件）。
     """
     try:
         _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
                        out_dir, fps, quality, max_frames, scale, speed,
-                       start_sec, video_src, log)
+                       start_sec, video_src, log, event)
     except Exception as e:                                   # noqa: BLE001
         # 线程里抛出去的异常不会有人接：不在这里兜住，屏上就会永远停在「推流中」
         # （2026-11-01 实测：sendall 超时后界面静默十分钟）。宁可报错也要说出来。
@@ -1123,7 +1218,38 @@ def push_worker(video, q, stop, host="192.168.2.99", port=5007,
 
 def _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
                    out_dir, fps, quality, max_frames, scale, speed,
-                   start_sec, video_src, log):
+                   start_sec, video_src, log, event=None):
+    started = None
+    if event:
+        q.put(("status", "PUSH 起事件管线 :%d" % event["port"]))
+        started = board_start_pipeline(event["argv"], jupyter,
+                                       pidfile=event.get("pidfile", "/tmp/pc_event.pid"),
+                                       log=event.get("log", "/tmp/pc_event_run.log"))
+        if log:
+            for line in str(started.get("text", "")).splitlines():
+                if line.startswith("BOARD_"):
+                    log(line)
+    try:
+        _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
+                   out_dir, fps, quality, max_frames, scale, speed,
+                   start_sec, video_src, log)
+    finally:
+        if started is not None:
+            try:
+                rc, text = board_stop_pipeline(jupyter,
+                                               pidfile=started["pidfile"])
+                if log:
+                    for line in text.splitlines():
+                        if line.startswith("BOARD_"):
+                            log(line)
+            except Exception as e:                           # noqa: BLE001
+                if log:
+                    log("BOARD_PIPELINE_STOP_FAIL %s: %s" % (type(e).__name__, e))
+
+
+def _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
+               out_dir, fps, quality, max_frames, scale, speed,
+               start_sec, video_src, log):
     q.put(("status", "PUSH 连接板子"))
     before = board_snapshot(store_dir, pattern, jupyter)
 
@@ -1370,6 +1496,27 @@ def _selftest():
     check(_parse_list("N 1\nF /flow/a.jsonl 20 1728\n") == {"/flow/a.jsonl": (20, 1728)},
           "_parse_list 解析错误")
 
+    # 8) 板端代码模板：塞进内核前必须能编译。这条是补课的——`_BOARD_LIST` 里
+    #    一个没转义的 `%d` 曾让整条推流报「not enough arguments for format string」。
+    tmpls = [("list", _BOARD_LIST, {"dir": "/tmp", "pat": "*.jsonl"}),
+             ("pull", _BOARD_PULL, {"remote": "/tmp/a.jsonl"}),
+             ("start", _BOARD_START, {"argv": ["py", "x.py"], "log": "/tmp/l",
+                                      "pidfile": "/tmp/p", "cwd": "/tmp"}),
+             ("stop", _BOARD_STOP, {"pidfile": "/tmp/p", "flag": "/tmp/f"})]
+    for name, tmpl, kw in tmpls:
+        try:
+            compile(tmpl % kw, "<board_%s>" % name, "exec")
+        except Exception as e:                               # noqa: BLE001
+            check(False, "板端模板 %s 编译失败：%s" % (name, e))
+
+    # 9) 事件模式的板端命令：三个关键参数一个都不能丢（丢了就采不到事件）
+    eargv = _event_argv(port=5009, calib="c.json", store_dir="/d", prefix="evt",
+                        hdmi=False)
+    for flag in ("--proposal", "--calib", "--max-det", "--ball-every", "--listen"):
+        check(flag in eargv, "事件管线缺参数 %s：%s" % (flag, eargv))
+    check(eargv[eargv.index("--max-det") + 1] == "0", "--max-det 必须是 0")
+    check("--hdmi-preview" not in eargv, "hdmi=False 时不该带 --hdmi-preview")
+
     print("PC_DASHBOARD_SELFTEST", "OK" if ok else "FAIL")
     print("PC_DASHBOARD_SELFTEST_PNG", png)
     return 0 if ok else 1
@@ -1413,6 +1560,24 @@ def main():
     ap.add_argument("--push-quality", type=int, default=95,
                     help="JPEG 质量；默认 95 是量出来的（q80 会多出假球），别往下调")
     ap.add_argument("--pull-dir", default="build/pull", help="拉回的 JSONL 存在哪")
+    ap.add_argument("--event", action="store_true",
+                    help="事件模式：推流前在板上另起一条 `--proposal --calib` 管线，"
+                         "推完自动停掉。装机服务 zynq-stream 没有 --proposal，"
+                         "不加这个开关时 events 恒为空")
+    ap.add_argument("--event-port", type=int, default=5009,
+                    help="事件模式管线监听的端口（别和 zynq-stream 的 5007 撞）")
+    ap.add_argument("--calib", default=EVENT_CALIB_DEFAULT,
+                    help="事件模式用的标定文件，必须与素材配对"
+                         "（中圈片段配 field_calib_ball.json）")
+    ap.add_argument("--event-no-hdmi", action="store_true",
+                    help="事件模式不回显到 HDMI（默认回显，屏上能看到框+球）")
+    ap.add_argument("--event-prefix", default="evt",
+                    help="事件模式落盘文件名前缀（与服务的 net_ 分开，便于区分）")
+    ap.add_argument("--event-every", type=int, default=25,
+                    help="事件模式的检测间隔（与验收口径一致；球员坐标在非检测帧"
+                         "由跟踪器外推，调小=位置更新更勤、但更慢）")
+    ap.add_argument("--event-ball-every", type=int, default=2,
+                    help="事件模式的扫球间隔（202 帧片段实测 2 才采得到球）")
     args = ap.parse_args()
 
     if args.selftest:
@@ -1428,6 +1593,10 @@ def main():
         ap.error("需要 --listen / --replay / --push 之一")
     if args.listen and args.replay:
         ap.error("--listen 与 --replay 只能二选一")
+    if args.event and not args.push:
+        ap.error("--event 只作用于 --push（事件模式是「另起一条管线再推流」）")
+    if args.event and args.board.rsplit(":", 1)[-1] == str(args.event_port):
+        ap.error("--board 的端口不能和 --event-port 相同（%d）" % args.event_port)
 
     # ---- 批量路径：回放完直接出 PNG，不开窗口（出图 / CI / 演示截图）
     if args.replay and args.dump_png:
@@ -1470,17 +1639,32 @@ def main():
         base_dir, source = None, "TCP %s" % args.listen
     elif args.push:
         bhost, bport = args.board.rsplit(":", 1)
+        ev = None
+        port, pattern = int(bport), "%s_*.jsonl" % args.store_prefix
+        if args.event:
+            port = args.event_port
+            pattern = "%s_*.jsonl" % args.event_prefix
+            ev = {"port": port,
+                  "prefix": args.event_prefix,
+                  "pidfile": "/tmp/pc_event.pid",
+                  "log": "/tmp/pc_event_run.log",
+                  "argv": _event_argv(port=port, calib=args.calib,
+                                      store_dir=args.store_dir,
+                                      prefix=args.event_prefix,
+                                      hdmi=not args.event_no_hdmi,
+                                      every=args.event_every,
+                                      ball_every=args.event_ball_every)}
         threading.Thread(target=push_worker, args=(args.push, q, stop),
-                         kwargs=dict(host=bhost, port=int(bport),
+                         kwargs=dict(host=bhost, port=port,
                                      jupyter=args.jupyter,
                                      store_dir=args.store_dir,
-                                     pattern="%s_*.jsonl" % args.store_prefix,
+                                     pattern=pattern,
                                      out_dir=args.pull_dir,
                                      fps=args.push_fps, quality=args.push_quality,
                                      max_frames=args.push_max_frames,
                                      start_sec=args.push_start,
                                      video_src=_vid,
-                                     speed=args.speed), daemon=True).start()
+                                     speed=args.speed, event=ev), daemon=True).start()
         base_dir, source = None, "推流 %s" % Path(args.push).name
     else:
         rp = Path(args.replay)
@@ -1520,7 +1704,7 @@ def main():
                             json.dumps(payload.events, ensure_ascii=False)))
         finally:
             dash.close()
-        print("PC_DASHBOARD_OK frames=%d" % n)
+        print("PC_DASHBOARD_OK frames=%d" % n if n else "PC_DASHBOARD_FAIL frames=0")
         if args.dump_png:
             print("PC_DASHBOARD_PNG %s" % write_png(dash, args.dump_png))
         return 0 if n else 1

@@ -63,6 +63,27 @@ py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_0
 
 > 帧号对得上：`PUSH_FRAME_OFFSET start_frame=1500`，记分牌 00:55 就是视频第 60 秒 + 45 帧。
 
+## 1.5 第二镜：让评委看到**事件**（球权）
+
+开机服务那条路**不产事件**（没 `--proposal`、没标定）。要看到事件，加 `--event`：
+它会在板上另起一条带 `--proposal --calib` 的管线（5009 口），推完自动停、清 HDMI 标记。
+
+```bash
+py tools/pc_dashboard.py --event --event-every 5 --push build/ball_clip.mp4 --csv build/demo_events.csv
+```
+
+- **素材只能用 `build/ball_clip.mp4`**（1280×720 中圈机位，9.5 s）。它同时满足三件事：
+  球被检出、有配对标定 `data/calib/field_calib_ball.json`、球在**球员脚下**（第 20–29 帧）；
+- 屏上预期：面板「事件」栏出现 `球权 #id（1.x m）`，CSV 的 `球权ID / 球权距离` 两列有值，
+  左画面红圈套着球、绿框是球员；
+- 时长：202 帧，按板端单帧成本**预计约 2 分钟**（`--event-every 5`；用 25 会更快但球员坐标更旧）。
+
+⚠️ **这条还没上板跑过**：2026-11-01 22:5x 板子掉线（ping 全丢）。目前已有的证据是
+**主机代理**（`py tools/evt_proxy.py --video build/ball_clip.mp4 --every 5 --ball-every 2`：
+23 帧球权、其中 5 帧落在检测帧，最近 1.03 m）＋人工核图
+（`build/evt_proof_f022.png`、`build/evt_proof_f025.png`：红圈确实套在球员脚下那颗球上）。
+上板这一跑要等板子回来，**现场措辞按「主机已复现、板上正在验证」讲**，别说过头。
+
 ## 2. 板子侧的证据（可选，10 s）
 
 ```bash
@@ -98,7 +119,7 @@ head -5 build/demo_session.csv
 | 第 0 步不是 `active` / ping 不通 | **断电重启**板子，等 60–90 s 再跑第 0 步；期间先讲架构图 |
 | 推流卡在 `推流中` 不动超过 60 s | 看 HDMI 是否已成白屏：成白屏说明板端已处理完，等 `等板端落盘` 那步；连续两次超时就 Ctrl-C，走下行 |
 | 板子彻底掉线 | 回放**已经拉回来**的结果：`py tools/pc_dashboard.py --replay build/pull/net_20261030_224217_00.jsonl --video "D:/yt-dlp/downloads/964262880/clips_5min/clip_04_015min.mp4" --video-start 60` —— 画面照出、框对得上（`--video-start 60` 必须带，否则会从片头开始画，框和画面对不上），明确说「这段是刚才板上跑出来的结果」 |
-| 评委问「事件呢」 | **照实说**：这条装机的 `zynq-stream` 没开 `--proposal`、也没有匹配标定，所以事件流本来就不会有内容（`events` 恒为空）。出界/进球/球权需要「球 + 球场坐标 + 匹配标定」，本片源 854×480 转播远景三者都不满足。已实测：`--proposal --calib` 的球片段能产出 `events` 对象，但最近球员 3.6 m > 2 m 判据 ⇒ 球权仍不成立（见 `ai/sessions/026` 轮次 7） |
+| 评委问「事件呢」 | **照实说**：这条装机的 `zynq-stream` 没开 `--proposal`、也没有匹配标定，所以事件流本来就不会有内容（`events` 恒为空）。出界/进球/球权需要「球 + 球场坐标 + 匹配标定」，本片源 854×480 转播远景三者都不满足。**要真给评委看事件**，走下面 §1.5 的 `--event` 那一镜（中圈 720p 素材 + 配对标定，球在球员脚下 ⇒ 球权事件） |
 | 想展示**球** | 本片源是 854×480 转播远景，球只有几个像素，**这一路没检出球**（435 帧实测 0 帧）。要展示球请用已有结果回放：`py tools/pc_dashboard.py --replay data/results/ball_air_c03_20261031.jsonl --video data/samples/scenes/c03_t01290.0.mp4 --dump-frame 106`，并说明这是**另一段素材**（1280×720）跑出来的 |
 
 ⚠️ **不能说的话**（报告里已撤回或没验过的）：

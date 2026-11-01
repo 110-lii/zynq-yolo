@@ -1,0 +1,234 @@
+{
+ "video": "build/ball_clip.mp4",
+ "calib": "data/calib/field_calib_ball.json",
+ "every": 5,
+ "ball_every": 2,
+ "max_det": 0,
+ "frames": 202,
+ "ball_scans": 101,
+ "ball_scans_hit": 20,
+ "ball_field_frames": 52,
+ "possession_frames": 23,
+ "possession_on_det_frames": 5,
+ "out_of_play_frames": 0,
+ "goal_frames": 0,
+ "best_possession": {
+  "frame": 28,
+  "dist": 1.03,
+  "pid": 3,
+  "ball": [
+   55.63,
+   36.6
+  ]
+ },
+ "events": [
+  {
+   "frame": 20,
+   "possession": 3,
+   "dist": 1.83,
+   "ball": [
+    56.79,
+    37.57
+   ]
+  },
+  {
+   "frame": 21,
+   "possession": 3,
+   "dist": 1.88,
+   "ball": [
+    56.79,
+    37.57
+   ]
+  },
+  {
+   "frame": 22,
+   "possession": 3,
+   "dist": 1.4,
+   "ball": [
+    56.25,
+    37.12
+   ]
+  },
+  {
+   "frame": 23,
+   "possession": 3,
+   "dist": 1.43,
+   "ball": [
+    56.25,
+    37.12
+   ]
+  },
+  {
+   "frame": 24,
+   "possession": 3,
+   "dist": 1.18,
+   "ball": [
+    55.94,
+    36.86
+   ]
+  },
+  {
+   "frame": 25,
+   "possession": 3,
+   "dist": 1.21,
+   "ball": [
+    55.94,
+    36.86
+   ]
+  },
+  {
+   "frame": 26,
+   "possession": 3,
+   "dist": 1.06,
+   "ball": [
+    55.75,
+    36.7
+   ]
+  },
+  {
+   "frame": 27,
+   "possession": 3,
+   "dist": 1.11,
+   "ball": [
+    55.75,
+    36.7
+   ]
+  },
+  {
+   "frame": 28,
+   "possession": 3,
+   "dist": 1.03,
+   "ball": [
+    55.63,
+    36.6
+   ]
+  },
+  {
+   "frame": 29,
+   "possession": 3,
+   "dist": 1.1,
+   "ball": [
+    55.63,
+    36.6
+   ]
+  },
+  {
+   "frame": 70,
+   "possession": 69,
+   "dist": 2.15,
+   "ball": [
+    65.91,
+    62.81
+   ]
+  },
+  {
+   "frame": 71,
+   "possession": 69,
+   "dist": 2.03,
+   "ball": [
+    65.91,
+    62.81
+   ]
+  },
+  {
+   "frame": 72,
+   "possession": 69,
+   "dist": 1.99,
+   "ball": [
+    65.7,
+    62.7
+   ]
+  },
+  {
+   "frame": 73,
+   "possession": 69,
+   "dist": 1.86,
+   "ball": [
+    65.7,
+    62.7
+   ]
+  },
+  {
+   "frame": 106,
+   "possession": 95,
+   "dist": 1.87,
+   "ball": [
+    66.63,
+    64.98
+   ]
+  },
+  {
+   "frame": 107,
+   "possession": 95,
+   "dist": 1.95,
+   "ball": [
+    66.63,
+    64.98
+   ]
+  },
+  {
+   "frame": 108,
+   "possession": 95,
+   "dist": 2.14,
+   "ball": [
+    67.5,
+    64.48
+   ]
+  },
+  {
+   "frame": 109,
+   "possession": 95,
+   "dist": 2.19,
+   "ball": [
+    67.5,
+    64.48
+   ]
+  },
+  {
+   "frame": 110,
+   "possession": 95,
+   "dist": 2.75,
+   "ball": [
+    68.25,
+    63.36
+   ]
+  },
+  {
+   "frame": 111,
+   "possession": 95,
+   "dist": 2.77,
+   "ball": [
+    68.25,
+    63.36
+   ]
+  },
+  {
+   "frame": 185,
+   "possession": 152,
+   "dist": 1.33,
+   "ball": [
+    69.42,
+    56.92
+   ]
+  },
+  {
+   "frame": 186,
+   "possession": 152,
+   "dist": 1.29,
+   "ball": [
+    69.26,
+    56.82
+   ]
+  },
+  {
+   "frame": 187,
+   "possession": 152,
+   "dist": 1.27,
+   "ball": [
+    69.26,
+    56.82
+   ]
+  }
+ ],
+ "note": "主机代理：球员检测为 yolov8n（板上是 person_v8n25），只作预筛"
+}

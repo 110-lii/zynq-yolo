@@ -202,7 +202,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 |---|---|---|
 | ① 装机服务不跑事件代码 | `zynq-stream` 的 ExecStart 没有 `--proposal`，而 `events` 只在 `--proposal` 分支里计算 | `build/pull/*.jsonl` 每行只有 `frame/detected/tracks/camera_state`，**没有 `events` 键** |
 | ② 转播素材没有匹配标定 | 出界/进球/球权都基于球场坐标；服务也没带 `--calib` | 同一段画面用 c03 的标定投影，球落点 y≈93 m > 场地 68 m，按设计落回画面坐标 |
-| ③ 有标定也不一定有事件 | `--proposal --calib field_calib_ball.json` 推 `build/ball_clip.mp4` 202 帧：16 帧球场坐标球、`camera_state=VALID_FIELD_VIEW`、**`events` 对象正常产出**，但最近球员 **7.12 m（最小 3.6 m）> 2 m 判据** ⇒ `possession=None`、`out_of_play=False` | `build/pull_evt/evt_20261030_225312_00.jsonl` |
+| ③ 有标定也不一定有事件 | `--proposal --calib field_calib_ball.json` 推 `build/ball_clip.mp4` 202 帧：16 帧球场坐标球、`camera_state=VALID_FIELD_VIEW`、**`events` 对象正常产出**，但最近球员 **7.12 m（最小 3.6 m）> `events.possession` 的 3 m 判据** ⇒ `possession=None`、`out_of_play=False` | `build/pull_evt/evt_20261030_225312_00.jsonl` |
 
 **结论**：事件代码是活的（③ 证明 `events` 字段会产出），但**演示用的装机服务不计算事件**，
 而转播素材也不具备触发几何事件的条件。报告里「202 帧 144 坐标球 / 49 帧球权」来自
@@ -210,7 +210,29 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 是已知证据缺口（§8 已登记）。
 
 > 想现场展示事件，必须同时满足：服务加 `--proposal` + 匹配标定 + 一段球贴脚/出界的同机位素材。
-> 不为演示去调 `possession` 的 2 m 判据。
+> 不为演示去调 `possession` 的 3 m 判据。
+
+### 追加（2026-11-01）：事件「出不来」不是判据太严，是那一刻没有可信的球员坐标
+
+把同一段 `ball_clip.mp4` 换一组参数重跑，结论就变了 —— **球权是能出来的**：
+
+| 证据 | 结论 |
+|---|---|
+| 主机代理复现（球链路与板上同一套：`ball_cv_probe` 候选 + `ball_cls_c.exe` 分类器 + `BallTracker` + `place_ball`；球员换成 yolov8n，只作预筛）`--every 25 --ball-every 2` | 52 帧球场坐标球、**14 帧球权**，最近 1.09 m；`--every 5` 时 23 帧球权、其中 **5 帧落在检测帧**（球员坐标是当帧新检出的） |
+| 人工核对 | `build/_evt_f022.png` / `_f024.png`：红圈正落在白衣球员**脚下那颗球**上（不是白线/广告牌）；第 25 帧球员框重新贴回人身上 |
+| 为什么昨天那次 3.6 m | 那次球帧只有 22–23 帧，而 `--every 25` 的检测帧在 0/25/50…：**球出现的帧全部在检测之间**，球员坐标是跟踪器外推了 20 多帧的结果，且板端 person_v8n25 没框住持球那人 ⇒ 最近的"球员"在 3.6 m 外 |
+
+所以处置不是放宽判据，而是**让球帧与检测帧对得上**：`pc_dashboard.py --event` 会在板上
+另起一条 `--proposal --calib` 管线（5009 口，与装机服务 5007 分开），推完自动停掉：
+
+```bash
+py tools/pc_dashboard.py --event --push build/ball_clip.mp4 --event-every 5 --csv build/demo_events.csv
+```
+
+⚠️ **上板状态**：2026-11-01 22:5x 板子掉线（ping 100% 丢包），本轮只做到**主机代理 + 人工核图**，
+`--event` 的板上实跑与 JSONL 归档记为 **todo**（AGENTS.md §2：板子离线时不做任何硬件验证、
+也不声称「已验证」）。
+
 
 ## 分层测试集与全流程 overlay（2026-10-30）
 

@@ -395,6 +395,8 @@ def main():
     ap.add_argument("--timeout", type=float, default=0.0, help="板上运行秒数，0=不限")
     ap.add_argument("--no-sync-frame", action="store_true",
                     help="不按 JSONL 的 frame 号定位画面（默认会定位）")
+    ap.add_argument("--no-calibrate", action="store_true",
+                    help="跳过行内平移自标定（默认起播前量一次 K 并补正，见 D031）")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
 
@@ -412,6 +414,15 @@ def main():
         except Exception as e:                      # 没 pynq / 不是板子
             print("HDMI_VIDEO_FAIL no board: %s" % e)
             return 2
+        # ★ 2026-11-01：这块屏「屏幕第 C 列 = 帧缓存第 (C-K) 列」，K 每次起管线都可能变
+        #   （实测 414/415/313/1024）。板端管线走 --hdmi-preview 时会标定，但这个独立
+        #   播放工具以前**没有**标定，屏上就是整行错位 —— 这里补上，判据同 D031。
+        if not args.no_calibrate:
+            k = out.calibrate_shift()
+            res = out.verify_shift()
+            print("HDMI_ALIGN shift=%s residue=%s" % (k, res))
+            if res not in (0, None) and abs(res) > 1:
+                print("HDMI_ALIGN_WARN residue=%s 超过 1 列，屏上可能仍有错位" % res)
 
     n = 0
     t0 = time.perf_counter()

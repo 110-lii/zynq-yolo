@@ -993,6 +993,21 @@ class Dashboard:
             self.writer = None
 
 
+def _open_dump_video(path, fps):
+    """开一个 MP4 写入器（画布同尺寸）。路径不存在就建目录；开不了直接抛。"""
+    import cv2
+    p = Path(path).expanduser()
+    if not p.is_absolute():
+        p = Path.cwd() / p
+    if p.parent and not p.parent.exists():
+        p.parent.mkdir(parents=True, exist_ok=True)
+    vw = cv2.VideoWriter(str(p), cv2.VideoWriter_fourcc(*"mp4v"), float(fps),
+                         (CANVAS_W, CANVAS_H))
+    if not vw.isOpened():
+        raise RuntimeError("cv2.VideoWriter 打不开：%s（换个文件名/换 mp4v 编码器）" % p)
+    return vw
+
+
 def write_png(dash, path):
     """渲染当前帧并写成 PNG（走 imencode，中文路径也不会失败）。返回绝对路径。"""
     import cv2
@@ -1767,8 +1782,10 @@ def _selftest():
     tmpls = [("list", _BOARD_LIST, {"dir": "/tmp", "pat": "*.jsonl"}),
              ("pull", _BOARD_PULL, {"remote": "/tmp/a.jsonl"}),
              ("start", _BOARD_START, {"argv": ["py", "x.py"], "log": "/tmp/l",
-                                      "pidfile": "/tmp/p", "cwd": "/tmp"}),
-             ("stop", _BOARD_STOP, {"pidfile": "/tmp/p", "flag": "/tmp/f"})]
+                                      "pidfile": "/tmp/p", "cwd": "/tmp",
+                                      "flag": "/tmp/f"}),
+             ("stop", _BOARD_STOP, {"pidfile": "/tmp/p", "pid": None,
+                                    "flag": "/tmp/f"})]
     for name, tmpl, kw in tmpls:
         try:
             compile(tmpl % kw, "<board_%s>" % name, "exec")
@@ -1803,6 +1820,11 @@ def main():
     ap.add_argument("--loop", action="store_true", help="回放循环")
     ap.add_argument("--headless", action="store_true", help="不打开 GUI，只打印摘要")
     ap.add_argument("--dump-png", default="", help="把（最后）一帧渲染成 PNG 后退出")
+    ap.add_argument("--dump-video", default="", metavar="MP4",
+                    help="把整段回放（面板原样：左侧带框画面 + 球场俯视 + 事件流）"
+                         "录成 MP4，不开窗口；存到电脑上慢慢看/剪演示视频时用")
+    ap.add_argument("--dump-fps", type=float, default=0.0,
+                    help="--dump-video 的帧率（0=按 10×--speed 推）")
     ap.add_argument("--dump-frame", type=int, default=-1,
                     help="配合 --dump-png：回放到该帧号就停（-1=放到最后）。"
                          "出「球刚到画面里」这类截图时用")
@@ -1893,8 +1915,8 @@ def main():
     if args.calib and Path(args.calib).is_file():
         load_calib_hinv(args.calib)
 
-    # ---- 批量路径：回放完直接出 PNG，不开窗口（出图 / CI / 演示截图）
-    if args.replay and args.dump_png:
+    # ---- 批量路径：回放完直接出 PNG / 录成 MP4，不开窗口（出图 / CI / 演示素材）
+    if args.replay and (args.dump_png or args.dump_video):
         rp = Path(args.replay)
         if not rp.is_file():
             ap.error("找不到回放文件：%s" % args.replay)
@@ -1902,21 +1924,32 @@ def main():
         dash = Dashboard(csv_path=args.csv or None, base_dir=rp.parent, source=rp.name,
                          video=_vid)
         dash.status("REPLAY_START")
+        fps = args.dump_fps or (10.0 * args.speed if args.speed > 0 else 10.0)
+        vw = _open_dump_video(args.dump_video, fps) if args.dump_video else None
         n = 0
         try:
             for st in read_jsonl(rp):
                 dash.frame(st)
                 n += 1
+                if vw is not None:
+                    vw.write(dash.render())      # 录像不按回放节奏等，直接按帧写
                 if args.dump_frame >= 0 and st.frame >= args.dump_frame:
                     break
-                if args.speed > 0:
+                if vw is None and args.speed > 0:
                     time.sleep(1.0 / (10.0 * args.speed))
         finally:
             dash.close()
+            if vw is not None:
+                vw.release()
         dash.status("REPLAY_DONE %d frames" % n)
-        png = write_png(dash, args.dump_png)
+        png = write_png(dash, args.dump_png) if args.dump_png else ""
         print("PC_DASHBOARD_OK frames=%d" % n)
-        print("PC_DASHBOARD_PNG %s" % png)
+        if png:
+            print("PC_DASHBOARD_PNG %s" % png)
+        if args.dump_video:
+            size = Path(args.dump_video).stat().st_size if Path(args.dump_video).is_file() else 0
+            print("PC_DASHBOARD_MP4 %s frames=%d fps=%.1f bytes=%d"
+                  % (Path(args.dump_video).resolve(), n, fps, size))
         return 0 if n else 1
 
     q = queue.Queue()

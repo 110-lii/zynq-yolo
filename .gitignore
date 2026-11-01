@@ -49,6 +49,8 @@ venv/
 .idea/
 *.swp
 *~
+# Word/Excel 打开文件时生成的锁文件（`~$xxx.docx`），既不是提交物也不该进包
+~$*
 .DS_Store
 Thumbs.db
 desktop.ini

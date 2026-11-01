@@ -103,6 +103,12 @@ py tools/pc_dashboard.py --event --event-every 5 --event-lcd 5 --push data/sampl
   板端回 **80 行**）约 4 分钟。两版事件逐帧一致 ⇒ 现场**如果时间紧**才用截短版；
 - 画面上不再是光板：事件模式只给球场坐标，PC 面板借 `--calib` 的单应逆矩阵把球员和球
   **回投成圈**（圈标在脚下），顶栏会写「事件模式（球场坐标回投）」。
+- **想留一份录像**（不用边跑边录屏）：同一份 JSONL 回放一遍就能出片，
+  内容与面板一模一样（左带框画面 + 事件流 + 底部统计），不按回放节奏等、写完即得：
+  ```bash
+  py tools/pc_dashboard.py --replay build/pull/evt_<时间戳>_00.jsonl --video data/samples/scenes/c05_t01730.0.mp4 --calib data/calib/field_calib_ball.json --dump-video build/demo_c05_processed.mp4 --dump-fps 25 --speed 0
+  ```
+  250 帧（= 10 s，片源 25 fps）约 8 s 出片，落 `PC_DASHBOARD_MP4 <路径> frames=250 fps=25.0 bytes=…`。
 - ⚠️ **第 166 帧之后不要解释成"抢断"**：板端球在 166 帧后跟丢、后面几帧是外推值
   （第 167 帧 0.5 m 的圈在空草地上）。讲到第三条球权就停，或照实说「球跟丢后是外推」。
 - ⚠️ **别现场说出界**：整段那次板端确实报了 6 帧 `out_of_play`（第 170–175 帧），

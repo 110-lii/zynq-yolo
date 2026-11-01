@@ -134,7 +134,12 @@ PS 检测）→ PL 预处理 HLS 与 AXI 带宽标定 → PS 检测/跟踪/球�
 - 输出：HDMI（TMDS，1280×720）与 LCD（800×480，4bpp/16 色，RGB 并口 + 按键）。
 - 调试：Jupyter（9090）远程执行 Python；不依赖 SSH 免密。
 
-> 【待补实物照片：开发板正面、斜 45° 全局照；HDMI 与 LCD 同时点亮的现场照】
+![开发板全貌：ATK-DF7010/7020P 底板 + CF7010B/7020B 核心板，电源、以太网、HDMI 与 LCD 排线均接好](figures/board/board_01_full.jpg)
+
+![核心板特写：XC7Z020-CLG400-2 与 DDR3，散热片下方为 PL/PS 所在](figures/board/board_02_core.jpg)
+
+> 说明：以上为 2026-11-01 实拍（未通电）；「HDMI 与 LCD 同时点亮」的工作照仍在补拍清单里，
+> 未拍到之前本报告不声称已拍到。
 
 #### 2.2.2 机械设计介绍
 
@@ -235,7 +240,12 @@ PS 侧运行 `board_pipeline.py`；LCD 显示运行时状态面板，HDMI 显示
   记录过 `HDMI_VISUAL_OK` 又在 20:23 复测后撤回，因此 **`HDMI_VISUAL_OK` 至今不记**，
   演示前需要人眼看屏。
 
-> 【待补电路/板卡照片：开发板与排线、HDMI/LCD 接线】
+![接口侧：HDMI 输出、LCD 排线（RGB TFTLCD）、JTAG 与千兆网口](figures/board/board_03_usb_eth.jpg)
+
+![HDMI 与 LCD 排线走线、按键与音频接口](figures/board/board_04_hdmi_lcd.jpg)
+
+> 板端接线如图所示：HDMI 走 TMDS 输出到显示器，LCD 走 RGB 并口排线，视频输入不再使用板载 DVP，
+> 改由 PC 经以太网送入（D015）。
 
 #### 3.2.3 软件成果
 

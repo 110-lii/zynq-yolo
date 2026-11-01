@@ -54,10 +54,10 @@
 
 ## 技能包清单表
 
-| 技能名 | 形态 | 适用范围 | 失效条件 | 状态 |
-|---|---|---|---|---|
-| [`pynq_overlay_bringup`](pynq_overlay_bringup/README.md) | 通用 PYNQ（额外加分） | Zynq-7000 + PYNQ 2.7 + `.bit`/`.hwh`；AXI-Lite + `m_axi` | `.hwh` 不匹配 / 漏接 `s_axi_control_r` / 缓存未 flush / PYNQ 3.x API 差异 | ✅ 已验证（2 块 overlay、20 min 满载） |
-| [`hls_axi_stream_accel`](hls_axi_stream_accel/README.md) | HLS/AXI 通用 | Vitis_HLS/Vivado 2020.2 + Zynq-7000 `m_axi` 流式核 | 字节指针/条件读/散读权重/DATAFLOW 同 bundle 多读/只跑 csim | ✅ 已验证（6/6 bit-exact、AXI 四模式、41.4→9.63 s）；自带 `checks/axis_stream_check.py`（`AXIS_CHECK_SELFTEST OK`） |
+| 技能名 | 形态 | 适用范围 | 失效条件 | 提炼来源 | 已验证的效果 |
+|---|---|---|---|---|---|
+| [`pynq_overlay_bringup`](pynq_overlay_bringup/README.md) | 通用 PYNQ（额外加分） | Zynq-7000 + PYNQ 2.7 + `.bit`/`.hwh`；AXI-Lite + `m_axi` | `.hwh` 不匹配 / 漏接 `s_axi_control_r` / 缓存未 flush / PYNQ 3.x API 差异 | `ai/sessions/003`、`ai/sessions/013` 的 overlay 反复失效；README §4 | ✅ 2 块 overlay 各 20 min 满载无掉线；`checks/overlay_health.py` 给出 `OVERLAY_HEALTH_OK` |
+| [`hls_axi_stream_accel`](hls_axi_stream_accel/README.md) | HLS/AXI 通用 | Vitis_HLS/Vivado 2020.2 + Zynq-7000 `m_axi` 流式核 | 字节指针/条件读/散读权重/DATAFLOW 同 bundle 多读/只跑 csim | `ai/sessions/005`/`007`/`008` 的 8 条踩坑；`PITFALLS.md` P1–P8 | ✅ 6/6 bit-exact、AXI 四模式、整网 20.8→9.63 s；`checks/axis_stream_check.py` 自证 `AXIS_CHECK_SELFTEST OK` |
 
 > 技能包只能来自本队**真实发生过**的失败或观察；没有 `ai/` 原始记录支撑的条目不得补行
 > （承 `docs/repo_spec.md` §7）。本表两个包的原始出处分别见各自 README §4。

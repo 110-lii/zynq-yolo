@@ -94,10 +94,11 @@
 > **一条硬规则**：`report/llm_logs/` 里的每一个结论都必须能指回 `ai/sessions/` 的具体记录，
 > 而该记录又必须能指回 `ai/raw/` 的原文位置或实测数据。**指针断掉 = 判为事后编造。**
 >
-> ⚠️ `report/llm_logs/` **仍为空目录** —— **这是事实，不是遗漏**：整理层目前只有 1 条记录，
-> 尚不具备「按报告章节挑选」的素材量。**不预填占位内容**（预填会让目录看起来完成了）。
-> ★ **2026-10-19 补充**：原始层已落盘 ⇒ **素材已不再稀缺**，本条缺口因此从「无米下锅」变成
-> 「**尚未按章节挑选**」—— 性质变了，仍是缺口，故保留。见 [`sessions/001_repo_skeleton.md`](sessions/001_repo_skeleton.md)「未决问题」第 3 项。
+> ✅ **2026-11-01 更新**：`report/llm_logs/` 已不再是空目录 —— 现有 `01`–`06` 六篇
+> （按报告章节组织）+ `README.md` 索引，覆盖卷积引擎优化、路由选择与预处理、智能体工作流与证据链、
+> 扩展（存储/显示）、显示重做的证据、HDMI 三重缺陷。**仍缺**：与演示视频、实物照片对应的章节。
+> ⚠️ 反过来，`raw/` 的导出**停在 2026-10-20**（19 个分片），此后 20 多条会话记录没有原始层分片，
+> 部分记录的「原文位置」写的是「待导出」—— 这条断链是**当前最大的一处证据缺口**，见 §五。
 
 ---
 
@@ -145,16 +146,19 @@ Get-Content D:\zynq-yolo\ai\coordination\DECISIONS.md     # 看状态列：discu
 ## 五、当前状态（**如实记录，不预填**）
 
 > 以下是本目录**现在真实的样子**。未做的部分保持空，不为好看而占位。
-> ★ **2026-10-19 第二次更新（任务 `task-8`）**：原始层与工具层**已落盘**，下表据此重写（原文里的「空」标记已被真实状态取代；改动过程见 [`sessions/001_repo_skeleton.md`](sessions/001_repo_skeleton.md) 纠错轨迹（三））。
+> ★ **2026-11-01 重写（提交前核对）**：旧表的条数是 10-19 的时点值，已全部失真（当时写「1 条记录 / 9 个分片 /
+> 4 条 decided / 两个空目录」）。**条数一律以本表日期当天的实际文件为准**，不再写「N 条」的硬数字除非同时给核对命令。
+> 核对命令：`ls ai/sessions/*.md`、`ls ai/raw/*.md`、`grep -c '^| \*\*D' ai/coordination/DECISIONS.md`。
 
-| 项 | 状态 | 说明 |
+| 项 | 状态 | 说明（2026-11-01） |
 |---|---|---|
-| `ai/sessions/` | ✅ 已建骨架 + 1 条记录 | `INDEX.md` / `_TEMPLATE.md` / `001_repo_skeleton.md` |
-| `ai/coordination/` | ✅ 已建 | `README.md` / `DECISIONS.md`（**4** 条 `decided` + **5** 条 `discussing` + 0 条 `rejected`；2026-10-19 补登 D008/D009） |
-| `ai/raw/` | ✅ **已落盘** | **9 个分片**（`YYYY-MM-DD_<短ID>.md`）+ `_prompts_all.md` + `README.md`，全部非空；**逐字自证令牌** `VERIFY_RAW_OK` |
-| `ai/tools/` | ✅ **已落盘** | `export_transcript_dsh.py` / `prompts_index.py` / `verify_raw_match.py` / `dsh_session_dump.mjs` + `README.md` |
-| `../report/llm_logs/` | ⬜ 空目录 | 待整理层素材足够后按报告章节挑选（见 §二） |
-| `../skill/` | ⬜ 空 | 待有「换个题目也能用」的结论时沉淀（见 §1.3） |
+| `ai/sessions/` | ✅ **27 条记录** | `001`–`027` + `INDEX.md` / `_TEMPLATE.md` / `README.md`；`INDEX.md` 每行含「执行 AI / 关键判据 / 自我纠错」 |
+| `ai/coordination/` | ✅ **D001–D031 共 31 条** | 其中 26 条整行 `decided`，5 条是「一部分已定、另一部分仍 `discussing`」（D013/D014/D015/D016 与双通道那条），**没有整行 `discussing` 的条目** |
+| `ai/raw/` | ⚠️ **19 个分片，但停在 2026-10-20** | `YYYY-MM-DD_<短ID>.md` + `_prompts_all.md` + `README.md`；**逐字自证令牌** `VERIFY_RAW_OK`（`python ai\tools\verify_raw_match.py`）。★ **10-21 之后的会话没有原始层分片**，其中 12 条记录的「原文位置」写着「待导出」⇒ 见下行 |
+| `ai/tools/` | ✅ 导出链可用 | `export_transcript_dsh.py` / `prompts_index.py` / `verify_raw_match.py` / `dsh_session_dump.mjs` + `README.md`；**缺** Claude Code / 桌面端会话的导出器 |
+| `../report/llm_logs/` | ✅ **6 篇 + 索引** | `01`–`06` 按报告章节组织；与演示视频、实物照片对应的章节仍未写 |
+| `../skill/` | ✅ **2 包** | `hls_axi_stream_accel/`、`pynq_overlay_bringup/`，各含 README（五节）/ PITFALLS / checks；通用 PYNQ 包可单独加分 |
+| **最大缺口** | ⛔ 原始层断链 | 020–027 这批最新、最有价值的记录没有逐字原文；补导出器或统一改为「原文内嵌于会话记录」并在此处声明口径 |
 
 > ⚠️ **引用原始层时的纪律（2026-10-19 起）**：`ai/raw/` 里的**条数类数字是时点值**（主会话仍在进行，每次重跑导出都会变大）。
 > ⇒ 引用时写**令牌 + 重跑命令 + 核对日期**（`python ai\tools\verify_raw_match.py` → `VERIFY_RAW_OK`），

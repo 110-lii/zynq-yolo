@@ -44,10 +44,14 @@ HLS 会把 `in`/`out` 改名成 `in_r`/`out_r`（与关键字冲突），解析�
 2. AXI-Lite 是否有 `s_axi_control` 与 `s_axi_control_r` 两个窗口（漏接 `_r` 会 `KeyError`）；
 3. 小缓冲（1 个 tile/1 行）逐位对；
 4. 全尺寸 + 计时；
-5. 连续跑 ≥10 分钟，记录 `uptime` 与串口，排除整机复位。
+5. 连续跑 **20 分钟**（本队的验收时长），记录 `uptime` 与串口，排除整机复位。
 
-`checks/overlay_health.py` 是只读体检脚本：加载 overlay、打印 `ip_dict`/mem_id、
-检查控制窗口，不写寄存器。
+```bash
+# 只读体检：.hwh 同名检查 + 加载 + IP/控制窗口成对检查；不写任何寄存器
+python3 checks/overlay_health.py /path/to/xxx.bit
+# 期望末行 OVERLAY_HEALTH_OK；缺 s_axi_control_r 时给 OVERLAY_HEALTH_WARN_CONTROL（退出码 2）
+python3 checks/overlay_health.py --help        # 参数说明（陌生机器上也能跑，只有加载那一步需要板）
+```
 
 ## 3. 失效条件（可观察现象）
 

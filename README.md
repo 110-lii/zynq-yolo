@@ -20,7 +20,19 @@
 - **输入源已于 2026-10-20 变更（D015）**：**不再使用板载摄像头**；所有视频由 PC 经网口送入。
   原 DVP 采集链（`vid_dvp_capture` 等）退出主线，仅保留为历史/回归资产。
 - 仓库已有可运行的设计真源：`conv_engine` HLS 内核（含 csim/出片）、PYNQ 驱动、球员跟踪与
-  倒地带后处理工具、YOLO 模型与逐层金标准；网络视频入口、整机实时闭环仍在建设中。
+  倒地带后处理工具、YOLO 模型与逐层金标准。**网络视频入口已落地并上板验过**（D027/D029）：
+  板子上电即就绪，PC 一条命令推流并取回结果；**整机不是实时**（事件模式板端约 1 fps）。
+
+**现场演示（一条命令）**：
+
+```bash
+python tools/pc_dashboard.py --demo
+```
+
+板端体检 → 起事件管线（HDMI 回显 + LCD 面板）→ 推 `data/samples/scenes/c05_t01730.0.mp4`
+整段 250 帧 → 等板端算完 → 拉回并回放。端到端 8–10 分钟；参数与踩坑见
+[`docs/streaming_quickstart.md`](docs/streaming_quickstart.md)、现场操作卡见
+[`docs/demo_run_sheet.md`](docs/demo_run_sheet.md)。
 - 目录职责与命名规则的**唯一事实源**是 [`docs/repo_spec.md`](docs/repo_spec.md)；本 README 与之冲突时，以该文件为准。
 - 已裁定/待裁定事项以 [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) 为准；
   §10 的占位符只用于**尚未裁定**的参数，不用于已经裁定的功能范围。
@@ -197,45 +209,38 @@ cd zynq-yolo
 #    期望末行 CHECK_REPO_OK
 python tools/check_repo.py          # 或： mingw32-make check
 
-# 2) 构建比特流（按需；脚本入口在 build/scripts/，工具链路径参数化）
-#    preproc（当前主线）：bd_preproc.tcl
-#    conv_engine（历史验证）：bd_conv_engine.tcl
-#    axi_bw（带宽标定）：bd_axi_bw.tcl
-#    track_preproc（PL 跟踪辅助，D019）：先 export_track.py，再 bd_track_preproc.tcl
-vivado -mode batch -source build/scripts/bd_preproc.tcl
+# 2) 仿真回归（工程包要求的「仿真或验证结果」入口）
+#    期望 SIM_PASS 12/12
+python sim/scripts/run_sim.py       # 或： mingw32-make sim
 
-# 3) 上板：部署 + 运行完整管线（见 board/README.md 与 report/design_report.md §7）
-powershell -File board/scripts/deploy_to_board.ps1
-# 板端：PL 跟踪辅助 + SD 增量存储
-python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
-  --max-det 0 --ball-every 2 --pl-track --motion-gate \
-  --calib data/calib/field_calib.json --proposal \
-  --store-dir /home/xilinx/zynq-yolo --out /home/xilinx/out.json
-# 可选：把结果推给 PC Dashboard
-python3 tools/result_stream.py --file /home/xilinx/zynq-yolo/run_*.jsonl \
-  --host <PC_IP> --port 5005 --follow
+# 3) 重建比特流（按需；脚本入口在 build/scripts/，工具链路径参数化）
+#    主线（交付片，LCD + HDMI 合一）：bd_flow_system.tcl
+#    其他历史验证：bd_preproc.tcl / bd_track_preproc.tcl / bd_conv_engine.tcl / bd_axi_bw.tcl
+vivado -mode batch -source build/scripts/bd_flow_system.tcl
+#    成功判据是日志令牌 FLOW_SYSTEM_BD_OK / DONE_OK，不是进程退出码（见 §5.3）
 
-# HDMI+LCD 合并（D023）：一次写双屏
-python3 tools/status_display.py --replay /home/xilinx/out.json \
-  --size 1280x720 --display-bit board/overlay/display_both.bit \
-  --also-lcd-base 0x40020000
-# 跟踪+双屏合并（D024）：同一 overlay 跑 --pl-track 并刷双屏
-python3 tools/status_display.py --replay /home/xilinx/out.json \
-  --size 1280x720 --display-bit board/overlay/track_display.bit \
-  --fb-bram 0x40020000 --also-lcd-base 0x40040000
-# 单独 HDMI / LCD 仍可用：hdmi_status.bit / lcd_status.bit
+# 4) 上板：装开机服务（只需一次）。装完后板子上电 30–60 s 自动就绪：
+#    加载 flow_system.bit、HDMI 刷白待机（zynq-idle）、5007 端口等 PC 推流（zynq-stream）
+python tools/install_boot.py
 
-# PC 端（接收/回放；--headless 用于无显示环境）
-python tools\pc_dashboard.py --listen 0.0.0.0:5005 --csv session.csv
-python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
+# 5) 演示（PC 侧一条命令）：板端体检 → 起事件管线（HDMI 回显 + LCD 面板）→
+#    推 data/samples/scenes/c05_t01730.0.mp4 整段 250 帧 → 等板端算完 → 拉回 → 回放
+#    期望：PUSH_DONE frames=250 → BOARD_PIPELINE_EXITED → PULL_OK sha256=… → PC_DASHBOARD_OK
+python tools/pc_dashboard.py --demo
+#    只推流、不等事件时用：--push <视频> --push-start <秒> --push-max-frames <N>
+#    详细参数与踩坑见 docs/streaming_quickstart.md；现场操作卡见 docs/demo_run_sheet.md
 
-# 4) 生成设计报告（Markdown → docx）
-mingw32-make report                 # 或 python tools/md_to_docx.py
-
-# 5) 生成提交包（含运行必需件 + manifest + SHA256，并在导出目录自检）
-python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；产物在 dist/
+# 6) 生成报告与提交件
+mingw32-make report                    # 或 python tools/md_to_docx.py（设计报告 docx）
+python tools/make_submission.py        # 代码包 zip，末行 SUBMISSION_PACK_OK
+python tools/make_portal_assets.py --pdf                       # 技术文档 PDF（≤50 MB）
+python tools/make_portal_assets.py --rar dist/zynq-yolo_submission_<stamp>  # 门户要的 RAR（≤200 MB）
 ```
 
+> **交付片以 `board/overlay/flow_system.bit` 为准**（sha256 `1397ce68…`，WNS +2.362 ns、
+> Slice LUT 42.97%、BRAM 86/140）。`hdmi_status.bit` / `hdmi_video.bit` / `display_both.bit` /
+> `track_display.bit` 是**历史中间片**，仍可复现但与当前读侧不同批，不要用来验收。
+>
 > 当前仓库是**提交状态**，不是骨架：报告、技能包、协作记录、上板日志均已落盘。
 > 历史路径（DVP 采集、PL 整网 `conv_engine`）仍保留为可复现的验证资产，但不在主线。
 
@@ -366,7 +371,7 @@ python tools/make_submission.py     # 末行 SUBMISSION_PACK_OK；产物在 dist
 | [`docs/yolo_on_zynq7020_survey.md`](docs/yolo_on_zynq7020_survey.md) | **YOLO on XC7Z020 技术调研**：五条路线判定（含「Vitis AI DPU 在 7000 系不存在」一手核查）、同芯片实测锚点（ARC2020 / 1.88 fps）、开源实现清单、推荐路线与验证阶梯。**引用其数字前必读 §9 未验证项** |
 | [`ref/hardware.md`](ref/hardware.md) | **硬件能力清单**（逐条 `文件:行号`）+ **UNVERIFIED 清单** —— 写报告取数的**一手**来源 |
 | [`ref/pitfalls_from_oi.md`](ref/pitfalls_from_oi.md) | **踩坑清单 P1–P10**（现象 / 触发 / 定位 / 规避 / 出处），承旧项目已验证经验 |
-| [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) | 决策台账（**`decided` 24 条 / `discussing` 0 条（只剩 D004 的参数部分待细化）/ `rejected` 0 条**；D003/D005/D006/D007 于 2026-10-30 裁定）+ **编号纪律**（本仓库 `DNNN` 与旧项目台账不是同一命名空间） |
+| [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) | 决策台账（**D001–D031 共 31 条**：26 条整行 `decided`，5 条是「一部分已定、另一部分仍 `discussing`」，无整行 `discussing` 的条目；**具体条数以台账为准，不在此写死**）+ **编号纪律**（本仓库 `DNNN` 与旧项目台账不是同一命名空间） |
 | [`report/README.md`](report/README.md) | 设计报告必须覆盖的 7 项、优化前后对比表与权重表 |
 | [`skill/README.md`](skill/README.md) | 技能包规范（适用范围 / 使用方法 / 失效条件） |
 | [`ai/README.md`](ai/README.md) | 大模型协作三层记录体系（原始层 / 整理层 / 沉淀层） |

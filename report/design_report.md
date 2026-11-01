@@ -1,11 +1,15 @@
 # 基于 Zynq-7020 的足球转播视频目标与事件分析系统
 
-**设计报告（提交稿 v1.3）**
+**设计报告（提交稿 v1.4）**
 
-- 日期：2026-10-31（v1.0 为 2026-10-25；v1.1 补 D026 HDMI 带框环出、统一显示判据的两级口径、
+- 日期：2026-11-01（v1.0 为 2026-10-25；v1.1 补 D026 HDMI 带框环出、统一显示判据的两级口径、
   同步 D023–D026 与 2026-10-28–30 的 LCD 重做记录；v1.2 补 10-31 的 HDMI 三处 RTL 缺陷、
   系统级仿真回归与单行/单列几何探针；v1.3 补 10-31 上板两轮实测：取数吞吐缺陷定量与修复
-  （黑横条消失、画面不跳），以及读地址错 2 像素造成整幅图右移 —— 修正片待上板）
+  （黑横条消失、画面不跳），以及读地址错 2 像素造成整幅图右移；**v1.4（2026-11-01）**：
+  补 D027–D031 —— HDMI 整行循环平移定量为「纯循环平移」并改为**每次起管线现场标定 + 补正**
+  （`HDMI_ALIGN shift=… residue=0`）、LCD 运行时状态面板（D030）、一条命令演示
+  `pc_dashboard --demo`、整段 250 帧实测复现；同时把资源/时序数字统一到**交付片**的
+  综合实现报告）
 - 器件：Xilinx XC7Z020-CLG400-2（正点原子 领航者 ZYNQ 7020，底板 V3.7）
 - 工具链：Vivado / Vitis / Vitis_HLS 2020.2（本机唯一安装版本；与指南推荐版本的差异见 §7.6）
 - 代码与复现入口：[`../README.md`](../README.md)、[`../docs/repo_spec.md`](../docs/repo_spec.md)
@@ -82,6 +86,12 @@
    未标定或无效机位**不输出坐标/事件**，避免“有数字但不可信”。
 4. **可验证的工程资产**：PL 卷积引擎保留 6/6 逐值 bit-exact；AXI 带宽标定给出
    32-bit 读 222 MB/s、64-bit 读 444 MB/s、拷贝 444 MB/s，解释了旧引擎为何慢。
+5. **把间歇性显示缺陷变成可测量的量（D031）**：HDMI 的整行错位曾被判为「间歇、不可复现」，
+   两次人眼结论甚至相反；用单列探针把它定量成「屏幕列 = 源列 + K」，K 恒定但换次运行会变，
+   于是做成**每次运行现场标定 + 写帧前补正 + 补完复测残余**，而不是写死一个常数。
+6. **一条命令的端到端演示**：`py tools/pc_dashboard.py --demo` 把「板端体检 → 起事件管线 →
+   推流 → 等板端算完 → 拉回校验 → 回放」串起来；等待判据踩过「僵尸进程」的坑后改为读
+   `/proc/<pid>/stat` 的状态位，现场不会再把「板端早就跑完」误判成卡死。
 
 ---
 
@@ -182,14 +192,18 @@ PS：单应 → 球场坐标 → 事件（出界/进球/球权）
   - 球权：离球最近且距离 **≤ 3 m** 的球员（`possession` / `possession_dist`）；
   - **角球/球门球**：需要“最后触球队伍 + 进攻方向”，当前只输出出界侧与最近球员，
     尚未做完整规则引擎（见 §8 第 3 条）。
-- **板上结果（2026-11-01 复测，`c05_t01730.0.mp4` 250 帧 / 中圈机位 / 配对标定）**：
-  板端本机跑出 **32 帧**球场坐标球、**7 帧球权**（最近 **1.12 m**，第 166 帧）；
-  推流路径（`pc_dashboard --event`）跑出 28 帧球场坐标球、10 帧球权、面板上三条 `球权`。
-  人工核图（`build/c05_evt_f110/130/166.png`，球场坐标经 `inv(H)` 投回画面）确认两条路在
-  第 110/130/166 帧**坐标逐位相同、红圈都套在真实球上** ⇒ 球权事件成立。
-  第 167 帧起推流路径跟错候选（圆点落在空草地），该段球权帧不采信，`possession` 判据未做任何放宽。
-  > ⚠️ 两处**不采信**要说清：① 同片段板端报的 6 帧 `out_of_play`（170–175）虽然方向对
-  > （球确实越线），但球圈落在白衣球员身上、来回跳，**不作为出界证据**；
+- **板上结果（2026-11-01 整段复测，`c05_t01730.0.mp4` 250 帧 / 中圈机位 / 配对标定）**：
+  推流路径（`py tools/pc_dashboard.py --demo`，等同 `--event`）整段跑出
+  **32 帧**球场坐标球、**10 帧**球权（最近 **1.09 m**，第 166 帧）、`out_of_play` **0 帧**；
+  面板「事件」栏出现三条 `球权`（`#32 2.38 m` / `#33 1.93 m` / `#26 1.09 m`）。
+  两次独立整段运行的拉回结果 **sha256 逐位相同**（`e7281e92…`），逐帧可复现。
+  人工核图（`build/c05_evt_f110/130/166.png`，球场坐标经 `inv(H)` 投回画面）确认
+  第 110/130/166 帧**红圈都套在真实球上** ⇒ 球权事件成立。
+  第 167 帧起球跟丢，之后几帧是**外推值**（f167 = 0.50 m 的圈落在空草地上），该段不采信；
+  `possession` 判据未做任何放宽。
+  > ⚠️ 两处**不采信**要说清：① 10-30 那次板端报的 6 帧 `out_of_play`（170–175）虽然方向对
+  > （球确实越线），但球圈落在白衣球员身上、来回跳，**不作为出界证据**；11-01 整段重跑为 **0 帧**，
+  > 一并说明这不是「修好了」，而是这一段本来就没触发；
   > ② 2026-10-24 那次「202 帧 144 帧坐标球 / 49 帧球权」的逐帧原始 JSON **未随包归档**，
   > 用同一片段重跑只有 16 帧坐标球、0 帧球权 ⇒ 本报告**不引用 144/49**（§8 已登记缺口）。
 
@@ -364,7 +378,7 @@ video_driver（1280×720@30）──► dvi_transmitter_top ──► HDMI
 | **上板（10-31 19:50 / 20:23，人眼+机器）** | ❌ **`HDMI_VISUAL_OK` 撤回** | 同一片 bit：19:50 前后人眼确认「现在可以了」；**20:23 再测又出现整行循环移位**（`px = c + 437` / `+441`）。⇒ 这不是「已修好」，是**间歇性缺陷**：同片、同源、同一套判据，两次人眼结论相反 |
 | **上板（10-31 21:0x，机器）** | ❌ 仍未修好，定量为恒定 `+313` 列 | 逐像素探针（`build/hdmi_pixel_probe.py`）：21 个源列 × 7 行**全部 `+313`**（1279+313 回绕成 312），`sum=1` ⇒ 无丢点、无重复；行方向 r=0/1/2/3/717/718/719 全对。取址逻辑本轮只读未改：`rd_idx = dbuf*LBUF + xpos`、`wr_idx = d_line[1:0]*LBUF + (d_col + b_i)` —— 两边都是「列号即源列」，**恒定的整行旋转说明写侧那一行的起点不是源列 0**，不是读侧取错地址。复现需要「多笔在飞」的 AXI 从机 TB；**仿真复现之前不出新片**，演示通道改走 PC / 网口 |
 | **上板（2026-11-01，机器）** | ✅ 行内平移**已定量并补正** | 逐列打点（源图只让第 j 列 = 1，读 `0x41210008` 的位置加权和，`pos = 720×(屏列+1)`）**47 个点全部 K=414**，接缝在源 866 → 屏 0 ⇒ 是**纯循环平移**（不是丢点/重复），连测 20 次不漂；换一次起管线量到 K=415。`--push` 起 HDMI 回显时现场标定 K 并按列索引循环移位再写帧缓存，复测残余量 **`HDMI_ALIGN shift=415 residue=0`**（5 个探针点补正后逐点恒等）。**降低口径**：这条证明「列映射恒等、行号对得上」，**不证明屏上观感**；人眼一项记 todo，`HDMI_VISUAL_OK` 仍不记 |
-| **待上板（10-31 01:xx）** | `build/hdmi_geom_probe.py` | 板子离线（本机网口断开，路由表无 `192.168.2.0/24`），**修正后的比特流尚未上板**。探针含：单行/单列（`sum = count·1280·0x00FFFFFF`，与 2³² 互素 ⇒ **精确反解「某个源行被显示了几次」**）、行列编码 Σ、八横带/八竖带、`0x41290000` 的 `under/behind/last_disp`。**`HDMI_VISUAL_OK` 不记** |
+| **（历史）10-31 01:0x 片** | `build/hdmi_geom_probe.py` | 当时板子离线（路由表无 `192.168.2.0/24`），该片未上板；**11-01 已由后续片补齐**（见上一行）。探针含：单行/单列（`sum = count·1280·0x00FFFFFF`，与 2³² 互素 ⇒ **精确反解「某个源行被显示了几次」**）、行列编码 Σ、八横带/八竖带、`0x41290000` 的 `under/behind/last_disp`。**`HDMI_VISUAL_OK` 不记** |
 
 
 ![HDMI 带框环出（主机侧渲染）](figures/hdmi_osd_boxes.png)
@@ -396,15 +410,16 @@ video_driver（1280×720@30）──► dvi_transmitter_top ──► HDMI
 | 项 | 值 |
 |---|---|
 | 令牌 | `FLOW_SYSTEM_BD_OK` |
-| WNS / WHS | **+3.042 ns / +0.028 ns**，失败端点 0 |
-| Slice LUT | 23,865（44.9%） |
+| WNS / WHS（**交付片** `flow_system.bit` sha256 `1397ce68…`） | **+2.362 ns / +0.028 ns**，失败端点 0（100,665 端点） |
+| Slice LUT | **22,858（42.97%）** |
 | Slice Registers | 31,255（29.4%） |
-| Block RAM | 86 / 140（61.4%） |
+| Block RAM | 86 / 140（61.43%） |
+| DSP | 4 / 220（1.82%） |
 | MMCM | 2 / 4 |
 | 地址表与 hwh 对拍 | 11 个从设备逐条一致 |
 
 ★ 一个必须记住的教训：**互连的开销不能按单体相加估**。两个设计单独出片时
-LUT 分别是 19.0% 和 11.1%，相加约 30%；实际合并后 44.9%，差额全在
+LUT 分别是 19.0% 和 11.1%，相加约 30%；实际合并后 44.9%（10-30 版；交付片 42.97%），差额全在
 `axi_smc`(10 MI) + `axi_clock_converter` + `hdmi_smc` + `hp_smc` 四个互连 IP 上。
 
 **构建期的一个真坑**：`create_bd_design` 报 `couldn't read file "init.tcl": No error`。
@@ -455,8 +470,8 @@ pclk 在计数（`tick 132155348→138832280`）、HDMI 侧 `frames 564→1056�
 10-31 复验：同一片 overlay 的 **LCD 半边与按键继续成立**；**HDMI 半边仍未过** ——
 彩条（`cfg_pack[28]`）人眼正确，切回帧缓存后是「左边白、其余黑、白上有黑横条」。
 三处 RTL 缺陷已在仿真里定位并修（末列恒黑、取数回绕冻结、累加口径错拍），
-新比特流 10-31 01:0x 出片（WNS **+3.937 ns**），**尚未上板**；
-上板一次即可判定的几何探针 `build/hdmi_geom_probe.py` 已就绪，等网口恢复后运行。
+该片（10-31 01:0x，WNS **+3.937 ns**）当时未能上板；后续 10-31 修复片已上板并验到
+「行号正确、列整体循环平移 K 恒定」，11-01 进一步定量为纯循环平移并做成运行时补正（D031）。
 
 ### 2.12 板端分层跑表：先确认板上到底检得到几个人（2026-10-30）
 
@@ -584,6 +599,14 @@ pclk 在计数（`tick 132155348→138832280`）、HDMI 侧 `frames 564→1056�
 > 资源代价如实记录：32-bit 字访存把 LUT 从 13,076 增到 23,552、DSP 从 162 增到 172，
 > 换来整网 20.8→9.63 s；这是“用资源换事务效率”，不是免费加速。
 
+**2026-11-01 新增两组「优化前后」对照（D030/D031）**：
+
+| 项 | 优化前 | 优化后 | 判据/出处 |
+|---|---|---|---|
+| HDMI 行内平移 | 屏幕第 C 列显示源列 `(C−K)`，K 每次运行不同（历史 425/399/437/440/441/414/415/0），屏上肉眼可见错位 | 起管线现场标定 K → 写帧前逐列补正 → 复测残余 | **`HDMI_ALIGN shift=415 residue=0`**；`docs/streaming_quickstart.md` §6 |
+| 状态可见性 | LCD 只在整段跑完后人工看文件 | 每 5 帧刷新运行时面板（事件/人数/机位） | `LCD_PANEL_OK` 整段 **50 次**（frame=0…245，n=1…50）；`ai/sessions/027` 轮次 10 |
+| 演示路径 | `--push` 只到 PC 回放；事件要再手写一长串参数 | `--demo` 一条命令（体检→事件管线→推流→等算完→拉回→回放） | 整段 `PUSH_DONE 250 帧` → `EXITED after=31s` → `PULL_OK` → `PC_DASHBOARD_OK frames=250` |
+
 - 其他耗时（PS 首层/非卷积/后处理）从 ~2.3 s 降到 **1.45 s**；
 - 单层验收 `BOARD_LAYER_OK all_6_cases`，聚合 **0.1156 GOP/s**（旧 0.0846）；
 - 关键认知：瓶颈不是总字节数，而是**每次字节访存的固定开销**；32-bit 打包后 conv 提升 2.27×。
@@ -645,7 +668,8 @@ pclk 在计数（`tick 132155348→138832280`）、HDMI 侧 `frames 564→1056�
 | 球候选召回 | 87.3 % | 会话 009 |
 | 球分类器 | P 0.667 / R 0.848（th=0.7） | 会话 009 |
 | 球链路确认 | 80 %（16/20，15 px 容差） | 会话 009 |
-| 板上球输出 | 144/202 帧球场坐标，49 帧球权，`events` 同步 | `board/logs/board_pipeline_20261024.md` |
+| 板上球输出（**2026-11-01 整段**） | **32/250 帧**球场坐标球、**10 帧**球权，`events` 同步 | `build/pull/evt_demo_20261101.jsonl` |
+| 板上球输出（10-24 历史，**不引用**） | 曾记 144/202 帧坐标球、49 帧球权，逐帧 JSON 未归档且不可复现 | `board/logs/board_pipeline_20261024.md`（仅作历史注记） |
 | 机位有效性 | 377 帧：300 LIMITED / 77 INVALID | 会话 009 |
 | 板子稳定性 | 20 分钟双核满载：164 轮、约 1148 次推理、无复位 | 会话 009 |
 
@@ -702,8 +726,11 @@ pclk 在计数（`tick 132155348→138832280`）、HDMI 侧 `frames 564→1056�
 | 6 | “球候选多了，补轨迹就能提高确认率” | 两次 backfill 试验把 144 帧回退到极少帧、球权归零；根因是球路径每 2 帧一次，5 次丢失只覆盖 0.4 s（`ai/sessions/010`） | 已回滚稳定版，结构改动待做（不是已解决） |
 | 7 | “纯 CV 颜色/形状/帧差能替代球检测” | 三级过滤后确认的仍是场边静态白块；候选召回高但单帧判别不足 | 改为“候选 + 小 CNN + 轨迹” |
 | 8 | “`under=0`、帧号累加、cfg 读回一致 ⇒ 显示正常” | 10-31 三处叠加缺陷（HP0 地址段缺失、行推进条件永不成立、cfg 挂在错的总线域）：机器全绿而屏上一个颜色都不变（`ai/sessions/022` §7.16） | 判据改为「源行/源列各显示恰好一次」等可反解指标，先仿真 8/8 再上板 |
+| 9 | “整行错位是固定偏移，写死一个补偿值就行” | 同一片 bit 上 K 跨运行会变：本轮 414、下一次 415，历史记录里还有 425/399/437/440/441/0（`ai/sessions/027` 轮次 10） | 改为**每次起管线现场标定 K**（单列探针 + 位置加权和）→ 写帧前逐列补正 → 复测残余量，判据 `HDMI_ALIGN shift=… residue=0` |
+| 10 | “读 `0x41290000` 看调试通道” | 该地址被地址解码到 status GPIO，永远读回 `{frames, under}` —— 此前多次基于它得出的「st_dbg」结论都是假的 | 诊断改走 `0x41210008` 的通道 2（`cfg_pack[31:29]` 选择器），并在 RTL 注释里写死「`0x41290000` 是坏地址」 |
 
-> 第 6 条是**未完成项**，如实记录：当前稳定版是 144/202 帧；backfill 结构改动
+> 第 6 条是**未完成项**，如实记录：当前稳定版是 c05 整段 32/250 帧坐标球、10 帧球权
+> （10-24 的 144/202 帧因原始 JSON 未归档且不可复现，已不在报告中作为当前结果引用）；backfill 结构改动
 > （`--ball-every 1`、按秒计丢失窗口、预测位置绕过标定边界过滤）尚未落地。
 > 报告不把“计划中的优化”写成“已完成的结果”。
 
@@ -770,21 +797,30 @@ cd zynq-yolo
 # 1) 仓库自检：末行必须是 CHECK_REPO_OK
 python tools\check_repo.py
 
-# 2) 构建比特流（按需；脚本入口在 build/scripts/）
-#    preproc: build/scripts/bd_preproc.tcl
-#    conv_engine（历史验证）: build/scripts/bd_conv_engine.tcl
-#    axi_bw（带宽标定）: build/scripts/bd_axi_bw.tcl
-vivado -mode batch -source build/scripts/bd_preproc.tcl
+# 2) 仿真回归（工程包的「仿真/验证结果」入口）：期望 SIM_PASS
+python sim\scripts\run_sim.py
 
-# 3) 生成提交包（含运行必需件 + 清单 + SHA256）
+# 3) 构建比特流（按需；脚本入口在 build/scripts/，工具链路径参数化）
+#    交付主线（LCD + HDMI 合一）: build/scripts/bd_flow_system.tcl
+#    历史验证: bd_preproc.tcl / bd_track_preproc.tcl / bd_conv_engine.tcl / bd_axi_bw.tcl
+vivado -mode batch -source build/scripts/bd_flow_system.tcl
+#    成功判据是日志令牌 FLOW_SYSTEM_BD_OK / DONE_OK，不是退出码
+
+# 4) 生成提交包（含运行必需件 + 清单 + SHA256）与门户件
 python tools\make_submission.py --out dist
+python tools\make_portal_assets.py --pdf                                   # 技术文档 PDF
+python tools\make_portal_assets.py --rar dist\zynq-yolo_submission_<stamp>  # 门户要 RAR
 ```
 
 ### 7.3 板上运行（完整管线）
 
 ```bash
-# 把仓库与运行必需件推到板端（PC 侧）
+# 0) 一次性：部署仓库与运行必需件 + 装开机服务（之后板子上电即就绪）
 powershell -File board/scripts/deploy_to_board.ps1
+python tools\install_boot.py          # zynq-idle（白屏待机）+ zynq-stream（5007 等推流）
+
+# ★ 一条命令演示（PC 侧，事件模式 + HDMI 回显 + LCD 面板 + 推流 + 拉回 + 回放）
+python tools\pc_dashboard.py --demo
 
 # 板端：完整管线（PL 跟踪辅助 + 检测 + 跟踪 + 球 + 事件 + SD 存储）
 python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
@@ -856,7 +892,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | 仓库 | `python tools/check_repo.py` | 末行 `CHECK_REPO_OK` |
 | PL 卷积引擎（历史） | `board/scripts/jtag_layer_test.tcl` | `BOARD_LAYER_OK all_6_cases` |
 | AXI 带宽 | `board/scripts/run_axi_bw.sh` | `AXI_BW_OK` 四模式 |
-| 板上球输出 | `tools/board_pipeline.py` + `data/calib/field_calib.json`（汇总见 `board/logs/board_pipeline_20261024.md`） | 144/202 帧球场坐标；49 帧球权；`events` 非空 |
+| 板上球输出 | `py tools/pc_dashboard.py --demo`（c05 整段 250 帧，事件模式 + 已配标定） | **32 帧**球场坐标球、**10 帧**球权、`out_of_play` 0 帧；`PIPELINE_OK frames=250 detections=50` |
 | 球链路（已知球评估） | `ai/sessions/009` 的 20 个已知球、15 px 容差 | 16/20 确认（80 %） |
 | HDMI 状态面板 | `board/overlay/hdmi_status.bit` + `status_display.py --fb-bram 0x40000000` | `BRAM_OK`：`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`；`VISUAL_OK` 待人眼 |
 | LCD 4bpp 面板 | `board/overlay/lcd_probe.bit` + `tools/check_lcd4_board.py` | **`READBACK_OK bad=0 checked=10`（2026-10-30 实跑两次）**；自证图 `tag4` 人眼确认 ⇒ `VISUAL_OK`；彩色状态面板画面仍待人眼 |
@@ -1021,8 +1057,10 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     由用户当场确认六屏「全对」，**当时**记为 `HDMI_VISUAL_OK`；随后在同一片固化 overlay 上跑真视频环出，
     `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级）。
     **⚠️ 该结论当日 20:23 撤回**：同片复测出现整行循环移位，今日定量为恒定 `+313` 列，
-    属间歇性缺陷（详见 §2.9 与第 8 条）。**实时叠框回放的人工确认仍单列，不并进静态六屏证据**；
-    且 HDMI 通道不具备交付条件，本报告不把它当演示通道。
+    属间歇性缺陷（详见 §2.9 与第 8 条）。**实时叠框回放的人工确认仍单列，不并进静态六屏证据**。
+    **2026-11-01 更新（D031）**：平移已定量为「屏幕列 = 源列 + K」的纯循环平移，
+    `--demo` 起管线时现场标定 K 并逐列补正，复测 `HDMI_ALIGN shift=415 residue=0`；
+    **故演示已走 HDMI 回显**，但「屏上观感」仍单列为人眼待办，`HDMI_VISUAL_OK` 不记。
     另：分层测试集扩到 8+8 后，「争抢画面球更难检出」这条**被自己的数据推翻**
     （p=0.61），§2.11 已改为如实记录推翻过程，而不是留一个好看的旧数字。
 
@@ -1072,7 +1110,13 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | D022 修复：BRAM 单端口 | `bd_hdmi_status.tcl`/`bd_lcd_status.tcl` 的 `SINGLE_PORT_BRAM=1` | ✅ 根因修复；后续 RTL 已改写读侧 |
 | D023/D024 合并显示 | `bd_display_both.tcl`、`bd_track_display.tcl` | ⚠️ 比特流落后于 018–021 的新读侧，需重出片 |
 | D025 扩展：PC 端上位机 | `tools/pc_dashboard.py`（状态条 + 球场 + 事件流 + 证据帧 + CSV） | ✅ 自检与界面 PNG 已人眼核对 |
-| D026 扩展：HDMI 带框环出 | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ 仿真 `TB_FB_SCANOUT_OK`；✅ 主机侧 OSD 出图；✅ **上板 `HDMI_VIDEO_BOARD_OK frames=313 under=0`**（`BRAM_OK` 级）；❌ **`VISUAL_OK` 不成立** —— 13:56 曾人眼记 `HDMI_VISUAL_OK`，20:23 复测出现整行循环移位，今日定量为恒定 `+313` 列，**当日撤回**；⚠️ 实时叠框回放只到机器级（`HDMI_VIDEO_OK` 25 帧 `under=0`），无人眼结论。**间歇缺陷未修好，演示不走 HDMI** |
+| D026 扩展：HDMI 带框环出 | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`bd_hdmi_video.tcl`、`tools/hdmi_video.py` | ✅ 仿真 `TB_FB_SCANOUT_OK`；✅ 主机侧 OSD 出图；✅ **上板 `HDMI_VIDEO_BOARD_OK frames=313 under=0`**（`BRAM_OK` 级）；❌ **`VISUAL_OK` 不成立** —— 13:56 曾人眼记 `HDMI_VISUAL_OK`，20:23 复测出现整行循环移位，今日定量为恒定 `+313` 列，**当日撤回**；⚠️ 实时叠框回放只到机器级（`HDMI_VIDEO_OK` 25 帧 `under=0`），无人眼结论。**2026-11-01（D031）**：平移已定量为纯循环平移并在每次起管线时现场标定补正（`HDMI_ALIGN shift=415 residue=0`）；`--demo` 演示走 HDMI 回显，但**屏上观感仍待人眼**，`HDMI_VISUAL_OK` 不记 |
+| D027 扩展：PC 以太网推流 | `tools/video_send.py`（`ZYVI` 协议 / JPEG q95 / 5007）、`board_pipeline --listen` | ✅ 上板验过：文件源与网络源同段对拍一致；`PUSH_DONE` → `BOARD_RESULT_READY` → `PULL_OK` |
+| D028 裁定：删除赛前选色 UI | `tools/lcd_ui.py`（已删）、D013-a 判据 | ✅ 按判据删除：不影响检测、只产出队别标签且无真值 |
+| D029 扩展：上电即用 | `tools/board_idle.py`、`tools/install_boot.py`、`docs/streaming_quickstart.md` | ✅ 真重启后两服务 `active`、白屏 `frames=35 under=0`、重启后推流 `PIPELINE_OK` |
+| D030 扩展：LCD 运行时状态面板 | `status_display.render` → `bram_fb.write_image4`、`board_pipeline --lcd-preview N` | ✅ 整段 `LCD_PANEL_OK` 50 次（每 5 帧刷新）；人眼确认 |
+| D031 修复：HDMI 行内平移 | `tools/hdmi_video.py::calibrate_shift/verify_shift/_rotate_into`、`board_pipeline` 起管线时调用 | ✅ 定量为纯循环平移（K=414/415）→ 现场标定 + 补正 → **`HDMI_ALIGN shift=415 residue=0`**；⚠️ 屏上观感待人眼，`HDMI_VISUAL_OK` 不记 |
+| 一条命令演示 | `tools/pc_dashboard.py --demo` | ✅ 整段：`PUSH_DONE 250 帧` → `BOARD_PIPELINE_EXITED after=31s` → `PULL_OK sha256=e7281e92…` → `PC_DASHBOARD_OK frames=250` |
 | 整体流程（新增） | `tools/check_full_flow.py` | ✅ 主机侧 `FULL_FLOW_OK ok=6 skip=1 fail=0`；✅ **板上 `FULL_FLOW_OK ok=8 skip=0 fail=0`** |
 
 ---
@@ -1080,15 +1124,17 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 ## 10. 结论
 
 本项目在 Zynq-7020 上把“足球转播视频的可观测目标与事件分析”做成了**可上板、可复现**的分析链路：PL 预处理 18.8 ms/帧、PS ncnn 检测 0.95–1.0 s/帧、跟踪 0.2 px、
-球链路 80 % 确认（16/20，PC 侧已知球评估）、144/202 帧球场坐标与 49 帧球权输出；
-扩展侧交付了 SD 增量存储、PC 上位机、PL 跟踪辅助（上板逐位对通过）与 HDMI 带框环出
-（仿真与主机侧出图通过）。
+球链路 80 % 确认（16/20，PC 侧已知球评估）、**c05 整段 250 帧跑出 32 帧球场坐标球与 10 帧球权**
+（两次运行的拉回文件 sha256 逐位相同）；
+扩展侧交付了 SD 增量存储、PC 上位机、PL 跟踪辅助（上板逐位对通过）、**PC 以太网推流（D027）**、
+**上电即用（D029）**、**LCD 运行时状态面板（D030）**、HDMI 带框环出（D026）与
+**一条命令的端到端演示 `pc_dashboard --demo`**。
 显示部分按两级口径如实表述：**HDMI 状态面板 `BRAM_OK` 通过、1bpp 文字面板的 `VISUAL_OK` 仍待人眼；
 LCD 4bpp 上板通过机器判据（`READBACK_OK bad=0`），自证图与彩色状态面板已经人眼确认；
-HDMI 带框环出（`flow_system.bit`）的 `VISUAL_OK` **不成立**：13:56 曾人眼记 `HDMI_VISUAL_OK`，
-20:23 同片复测出现整行循环移位、当日撤回，今日定量为恒定 `+313` 列（间歇性缺陷）；
-实时叠框回放只到 `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级），不宣称画面已目视通过**。
-功能侧的已知未完成项同样写清楚：视频入口仍走本地文件（D015 只落地了板→PC 的输出半条）、
+HDMI 带框环出（`flow_system.bit`）的整行循环平移已在 2026-11-01 定量为纯循环平移并在每次起管线时
+现场标定 + 补正（`HDMI_ALIGN shift=415 residue=0`），但 13:56 曾记的 `HDMI_VISUAL_OK` 撤回后不再恢复，
+**屏上观感单列为人眼待办**，实时叠框回放只到 `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级）**。
+功能侧的已知未完成项同样写清楚：视频入口已从本地文件换成 **PC 网络推流**（D015/D027）但摄像头源未验、
 队别已接入主线但只在主机侧自证（板上与真实画面未验）、倒地只到候选层（强层精度 3/4）、
 球的 backfill 结构改动未落地。
 我们没有把资源花在“PL 跑整网”

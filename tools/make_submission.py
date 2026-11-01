@@ -32,6 +32,9 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 
+# 赛事门户上限：全部代码 RAR <= 200 MB（2026-11-01 门户截图）
+MAX_PORTAL_RAR_BYTES = 200 * 1024 * 1024
+
 ROOT = Path(__file__).resolve().parent.parent
 
 # 本机/过程产物：绝不进包（前缀匹配，POSIX 风格）
@@ -221,6 +224,7 @@ def main(argv=None):
         print("SUBMISSION_PACK_FAIL")
         return 1
 
+    zpath = None
     if args.zip:
         zpath = out_root / f"{name}.zip"
         with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
@@ -228,6 +232,15 @@ def main(argv=None):
                 if p.is_file():
                     z.write(p, p.relative_to(pkg.parent).as_posix())
         print(f"ZIP {zpath} {zpath.stat().st_size} bytes")
+
+    # 门户只收 RAR（<=200 MB），zip 只是方便本地传输；这里把该跑的那条命令直接打出来，
+    # 免得「打完包就以为交完了」。
+    print("PORTAL_NEXT python tools/make_portal_assets.py --rar %s   # 门户要 RAR，zip 不收" % pkg)
+    if zpath is not None and zpath.exists() and zpath.stat().st_size > MAX_PORTAL_RAR_BYTES:
+        print("ZIP_TOO_LARGE %d > %d（门户 RAR 上限 200 MB，需先瘦身）"
+              % (zpath.stat().st_size, MAX_PORTAL_RAR_BYTES))
+        print("SUBMISSION_PACK_FAIL")
+        return 1
 
     print("SUBMISSION_PACK_OK")
     return 0

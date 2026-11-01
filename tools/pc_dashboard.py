@@ -693,12 +693,60 @@ def _video_with_start(path, start_sec):
     return vid
 
 
+_CALIB_HINV = None
+
+
+def load_calib_hinv(path):
+    """读标定文件里的 3×3 单应，存下它的逆矩阵（球场坐标 → 画面像素）。
+
+    事件模式（`--proposal`）的 JSONL 里**只有球场坐标、没有像素框**，画面要画出
+    球员位置与球，就得靠这张逆矩阵回投。失败不抛异常：返回 None 时画面只少几个圈。
+    """
+    global _CALIB_HINV
+    _CALIB_HINV = None
+    if not path:
+        return None
+    try:
+        import numpy as np
+        with open(path, "r", encoding="utf-8") as f:
+            h = np.array(json.load(f)["H"], dtype=float)
+        _CALIB_HINV = np.linalg.inv(h)
+        print("CALIB_LOADED %s" % path)
+    except Exception as e:                                     # noqa: BLE001
+        print("CALIB_LOAD_FAIL %s %s" % (path, e))
+    return _CALIB_HINV
+
+
+def _field_to_px(x, y):
+    """球场坐标 → 画面像素；没有标定或点在无穷远时返回 None。"""
+    if _CALIB_HINV is None or x is None or y is None:
+        return None
+    try:
+        import numpy as np
+        v = _CALIB_HINV @ np.array([float(x), float(y), 1.0])
+        if abs(v[2]) < 1e-9:
+            return None
+        return (v[0] / v[2], v[1] / v[2])
+    except Exception:                                          # noqa: BLE001
+        return None
+
+
 def _draw_video_panel(img, tb, st, video):
-    """比赛画面 + 检测框（像素坐标直接画在缩略图上）。"""
+    """比赛画面 + 检测框（像素坐标直接画在缩略图上）。
+
+    两种 JSON 都要能画：
+      - `tracks`（普通模式）：带 `[id,x1,y1,x2,y2,...]`，直接画矩形框；
+      - `players`（**事件模式 `--proposal`**）：只有球场坐标、没有像素框，
+        借 `--calib` 的单应逆矩阵回投到画面画圈——否则事件那一镜画面是**光板**的
+        （2026-11-01 现场提问「为什么没有框」）。
+    """
     import cv2
     cv2.rectangle(img, (LEFT_X0, PANEL_Y0), (LEFT_X1, PANEL_Y1), COL_PANEL, -1)
-    tb.add((LEFT_X0 + 14, PANEL_Y0 + 14), "比赛画面 · 带框（转播机位，无需标定）",
-           14, COL_TEXT, "la", bold=True)
+    _tracks = (st.raw or {}).get("tracks") if st is not None else None
+    _title = "比赛画面 · 带框（转播机位，无需标定）"
+    if st is not None and not _tracks and _CALIB_HINV is not None:
+        _title = "比赛画面 · 事件模式（球场坐标回投，圈在脚下）"
+    tb.add((LEFT_X0 + 14, PANEL_Y0 + 14), _title, 14, COL_TEXT, "la", bold=True)
     f = video.get(st.frame) if (st is not None and video is not None) else None
     if f is None:
         cv2.rectangle(img, (PITCH_OX, PITCH_OY), (PITCH_OX + PITCH_W, PITCH_OY + PITCH_H),
@@ -721,13 +769,33 @@ def _draw_video_panel(img, tb, st, video):
         cv2.rectangle(small, p1, p2, (80, 240, 80), 2)
         cv2.putText(small, "#%s" % tid, (p1[0], max(10, p1[1] - 3)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (80, 240, 80), 1)
+    if not ((st.raw or {}).get("tracks") or []):
+        for p in (st.players or []):
+            if p.get("space") != "field":
+                continue
+            q = _field_to_px(p.get("x"), p.get("y"))
+            if q is None:
+                continue
+            px, py = int(q[0] * s), int(q[1] * s)
+            if not (0 <= px < nw and 0 <= py < nh):
+                continue
+            cv2.circle(small, (px, py), 14, (80, 240, 80), 2)
+            cv2.putText(small, "#%s" % p.get("id"), (px + 15, max(12, py - 6)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (80, 240, 80), 1)
     b = (st.ball or {}) if st is not None else {}
-    if b.get("valid") and b.get("space", "field") in ("image", "px") and b.get("x") is not None:
-        bx, by = int(_num(b["x"]) * s), int(_num(b["y"]) * s)
-        cv2.circle(small, (bx, by), 12, (0, 0, 255), 2)
-        cv2.circle(small, (bx, by), 2, (0, 0, 255), -1)
-        cv2.putText(small, "BALL", (bx + 15, max(12, by - 6)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+    bxy = None
+    if b.get("valid") and b.get("x") is not None:
+        if b.get("space", "field") in ("image", "px"):
+            bxy = (_num(b["x"]), _num(b["y"]))
+        elif b.get("space") == "field":
+            bxy = _field_to_px(b.get("x"), b.get("y"))
+    if bxy is not None:
+        bx, by = int(bxy[0] * s), int(bxy[1] * s)
+        if 0 <= bx < nw and 0 <= by < nh:
+            cv2.circle(small, (bx, by), 12, (0, 0, 255), 2)
+            cv2.circle(small, (bx, by), 2, (0, 0, 255), -1)
+            cv2.putText(small, "BALL", (bx + 15, max(12, by - 6)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
     ox = PITCH_OX + (PITCH_W - nw) // 2
     oy = PITCH_OY + (PITCH_H - nh) // 2
     img[oy:oy + nh, ox:ox + nw] = small
@@ -1074,6 +1142,41 @@ def _pick_grown(items, before):
     return grown[-1]
 
 
+_BOARD_ALIVE = r'''
+import os
+pid = None
+try:
+    pid = int(open(%(pidfile)r).read().strip())
+except Exception:
+    pass
+alive = bool(pid) and os.path.exists("/proc/%%d" %% pid)
+print("BOARD_PIPELINE_ALIVE pid=%%s alive=%%s" %% (pid, alive))
+'''
+
+
+def board_wait_pipeline_exit(pidfile, jupyter="192.168.2.99:9090",
+                             timeout=300.0, poll=3.0, log=None):
+    """等板上那条 Popen 起来的管线**自己跑完退出**。
+
+    为什么要这一步：`ResultStore` 按 `--store-fsync 30` 攒着写盘，推流一结束就按
+    「行数不再变」去拉，会把**最后不到 30 行**当成「写稳了」——2026-11-01 现场就是这样
+    （推 80 帧只拉回 60 行，第 166 帧那条 1.09 m 的球权正好落在丢掉的那 20 帧里）。
+    管线进程退出时会补一次 flush，所以判据改成「进程没了」再拉。
+    """
+    bj = _board_mod(jupyter)
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        rc, text = bj.run_capture(_BOARD_ALIVE % {"pidfile": pidfile}, timeout=120.0)
+        if rc == 0 and "alive=False" in text:
+            if log:
+                log("BOARD_PIPELINE_EXITED")
+            return True
+        time.sleep(poll)
+    if log:
+        log("BOARD_PIPELINE_EXIT_TIMEOUT %ss" % int(timeout))
+    return False
+
+
 def board_wait_results(before, store_dir, pattern="net_*.jsonl",
                        jupyter="192.168.2.99:9090", timeout=180.0,
                        poll=2.0, log=None):
@@ -1233,7 +1336,8 @@ def _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
     try:
         _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
                    out_dir, fps, quality, max_frames, scale, speed,
-                   start_sec, video_src, log)
+                   start_sec, video_src, log,
+                   await_pidfile=(started or {}).get("pidfile"))
     finally:
         if started is not None:
             try:
@@ -1250,7 +1354,7 @@ def _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
 
 def _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
                out_dir, fps, quality, max_frames, scale, speed,
-               start_sec, video_src, log):
+               start_sec, video_src, log, await_pidfile=None):
     q.put(("status", "PUSH 连接板子"))
     before = board_snapshot(store_dir, pattern, jupyter)
 
@@ -1276,6 +1380,10 @@ def _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
         log("PUSH_DONE frames=%d mb=%.1f fps=%.1f"
             % (res["frames"], res["bytes"] / 1e6, res["fps"]))
 
+    if await_pidfile:
+        # 事件管线是我们自己起的：等它跑完再拉，否则最后 <30 行（fsync 间隔）会丢
+        q.put(("status", "PUSH 等板端算完"))
+        board_wait_pipeline_exit(await_pidfile, jupyter, log=log)
     q.put(("status", "PUSH 等板端落盘"))
     remote, lines, _size = board_wait_results(before, store_dir, pattern,
                                               jupyter, log=log)
@@ -1598,6 +1706,10 @@ def main():
         ap.error("--event 只作用于 --push（事件模式是「另起一条管线再推流」）")
     if args.event and args.board.rsplit(":", 1)[-1] == str(args.event_port):
         ap.error("--board 的端口不能和 --event-port 相同（%d）" % args.event_port)
+
+    # 事件模式的 JSONL 只有球场坐标：加载单应逆矩阵，画面才能把球员/球回投成圈
+    if args.calib and Path(args.calib).is_file():
+        load_calib_hinv(args.calib)
 
     # ---- 批量路径：回放完直接出 PNG，不开窗口（出图 / CI / 演示截图）
     if args.replay and args.dump_png:

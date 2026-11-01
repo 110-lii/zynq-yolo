@@ -1008,8 +1008,10 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     循环旋转（恒定 `+313` 列），纯白没有内容可旋转，也不承载信息——空闲屏上不该出现任何
     「像检测结果」的东西。**实测**：装后 `BOOT_SERVICE_STATE active active`、
     `IDLE_HDMI_WHITE_OK frames=31 under=0`；**真重启**后 18 s 自动恢复（`frames=35 under=0`），
-    重启后 PC 推 20 帧 → `PIPELINE_OK` 且落盘 20 行。**边界**：白屏只有机器判据，
-    **屏上颜色未经人眼确认**；推流时 HDMI 仍是白屏（不回显画面）。
+    重启后 PC 推 20 帧 → `PIPELINE_OK` 且落盘 20 行。**推流回显**：同一批 `--hdmi-preview` 把每帧带框图写进 HDMI 帧缓存，空闲时刷回纯白
+    （`HDMI_PREVIEW_ON` → `HDMI_PREVIEW_OFF white_restored` → `PIPELINE_OK frames=30`）。
+    **边界**：白屏与回显**都只有机器判据，画面未经人眼确认**；且 HDMI 有间歇整行旋转缺陷，
+    回显画面不能作为验收依据，验收仍走 PC 侧 JSONL 回放。
 
 ---
 

@@ -103,9 +103,44 @@ HDMI；带框回放（D026）走的是另一条路径且人眼判据已撤回。
 
 ---
 
+---
+
+## 轮次 4 — 推流时把「处理之后的画面」送上 HDMI（用户追问）
+
+用户问：「推流时 HDMI 仍是白屏是什么意思，那怎么显示处理之后的视频」。
+
+原状：`board_pipeline` 只做检测与落盘，从不写 HDMI 帧缓存；空闲白屏由 `zynq-idle` 每 5 s
+刷一次，所以推流时屏上不会变。这不是缺陷，是没做。
+
+**做法**（`board_pipeline --hdmi-preview`）：
+
+| 环节 | 实现 |
+|---|---|
+| 画 | 复用 `hdmi_video.draw_frame(norm_frame(rec))` —— 与网口回传**同一套画法**，不另造一份 |
+| 送 | `HdmiVideoOut.show()` 写 DDR + 切缓冲（与 D026 同一条 `fb_scanout` 通路） |
+| 不打架 | 起服务时 touch `/tmp/hdmi_preview.active`；`board_idle` 见到它就跳过刷白 |
+| 收尾 | 推完写回纯白并删标记 ⇒ 屏上回到待机，不会留着最后一张带框图 |
+
+**中途踩的坑**：第一次改完管线在收尾时崩了 —— `NameError: name 'pl_ms_med' is not defined`，
+原因是我插入收尾块时把 `pl_ms_med = ...` 那行吃掉了。修好后重跑干净通过。
+
+**实测**（2026-11-01）：
+
+```
+HDMI_PREVIEW_ON /home/xilinx/zynq-yolo/board/overlay/flow_system.bit
+HDMI_PREVIEW_OFF white_restored
+PIPELINE_OK frames=30 detections=2 med_infer_ms=997.3
+```
+
+落盘 `net_*_00.jsonl` 30 行；服务随后自动回到 `NET_IN_LISTEN port=5007`。
+
+**边界**：画面只有机器判据（`frames` 增长、`under=0`、token 顺序对），**没有人眼看**；
+且 HDMI 有间歇整行旋转（`+313` 列），所以回显能用来「看着像那么回事」，
+**不能**当验收依据 —— 验收仍走 PC 侧 JSONL 回放。要关掉回显：
+`py tools/install_boot.py --no-hdmi-preview`。
+
 ## 未决 / 下一步
 
 1. **人眼**：HDMI 白屏、LCD 面板、PC 面板——都要看一眼。
 2. 演示视频、授权书、全貌图：只能人工。
-3. 推流回显（推流时 HDMI 显示画面）未做；要做应在 `board_pipeline` 里加 `--hdmi-preview`，
-   但要注意 `fb_scanout` 的整行旋转缺陷会影响画面正确性。
+3. 推流回显已做（轮次 4），但画面未人眼确认；`fb_scanout` 的整行旋转缺陷仍会影响它的可信度。

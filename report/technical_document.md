@@ -212,7 +212,7 @@ HDMI 显示带框视频；PC 端显示球场画布与事件流。
 | LCD 显示 | `READBACK_OK` + 人眼 | 4bpp/16 色、按键、赛前 UI | 1bpp 文字面板未做人眼终验 |
 | HDMI 显示 | 六屏静态 + 真视频 | 机器级 `BRAM_OK`；视频 25 帧 `under=0` | 静态 `VISUAL_OK` 当日撤回（复测出现整行循环移位 `+313` 列），实时叠框回放未目视确认 |
 | 视频入口（PC → 板） | 同一段 c03 走文件源与网络源 | 两边 `frames=250 detections=17`，带球帧集合同为 20 帧 | JPEG 有损，档位影响判决（q80 多 10 帧假球 ⇒ 默认 q95）；摄像头源未验 |
-| 上电即用（D029） | `install_boot.py` + 真重启 | `BOOT_SERVICE_STATE active active`；白屏 `frames=31/35 under=0`；重启后推流 `PIPELINE_OK` | 白屏未经人眼；推流时 HDMI 不回显 |
+| 上电即用（D029） | `install_boot.py` + 真重启 | `BOOT_SERVICE_STATE active active`；空闲白屏 `frames=31/35 under=0`；推流时 HDMI 显示带框图（`HDMI_PREVIEW_ON/OFF`） | 白屏与回显画面均未经人眼；HDMI 有间歇整行旋转缺陷 |
 | 整链 | `FULL_FLOW_OK` | 主机 ok=6；板上 ok=8 | — |
 
 ## 第四部分  总结

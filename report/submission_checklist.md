@@ -67,7 +67,7 @@
 | HDMI+LCD 合并（旧） | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ❌ 已由 `flow_system` 取代：1bpp 文字方案，且落后于 018–021 的新读侧，不再重出片 |
 | 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ `TRACK_PREPROC_BOARD_OK`（逐字节对拍）；⚠️ 合并画面同上门槛 |
 | 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
-| 上电即用（D029，11-01） | `tools/board_idle.py` + `tools/install_boot.py` + `docs/streaming_quickstart.md` | ✅ **上板并真重启验过**：两服务自启、白屏 `frames=31/35 under=0`、重启后推流 `PIPELINE_OK`；⏳ 白屏待人眼 |
+| 上电即用（D029，11-01） | `tools/board_idle.py` + `tools/install_boot.py` + `docs/streaming_quickstart.md` | ✅ **上板并真重启验过**：两服务自启、白屏 `frames=31/35 under=0`、重启后推流 `PIPELINE_OK`；推流时 HDMI 回显带框图（`HDMI_PREVIEW_ON/OFF white_restored`）；⏳ 白屏与回显画面待人眼 |
 | 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025/D026/D027/D028/D029 | ✅ |
 
 ## 3.2 交付前补齐（2026-10-27，D026）

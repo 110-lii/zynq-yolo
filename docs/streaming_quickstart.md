@@ -78,16 +78,34 @@ py tools/install_boot.py --uninstall   # 撤掉（文件保留）
 
 ## 6. 推流时 HDMI 上看到什么
 
-**还是白色。** 当前 `board_pipeline` 只做检测与落盘，不把收到的画面送到 HDMI；
-HDMI 的带框回放（D026）走的是另一条 `hdmi_video.py` 路径，且该通路的人眼判据已撤回
-（间歇整行旋转 `+313` 列），**演示与验收都不用它**。
+**处理后的画面，带框和球。** `board_pipeline --hdmi-preview` 把每帧的检测结果画成带框图，
+写进 HDMI 帧缓存（与 D026 同一条 `fb_scanout` 通路）。时间线：
 
-要「边推边看」，现在有两条现成路子：
+| 时刻 | 屏上 |
+|---|---|
+| 空闲（没人推流） | **纯白**（`zynq-idle` 每 5 s 刷一次） |
+| 推流处理中 | **带框图**：绿框套球员 + `#id`，红圈是球（`HDMI_PREVIEW_ON`） |
+| 推完 | **回到纯白**（`HDMI_PREVIEW_OFF white_restored`），然后继续等下一段 |
+
+实测（2026-11-01）：`HDMI_PREVIEW_ON` → `HDMI_PREVIEW_OFF white_restored` →
+`PIPELINE_OK frames=30 detections=2 med_infer_ms=997.3`，落盘 30 行。
+
+⚠️ **这块屏的可信度要人眼看**：`fb_scanout` 有已知的**间歇整行循环旋转**缺陷
+（恒定 `+313` 列），2026-10-31 的 `HDMI_VISUAL_OK` 就是因此撤回的。
+所以：
+
+- 演示里要用它，**先自己看一遍**画面有没有整体错位；
+- 它**不能替代** PC 侧回放做验收；
+- 觉得画面不可信就关掉回显：`py tools/install_boot.py --no-hdmi-preview`（或把服务里的
+  `--hdmi-preview` 去掉），屏上就只剩白屏待机。
+
+不想用 HDMI 的话，另外两条路子仍然可用：
 
 - **PC 侧**：推流结束后用 `tools/pc_dashboard.py --replay <JSONL>` 看那一段的分析画面；
 - **网口回传**：板端另跑 `tools/video_back.py`（走 5006），PC 上 `pc_dashboard --listen` 接。
   这条路已上板验过（`VIDEO_BACK_OK`），但它需要**板本地**的视频源，所以是「板上跑文件 + 回传」，
-  不是「PC 推流 + 回传」的闭环。**闭环目前没实现**，不要在现场说它是实时的。
+  不是「PC 推流 + 回传」的闭环。**闭环（推流进板、带框图直接从网口回来）没实现**，
+  不要在现场说它是实时的。
 
 ## 7. 常见故障
 

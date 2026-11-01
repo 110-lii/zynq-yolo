@@ -28,6 +28,7 @@ DDR 缓冲，进程退出缓冲就被释放，扫描输出会读到失效页面�
     IDLE_HDMI_WHITE_FAIL <reason>
 """
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -87,9 +88,12 @@ def main(argv=None):
         return 0
 
     t0 = time.time()
+    FLAG = "/tmp/hdmi_preview.active"
     while True:
         time.sleep(5.0)
-        if args.always_white:
+        # 有人在回显处理后的画面（board_pipeline --hdmi-preview）时不要盖掉它；
+        # 那个进程退出时会自己写回白屏并撤掉标记，这里不需要插手。
+        if args.always_white and not os.path.exists(FLAG):
             try:
                 out.show(white)
             except Exception as e:                           # noqa: BLE001

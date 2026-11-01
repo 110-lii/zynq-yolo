@@ -296,6 +296,13 @@ def main():
                     help="网络源的标称帧率（只用于 ball_lost_sec 之类的时间换算）")
     ap.add_argument("--net-timeout", type=float, default=120.0,
                     help="等连接/等帧的超时秒数（PC 端起得慢时给大一点）")
+    # ---- 板载 HDMI 回显（D029 后续）：把「处理之后的画面」写到 HDMI 帧缓存
+    ap.add_argument("--hdmi-preview", action="store_true",
+                    help="把每帧检测结果画成带框图并写到 HDMI（需要 flow_system.bit）。"
+                         "★ HDMI 通路有已知的间歇整行旋转缺陷（+313 列，VISUAL_OK 已撤回），"
+                         "画面是否可信要人眼看；不能用它代替 PC 侧回放")
+    ap.add_argument("--hdmi-bit", default=os.path.join(REPO, "board", "overlay",
+                                                       "flow_system.bit"))
     ap.add_argument("--bin", default="/home/xilinx/ncnn_infer")
     ap.add_argument("--param", default="/home/xilinx/person_v8n25.param")
     ap.add_argument("--model", default="/home/xilinx/person_v8n25.bin")
@@ -406,6 +413,27 @@ def main():
         if not cap.isOpened():
             print("PIPELINE_FAIL video_open")
             return 1
+
+    # ---- HDMI 回显：处理后的画面直接上大屏（D029 后续）
+    hdmi_out = None
+    PREVIEW_FLAG = "/tmp/hdmi_preview.active"
+    if args.hdmi_preview:
+        try:
+            from pynq import Overlay
+            Overlay(args.hdmi_bit)                 # 已加载同一片时是幂等的
+            from hdmi_video import HdmiVideoOut
+            hdmi_out = HdmiVideoOut()
+            cfg = hdmi_out.check_cfg()
+            if not (cfg["addr"] and cfg["pack"]):
+                print("HDMI_PREVIEW_FAIL cfg_not_effective %s" % cfg)
+                hdmi_out = None
+            else:
+                # 告诉 board_idle 别再来刷白屏（否则它每 5 s 会把画面盖掉）
+                open(PREVIEW_FLAG, "w").close()
+                print("HDMI_PREVIEW_ON %s" % args.hdmi_bit, flush=True)
+        except Exception as _e:                    # noqa: BLE001
+            print("HDMI_PREVIEW_FAIL %s" % _e)
+            hdmi_out = None
 
     H = None
     hull = None
@@ -652,12 +680,33 @@ def main():
                                   "camera_state": cam_state})
         elif store is not None:
             store.append(dict(rec, type="frame"))
+        # HDMI 回显：同一份 rec 画成带框图再上大屏。放这里而不是循环开头，
+        # 是因为要等本帧的检测/球结果都齐了；慢（~30 ms/帧）但板端本来 ~1 fps。
+        if hdmi_out is not None:
+            try:
+                from hdmi_video import draw_frame, norm_frame
+                hdmi_out.show(draw_frame(frame, norm_frame(rec)))
+            except Exception as _e:             # noqa: BLE001 — 回显失败不该拖垮管线
+                print("HDMI_PREVIEW_FRAME_FAIL %s" % _e)
+                hdmi_out = None
         # 证据帧：出界/倒地各存当前帧原图（限流与失败处理在 ResultStore 内部）
         if store is not None and args.store_evidence:
             save_evidence_for(store, frame, idx, ev, fall_ids, cam_state, ball)
         idx += 1
 
     cap.release()
+    # 回显收尾：把大屏交还「空闲白屏」——否则最后一张带框图会一直停在屏上，
+    # 看起来像还有活没干完。同时撤掉标记，board_idle 的自动刷白随之恢复。
+    if args.hdmi_preview:
+        try:
+            if os.path.exists(PREVIEW_FLAG):
+                os.remove(PREVIEW_FLAG)
+            if hdmi_out is not None:
+                hdmi_out.show(np.full((720, 1280, 3), 255, np.uint8))
+                print("HDMI_PREVIEW_OFF white_restored", flush=True)
+        except Exception as _e:                 # noqa: BLE001
+            print("HDMI_PREVIEW_FAIL restore: %s" % _e)
+
     pl_ms_med = statistics.median([f["pl_ms"] for f in frames if "pl_ms" in f]) if TRACK else None
     out = {
         "video": args.video, "frames": idx, "detections": n_det,

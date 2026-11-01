@@ -172,8 +172,11 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
   → `PIPELINE_OK`、落盘 `net_*_00.jsonl` 20 行。
 - **两个坑**：systemd 里必须用 `/usr/local/share/pynq-venv/bin/python3`（系统 python 没有 pynq），
   且必须 `Environment=XILINX_XRT=/usr`（否则 `No Devices Found`）。
-- ⏳ **白屏只有机器判据**（配置生效、`frames` 增长、`under=0`），**屏上是不是白的要人眼看** ——
-  与 10-31 `HDMI_VISUAL_OK` 撤回同一条纪律。
+- **推流时回显处理后的画面**：`board_pipeline --hdmi-preview` 把每帧带框图写进 HDMI 帧缓存，
+  空闲时由 `zynq-idle` 刷回纯白；用 `/tmp/hdmi_preview.active` 标记避免两边互相覆盖。
+  实测 `HDMI_PREVIEW_ON` → `HDMI_PREVIEW_OFF white_restored` → `PIPELINE_OK frames=30`。
+- ⏳ **白屏与回显画面都只有机器判据**（配置生效、`frames` 增长、`under=0`），
+  **屏上对不对要人眼看** —— 与 10-31 `HDMI_VISUAL_OK` 撤回同一条纪律。
 - 电脑侧怎么推流：见 [`streaming_quickstart.md`](streaming_quickstart.md)。
 
 ## 分层测试集与全流程 overlay（2026-10-30）

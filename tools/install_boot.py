@@ -75,7 +75,7 @@ Type=simple
 #   Jupyter 内核的 env，缺这一行会报 "No Devices Found, is the XRT environment sourced?"
 Environment=XILINX_XRT=/usr
 WorkingDirectory=%(root)s
-ExecStart=%(py)s %(root)s/tools/board_pipeline.py --listen 5007 \
+ExecStart=%(py)s %(root)s/tools/board_pipeline.py --listen 5007%(preview)s \
   --every 15 --max-det 0 --no-pl --no-camera-gate --ball-every 5 \
   --bin /home/xilinx/ncnn_infer \
   --param %(root)s/build/models/person_v8n25.param \
@@ -91,9 +91,10 @@ WantedBy=multi-user.target
 """
 
 
-def render(which, root=BOARD_ROOT, py=PY3):
+def render(which, root=BOARD_ROOT, py=PY3, preview=True):
     tpl = {"idle": UNIT_IDLE, "stream": UNIT_STREAM}[which]
-    return tpl % {"root": root, "py": py}
+    return tpl % {"root": root, "py": py,
+                  "preview": " --hdmi-preview" if preview else ""}
 
 
 def main(argv=None):
@@ -101,11 +102,13 @@ def main(argv=None):
     ap.add_argument("--dry-run", action="store_true", help="只打印 unit，不连板子")
     ap.add_argument("--no-stream", action="store_true", help="不装 5007 监听服务")
     ap.add_argument("--uninstall", action="store_true")
+    ap.add_argument("--no-hdmi-preview", action="store_true",
+                    help="推流时不把画面送到 HDMI（只保留白屏待机）")
     ap.add_argument("--board", default="192.168.2.99")
     args = ap.parse_args(argv)
 
     which = ["idle"] if args.no_stream else ["idle", "stream"]
-    units = {k: render(k) for k in which}
+    units = {k: render(k, preview=not args.no_hdmi_preview) for k in which}
 
     if args.dry_run:
         for k in which:

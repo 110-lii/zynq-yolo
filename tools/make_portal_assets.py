@@ -22,7 +22,8 @@
     py tools/make_portal_assets.py --rar dist/zynq-yolo_submission_YYYYMMDD_HHMM
     py tools/make_portal_assets.py --check --video <demo.mp4> --auth <auth.pdf>
 
-RAR 可执行文件查找顺序：`--rar-exe` > 环境变量 `RAR_EXE` > PATH 中的 `rar` / `winrar`。
+RAR 可执行文件查找顺序：`--rar-exe` > 环境变量 `RAR_EXE` > PATH 中的 `rar` / `winrar` >
+Windows 注册表里 `.rar` 关联的安装目录（装了 WinRAR 但没进 PATH 的常见情况）。
 本机若未装 WinRAR，脚本会打印明确提示，不会假装成功。
 
 日志令牌::
@@ -59,6 +60,33 @@ def human(n):
     return f"{n / 1024 / 1024:.1f} MB"
 
 
+def _rar_from_registry():
+    """已装 WinRAR 但不在 PATH 时，从 .rar 关联的打开命令里找 Rar.exe/WinRAR.exe。"""
+    if os.name != "nt":
+        return None
+    try:
+        import winreg
+    except Exception:
+        return None
+    keys = ((winreg.HKEY_CLASSES_ROOT, r"Applications\Rar.exe\shell\open\command"),
+            (winreg.HKEY_CLASSES_ROOT, r"Applications\WinRAR.exe\shell\open\command"),
+            (winreg.HKEY_CLASSES_ROOT, r"WinRAR\shell\open\command"))
+    for hive, sub in keys:
+        try:
+            with winreg.OpenKey(hive, sub) as k:
+                val = str(winreg.QueryValueEx(k, "")[0])
+        except OSError:
+            continue
+        cmd = val.strip().strip('"')
+        exe = cmd.split('"')[0] if cmd.startswith('"') else cmd.split(" ")[0]
+        d = Path(exe).parent
+        for name in ("Rar.exe", "WinRAR.exe"):
+            cand = d / name
+            if cand.is_file():
+                return str(cand)
+    return None
+
+
 def find_rar(explicit=None):
     if explicit:
         p = Path(explicit).expanduser()
@@ -70,7 +98,7 @@ def find_rar(explicit=None):
         p = shutil.which(name)
         if p:
             return p
-    return None
+    return _rar_from_registry()
 
 
 def docx_to_pdf(src: Path, dst: Path) -> bool:

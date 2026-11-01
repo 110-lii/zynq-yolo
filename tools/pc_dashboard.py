@@ -1044,11 +1044,61 @@ print("END")
 # 的管线（另一个端口），推完就杀掉。命令行与装机服务分开，是为了不把演示素材
 # 用的标定/参数拖慢主路径（--ball-every 2 比服务里的 5 慢一倍多）。
 _BOARD_START = r'''
-import subprocess, time
+import os, signal, subprocess, time
+def _state(p):
+    # 僵尸（状态 Z）也算「已经死了」：Jupyter kernel 不 wait，管线跑完会以僵尸留在
+    # /proc 里，光看 /proc/<pid> 存在会误判成还在跑（见 _BOARD_ALIVE 的注释）。
+    try:
+        st = open("/proc/%%d/stat" %% p).read()
+    except OSError:
+        return None
+    tail = st.rsplit(")", 1)[-1].split()
+    return tail[0] if tail else None
+def _reap():
+    me = os.getpid()
+    for name in os.listdir("/proc"):
+        if not name.isdigit():
+            continue
+        try:
+            st = open("/proc/" + name + "/stat").read()
+        except OSError:
+            continue
+        tail = st.rsplit(")", 1)[-1].split()
+        if len(tail) > 1 and tail[0] == "Z" and int(tail[1]) == me:
+            try:
+                os.waitpid(int(name), os.WNOHANG)
+            except OSError:
+                pass
+pidfile = %(pidfile)r
+_reap()
+old = None
+try:
+    old = int(open(pidfile).read().strip())
+except Exception:
+    pass
+if old and _state(old) not in (None, "Z"):
+    # 上一条没退干净（Ctrl-C、掉线、连着跑两遍）：它占着 5009 口和帧缓存，pidfile 还会
+    # 被新进程覆盖，上位机的「等管线退出」就一直盯着别人的 pid 等到超时
+    # （2026-11-01 实测：板端早已 PIPELINE_OK，上位机还在 WAIT pid=1720）。
+    # 先把它收掉再起新的，别让两条管线同时写同一批结果文件。
+    try:
+        os.kill(old, signal.SIGTERM)
+        print("BOARD_PIPELINE_BUSY pid=%%d stopped" %% old)
+    except ProcessLookupError:
+        pass
+    for _ in range(60):
+        if _state(old) in (None, "Z"):
+            break
+        time.sleep(0.5)
+    _reap()
+    try:
+        os.remove(%(flag)r)
+    except OSError:
+        pass
 argv = %(argv)r
 log = open(%(log)r, "w")
 p = subprocess.Popen(argv, cwd=%(cwd)r, stdout=log, stderr=subprocess.STDOUT)
-open(%(pidfile)r, "w").write(str(p.pid))
+open(pidfile, "w").write(str(p.pid))
 time.sleep(2.0)
 print("BOARD_PIPELINE_START pid=%%d alive=%%s" %% (p.pid, p.poll() is None))
 txt = open(%(log)r, "r", errors="replace").read()[-600:]
@@ -1058,11 +1108,12 @@ if txt:
 
 _BOARD_STOP = r'''
 import os, signal, time, subprocess
-pid = None
-try:
-    pid = int(open(%(pidfile)r).read().strip())
-except Exception:
-    pass
+pid = %(pid)r
+if pid is None:
+    try:
+        pid = int(open(%(pidfile)r).read().strip())
+    except Exception:
+        pid = None
 if pid is None:
     print("BOARD_PIPELINE_STOP no_pid")
 else:
@@ -1144,18 +1195,30 @@ def _pick_grown(items, before):
 
 _BOARD_ALIVE = r'''
 import os
-pid = None
+pid = %(pid)r
+def _state(p):
+    # 只认 /proc/<pid> 存在是不够的：父进程（Jupyter kernel）从不 wait，管线跑完会变成
+    # **僵尸**留在 /proc 里，判据就成了「永远活着」（2026-11-01 实测：板端 01:26:34 已
+    # PIPELINE_OK，上位机又等了 10 分钟）。stat 第二列的状态位 Z 才是真死了。
+    try:
+        st = open("/proc/%%d/stat" %% p).read()
+    except OSError:
+        return None
+    tail = st.rsplit(")", 1)[-1].split()
+    return tail[0] if tail else None
+state = _state(pid) if pid else None
+alive = state not in (None, "Z")
 try:
-    pid = int(open(%(pidfile)r).read().strip())
+    cur = int(open(%(pidfile)r).read().strip())
 except Exception:
-    pass
-alive = bool(pid) and os.path.exists("/proc/%%d" %% pid)
-print("BOARD_PIPELINE_ALIVE pid=%%s alive=%%s" %% (pid, alive))
+    cur = None
+print("BOARD_PIPELINE_ALIVE pid=%%s pidfile_pid=%%s state=%%s alive=%%s"
+      %% (pid, cur, state, alive))
 '''
 
 
 def board_wait_pipeline_exit(pidfile, jupyter="192.168.2.99:9090",
-                             timeout=1200.0, poll=3.0, log=None):
+                             timeout=1200.0, poll=3.0, log=None, pid=None):
     """等板上那条 Popen 起来的管线**自己跑完退出**。
 
     为什么要这一步：`ResultStore` 按 `--store-fsync 30` 攒着写盘，推流一结束就按
@@ -1166,13 +1229,30 @@ def board_wait_pipeline_exit(pidfile, jupyter="192.168.2.99:9090",
     超时从 300 s 放宽到 1200 s：**推完 ≠ 板端算完**。250 帧实测推流 6 min，
     收尾时内核还压着几十帧 JPEG 没解，板端按 ~1 fps 追，再要 3–5 min。
     2026-11-01 那次卡在 300 s 上，随后紧接着拉文件恰好撞上「还没写完」。
+
+    `pid` 必须传自己起的那条：**不能只信 pidfile**。2026-11-01 实测连着跑两次时，
+    第二次启动把 pidfile 覆盖成新 pid，第一次的等待就一直盯着别人的进程，
+    于是「板端早就 PIPELINE_OK 了，上位机还在 WAIT」（日志里 pid=1720 alive=True
+    而板上根本没有这个进程）。pidfile 只用于排查，判据用 pid。
     """
     bj = _board_mod(jupyter)
+    if pid is None:
+        rc, text = bj.run_capture(_BOARD_ALIVE % {"pidfile": pidfile, "pid": None},
+                                  timeout=120.0)
+        for line in text.splitlines():
+            if line.startswith("BOARD_PIPELINE_ALIVE"):
+                kv = dict(x.split("=", 1) for x in line.split()[1:] if "=" in x)
+                pid = int(kv["pidfile_pid"]) if kv.get("pidfile_pid", "-") not in ("None", "-") else None
+        if pid is None:
+            if log:
+                log("BOARD_PIPELINE_EXIT_NO_PID %s" % pidfile)
+            return False
     t0 = time.time()
     deadline = t0 + timeout
     last_note = t0
     while time.time() < deadline:
-        rc, text = bj.run_capture(_BOARD_ALIVE % {"pidfile": pidfile}, timeout=120.0)
+        rc, text = bj.run_capture(_BOARD_ALIVE % {"pidfile": pidfile, "pid": pid},
+                                  timeout=120.0)
         if rc == 0 and "alive=False" in text:
             if log:
                 log("BOARD_PIPELINE_EXITED after=%ds" % int(time.time() - t0))
@@ -1335,21 +1415,36 @@ def _event_argv(port=5009, calib=EVENT_CALIB_DEFAULT,
 
 def board_start_pipeline(argv, jupyter="192.168.2.99:9090",
                          log="/tmp/pc_event_run.log", pidfile="/tmp/pc_event.pid"):
-    """在板上后台起一条管线，返回它的日志/pid 路径。失败抛 RuntimeError。"""
+    """在板上后台起一条管线，返回它的日志/pid 路径。失败抛 RuntimeError。
+
+    若 pidfile 上那条还活着，板端模板会先把它 SIGTERM 掉（`BOARD_PIPELINE_BUSY`）——
+    两条管线同时跑会把结果文件、pidfile、5009 口全搅在一起。
+    """
     bj = _board_mod(jupyter)
     rc, text = bj.run_capture(_BOARD_START % {"argv": list(argv), "log": log,
-                                             "pidfile": pidfile, "cwd": EVENT_REPO},
+                                             "pidfile": pidfile, "cwd": EVENT_REPO,
+                                             "flag": EVENT_PREVIEW_FLAG},
                               timeout=120.0)
     if rc != 0 or "BOARD_PIPELINE_START" not in text:
         raise RuntimeError("板端起管线失败：%s" % (text or ("rc=%s" % rc))[-400:])
-    return {"log": log, "pidfile": pidfile, "text": text}
+    pid = None
+    for line in text.splitlines():
+        if line.startswith("BOARD_PIPELINE_START pid="):
+            try:
+                pid = int(line.split("pid=", 1)[1].split()[0])
+            except (IndexError, ValueError):
+                pid = None
+    return {"log": log, "pidfile": pidfile, "pid": pid, "text": text}
 
 
 def board_stop_pipeline(jupyter="192.168.2.99:9090",
-                        pidfile="/tmp/pc_event.pid", log=None):
-    """停掉板上那条管线，并把 HDMI 占屏标记清掉（否则白屏回不来）。"""
+                        pidfile="/tmp/pc_event.pid", log=None, pid=None):
+    """停掉板上那条管线，并把 HDMI 占屏标记清掉（否则白屏回不来）。
+
+    `pid` 优先：只停自己起的那条，避免对方正在跑时被后一个会话的收尾误杀。
+    """
     bj = _board_mod(jupyter)
-    rc, text = bj.run_capture(_BOARD_STOP % {"pidfile": pidfile,
+    rc, text = bj.run_capture(_BOARD_STOP % {"pidfile": pidfile, "pid": pid,
                                             "flag": EVENT_PREVIEW_FLAG},
                               timeout=120.0)
     return rc, text
@@ -1397,12 +1492,14 @@ def _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
         _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
                    out_dir, fps, quality, max_frames, scale, speed,
                    start_sec, video_src, log,
-                   await_pidfile=(started or {}).get("pidfile"))
+                   await_pidfile=(started or {}).get("pidfile"),
+                   await_pid=(started or {}).get("pid"))
     finally:
         if started is not None:
             try:
                 rc, text = board_stop_pipeline(jupyter,
-                                               pidfile=started["pidfile"])
+                                               pidfile=started["pidfile"],
+                                               pid=started.get("pid"))
                 if log:
                     for line in text.splitlines():
                         if line.startswith("BOARD_"):
@@ -1414,7 +1511,7 @@ def _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
 
 def _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
                out_dir, fps, quality, max_frames, scale, speed,
-               start_sec, video_src, log, await_pidfile=None):
+               start_sec, video_src, log, await_pidfile=None, await_pid=None):
     q.put(("status", "PUSH 连接板子"))
     before = board_snapshot(store_dir, pattern, jupyter)
 
@@ -1443,7 +1540,7 @@ def _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
     if await_pidfile:
         # 事件管线是我们自己起的：等它跑完再拉，否则最后 <30 行（fsync 间隔）会丢
         q.put(("status", "PUSH 等板端算完"))
-        board_wait_pipeline_exit(await_pidfile, jupyter, log=log)
+        board_wait_pipeline_exit(await_pidfile, jupyter, log=log, pid=await_pid)
     q.put(("status", "PUSH 等板端落盘"))
     remote, lines, _size = board_wait_results(before, store_dir, pattern,
                                               jupyter, log=log)

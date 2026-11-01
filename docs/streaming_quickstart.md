@@ -92,6 +92,12 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
 | `--event-no-hdmi` | 不回显到 HDMI（默认回显，屏上能看到框 + 球，起管线时会自动做行内平移标定）；关掉更快 |
 | `--event-lcd N` | 每 N 帧把状态面板写到板载 LCD（默认 5，0=关）。面板与 PC 面板同源，走 `status_display.render` → `bram_fb.write_image4`（800×480 4bpp） |
 
+> **别同时开两个窗口跑 `--event`/`--demo`**：板端 pidfile 只有一份，后起的会把前一个的
+> 覆盖掉。现在的代码会先把还活着的那条 `SIGTERM` 掉（日志 `BOARD_PIPELINE_BUSY`），
+> 但你自己也别指望两条并行能出两份结果。
+> 等待管线收尾时日志里的 `BOARD_PIPELINE_ALIVE … state=S alive=True` 才是「还在算」；
+> 变成 `state=Z` 或 `alive=False` 就是真结束了（僵尸也算结束）。
+
 结果同上：面板「事件」栏会出现 `球权 #id（1.x m）`，CSV 的 `球权ID / 球权距离` 两列有值。
 **只有 `data/samples/scenes/c05_t01730.0.mp4`（1280×720 中圈机位）这一路同时满足「球被检出 + 有配对标定」**；
 854×480 的转播素材这一路一球未检出，事件必然为空（见 §2.5 的边界说明）。

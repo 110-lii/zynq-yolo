@@ -188,4 +188,17 @@ PUSH_DONE frames=250 mb=52.4 fps=0.7       ← 约 6 分钟
 撞上「还没写完」，报 `板端没有返回数据`。现在等待放宽到 1200 s 且每 60 s 打一行进度，
 拉取也带 3 次重试。**现场若看到 `BOARD_PIPELINE_WAIT`，那是板子还在算，不是卡死。**
 
+⚠️ 2026-11-01 傍晚又踩到两个尾巴问题，也已修（同样在本机 `tools/pc_dashboard.py`）：
+
+- **僵尸进程被当成「还在跑」**：板端管线跑完、打了 `PIPELINE_OK`，但它是以 `python3`
+  子进程起的，Jupyter kernel 从不 `wait()`，进程死后在 `/proc` 里留成**僵尸**。
+  上位机原来只判 `/proc/<pid>` 在不在，于是一直 `BOARD_PIPELINE_WAIT`
+  （实测板端 01:26:34 就结束了，上位机又空等 10 分钟才超时）。现在判据改成
+  `/proc/<pid>/stat` 的状态位是不是 `Z`，顺手把僵尸 `waitpid` 收掉。
+  **日志里会多一列 `state=S/Z`，`alive=False` 才是真结束。**
+- **连着跑两次会互相打架**：`/tmp/pc_event.pid` 只有一份，第二次启动把它覆盖成新
+  pid，第一次的等待就一直盯着别人的进程。现在起管线前先看 pidfile：那条还活着就先
+  `SIGTERM` 收掉（日志 `BOARD_PIPELINE_BUSY pid=… stopped`），等待也只认**自己这次
+  起的**那个 pid。**现场别同时开两个窗口跑 `--demo`。**
+
 ```

@@ -327,3 +327,43 @@ py tools/pc_dashboard.py --demo
 - K 在同一片 bit 上**跨运行**会变（414 → 415），当前实现是「每次起管线量一次」；
   如果它在一次演示途中变，画面会整体错 1 像素到几十像素 —— 这一点没有观测到，也没有防御；
 - `out_of_play` 仍不采信（球圈落在白衣球员身上），演示只讲球权。
+
+## 轮次 11（2026-11-01 傍晚）：`--demo` 的「等板端算完」判据修对
+
+### 11.1 现象
+
+用户问「现在可以了吗」，按纪律先重跑一遍整段（不是拿旧日志回答）。25 帧试验里板端
+`/tmp/pc_event_run.log` 在 **01:26:34 就打了 `PIPELINE_OK frames=25` 并写完 16 219 B 的
+JSONL**，而上位机一直 `BOARD_PIPELINE_WAIT`（`pid=2126 alive=True`）到 548 s 才被我
+`timeout` 掐掉。同一时段还观察到另一次「推 30 帧、板端却处理 250 帧」——那是**两条演示
+同时在跑**（pidfile 被后来的覆盖），不是板端多算。
+
+### 11.2 根因（两处，都在上位机的判据里，不在板子）
+
+1. **僵尸被当成活着**：事件管线是 `_BOARD_START` 里用 `subprocess.Popen` 起的，
+   Jupyter kernel **从不 `wait()`**；进程退出后变成 `/proc/<pid>` 里状态 `Z` 的僵尸，
+   原判据 `os.path.exists("/proc/pid")` 于是恒为真 ⇒ 「等它退出」等到 1200 s 超时。
+2. **pidfile 只有一份**：第二次启动把 `/tmp/pc_event.pid` 覆盖成新 pid，第一次的等待
+   盯上了别人的进程（实测 `pid=1720 alive=True` 而板上根本没有 1720）。
+
+### 11.3 修法（`tools/pc_dashboard.py`）
+
+- `_BOARD_ALIVE` / `_BOARD_START` 统一用 `/proc/<pid>/stat` 的**状态位**判活，
+  `Z` 与「文件不存在」都算结束；日志多打一列 `state=S|Z`；
+- 起管线前 `_reap()`：把本 kernel 名下已退出的僵尸 `waitpid` 掉（否则僵尸会一直占 pid 槽）；
+- pidfile 上那条**还活着**就先 `SIGTERM` 再起新的（`BOARD_PIPELINE_BUSY pid=N stopped`），
+  并清掉 `/tmp/hdmi_preview.active`，避免两条管线同写结果文件；
+- 等待与收尾都只认**自己这次起的 pid**（`board_start_pipeline` 把 pid 返回出来，
+  `board_wait_pipeline_exit(..., pid=)` / `board_stop_pipeline(..., pid=)`）。
+
+### 11.4 复核（真机）
+
+| 步 | 结果 |
+|---|---|
+| 25 帧短跑（修后） | `BOARD_PIPELINE_EXITED after=20s` → `BOARD_RESULT_READY lines=25` → `PULL_OK` → `PC_DASHBOARD_OK frames=25` |
+| `--demo` 整段 | `PUSH_DONE frames=250 mb=52.4 fps=0.7` → **`BOARD_PIPELINE_EXITED after=31s`** → `BOARD_RESULT_READY lines=250` → `PULL_OK sha256=e7281e92991ffc4b` → `PC_DASHBOARD_OK frames=250`（exit 0） |
+| 板端 | `HDMI_ALIGN shift=415 residue=0` / `HDMI_PREVIEW_ON` / `LCD_PANEL_OK … n=50` / `PIPELINE_OK frames=250 detections=50`，`STAGES detect_ms=77539 ball_ms=90468` |
+| 结果一致性 | 拉回文件 sha256 `e7281e92991ffc4b…` 与 10.6 那次**逐位相同**；`build/demo_events.csv` 250 行、10 行有球权（f110/111 #32、f130/131 #33、f166–171 #26） |
+
+**仍未验**：HDMI / LCD 的**屏上观感**依旧要人眼看（`HDMI_VISUAL_OK` 不记），
+与 10.7 的边界同一条。

@@ -1,9 +1,16 @@
-# 演示视频分镜脚本（2026-10-31 夜）
+# 演示视频分镜脚本（v2，2026-11-01）
 
 > 用途：赛事门户「演示视频」上传件（MP4 / H.264 / ≤3 min / ≤300 MB）。
-> 演示通道：**板子跑本地片段 + 网口回传带框视频 / PC 面板 / LCD 面板**。
-> **HDMI 环出不作演示通道**：它有间歇性整行旋转缺陷，`data/results/hdmi_visual_ok.json`
-> 当前为 `HDMI_VISUAL_RETRACTED`，全片不得出现 HDMI 屏画面。
+>
+> **v2 变更（D030/D031 之后，以本节为准）**：主镜头改为**一条命令** `py tools/pc_dashboard.py --demo`，
+> 它把「PC 经以太网推流 → 板端检测/跟踪/事件 → HDMI 环出（运行时行内平移自动补正）→ LCD 面板
+> → 结果拉回 → PC 面板回放」串成一段。**HDMI 现在参与演示**，前提是每次起管线都会自标定并自证
+> （日志 `HDMI_ALIGN shift=… residue=0`）。§4 的 S1–S10 是 10-31 夜按「HDMI 不参与」写的分镜，
+> 仍可作备用素材方案（详见 §0 的取舍表）。
+>
+> **边界照旧**：`residue=0` 只证明列映射恒等、行号对得上，**不证明屏上观感**；
+> `data/results/hdmi_visual_ok.json` 仍是 `HDMI_VISUAL_RETRACTED`，成片里不得出现
+> `HDMI_VISUAL_OK` 或「大屏画面已通过」之类的结论。屏上是否可拍，以现场人眼为准（§5.1 最后一条）。
 >
 > 所有命令在仓库根 `D:\zynq-yolo` 执行。板端没有免密 SSH，统一经 Jupyter：
 > `py tools/board_jupyter.py "<Python 代码>"`（板 IP `192.168.2.99`，Jupyter 9090）。
@@ -11,6 +18,73 @@
 >
 > 本脚本只使用仓库里真实存在的入口和真实记录过的结果；没有上板人眼证据的画面，
 > 一律标「待上板确认」，不当成已验证。
+
+---
+
+## 0. v2 主镜头：一条命令演示（推荐用它拍成片主体）
+
+### 0.1 命令与现场判据
+
+```bash
+py tools/pc_dashboard.py --demo
+```
+
+> 板子必须在线、`board/overlay/flow_system.bit` 已部署、`data/samples/scenes/c05_*.mp4` 在板上。
+> 命令会自己起板端管线（`--proposal --calib`，事件模式）、推流、等板端算完、拉回结果、回放面板。
+
+2026-11-01 17:0x 真机跑通的那一次，日志依次是（数值以现场为准，令牌必须出现）：
+
+| 顺序 | 令牌 | 实测值 | 说明 |
+|---|---|---|---|
+| 1 | `PUSH_DONE frames=250 mb=52.4 fps=0.7` | 250 帧 / 52.4 MB | PC → 板：c05 片段 10 s |
+| 2 | `HDMI_ALIGN shift=415 residue=0` | 415 / 0 | 板端每次起管线自标定；`residue=0` 是机器判据 |
+| 3 | `LCD_PANEL_OK … n=50` | 每 5 帧刷一次 | 250 帧 → 50 次面板刷新 |
+| 4 | `PIPELINE_OK frames=250 detections=50` | — | 板端算完 |
+| 5 | `BOARD_PIPELINE_EXITED after=31s` | 31 s | 上位机确认进程**真的退了**（读 `/proc/<pid>/stat` 状态位，不看 `exists()`） |
+| 6 | `BOARD_RESULT_READY …lines=250` / `PULL_OK sha256=…` | 210,791 B | 结果拉回，sha256 落到终端 |
+| 7 | `PC_DASHBOARD_OK frames=250` | — | PC 面板回放 250 帧 |
+
+**出现 `BOARD_PIPELINE_BUSY pid=N stopped` 是正常的**：上一次的管线还挂着，命令先把它收掉再起新的。
+等不到 `BOARD_PIPELINE_EXITED` 或 `HDMI_ALIGN` 的 `residue` 非 0，**不要硬拍**，按 0.4 处理。
+
+### 0.2 镜头表（合计 150 s，上限 180 s）
+
+| 镜头 | 内容 | 时长 | 怎么拍 |
+|---|---|---|---|
+| V1 | 片头标题 | 5 s | 后期字幕，同 §4 S1 |
+| V2 | 实物全貌：板子 + LCD + HDMI 屏同框 | 15 s | 45° 俯拍；开机后屏上是待机/面板 |
+| V3 | 终端敲下 `--demo` 回车，`PUSH_DONE` 滚动 | 20 s | 录屏，字体 20–22 pt，开头停 3 s |
+| V4 | **HDMI 屏上带框画面**（板端实时环出） | 35 s | 镜头对准 HDMI 显示器；屏上球员绿框、球红圈 |
+| V5 | LCD 状态面板随帧刷新 | 20 s | LCD 特写 30–45°，配合 V4 交替剪辑 |
+| V6 | 板端日志 `HDMI_ALIGN`/`PIPELINE_OK` + 网口 B-roll | 15 s | 录屏 + RJ45 指示灯 2–3 s |
+| V7 | PC 面板回放：画面 + 事件栏（球权/出界） | 30 s | 录屏；这一段启用了 `--proposal --calib`，事件栏非空 |
+| V8 | 结论卡：指标与边界 | 10 s | 后期字幕，数字与 `docs/system_status.md` 一致 |
+| — | 转场预留 | 15 s | 硬切/淡入淡出 |
+
+> V4 与 V5 是这一版**唯一新增的必备镜头**：过去因为间歇错位不敢拍 HDMI，现在补正走
+> 「每次起管线自标定 + 补正后自证（residue=0）」，可以拍；但**必须现场人眼看一遍再决定用不用**，
+> 画面一旦出现左右错位，当场停拍跑 0.4 的第 3 条，不要靠后期补救。
+
+### 0.3 与 §4 旧分镜的取舍
+
+| 旧镜头 | v2 里怎么办 |
+|---|---|
+| S1 片头 / S3 架构图 / S10 结论卡 | **照用**（纯字幕与框图，与 HDMI 无关） |
+| S2 实物（HDMI 曾要求纯白待机） | 改为 V2：HDMI 屏**可以亮着**，显示演示画面 |
+| S4 板端本地片段 / S5 网口回传带框 | **被 V3–V6 取代**（`--demo` 已含推流、回传与回放）；仍可作 B-roll |
+| S6 PC 面板（无事件） | 改为 V7：有 `--proposal --calib`，**事件栏有内容**，旁白可以说球权/出界 |
+| S7 LCD 面板 | 改为 V5：不再是一次写死一帧，而是随演示刷新 50 次 |
+| S9 逐帧 CSV | 保留（`build/demo_session.csv`），作为补充素材，不占主镜头时长 |
+
+### 0.4 出问题时
+
+1. **等不到 `BOARD_PIPELINE_EXITED`**：先在板端 `ps` 看有没有 `board_pipeline.py`；没有就是上位机判据问题，
+   不要靠放长超时硬等（D031 已修过一次僵尸进程判活）。
+2. **`HDMI_ALIGN` 没出现或 `residue≠0`**：管线会打 `HDMI_ALIGN_FAIL`/残余量，说明这次标定没对上；
+   停拍、断电重启板子后再跑一次，**不要手改 shift 数值**。
+3. **屏上有左右错位**：这是修正后仍不成立的观感问题 —— 记 todo，改用 §4 的 S4/S5 方案出片（不拍 HDMI），
+   成片与文档都不写「HDMI 已通过」。
+4. **板子掉线**：按 AGENTS.md §2 手动上电重启，等 60–90 s 再试；离线时**不拍任何板端镜头**。
 
 ---
 
@@ -113,7 +187,7 @@ py tools/video_back.py --help
 
 | 字段 | 内容 |
 |---|---|
-| 画面内容 | 板子 45° 俯拍，LCD 与网口同框；LCD 上显示 4bpp 彩色状态面板（8 项，已人眼确认过）。可拍一下网口指示灯。**HDMI 显示器：按新要求通电并显示纯白待机**（白屏是均匀画面，整行旋转缺陷在纯白上看不出来，也不承载信息）。 |
+| 画面内容 | 板子 45° 俯拍，LCD 与网口同框；LCD 上显示 4bpp 彩色状态面板（8 项，已人眼确认过）。可拍一下网口指示灯。**HDMI 显示器（v2）**：可以亮着显示演示画面，前提是这次 `--demo` 的 `HDMI_ALIGN` 是 `residue=0` 且人眼确认没错位；否则按 §0.4 第 3 条移出画面。 |
 | 要执行的确切命令 | C2（见下） |
 | 预期屏幕结果 | LCD 800×480 显示 8 行彩色状态面板（与 S7 同一画面）；Console 出现 `STATUS_DISPLAY` 字样。版式参考 `report/figures/lcd_panel_ball_20261031.png`（主机侧渲染，非屏摄）。**赛前选色 UI 已按 D028 删除**，不要再拍它。 |
 | 支撑证据 | `ai/sessions/023_pc_video_view_ball_air.md`（彩色状态面板上屏、用户看屏确认）；`tools/status_display.py`；`report/figures/lcd_panel_ball_20261031.png`（仅版式参考） |
@@ -129,7 +203,7 @@ py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/
 |---|---|
 | 画面内容 | 全屏显示 `report/figures/system_arch.png`；后期用半透明高亮框依次圈出：PL preproc、PS ncnn 检测、球链路、三处输出（SD / PC / LCD）。 |
 | 要执行的确切命令 | C3（见下） |
-| 预期屏幕结果 | 仓库内系统框图。图上不得叠任何「HDMI 画面已通过」之类结论；HDMI 只作为框图里的一个设计模块出现，旁白明确它今天不参与演示。 |
+| 预期屏幕结果 | 仓库内系统框图。图上不得叠任何「HDMI 画面已通过」之类结论；HDMI 作为框图里的一个设计模块出现，旁白可以说「板端环出，每次起管线自动补正行内平移」，不能说「已验收」。 |
 | 支撑证据 | `report/figures/system_arch.png`；`docs/system_status.md`「架构」；`ai/sessions/022_hdmi_osd_full_flow.md` §7.31（`HDMI_VISUAL_OK` 不成立） |
 
 ```bash
@@ -323,7 +397,7 @@ py -c "import os;os.startfile(r'build\demo_session.csv')"
 
 | 字段 | 内容 |
 |---|---|
-| 画面内容 | 结论卡。左列「已实测」：PL 预处理 18.8 ms/帧（LUT 7%）、PS person 0.95–1.0 s/帧、球分类器 P 0.67 / R 0.85（th=0.7，板上 8 ms/候选）、球链路确认 80%（16/20，15 px 内）。右列「边界」：球仍断续、单机位标定、倒地只做候选粗筛（强层 4 个候选 = 3 真 1 假，人工复核，**不作 precision/recall**）、**HDMI 环出不作演示通道**。底部一行「数据与代码可复现；测试片段仅内部使用」。 |
+| 画面内容 | 结论卡。左列「已实测」：PL 预处理 18.8 ms/帧（LUT 7%）、PS person 0.95–1.0 s/帧、球分类器 P 0.67 / R 0.85（th=0.7，板上 8 ms/候选）、球链路确认 80%（16/20，15 px 内）。右列「边界」：球仍断续、单机位标定、倒地只做候选粗筛（强层 4 个候选 = 3 真 1 假，人工复核，**不作 precision/recall**）、**HDMI 行内平移靠运行时自标定补正（residue=0），人眼验收仍记 todo**。底部一行「数据与代码可复现；测试片段仅内部使用」。 |
 | 要执行的确切命令 | 无（后期字幕卡） |
 | 预期屏幕结果 | 只有静态文字。所有数字必须与 `docs/system_status.md` 一致，并在角标注明「历史实测（不同片段/条件）」，不能让人以为都是本片这一段跑出来的；不得相加或换算成「准确率」。 |
 | 支撑证据 | `docs/system_status.md`「实测指标」「已知边界」；`ai/sessions/010_board_pipeline_ball_backfill.md`（202 帧板端运行与球链路指标）；`data/results/fall_review.json`（人工复核 3 真 1 假；文件自注「不作 precision/recall」）；`report/submission_checklist.md` §7（开放项）；`data/results/hdmi_visual_ok.json`（`HDMI_VISUAL_RETRACTED`） |
@@ -344,12 +418,14 @@ py -c "import os;os.startfile(r'build\demo_session.csv')"
 - [ ] 拍 S4 时把终端字体调到 20–22 pt，窗口占屏幕 80% 以上；开头停 3 s 再回车。
 - [ ] 拍 S5 时先起板端服务（C5-b），等 1–2 s，再在 PC 上执行 C5-c；窗口标题应为 `board annotated`。
 - [ ] 拍 S7 前确认 `FLOW_OVERLAY_LCD OK`、`FLOW_OVERLAY_OK`；若 `LCD` 报 FAIL，先查 overlay 是否加载成功，不要硬拍。
-- [ ] 拍 S2 时确认 LCD 上仍是 S7 画的面板（同一屏，不要重跑写屏命令）；HDMI 已是纯白待机。
+- [ ] 拍 S2 时确认 LCD 上仍是 S7 画的面板（同一屏，不要重跑写屏命令）；HDMI 若按 v2 入镜，
+      **必须先跑一遍 `--demo` 并人眼确认屏上没错位**，再决定这一条要不要开 HDMI 显示器。
 
 ### 5.2 机位与屏
 
 - [ ] 主机位：三脚架，45° 俯拍板子 + LCD + 网口；背景清理，不出现实验室门牌、白板字、姓名贴。
-- [ ] **HDMI 显示器断电或整个移出画面**；不要拍 HDMI 线接着的显示器，也不要让它在 LCD 里反光出现。
+- [ ] **HDMI 显示器**：v2 主镜头要拍它（§0.2 V4）。开拍前先跑一遍 `--demo`，人眼看 HDMI 屏上
+      有没有左右错位；有就按 §0.4 第 3 条改走无 HDMI 方案，并把显示器移出画面。
 - [ ] LCD 特写：正面或 30–45°，占画面 70%；手动对焦、锁定曝光；若出现横纹，快门改 1/50 s。
 - [ ] 按键特写：KEY0/KEY1 与 LCD 同框，景深覆盖两者。
 - [ ] 网口 B-roll：RJ45 指示灯 + 网线，2–3 s，用于 S5 画中画。
@@ -383,9 +459,11 @@ py -c "import os;os.startfile(r'build\demo_session.csv')"
 2. **其他比赛标识**：转播台标、比分牌、赞助商广告、队徽/队名。c03 片段左上角有比分牌，
    剪辑时用同色块或模糊遮住（固定在画面左上约 320×90 区域），且遮罩不得盖住球员框和球。
    若遮不干净，换一段没有台标的片段重跑 S4（要重跑管线，成本高，尽量一次遮好）。
-3. **任何 HDMI 环出画面**：包括显示器亮着的一角、反光、录屏里的 HDMI 预览窗口。
-   `HDMI_VISUAL_RETRACTED` 已记录间歇性整行旋转，拍进去就是自曝缺陷。
-4. **声称 HDMI 已修好/已通过的结论**：不得出现 `HDMI_VISUAL_OK`、不得说「大屏画面正常」。
+3. ~~任何 HDMI 环出画面~~ → **v2 已放开**（见 §0.2 V4）：D031 之后 HDMI 行内平移每次起管线自标定并自证
+   `residue=0`，允许入镜。但**屏上出现错位就停拍**，改用 §0.4 第 3 条的无 HDMI 方案。
+   反向禁止：不得把「机器判据 `residue=0`」说成「人眼已确认画面正常」。
+4. **声称 HDMI 已通过验收的结论**：不得出现 `HDMI_VISUAL_OK`，不得说「大屏画面已通过/已验收」；
+   可以说「每次起管线自动标定，日志 `HDMI_ALIGN shift=415 residue=0`」。
 5. **未经上板验证的结论**：
    - 不得把 `report/figures/hdmi_osd_boxes.png` 当检测结果（该图是主机侧合成坐标渲染，
      仓库 `report/figures/README.md` 已注明「不能作为检测结果」）；
@@ -413,13 +491,13 @@ py -c "import os;os.startfile(r'build\demo_session.csv')"
 先看实物。ZYNQ-7020 板子，小屏是 800×480 的 LCD，显示赛前设置界面。演示视频先放在板上，结果从网口回传。
 
 **S3（12 s）**
-PL 做像素预处理，PS 跑检测和跟踪。演示走 PS 检测；结果只序列化一次，给存储、PC、LCD，HDMI 不在演示内。
+PL 做像素预处理，PS 跑检测和跟踪。结果只序列化一次，给存储、PC、LCD 和 HDMI 环出四路。（若按 §0.4 改走无 HDMI 方案，这句改为「三路，HDMI 不参与本次演示」。）
 
 **S4（22 s）**
 现在在板子上跑一段 10 秒的本地片段。每 15 帧做一次检测，球单独按 5 帧的节奏扫描；最后一行 `PIPELINE_OK` 说明 250 帧全部跑完。
 
 **S5（30 s）**
-检测结果不经过 HDMI，而是从网口回传。板子把带框画面压成 JPEG 发出来，PC 实时接收；绿框是球员，编号是跟踪 ID。板端推理比较慢，这里是大约 5 帧每秒的慢放。
+检测结果同时走两路：一路从 HDMI 环出到显示器，板子每次起管线会自动标定并补正行内平移；另一路从网口回传，把带框画面压成 JPEG 发出来，PC 实时接收。绿框是球员，编号是跟踪 ID。板端推理比较慢，回传是大约 5 帧每秒的慢放。
 
 **S6（20 s）**
 这是 PC 面板回放，用的是板上那份 JSONL。第 106 帧，红圈是球，坐标 739、212 像素，画面里有 15 个球员框。机位显示 `INVALID_VIEW`，因为转播机位没标定，坐标是画面像素。
@@ -431,7 +509,7 @@ PL 做像素预处理，PS 跑检测和跟踪。演示走 PS 检测；结果只�
 每一帧落成 CSV，固定 12 列；事件三列这段为空。球有效的行只有 20 行，集中在第 100 到 114 帧和第 140 到 144 帧。
 
 **S10（12 s）**
-指标和边界都留在报告里：球还是断续的，倒地只做到候选粗筛，HDMI 环出今天不作为演示通道。
+指标和边界都留在报告里：球还是断续的，倒地只做到候选粗筛，HDMI 的行内平移靠运行时自标定补正，人眼验收还没记。
 
 ---
 
@@ -457,7 +535,7 @@ py -c "import os,cv2;c=cv2.VideoCapture(r'build/demo_final.mp4');print('size_MB=
 | `ai/sessions/010_board_pipeline_ball_backfill.md` | 202 帧板端运行与球链路指标 |
 | `data/results/ball_air_c03_20261031.jsonl` | c03 板上原始输出（250 行，20 行 ball），与 `build/flow_c03e.jsonl` 逐字节一致 |
 | `data/results/fall_review.json` | 倒地人工复核（3 真 1 假；文件自注不作 precision/recall） |
-| `data/results/hdmi_visual_ok.json` | `HDMI_VISUAL_RETRACTED`，HDMI 不作演示通道的依据 |
+| `data/results/hdmi_visual_ok.json` | `HDMI_VISUAL_RETRACTED`：人眼验收**未记**的依据。v2 允许 HDMI 入镜（D031 自标定），但不得据此声称「已通过」 |
 | `data/results/board_acceptance.json` | 2026-10-31 17:45 deploy：42 个文件 + 16 段片段 |
 | `docs/system_status.md` | S3/S10 的指标与边界 |
 | `docs/board_environment.md` | 掉线/半死/ncnn SIGTRAP 的处置 |
@@ -482,7 +560,7 @@ py -c "import os,cv2;c=cv2.VideoCapture(r'build/demo_final.mp4');print('size_MB=
 | 回传连不上/花屏 | S5 | `VIDEO_BACK_FAIL`、PC 收不到 | 查防火墙 5006/TCP、同网段、先 serve 后 recv；重试一次。替代：播放 `build/annotated_c03.mp4`（022 回传产物，250 帧；早于空中球修复，**没有球红圈**，字幕要注明） |
 | S4 输出与 023 不完全一致 | S4、S5、S7 | 帧数不是 250、f106 无球 | 帧数必须是 250；若 f106 无球，先列出实际带球帧再改 `--frame`：`py tools/board_jupyter.py "import json;rows=[json.loads(l) for l in open('/home/xilinx/zynq-yolo/build/flow/c03e_demo.jsonl')];print([r['frame'] for r in rows if r.get('ball')])"` |
 | LCD 反光/频闪/拍不清 | S2、S7 | 屏上有条纹、过曝 | 调角度、快门 1/50 s、侧面柔光；不要用闪光灯直打 |
-| HDMI 缺陷误入画面 | 全片 | 显示器亮着、反光里出现错位画面 | 开拍前拔 HDMI 或关显示器；后期逐帧检查 |
+| HDMI 行内平移（偶发） | V4、V5 | 屏上画面左右错位；日志 `residue≠0` 或无 `HDMI_ALIGN` | 停拍、断电重启后**重跑一次** `--demo`（不要手改 shift）；仍错位就按 §0.4 第 3 条移出 HDMI，改走无 HDMI 方案，后期逐帧检查反光里有没有错位画面 |
 | 合规遮罩没盖干净 | S5、S6、S9 | 比分牌/台标仍可见 | 固定区域遮罩；若遮罩影响球员框，换片段重跑（成本高，尽量一次遮好） |
 | 成片超 300 MB | 全片 | 自检命令 `size_MB` > 300 | 码率降到 6 Mbps（约 116 MB / 155 s），分辨率保持 1080p；不要靠删证据镜头压时长 |
 | 原始素材丢失 | 全片 | 只剩成片 | 保留 `build/demo_raw/S01…S10` 与 `build/demo_final.mp4`，不要覆盖；提交包只放成片 |

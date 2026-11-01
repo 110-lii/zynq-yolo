@@ -772,7 +772,7 @@ pclk 在计数（`tick 132155348→138832280`）、HDMI 侧 `frames 564→1056�
 
 | 依赖 | 版本/说明 |
 |---|---|
-| Vivado / Vitis / Vitis_HLS | **2020.2**（本机唯一安装；脚本参数化，不硬编码绝对路径） |
+| Vivado / Vitis / Vitis_HLS | **2020.2**（本机唯一安装；BD 脚本按 `XILINX_VIVADO` 环境变量定位 ipintegrator 库，缺该变量才回落到 2020.2 默认路径） |
 | Python | 3.8+；仓库自检只用标准库 |
 | 开发板 | 正点原子 领航者 ZYNQ 7020（底板 V3.7，核心板 ZYNQ_CORE_2V5） |
 | PYNQ | SD 启动 PYNQ 2.7（Ubuntu 20.04 / kernel 5.4.0） |
@@ -928,7 +928,8 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 指南推荐 Vivado/Vitis 2026.1 或 2025.2；本机只有 **2020.2**。按指南 3.3.3.1
 “使用其他版本须在报告中说明并保证脚本可复现”：
 
-- 所有构建入口在 `build/scripts/`，工具链路径由变量注入，不硬编码 `D:\Xilinx\...`；
+- 所有构建入口在 `build/scripts/`；BD 脚本按 `XILINX_VIVADO` 环境变量定位 ipintegrator
+  库目录，取不到时才用 2020.2 的默认路径（日志打 `IP_PRELOAD_DIR`），换机器只需设这个变量；
 - 版本差异、IP 版本与复现注意事项登记在本节与 `README.md` §9；
 - 2020.2 已覆盖 Zynq-7020 器件与 PYNQ 2.7 镜像兼容性；升级 2025.2 需要重新验证
   BD/IP 迁移与 PYNQ 镜像，不在本次提交范围内。

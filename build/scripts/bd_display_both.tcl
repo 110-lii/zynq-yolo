@@ -40,7 +40,22 @@ update_compile_order -fileset sources_1
 ##    （Python 逐文件读 15/15 成功、手动 source 12/12 RC=0）。
 ##    对策：**在 create_bd_design 之前把这些库按绝对路径预加载**，proc 已在全局命名空间里，
 ##    Vivado 内部那次 source 就不再是唯一依赖。连续 3 次实测 BD_OK（曾用 cd 法只 2/2 后失效）。
-set _ipdir "D:/Xilinx/Vivado/2020.2/scripts/ipintegrator"
+## 库目录解析（2026-11-01）：优先用 Vivado 自己导出的 XILINX_VIVADO，
+## 换机器/换安装位置不用改脚本；取不到才回落到本机 2020.2 的路径。
+set _ipdir ""
+if {[info exists ::env(XILINX_VIVADO)]} {
+    set _ipdir [file join $::env(XILINX_VIVADO) scripts ipintegrator]
+}
+if {![file isdirectory $_ipdir]} {
+    set _fallback "D:/Xilinx/Vivado/2020.2/scripts/ipintegrator"
+    if {[file isdirectory $_fallback]} {
+        set _ipdir $_fallback
+    }
+}
+puts "IP_PRELOAD_DIR $_ipdir"
+if {![file isdirectory $_ipdir]} {
+    puts "IP_PRELOAD_DIR_FAIL 未找到 ipintegrator 库目录：请设 XILINX_VIVADO 或按实际安装路径改本段"
+}
 foreach _f {utils.tcl mig_utils.tcl board_utils.tcl utils_dbg.tcl clkrst.tcl replace_bd_cell.tcl \
             addr.tcl testbench.tcl sc_cosim_util.tcl utils_timing.tcl sdsoc_pfm.tcl gt_utils.tcl} {
     if {[catch {source -notrace [file join $_ipdir $_f]} _e]} { puts "IP_PRELOAD_FAIL $_f $_e" }

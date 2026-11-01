@@ -70,7 +70,22 @@ update_compile_order -fileset sources_1
 ##    utils/clkrst/... 一串相对路径）。所以这里比旧脚本多做两步：
 ##      1) 按绝对路径预加载（含 init.tcl 本身）——proc 已在全局命名空间；
 ##      2) create_bd_design 期间把 cwd 切到该目录，让任何残留的相对 source 都能落地。
-set _ipdir "D:/Xilinx/Vivado/2020.2/scripts/ipintegrator"
+## 库目录解析（2026-11-01）：优先用 Vivado 自己导出的 XILINX_VIVADO，
+## 换机器/换安装位置不用改脚本；取不到才回落到本机 2020.2 的路径。
+set _ipdir ""
+if {[info exists ::env(XILINX_VIVADO)]} {
+    set _ipdir [file join $::env(XILINX_VIVADO) scripts ipintegrator]
+}
+if {![file isdirectory $_ipdir]} {
+    set _fallback "D:/Xilinx/Vivado/2020.2/scripts/ipintegrator"
+    if {[file isdirectory $_fallback]} {
+        set _ipdir $_fallback
+    }
+}
+puts "IP_PRELOAD_DIR $_ipdir"
+if {![file isdirectory $_ipdir]} {
+    puts "IP_PRELOAD_DIR_FAIL 未找到 ipintegrator 库目录：请设 XILINX_VIVADO 或按实际安装路径改本段"
+}
 foreach _f {init.tcl utils.tcl mig_utils.tcl board_utils.tcl utils_dbg.tcl clkrst.tcl \
             replace_bd_cell.tcl addr.tcl testbench.tcl sc_cosim_util.tcl utils_timing.tcl \
             sdsoc_pfm.tcl gt_utils.tcl} {

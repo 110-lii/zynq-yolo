@@ -683,6 +683,15 @@ class VideoSource:
         return f if ok else None
 
 
+def _video_with_start(path, start_sec):
+    """建画面源；给了 --video-start 就把秒换算成帧偏移（板端 frame=0 对应的那一帧）。"""
+    vid = VideoSource(path)
+    if vid.ok and start_sec and start_sec > 0:
+        fps = vid.cap.get(vid.cv.CAP_PROP_FPS) or 25.0
+        vid.start = int(round(float(start_sec) * float(fps)))
+    return vid
+
+
 def _draw_video_panel(img, tb, st, video):
     """比赛画面 + 检测框（像素坐标直接画在缩略图上）。"""
     import cv2
@@ -1373,6 +1382,9 @@ def main():
     ap.add_argument("--replay", default="", help="JSONL 结果文件")
     ap.add_argument("--video", default="", help="配一段比赛视频：左侧改画「带框画面」而不是球场俯视图"
                     "（转播机位没有球场标定时用这个）")
+    ap.add_argument("--video-start", type=float, default=0.0,
+                    help="画面从第几秒开始对齐（配 --replay 用：推流时用 --push-start 跳过的片头，"
+                         "回放同一份 JSONL 时要补回来，否则框和画面对不上）")
     ap.add_argument("--csv", default="", help="把每帧写成 CSV（列固定）")
     ap.add_argument("--speed", type=float, default=1.0, help="回放倍速，0=不限速")
     ap.add_argument("--loop", action="store_true", help="回放循环")
@@ -1422,7 +1434,7 @@ def main():
         rp = Path(args.replay)
         if not rp.is_file():
             ap.error("找不到回放文件：%s" % args.replay)
-        _vid = VideoSource(args.video) if args.video else None
+        _vid = _video_with_start(args.video, args.video_start) if args.video else None
         dash = Dashboard(csv_path=args.csv or None, base_dir=rp.parent, source=rp.name,
                          video=_vid)
         dash.status("REPLAY_START")
@@ -1447,7 +1459,7 @@ def main():
     stop = threading.Event()
 
     # 画面源要先建出来：push_worker 拿到帧号偏移后直接写回它
-    _vid = VideoSource(args.video) if args.video else None
+    _vid = _video_with_start(args.video, args.video_start) if args.video else None
     if _vid is not None and not _vid.ok:
         ap.error("打不开视频：%s" % args.video)
 

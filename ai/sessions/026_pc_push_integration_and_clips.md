@@ -131,6 +131,33 @@ PC_DASHBOARD_OK frames=45
 并在 `docs/streaming_quickstart.md` §2.5 写明「要快的顺序：关回显 > 拉大 `--every` >
 拉大 `--ball-every`；想真正实时得换架构」。
 
+## 轮次 6 — 排练一遍演示（用户：「现在模拟一遍」）
+
+在板子在线状态下照现场顺序真跑了一次（22:42），总耗时 **34 s**：
+
+```
+BOARD_OK 22:42:03 / active / active / no_preview_flag
+PUSH_FRAME_OFFSET start_frame=1500
+PUSH_DONE frames=45 mb=3.9 fps=5.5
+BOARD_RESULT_READY …net_20261030_224217_00.jsonl lines=45 bytes=16210
+PULL_OK …sha256=5fde1f820920c7be      （与下午那次逐字节相同 ⇒ 同一输入可复现）
+板端：HDMI_PREVIEW_ON → HDMI_PREVIEW_OFF white_restored →
+      STAGES detect_ms=4361 ball_ms=2344 frames=45 →
+      PIPELINE_OK frames=45 detections=3 med_infer_ms=1243.3
+```
+
+排练暴露并当场补上了一个洞：**降级方案里回放同一份 JSONL 会画错画面**。
+推流用了 `--push-start 60`（板端 `frame=0` = 视频第 1500 帧），而 `--replay` 从第 0 帧画，
+框就和画面对不上。于是给 `pc_dashboard` 加了 `--video-start <秒>`（换算成 `VideoSource.start`），
+并实测降级命令：`--replay build/pull/net_20261030_224217_00.jsonl --video clip_04 --video-start 60`
+→ 记分牌 00:54，框落在球员身上。
+
+另外记一条**现场必须知道**的事实：这批 854×480 转播素材在板上**一球未检出**
+（5 段共 435 帧，`ball.valid` 全为 False），所以演示词不能吹球；要展示球得回放已有的
+c03（1280×720）结果，并说明是另一段素材。
+
+产物：`docs/demo_run_sheet.md`（开场检查、逐秒预期、板端证据、四档降级、不能说的话）。
+
 ## 未决 / 下一步
 
 1. **人眼**：HDMI 白屏与回显、LCD 面板、PC 面板窗口——仍要人看。

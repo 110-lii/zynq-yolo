@@ -145,7 +145,10 @@ def quantize_palette(img_bgr, n=PAL_N):
     from PIL import Image as _Image
     rgb = np.asarray(img_bgr, dtype=np.uint8)[:, :, ::-1]
     im = _Image.fromarray(rgb, "RGB")
-    q = im.quantize(colors=n, method=_Image.MEDIANCUT, dither=_Image.Dither.NONE)
+    # 板上的 Pillow 是旧的（没有 Image.Dither 这个枚举），只认整数常量；
+    # 主机上则是新 Pillow。两边取同一个值：NONE == 0。
+    _none = getattr(getattr(_Image, "Dither", None), "NONE", 0)
+    q = im.quantize(colors=n, method=_Image.MEDIANCUT, dither=_none)
     idx = np.asarray(q, dtype=np.uint8)
     raw = list(q.getpalette() or [])
     raw += [0] * (3 * n - len(raw))        # 图里色数不足时尾部补 0（黑）

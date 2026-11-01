@@ -303,6 +303,10 @@ def main():
                          "画面是否可信要人眼看；不能用它代替 PC 侧回放")
     ap.add_argument("--hdmi-bit", default=os.path.join(REPO, "board", "overlay",
                                                        "flow_system.bit"))
+    ap.add_argument("--lcd-preview", type=int, default=0, metavar="N",
+                    help="每 N 帧把「状态面板」写到板载 LCD（800x480 4bpp，需要 flow_system.bit）。"
+                         "0=关。面板走 status_display.render，与主机 PNG 同一套版面；"
+                         "写盘后做一次字数对，打印 LCD_PANEL_OK/FAIL 判定据")
     ap.add_argument("--bin", default="/home/xilinx/ncnn_infer")
     ap.add_argument("--param", default="/home/xilinx/person_v8n25.param")
     ap.add_argument("--model", default="/home/xilinx/person_v8n25.bin")
@@ -434,6 +438,26 @@ def main():
         except Exception as _e:                    # noqa: BLE001
             print("HDMI_PREVIEW_FAIL %s" % _e)
             hdmi_out = None
+
+    # ---- LCD 状态面板：小屏上一直显示「帧号/人数/球/事件」，与 HDMI 回显互不影响
+    lcd_out = None
+    if args.lcd_preview and args.lcd_preview > 0:
+        try:
+            from pynq import Overlay, MMIO
+            Overlay(args.hdmi_bit)                 # 同一片 flow_system.bit，幂等
+            import bram_fb
+            import status_display
+            from pc_dashboard import normalize
+            lcd_cfg = MMIO(0x41220000, 0x10)
+            lcd_cfg.write(0, 0x10)                 # [4]=帧缓存 + 800x480 + 背光
+            lcd_out = {"every": int(args.lcd_preview), "cfg": lcd_cfg,
+                       "bram": bram_fb, "panel": status_display,
+                       "norm": normalize, "base": 0x40000000, "n": 0}
+            print("LCD_PANEL_ON every=%d base=0x%08x" % (lcd_out["every"], lcd_out["base"]),
+                  flush=True)
+        except Exception as _e:                    # noqa: BLE001 — 面板失败不该拖垮管线
+            print("LCD_PANEL_FAIL %s" % _e)
+            lcd_out = None
 
     H = None
     hull = None
@@ -689,6 +713,19 @@ def main():
             except Exception as _e:             # noqa: BLE001 — 回显失败不该拖垮管线
                 print("HDMI_PREVIEW_FRAME_FAIL %s" % _e)
                 hdmi_out = None
+        # LCD 状态面板：每 N 帧重画一次。慢的东西（import/MMIO 建表）都在初始化里，
+        # 这里只有一次渲染 + 一次 4bpp 打包写。
+        if lcd_out is not None and (idx % lcd_out["every"] == 0):
+            try:
+                _panel_src = _f if args.proposal else rec
+                _img = lcd_out["panel"].render(lcd_out["norm"](_panel_src), 800, 480)
+                lcd_out["bram"].write_image4(_img, lcd_out["base"], 800, 480)
+                lcd_out["n"] += 1
+                if lcd_out["n"] == 1 or lcd_out["n"] % 10 == 0:
+                    print("LCD_PANEL_OK frame=%d n=%d" % (idx, lcd_out["n"]), flush=True)
+            except Exception as _e:                 # noqa: BLE001
+                print("LCD_PANEL_FRAME_FAIL %s" % _e)
+                lcd_out = None
         # 证据帧：出界/倒地各存当前帧原图（限流与失败处理在 ResultStore 内部）
         if store is not None and args.store_evidence:
             save_evidence_for(store, frame, idx, ev, fall_ids, cam_state, ball)

@@ -69,8 +69,16 @@ py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_0
 它会在板上另起一条带 `--proposal --calib` 的管线（5009 口），推完自动停、清 HDMI 标记。
 
 ```bash
-py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_t01730.0.mp4 --push-start 4.0 --push-max-frames 80 --csv build/demo_events.csv
+py tools/pc_dashboard.py --event --event-every 5 --event-no-hdmi --push data/samples/scenes/c05_t01730.0.mp4 --push-max-frames 250 --csv build/demo_events.csv
 ```
+
+- **整段 250 帧 = 10 s**，事件模式板端 ~1.1 fps ⇒ **约 5 分钟**（日志停在
+  `PUSH 等板端算完` 是正常的）。想压到 2 分钟就把 `--push-start 4.0 --push-max-frames 80` 加回去，
+  代价是只覆盖 3 s；
+- **小屏（LCD 800×480）会显示状态面板**：`--event-lcd 5` 每 5 帧写一次
+  （帧号/人数/球/事件/机位），与 PC 面板同一套数据源（D030）；
+- `--event-no-hdmi` 不给就同时回显 HDMI——但 HDMI 有已知的间歇整行旋转，
+  演示时建议关掉，只留白屏待机 + LCD + PC 三处中的后两处。
 
 - **素材用 `data/samples/scenes/c05_t01730.0.mp4`**（1280×720 中圈机位，250 帧 / 10 s），
   默认标定 `data/calib/field_calib_ball.json` 就是给它配的。这段里球在**红衣 26 号**脚边

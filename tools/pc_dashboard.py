@@ -1251,7 +1251,7 @@ EVENT_PREVIEW_FLAG = "/tmp/hdmi_preview.active"
 
 def _event_argv(port=5009, calib=EVENT_CALIB_DEFAULT,
                 store_dir="/home/xilinx/zynq-yolo/build/flow", prefix="evt",
-                hdmi=True, py=EVENT_PY, every=25, ball_every=2):
+                hdmi=True, py=EVENT_PY, every=25, ball_every=2, lcd=5):
     """事件模式板端管线（与装机服务分开起）：参数是 2026-10-31 板上验收那一组。
 
     `--every 25 --ball-every 2 --max-det 0` 三个都不能省，省了就采不到东西：
@@ -1270,6 +1270,8 @@ def _event_argv(port=5009, calib=EVENT_CALIB_DEFAULT,
             "--store-dir", store_dir, "--store-prefix", prefix]
     if hdmi:
         argv.append("--hdmi-preview")
+    if lcd and int(lcd) > 0:
+        argv += ["--lcd-preview", str(int(lcd))]
     return argv
 
 
@@ -1678,6 +1680,8 @@ def main():
     ap.add_argument("--calib", default=EVENT_CALIB_DEFAULT,
                     help="事件模式用的标定文件，必须与素材配对"
                          "（中圈片段配 field_calib_ball.json）")
+    ap.add_argument("--event-lcd", type=int, default=5, metavar="N",
+                    help="每 N 帧把状态面板写到板载 LCD（默认 5，0=关）")
     ap.add_argument("--event-no-hdmi", action="store_true",
                     help="事件模式不回显到 HDMI（默认回显，屏上能看到框+球）")
     ap.add_argument("--event-prefix", default="evt",
@@ -1765,6 +1769,7 @@ def main():
                                       store_dir=args.store_dir,
                                       prefix=args.event_prefix,
                                       hdmi=not args.event_no_hdmi,
+                                      lcd=args.event_lcd,
                                       every=args.event_every,
                                       ball_every=args.event_ball_every)}
         threading.Thread(target=push_worker, args=(args.push, q, stop),

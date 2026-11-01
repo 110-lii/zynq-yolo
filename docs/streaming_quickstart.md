@@ -87,6 +87,7 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
 | `--event-every` | 检测间隔。25 = 验收口径；推演示素材时用 5，球员坐标更新更勤（非检测帧靠跟踪器外推，越拖越偏） |
 | `--event-ball-every` | 扫球间隔，默认 2；别再调大，这段 250 帧实测调大就采不到球 |
 | `--event-no-hdmi` | 不回显到 HDMI（默认回显，屏上能看到框 + 球）；关掉更快 |
+| `--event-lcd N` | 每 N 帧把状态面板写到板载 LCD（默认 5，0=关）。面板与 PC 面板同源，走 `status_display.render` → `bram_fb.write_image4`（800×480 4bpp） |
 
 结果同上：面板「事件」栏会出现 `球权 #id（1.x m）`，CSV 的 `球权ID / 球权距离` 两列有值。
 **只有 `data/samples/scenes/c05_t01730.0.mp4`（1280×720 中圈机位）这一路同时满足「球被检出 + 有配对标定」**；

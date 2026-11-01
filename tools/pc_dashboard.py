@@ -275,12 +275,13 @@ KIND_COLOR = {
 
 
 def fmt_ts(ts):
-    """时间戳格式化：板端给的是毫秒（如 1000），小于 100 的值按秒解释。"""
+    """时间戳格式化。**板端一律给毫秒**（`result_publisher.build_frame(timestamp_ms, ...)`），
+    所以这里不再按数值大小猜单位——早期版本把 <100 的值当秒，于是 40 ms 会显示成
+    `00:40.00`（CSV 第 2 行就能看到，已改）。"""
     v = _num(ts, -1.0)
     if v < 0:
         return "--:--.--"
-    sec = v / 1000.0 if v >= 100 else v
-    m, s = divmod(sec, 60)
+    m, s = divmod(v / 1000.0, 60)
     return "%02d:%05.2f" % (int(m), s)
 
 

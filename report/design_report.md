@@ -1031,7 +1031,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     出图 7–10 人带框，记分牌与 `start_frame=1500` 对齐。**三个坑写进代码注释**：`create_connection`
     的 5 s 超时会留在 socket 上（板端反压即误判失败）；板端**在服务启动时就建好** JSONL，
     「新建文件」判据整段失效（改为「快照比增长」）；`ResultStore` 攒写，推完那一刻文件可能是
-    0 行（空文件不算结果）。**边界**：板端约 2–3 fps，整段 5 分钟要推半小时，演示用
+    0 行（空文件不算结果）。**边界**：板端实测 3.2 fps（开 HDMI 回显）/ 4.4 fps（关回显），整段 5 分钟要推 28–39 分钟，演示用
     `--push-max-frames` 限长；只拉最新一段，不拼接；GUI 窗口本身未人眼。
 
 ---

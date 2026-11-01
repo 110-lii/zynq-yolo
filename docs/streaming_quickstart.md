@@ -69,6 +69,9 @@ py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_0
 | `--push-max-frames <N>` | 只推前 N 帧。**演示必填**：板端 3.2–4.4 fps，5 分钟片段（7500 帧）要推 28–39 分钟 |
 | `--push-fps` / `--push-quality` | 同 `video_send.py`；质量别降到 95 以下 |
 
+> ⭐ **只想看演示**：`py tools/pc_dashboard.py --demo` —— 板端体检 + 事件管线 + HDMI + LCD
+> + 推 c05 整段 250 帧 + 拉回回放，全部参数已定死，现场只敲这一条（见 `docs/demo_run_sheet.md` §1.5）。
+
 ### 2.5.1 要看**事件**（出界/进球/球权）：加 `--event`
 
 装机服务 `zynq-stream` **不开 `--proposal`、也不带标定**，所以它的 JSONL 里
@@ -86,7 +89,7 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
 | `--calib` | 标定文件，**必须与素材配对**，默认 `data/calib/field_calib_ball.json`（配 `c05_t01730.0.mp4`） |
 | `--event-every` | 检测间隔。25 = 验收口径；推演示素材时用 5，球员坐标更新更勤（非检测帧靠跟踪器外推，越拖越偏） |
 | `--event-ball-every` | 扫球间隔，默认 2；别再调大，这段 250 帧实测调大就采不到球 |
-| `--event-no-hdmi` | 不回显到 HDMI（默认回显，屏上能看到框 + 球）；关掉更快 |
+| `--event-no-hdmi` | 不回显到 HDMI（默认回显，屏上能看到框 + 球，起管线时会自动做行内平移标定）；关掉更快 |
 | `--event-lcd N` | 每 N 帧把状态面板写到板载 LCD（默认 5，0=关）。面板与 PC 面板同源，走 `status_display.render` → `bram_fb.write_image4`（800×480 4bpp） |
 
 结果同上：面板「事件」栏会出现 `球权 #id（1.x m）`，CSV 的 `球权ID / 球权距离` 两列有值。
@@ -180,11 +183,23 @@ py tools/install_boot.py --uninstall   # 撤掉（文件保留）
 实测（2026-11-01）：`HDMI_PREVIEW_ON` → `HDMI_PREVIEW_OFF white_restored` →
 `PIPELINE_OK frames=30 detections=2 med_infer_ms=997.3`，落盘 30 行。
 
-⚠️ **这块屏的可信度要人眼看**：`fb_scanout` 有已知的**间歇整行循环旋转**缺陷
-（恒定 `+313` 列），2026-10-31 的 `HDMI_VISUAL_OK` 就是因此撤回的。
-所以：
+⚠️ **这块屏的可信度**：`fb_scanout` 长期有一个「整行循环平移」的缺陷（2026-10-31 因此撤回了
+`HDMI_VISUAL_OK`）。**2026-11-01 已定位并补正**（D031）：
 
-- 演示里要用它，**先自己看一遍**画面有没有整体错位；
+- 实测映射是**纯循环平移**：屏幕第 C 列显示帧缓存第 (C−K) 列，K 恒定。
+  逐列打点（源图只让第 j 列 = 1，读回它落在屏幕第几列）扫了 47 个点，全部 K=414，
+  接缝在源 866 → 屏 0，连测 20 次不漂；换一次运行量到的是 K=415（差一像素，肉眼看不出）。
+- 所以**不能写死**：`board_pipeline --hdmi-preview` 起管线时现场量一次 K，
+  写帧缓存前把列循环移回去，再用量到的残余量复核。日志里的判据是
+  **`HDMI_ALIGN shift=415 residue=0`**（residue 0 = 补正后恒等）。
+- 测量走的是 `0x41210008`（status GPIO 的通道 2），`cfg_pack[31:29]=7` 时它是
+  「位置加权和 Σ(屏幕列号)×像素」。**注意 `0x41290000` 是坏地址**——它被地址解码到了
+  status GPIO 上，永远读回 `{frames, under}`，别再拿它做诊断（此前多次「读 st_dbg」的
+  结论都是假的）。
+
+仍然成立的纪律：
+
+- 机器只证明「列映射恒等、行号对得上」，**不证明屏上观感**——演示前自己看一眼；
 - 它**不能替代** PC 侧回放做验收；
 - 觉得画面不可信就关掉回显：`py tools/install_boot.py --no-hdmi-preview`（或把服务里的
   `--hdmi-preview` 去掉），屏上就只剩白屏待机。

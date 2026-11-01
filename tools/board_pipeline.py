@@ -423,8 +423,17 @@ def main():
     PREVIEW_FLAG = "/tmp/hdmi_preview.active"
     if args.hdmi_preview:
         try:
-            from pynq import Overlay
-            Overlay(args.hdmi_bit)                 # 已加载同一片时是幂等的
+            # ★ 只在这片比特流**还没进 PL** 时才下：board_idle 开机就加载并保持，
+            #   再下一遍会把 PL 里 HDMI/DMA 的状态一起清掉（2026-11-01 现场掉线的可疑来源之一，
+            #   同 lcd_preview 分支的处理口径）。fpga_manager 的 state 是唯一可靠判据。
+            st = ""
+            try:
+                st = open("/sys/class/fpga_manager/fpga0/state").read().strip()
+            except OSError:
+                pass
+            if st != "operating":
+                from pynq import Overlay
+                Overlay(args.hdmi_bit)
             from hdmi_video import HdmiVideoOut
             hdmi_out = HdmiVideoOut()
             cfg = hdmi_out.check_cfg()
@@ -432,6 +441,15 @@ def main():
                 print("HDMI_PREVIEW_FAIL cfg_not_effective %s" % cfg)
                 hdmi_out = None
             else:
+                # ★★ 行内平移补正（2026-11-01）：这块屏实测「屏幕列 = 源列 + K」，
+                #    K 恒定但历史上换过（414 / 313 / 1024），所以每次起管线现场量。
+                #    量完把 K 交给 show()，它写帧缓存前先把列循环移回去。
+                try:
+                    k = hdmi_out.calibrate_shift()
+                    r = hdmi_out.verify_shift()
+                    print("HDMI_ALIGN shift=%s residue=%s" % (k, r), flush=True)
+                except Exception as _e:            # noqa: BLE001
+                    print("HDMI_ALIGN_FAIL %s" % _e, flush=True)
                 # 告诉 board_idle 别再来刷白屏（否则它每 5 s 会把画面盖掉）
                 open(PREVIEW_FLAG, "w").close()
                 print("HDMI_PREVIEW_ON %s" % args.hdmi_bit, flush=True)
@@ -788,7 +806,12 @@ def main():
         print("TEAM_ASSIGN tracks=%d labeled=%d" % (_ts["tracks_voted"], _ts["tracks_labeled"]))
     print("PIPELINE_OK frames=%d detections=%d med_infer_ms=%s out=%s"
           % (idx, n_det, out["infer_ms_med"], args.out))
-    return 0
+    # ★ 2026-11-01 实测：开 HDMI 回显之后，进程正常 return 会**卡在解释器退出**
+    #   （PYNQ 的 PynqBuffer / MMIO 析构，实测 >300 s 不返回，上位机只能等到超时再拉结果）。
+    #   落盘、store.close()、白屏恢复都在上面做完了，这里刷干净输出直接退。
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
 
 
 if __name__ == "__main__":

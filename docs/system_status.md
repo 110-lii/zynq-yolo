@@ -269,6 +269,7 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
   球检出的差异**不显著（置换检验 p=0.61）**，逐段 0%–52%。
   所以「争抢画面球更难检出」这条**不成立**（5+5 时的 11.6% vs 19.6% 是小样本巧合）。
   站得住的只有：**普通场景里球也只有约 1/5 的帧检得到** —— 这解释了 `ball_gate` 的必要性。
+- **HDMI 行内平移（2026-11-01 定量 + 补正，D031）**：屏幕第 C 列显示帧缓存第 (C−K) 列，**K 恒定但不是常数**（本轮 47 个测点全 414、换一次起管线 415；历史 425/399/437/440/441/0）。量法：源图只让第 j 列 = 1，读 `0x41210008`（`cfg_pack[31:29]=7` 的位置加权和），`pos = 720×(屏列+1)`。补正：起管线时标 K，写帧缓存前 `buf[i]=src[(i+K) mod W]`，补完复测残余量；实测 **`HDMI_ALIGN shift=415 residue=0`**。⚠️ `0x41290000` 是**坏地址**（被解码到 status GPIO，永远读 `{frames,under}`），不得再用作诊断。**人眼仍未确认** ⇒ `HDMI_VISUAL_OK` 不记。
 - **全流程固化 overlay**（`flow_system.bit`）：LCD 4bpp + 按键 + HDMI 32bpp 合进一个
   bitstream，一次加载小屏大屏同时可用。地址只迁了两条（`gpio_id`/`gpio_t` →
   `0x4127/0x4128`），其余工具零改动。详见 `docs/flow_overlay.md`。

@@ -196,6 +196,100 @@ class HdmiVideoOut(object):
         self.pack = pack
         self.cfg.write(0x8, pack)
         self.cfg.write(0x0, self.bufs[0].physical_address)
+        # ---- 行内平移补正（2026-11-01 实测，见 calibrate_shift 的说明）----
+        self.shift = 0          # 屏幕列 = 源列 + shift (mod 宽度)；0 = PL 已对齐
+        self._ix = None         # 列索引表（只在 shift ≠ 0 时才建）
+        self._tmp = None
+
+    # ------------------------------------------------------------------ 平移补正
+    # 2026-11-01：这块屏上「屏幕第 C 列显示的是帧缓存第 (C-K) 列」，K 恒定。
+    # 两次实测：K=414（0/1/2/3/4/5/857…868/1275…1279 共 47 个点全部 K=414，
+    #          接缝在源 866 → 屏 0，正好是 mod 1280 的循环平移；连测 20 次不漂）。
+    # 历史上还量到过 1024 / 313 —— 所以**不能写死**，每次起管线现场量一遍。
+    #
+    # 量的方法不靠人眼：`st` 的通道 2（0x41210008）在 cfg_pack[31:29]=7 时输出
+    # 「位置加权和」Σ(屏幕列号)×像素。把源图做成**只有第 j 列 = 1**、其余全 0，
+    # 那么每行只有那一列贡献 (屏列+1)，720 行累加 ⇒ pos = 720×(屏列+1)。
+    # 一个数反解一个点，扫几个点即可确认它是不是循环平移（K 一致 = 是）。
+    #
+    # 补正则只需在写帧缓存前把列循环右移：buf[i] = src[(i+K) mod W]
+    # ⇒ 屏幕第 C 列取 buf[C-K] = src[C]。补完再量一遍，必须变成恒等（K=0）。
+    # 这一步是**机器判据**，不是「看着像对齐了」。
+    _PROBE_COLS = (0, 320, 640, 960, 1279)
+
+    def _probe_screen_col(self, src_col, apply_shift=False, settle=0.12):
+        """源图只让第 src_col 列 = 1，返回它落在屏幕第几列（反解不出则 None）。
+
+        apply_shift=True 时先按已标定的列索引把图挪一遍，量到的就是 show() 之后的结果。
+        """
+        import time
+        img = np.zeros((self.height, self.width), dtype=np.uint32)
+        img[:, src_col] = 1
+        if apply_shift and self._ix is not None:
+            # 走产品路径的同一套列索引：这样探针量到的就是 show() 之后屏幕上的结果
+            img = img[:, self._ix].copy()
+        for b in self.bufs:
+            b[:] = img
+            b.flush()
+        self.cfg.write(0x0, self.bufs[0].physical_address)
+        self.cfg.write(0x8, self.pack | (7 << 29))
+        try:
+            time.sleep(settle)
+            pos = int(self.st.read(0x8)) & 0xFFFFFFFF
+            for _ in range(6):                    # 读到连续两次相同再采信（跨帧半截不算）
+                time.sleep(0.04)
+                v = int(self.st.read(0x8)) & 0xFFFFFFFF
+                if v == pos:
+                    break
+                pos = v
+        finally:
+            self.cfg.write(0x8, self.pack)
+        return (pos // self.height - 1) if pos % self.height == 0 else None
+
+    def calibrate_shift(self, cols=None):
+        """量出 K 并设好补正，返回 shift（量不稳则返回 0，即不补）。
+
+        K 不一致（说明不是循环平移，而是别的东西坏了）时**不补**，shift 保持 0 ——
+        补一个错的量只会把人眼也骗过去。
+        """
+        cols = tuple(cols or self._PROBE_COLS)
+        ks = []
+        for j in cols:
+            scr = self._probe_screen_col(j, apply_shift=False)
+            if scr is not None:
+                ks.append((scr - j) % self.width)
+        if not ks or len(set(ks)) != 1:
+            self.shift, self._ix = 0, None
+            return 0
+        self.shift = ks[0]
+        # buf[i] = src[(i + K) mod W]  ≡ np.roll(src, -K, axis=1)（诊断 6 上用探针验过恒等）
+        self._ix = None if self.shift == 0 else \
+            ((np.arange(self.width) + self.shift) % self.width).astype(np.intp)
+        return self.shift
+
+    def verify_shift(self, cols=None, tol=1):
+        """补正后**走补正路径**再量一遍，返回残余平移量（0 = 完全对齐，None = 量不出来）。
+
+        容忍 1 列：这块屏的 K 在两次运行之间实测从 414 变成过 415（一像素漂移，
+        肉眼不可辨），不值得为它把整帧重来一遍；但残余 > 1 就必须当 FAIL 报出来。
+        """
+        resid = []
+        for j in tuple(cols or self._PROBE_COLS):
+            scr = self._probe_screen_col(j, apply_shift=True)
+            if scr is None:
+                continue
+            r = (scr - j) % self.width
+            resid.append(r if r <= self.width // 2 else r - self.width)
+        if not resid:
+            return None
+        return max(resid, key=abs)
+
+    def _rotate_into(self, dst, src_bgr):
+        """BGR → 暂存 BGRA → 按列索引搬进帧缓存（一次整帧 gather，板上实测 ~10 ms 量级）。"""
+        if self._tmp is None or self._tmp.shape != dst.shape:
+            self._tmp = np.empty_like(dst)
+        cv2.cvtColor(src_bgr, cv2.COLOR_BGR2BGRA, dst=self._tmp)
+        np.take(self._tmp, self._ix, axis=1, out=dst)
 
     def check_cfg(self):
         """写-读闭环：配置寄存器到底有没有写进去？
@@ -234,7 +328,10 @@ class HdmiVideoOut(object):
         #   pack_frame() 仍然是契约（逐位、bit31=0），单测和期望值都以它为准。
         dst = self.bufs[self.cur].view(np.uint8).reshape(self.height, self.width, 4)
         if self.stride_px == self.width:
-            cv2.cvtColor(src, cv2.COLOR_BGR2BGRA, dst=dst)
+            if self._ix is None:                 # PL 已对齐（或还没标定）：原样写
+                cv2.cvtColor(src, cv2.COLOR_BGR2BGRA, dst=dst)
+            else:                                # 先画到暂存，再按标定好的列索引搬进帧缓存
+                self._rotate_into(dst, src)
         else:                                    # 带行填充的缓冲：仍走契约路径
             np.copyto(self.bufs[self.cur], pack_frame(src, self.width, self.stride_px))
         # PYNQ 的 allocate() 默认是可缓存（cacheable）的：CPU 写完只在 cache 里，

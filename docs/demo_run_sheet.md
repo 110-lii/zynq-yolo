@@ -68,27 +68,38 @@ py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_0
 开机服务那条路**不产事件**（没 `--proposal`、没标定）。要看到事件，加 `--event`：
 它会在板上另起一条带 `--proposal --calib` 的管线（5009 口），推完自动停、清 HDMI 标记。
 
+### ⭐ 演示就这一条命令（2026-11-01 起）
+
 ```bash
-py tools/pc_dashboard.py --event --event-every 5 --event-no-hdmi --push data/samples/scenes/c05_t01730.0.mp4 --push-max-frames 250 --csv build/demo_events.csv
+py tools/pc_dashboard.py --demo
 ```
 
-- **整段 250 帧 = 10 s，实测端到端约 8 分钟**（2026-11-01 板上：推流 250 帧 0.8 fps，
-  板端 `detect 75.5 s + ball 90.8 s`，再等管线退出与拉回）。日志停在
-  `PUSH 等板端算完` 是正常的。赶时间就用 `--push-start 4.0 --push-max-frames 80`，代价是只覆盖 3 s；
-- **小屏（LCD 800×480）会显示状态面板**：`--event-lcd 5` 每 5 帧写一次
-  （帧号/人数/球/事件/机位），与 PC 面板同一套数据源（D030）；
-- `--event-no-hdmi` 不给就同时回显 HDMI——但 HDMI 有已知的间歇整行旋转，
-  演示时建议关掉，只留白屏待机 + LCD + PC 三处中的后两处。
+它会依次做：板端体检（两个服务在不在跑）→ 起事件管线（HDMI 回显 + LCD 面板）→
+推 `data/samples/scenes/c05_t01730.0.mp4` 整段 **250 帧 = 10 s** → 等管线退出 →
+拉回 JSONL → 在 PC 面板上回放。等价的手写版是下面这条，参数已经全部定死在 `--demo` 里：
+
+```bash
+py tools/pc_dashboard.py --event --event-every 5 --event-lcd 5 --push data/samples/scenes/c05_t01730.0.mp4 --push-max-frames 250 --csv build/demo_events.csv
+```
+
+- **为什么是这段**：`data/samples/scenes/MANIFEST.csv` 里 8 段争抢场景，c05 得分最高
+  （score 0.9384，其余 0.85–0.89），而且是**唯一**验出球权事件的一段
+  （球被检出 + 配对标定同时成立）。
+- **整段 250 帧 = 10 s，实测端到端 8–10 分钟**。时间大头是**推流被板端反压**
+  （事件模式板端约 1 fps）。日志停在 `PUSH 等板端算完` 是正常的，别以为卡死。
+  赶时间就用 `--push-start 4.0 --push-max-frames 80`，代价是只覆盖 3 s。
+- **三块屏同时有东西**：HDMI 大屏（带框画面，**行内平移已在起管线时自动标定并补正**）、
+  LCD 小屏（状态面板，每 5 帧刷一次）、PC 面板（事件流 + 球场坐标回投）。
+
 
 - **素材用 `data/samples/scenes/c05_t01730.0.mp4`**（1280×720 中圈机位，250 帧 / 10 s），
   默认标定 `data/calib/field_calib_ball.json` 就是给它配的。这段里球在**红衣 26 号**脚边
   （第 166 帧前后），另外还有两次近身拼抢（第 110、130 帧）。
 - 屏上预期：面板「事件」栏出现三条 `球权`（`#32 2.38 m` / `#33 1.93 m` / `#26 1.09 m`），
   CSV 的 `球权ID / 球权距离` 两列有值，左画面红圈套着球、绿框是球员。
-- 时长（2026-11-01 **板上实测**）：整段 250 帧 **5 min 04 s**；上面这条截短版
-  （从第 4 秒起 80 帧，板端回 **80 行**）**约 4 分钟**——事件模式下板端只跑到 **1.1 fps**，
-  时间大头在等它算完（日志里会停在 `PUSH 等板端算完`，这是对的，别以为卡死）。
-  两版事件逐帧一致，**现场用截短版**，整段版只当录制备选；
+- 时间口径：整段 250 帧在板上算 **5 min 04 s**（`detect 75.5 s + ball 90.8 s`），
+  再叠加推流反压与拉回，端到端 **8–10 分钟**。手写截短版（从第 4 秒起 80 帧，
+  板端回 **80 行**）约 4 分钟。两版事件逐帧一致 ⇒ 现场**如果时间紧**才用截短版；
 - 画面上不再是光板：事件模式只给球场坐标，PC 面板借 `--calib` 的单应逆矩阵把球员和球
   **回投成圈**（圈标在脚下），顶栏会写「事件模式（球场坐标回投）」。
 - ⚠️ **第 166 帧之后不要解释成"抢断"**：板端球在 166 帧后跟丢、后面几帧是外推值
@@ -138,7 +149,7 @@ head -5 build/demo_session.csv
 ⚠️ **不能说的话**（报告里已撤回或没验过的）：
 
 - 不说「实时」：板端 3.2 fps（开回显）/ 4.4 fps（关回显），检测 1.24 s/次；
-- 不说「HDMI 画面已验证」：`HDMI_VISUAL_OK` 已撤回（间歇整行旋转 `+313` 列），只能请评委自己看；
+- 不说「HDMI 画面已验证」：行内平移已定量并**每次起管线自动标定 + 补正**（日志判据 `HDMI_ALIGN shift=… residue=0`），但**屏上观感仍要人眼看**，`HDMI_VISUAL_OK` 不记；
 - 不说「球在这段里检出了」：这段没有球；
 - 不说「5 分钟片段一口气推完」：7500 帧要 28–39 分钟，演示只用 `--push-max-frames 45`。
 
@@ -157,4 +168,24 @@ REPLAY_DONE 45 frames  →  PC_DASHBOARD_OK frames=45
       STAGES detect_ms=4361 ball_ms=2344 frames=45 →
       PIPELINE_OK frames=45 detections=3 med_infer_ms=1243.3
 总耗时 34 s（推流 8 s + 板端处理 16 s + 待落盘/拉回约 5 s + 回放 4.5 s）
+
+### 5.1 `--demo` 整段排练（2026-11-01，真机）
+
+```
+BOARD_OK SERVICES active active | PREVIEW_FLAG False
+BOARD_PIPELINE_START pid=1013 alive=True
+板端：HDMI_ALIGN shift=415 residue=0      ← 行内平移补正，补完复测残余 0
+      HDMI_PREVIEW_ON → LCD_PANEL_ON every=5 → LCD_PANEL_OK ×50
+PUSH_DONE frames=250 mb=52.4 fps=0.7       ← 约 6 分钟
+板端：HDMI_PREVIEW_OFF white_restored → PIPELINE_OK frames=250 detections=50
+      STAGES detect_ms=75518 ball_ms=91026 → TEAM_ASSIGN tracks=52 labeled=38
+结果：10 帧球权（f110/111 #32 2.38/2.46、f130/131 #33 1.93/1.95、f166–171 #26 1.09/…）
+      32 帧球场坐标球、out_of_play 0 帧；与 10-31 那次逐帧一致
+```
+
+⚠️ 这次卡了两处、都已修（下一版不会再有）：`PUSH 等板端算完` 的等待原来是 300 s，
+而**推完 ≠ 算完**（收尾还压着几十帧 JPEG，板端要再追 3–5 分钟），超时后紧接着拉结果
+撞上「还没写完」，报 `板端没有返回数据`。现在等待放宽到 1200 s 且每 60 s 打一行进度，
+拉取也带 3 次重试。**现场若看到 `BOARD_PIPELINE_WAIT`，那是板子还在算，不是卡死。**
+
 ```

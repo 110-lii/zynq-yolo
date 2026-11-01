@@ -1155,22 +1155,32 @@ print("BOARD_PIPELINE_ALIVE pid=%%s alive=%%s" %% (pid, alive))
 
 
 def board_wait_pipeline_exit(pidfile, jupyter="192.168.2.99:9090",
-                             timeout=300.0, poll=3.0, log=None):
+                             timeout=1200.0, poll=3.0, log=None):
     """等板上那条 Popen 起来的管线**自己跑完退出**。
 
     为什么要这一步：`ResultStore` 按 `--store-fsync 30` 攒着写盘，推流一结束就按
     「行数不再变」去拉，会把**最后不到 30 行**当成「写稳了」——2026-11-01 现场就是这样
     （推 80 帧只拉回 60 行，第 166 帧那条 1.09 m 的球权正好落在丢掉的那 20 帧里）。
     管线进程退出时会补一次 flush，所以判据改成「进程没了」再拉。
+
+    超时从 300 s 放宽到 1200 s：**推完 ≠ 板端算完**。250 帧实测推流 6 min，
+    收尾时内核还压着几十帧 JPEG 没解，板端按 ~1 fps 追，再要 3–5 min。
+    2026-11-01 那次卡在 300 s 上，随后紧接着拉文件恰好撞上「还没写完」。
     """
     bj = _board_mod(jupyter)
-    deadline = time.time() + timeout
+    t0 = time.time()
+    deadline = t0 + timeout
+    last_note = t0
     while time.time() < deadline:
         rc, text = bj.run_capture(_BOARD_ALIVE % {"pidfile": pidfile}, timeout=120.0)
         if rc == 0 and "alive=False" in text:
             if log:
-                log("BOARD_PIPELINE_EXITED")
+                log("BOARD_PIPELINE_EXITED after=%ds" % int(time.time() - t0))
             return True
+        if log and time.time() - last_note >= 60.0:
+            last_note = time.time()
+            log("BOARD_PIPELINE_WAIT %ds %s" % (int(time.time() - t0),
+                                                text.strip().replace("\n", " ")[:120]))
         time.sleep(poll)
     if log:
         log("BOARD_PIPELINE_EXIT_TIMEOUT %ss" % int(timeout))
@@ -1212,41 +1222,89 @@ def board_wait_results(before, store_dir, pattern="net_*.jsonl",
     raise RuntimeError("板端结果没有落定（timeout=%ss, last=%s）" % (timeout, last))
 
 
-def board_pull_jsonl(remote, local, jupyter="192.168.2.99:9090", timeout=300.0):
-    """把板端一个 JSONL 拉回本地并校验 sha256。返回本地路径。"""
+def board_pull_jsonl(remote, local, jupyter="192.168.2.99:9090", timeout=300.0,
+                     tries=3):
+    """把板端一个 JSONL 拉回本地并校验 sha256。返回本地路径。
+
+    为什么要重试：2026-11-01 一键演示那次，板端管线还在收尾（推完不等于算完），
+    紧接着的这一次读回**返回了空输出**（`板端没有返回数据`）——同一文件手工重拉一次
+    就 281 KB 全对。Jupyter 那侧偶发空回，重试一次比让人当场手忙脚乱强。
+    """
     import base64
     import hashlib
     bj = _board_mod(jupyter)
-    rc, text = bj.run_capture(_BOARD_PULL % {"remote": remote}, timeout=timeout)
-    if rc != 0:
-        raise RuntimeError("板端读文件失败（rc=%s）：%s" % (rc, remote))
-    want_len = want_sha = None
-    chunks = []
-    for line in text.splitlines():
-        if line.startswith("INFO "):
-            _tag, n, sha = line.split(" ", 2)
-            want_len, want_sha = int(n), sha.strip()
-        elif line.startswith("CHUNK "):
-            chunks.append(line[6:].strip())
-        elif line.strip() == "END":
-            break
-    if want_len is None or not chunks:
-        raise RuntimeError("板端没有返回内容：%s" % remote)
-    raw = base64.b64decode("".join(chunks))
-    got_sha = hashlib.sha256(raw).hexdigest()
-    if len(raw) != want_len or got_sha != want_sha:
-        raise RuntimeError("回传校验失败 len=%d/%d sha=%s/%s"
-                           % (len(raw), want_len, got_sha[:12], (want_sha or "")[:12]))
-    p = Path(local)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_bytes(raw)
-    return p, got_sha
+    last = None
+    for attempt in range(int(tries)):
+        rc, text = bj.run_capture(_BOARD_PULL % {"remote": remote}, timeout=timeout)
+        if rc != 0:
+            last = RuntimeError("板端读文件失败（rc=%s）：%s" % (rc, remote))
+        else:
+            want_len = want_sha = None
+            chunks = []
+            for line in text.splitlines():
+                if line.startswith("INFO "):
+                    _tag, n, sha = line.split(" ", 2)
+                    want_len, want_sha = int(n), sha.strip()
+                elif line.startswith("CHUNK "):
+                    chunks.append(line[6:].strip())
+                elif line.strip() == "END":
+                    break
+            if want_len is None or not chunks:
+                last = RuntimeError("板端没有返回内容：%s" % remote)
+            else:
+                raw = base64.b64decode("".join(chunks))
+                got_sha = hashlib.sha256(raw).hexdigest()
+                if len(raw) != want_len or got_sha != want_sha:
+                    last = RuntimeError("回传校验失败 len=%d/%d sha=%s/%s"
+                                        % (len(raw), want_len, got_sha[:12],
+                                           (want_sha or "")[:12]))
+                else:
+                    p = Path(local)
+                    p.parent.mkdir(parents=True, exist_ok=True)
+                    p.write_bytes(raw)
+                    return p, got_sha
+        time.sleep(2.0)
+    raise last
 
 
 EVENT_CALIB_DEFAULT = "data/calib/field_calib_ball.json"
 EVENT_PY = "/usr/local/share/pynq-venv/bin/python3"
 EVENT_REPO = "/home/xilinx/zynq-yolo"
 EVENT_PREVIEW_FLAG = "/tmp/hdmi_preview.active"
+
+# ---- 一键演示（`--demo`）的固定脚本 -----------------------------------------
+# 素材选 c05：`data/samples/scenes/MANIFEST.csv` 里 8 段争抢场景中得分最高的
+# （score 0.9384，其余 0.85–0.89），也是**唯一**验出球权事件的一段
+# （球 + 配对的中圈标定同时成立）。250 帧 = 10 s，事件在第 110/130/166 帧前后。
+DEMO_VIDEO = "data/samples/scenes/c05_t01730.0.mp4"
+DEMO_FRAMES = 250
+DEMO_CSV = "build/demo_events.csv"
+
+# 板子活着 = Jupyter 能连上 + 两个服务都在跑 + 没有人占着 HDMI
+_BOARD_PREFLIGHT = r'''
+import subprocess
+r = subprocess.run("systemctl is-active zynq-idle zynq-stream", shell=True,
+                   capture_output=True, text=True)
+print("SERVICES", r.stdout.replace("\n", " ").strip())
+import os
+print("PREVIEW_FLAG", os.path.exists("/tmp/hdmi_preview.active"))
+'''
+
+
+def board_preflight(jupyter="192.168.2.99:9090", timeout=30.0):
+    """演示前的三行体检。返回 (ok, 说明)。连不上就是板子没起 —— 先去上电。"""
+    try:
+        bj = _board_mod(jupyter)
+        rc, text = bj.run_capture(_BOARD_PREFLIGHT, timeout=timeout)
+    except Exception as e:                       # noqa: BLE001
+        return False, "Jupyter 连不上（%s: %s）——板子没起或掉线，先上电重启" % (
+            type(e).__name__, e)
+    if rc != 0:
+        return False, "板端体检执行失败：%s" % (text or ("rc=%s" % rc))[-200:]
+    svc = " ".join(l.split(None, 1)[1] for l in text.splitlines()
+                   if l.startswith("SERVICES"))
+    ok = svc.count("active") >= 2 and "inactive" not in svc and "failed" not in svc
+    return ok, text.strip().replace("\n", " | ")
 
 
 def _event_argv(port=5009, calib=EVENT_CALIB_DEFAULT,
@@ -1652,6 +1710,10 @@ def main():
                     help="配合 --dump-png：回放到该帧号就停（-1=放到最后）。"
                          "出「球刚到画面里」这类截图时用")
     ap.add_argument("--selftest", action="store_true", help="无显示器自检")
+    ap.add_argument("--demo", action="store_true",
+                    help="一键演示：%s 整段 %d 帧（10 s）+ 事件 + LCD 面板 + HDMI 回显，"
+                         "推完自动拉回并在面板上回放。开跑前先做板端体检"
+                         % (Path(DEMO_VIDEO).name, DEMO_FRAMES))
     ap.add_argument("--push", default="", metavar="VIDEO",
                     help="把这段视频推到板子上（板端 zynq-stream 在听 5007），"
                          "等板端落盘后自动把结果拉回来回放；会自动把它当作画面源")
@@ -1695,6 +1757,25 @@ def main():
 
     if args.selftest:
         raise SystemExit(_selftest())
+    if args.demo:
+        # 一键演示 = 一条命令把参数都定死，现场不用记；显式给了的输入源优先，不许混用
+        if args.push or args.replay or args.listen:
+            ap.error("--demo 自带素材，不要与 --push / --replay / --listen 同用")
+        if not Path(DEMO_VIDEO).is_file():
+            ap.error("演示素材不存在：%s" % DEMO_VIDEO)
+        args.push = DEMO_VIDEO
+        args.push_max_frames = DEMO_FRAMES
+        args.push_start = 0.0
+        args.event = True
+        args.event_every = 5          # 检测帧密度：25 是验收口径，演示用 5 才采得到球
+        args.event_lcd = 5            # 板载 LCD 每 5 帧刷一次状态面板
+        args.csv = args.csv or DEMO_CSV
+        ok, why = board_preflight(args.jupyter)
+        print(("BOARD_OK " if ok else "BOARD_DOWN ") + why)
+        if not ok:
+            print("演示先别开始：按 AGENTS.md，板子离线时不做硬件验证、也不声称跑通。"
+                  "先给板子上电、等 60–90 s，再跑同一条命令。")
+            return 3
     if args.push:
         if args.listen or args.replay:
             ap.error("--push 不能与 --listen / --replay 同用（推完会自动回放）")

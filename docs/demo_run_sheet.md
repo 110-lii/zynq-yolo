@@ -72,9 +72,9 @@ py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_0
 py tools/pc_dashboard.py --event --event-every 5 --event-no-hdmi --push data/samples/scenes/c05_t01730.0.mp4 --push-max-frames 250 --csv build/demo_events.csv
 ```
 
-- **整段 250 帧 = 10 s**，事件模式板端 ~1.1 fps ⇒ **约 5 分钟**（日志停在
-  `PUSH 等板端算完` 是正常的）。想压到 2 分钟就把 `--push-start 4.0 --push-max-frames 80` 加回去，
-  代价是只覆盖 3 s；
+- **整段 250 帧 = 10 s，实测端到端约 8 分钟**（2026-11-01 板上：推流 250 帧 0.8 fps，
+  板端 `detect 75.5 s + ball 90.8 s`，再等管线退出与拉回）。日志停在
+  `PUSH 等板端算完` 是正常的。赶时间就用 `--push-start 4.0 --push-max-frames 80`，代价是只覆盖 3 s；
 - **小屏（LCD 800×480）会显示状态面板**：`--event-lcd 5` 每 5 帧写一次
   （帧号/人数/球/事件/机位），与 PC 面板同一套数据源（D030）；
 - `--event-no-hdmi` 不给就同时回显 HDMI——但 HDMI 有已知的间歇整行旋转，

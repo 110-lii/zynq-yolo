@@ -220,3 +220,30 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
 `fb_scanout` 的**间歇整行循环移位**（恒定 `+313` 列）2026-10-31 就登记过，
 `HDMI_VISUAL_OK` 因此撤回；这次的观感与它一致。**演示不要依赖 HDMI**：
 `--event-no-hdmi` 让它保持白屏待机，画面以 PC 窗口为准。
+
+## 轮次 9 — 板子恢复后的整段验证：LCD 面板 + 250 帧（10 s）跑通
+
+用户：「板子重启好了，继续跑」。第一次起来后**跑到一半又掉线**（`BOARD_PIPELINE_START pid=770`
+后约 1 分钟 Jupyter 断、ping 全丢）。可疑点：LCD 初始化里调了一次 `Overlay(flow_system.bit)`，
+而 `board_idle` 开机已加载并保持这片比特流，**重复下比特流会清掉 PL 里 HDMI/DMA 的状态**。
+改成只走 MMIO 不再加载（`1acbac2`）。**这是怀疑不是证据**——当天板子在没开 LCD 时也掉过三次。
+
+第二次上电后按「先短后长」走：
+
+| 步骤 | 结果 |
+|---|---|
+| 12 帧短跑（`--lcd-preview 5`） | `LCD_PANEL_ON every=5` → `LCD_PANEL_OK frame=0`；`PIPELINE_OK frames=12`，板子没掉 |
+| BRAM 回读 | `LCD_CFG=0x10`；`0x40000000` 起 8 个字 `0x44444444/0x99999999/0xdddddddd/…/0xffffffff` 全部非零 |
+| **整段 250 帧 = 10 s**（`pc_dashboard --event --event-every 5 --event-no-hdmi --push-max-frames 250`） | 端到端 **约 8 分钟**；板端 `PIPELINE_OK frames=250 detections=50`，`STAGES detect_ms=75494 ball_ms=90800`；面板刷新 **50 次**（`LCD_PANEL_OK frame=0/45/95/145/195/245`） |
+| 拉回 | `BOARD_PIPELINE_EXITED` → `lines=250` → `PULL_OK sha256=e7281e92991ffc4b`（`build/pull/evt_20261031_001959_00.jsonl`） |
+
+整段事件（与之前 80 帧那次逐帧一致）：
+
+- 球权 10 帧：`f110/111 #32 2.38/2.46 m`、`f130/131 #33 1.93/1.95 m`、
+  `f166–171 #26 1.09/0.50/1.36/1.87/2.19/2.15 m`（**167 帧起球跟丢后是外推，不采信**）；
+- `out_of_play` 0 帧（这条推流路径本来就没报，出界仍未验）；
+- 28 帧球场坐标球。
+
+⚠️ **仍未由人确认**：小屏上到底有没有出现面板（机器只证明「数据写进了帧缓存、cfg 生效」，
+按 2026-10-31 `HDMI_VISUAL_OK` 撤回的同一纪律，不能代替人眼）；整段时长从之前估的 5 分钟
+更正为**约 8 分钟**（实测），现场排练要按这个排。

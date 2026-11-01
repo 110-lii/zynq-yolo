@@ -16,7 +16,7 @@
 | 4 | **上传全部代码** | ★ | **RAR** / ≤200 MB | `dist/zynq-yolo_submission_<stamp>.rar`（本次 41.6 MB / 740 项，`tools/make_portal_assets.py --rar dist/zynq-yolo_submission_<stamp>` 生成）+ 同名 `.zip`（48.2 MB，备用）；只留当天最新一份 | ✅ 已生成；改完代码要重出，WinRAR 在 `D:\软件\winrar\Rar.exe`（脚本会查注册表，查不到就设 `RAR_EXE`） |
 | 5 | **参赛作品承诺及使用授权书** | ★ | PDF / ≤50 MB | 官方空白模板（`D:\xiazai\` 下） | ⛔ **需打印、签名、扫描上传**（只能人工操作） |
 | 6 | 作品海报 | 选填 | PDF 或 PPT / ≤50 MB | 提示词与版式已备好，可出 A4 一页 | ⏳ 选填；进决赛另需**英文一页 A4 海报**（指南「六、其它」） |
-| 7 | **GitHub 链接** | ★ | ≤200 字 | `https://github.com/110-lii/zynq-yolo` | ⚠️ **本机 `main` 领先 origin 13 个提交，需 `git push` 后再填** |
+| 7 | **GitHub 链接** | ★ | ≤200 字 | `https://github.com/110-lii/zynq-yolo`（MIT LICENSE） | ✅ 已推送：2026-11-01 18:38 `origin/main` 与本地 `main` 一致（`0 0`） |
 | 8 | **作品全貌图** | ★ | JPG/PNG / ≤10 MB / **1 张** | 尚无实物照（`report/figures/system_arch.png` 是框图，不能替代） | ⛔ **待拍摄**（板子 + HDMI + LCD + PC 同框） |
 | 9 | **开发板重要角度高清照片** | ★ | JPG/PNG / ≤10 MB / **最多 4 张** | 尚无 | ⛔ **待拍摄**（建议：正面、斜 45°、接口侧、通电工作特写） |
 | 10 | **作品简介** | ★ | 文本框（约 300–500 字） | 已拟稿（见 §0.1） | ⚠️ 门户里那段末尾疑似多了 `PRINT` 字样，粘贴前核对 |

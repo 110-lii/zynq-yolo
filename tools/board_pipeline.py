@@ -443,8 +443,10 @@ def main():
     lcd_out = None
     if args.lcd_preview and args.lcd_preview > 0:
         try:
-            from pynq import Overlay, MMIO
-            Overlay(args.hdmi_bit)                 # 同一片 flow_system.bit，幂等
+            # ★ 这里**不再**调 Overlay()：board_idle 开机就把 flow_system.bit 加载并保持，
+            #   再下一遍比特流会把 PL 里 HDMI/DMA 的状态一起清掉（2026-11-01 现场掉线的
+            #   可疑来源之一）。MMIO 直接按物理地址访问，不依赖本进程是否加载过 overlay。
+            from pynq import MMIO
             import bram_fb
             import status_display
             from pc_dashboard import normalize

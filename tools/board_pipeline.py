@@ -128,9 +128,9 @@ def _is_grass(frame, u, v):
     return float(g.mean()) >= 0.4
 
 
-def detect(image_path, bin_path, param, model, conf, iou):
+def detect(image_path, bin_path, param, model, conf, iou, size=320, letterbox=True):
     return bd_detect(image_path, bin_path, param, model, conf, iou,
-                     use_pl=USE_PL, repo=REPO)
+                     use_pl=USE_PL, repo=REPO, size=size, letterbox=letterbox)
 
 
 # ---------- 证据帧：倒地候选判定 ----------
@@ -312,6 +312,12 @@ def main():
     ap.add_argument("--model", default="/home/xilinx/person_v8n25.bin")
     ap.add_argument("--conf", type=float, default=0.25)
     ap.add_argument("--iou", type=float, default=0.45)
+    ap.add_argument("--input-size", type=int, default=320, metavar="S",
+                    help="送进检测网络的边长（默认 320）。用高分辨率模型时改成 640，"
+                         "同时要换 --param/--model/--bin，三处尺寸必须一致（见 board_detect.detect）")
+    ap.add_argument("--no-letterbox", action="store_true",
+                    help="退回「压扁成正方形」的旧预处理。默认 letterbox（保比例+补边），"
+                         "实测同一模型同尺寸召回翻倍；只有对照实验才需要关掉")
     ap.add_argument("--calib", default="", help="field_coords.py 生成的 calib.json")
     ap.add_argument("--pl", action="store_true", default=None, help="强制启用 PL preproc")
     ap.add_argument("--no-pl", action="store_true", help="禁用 PL preproc")
@@ -561,7 +567,9 @@ def main():
                                                args.conf, args.iou)
                 else:
                     cv2.imwrite(tmp, frame)
-                    dets, ms = detect(tmp, args.bin, args.param, args.model, args.conf, args.iou)
+                    dets, ms = detect(tmp, args.bin, args.param, args.model, args.conf,
+                                      args.iou, size=args.input_size,
+                                      letterbox=not args.no_letterbox)
             except Exception as _e:
                 print("DETECT_FAIL:", _e)
                 dets, ms = [], None

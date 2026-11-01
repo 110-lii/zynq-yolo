@@ -1,8 +1,10 @@
 // ncnn_infer.cpp —— 板上 YOLOv8 单帧推理 + 解码 + NMS（无 OpenCV）
 //
-// 输入：raw RGB 320x320x3（uint8），由 Python 侧生成
+// 输入：raw RGB SxSx3（uint8），由 Python 侧生成；S 默认 320，可由命令第 8 个参数改
 // 输出：每行 "DET x1 y1 x2 y2 score"（输入像素坐标）
 //       最后一行 "INFER_MS <ms>"
+//
+// 调用：ncnn_infer model.param model.bin input.rgb [conf] [iou] [planar] [size]
 //
 // 编译：g++ -O2 -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -fopenmp \
 //        -I ncnn-20240820/src -I ncnn-20240820/build/src ncnn_infer.cpp \
@@ -37,14 +39,18 @@ static float iou(const Box &a, const Box &b) {
 
 int main(int argc, char **argv) {
     if (argc < 4) {
-        printf("USAGE: ncnn_infer model.param model.bin input.rgb [conf] [iou]\n");
+        printf("USAGE: ncnn_infer model.param model.bin input.rgb [conf] [iou] [planar] [size]\n");
         return 2;
     }
     const float conf_th = argc > 4 ? atof(argv[4]) : 0.25f;
     const float iou_th = argc > 5 ? atof(argv[5]) : 0.45f;
     const int planar = argc > 6 ? atoi(argv[6]) : 0;   // 1 = 3xHxW 平面（PL 预处理输出）
 
-    const int W = 320, H = 320;
+    // 输入边长：默认 320（既有 ncnn_infer 的行为不变），可由第 8 个参数改成 640 等。
+    // ★ 改了这里必须同时改 Python 侧 board_detect.detect(size=...) 与模型的导出尺寸，
+    //   三者任一不一致，框会整体错位（不是报错，是"看着像没检出来"）。
+    const int sz = argc > 7 ? atoi(argv[7]) : 320;
+    const int W = sz > 0 ? sz : 320, H = W;
     std::vector<unsigned char> buf((size_t)W * H * 3);
     FILE *f = fopen(argv[3], "rb");
     if (!f || fread(buf.data(), 1, buf.size(), f) != buf.size()) {
@@ -84,10 +90,19 @@ int main(int argc, char **argv) {
     }
 
     double t0 = now_s();
-    ncnn::Extractor ex = net.create_extractor();
-    ex.input("images", in);
     ncnn::Mat out;
-    int rc = ex.extract("output0", out);
+    int rc = -1;
+    // 输入/输出名随导出工具而变：老模型（pnnx 直出）是 images/output0，
+    // ultralytics 导出的 ncnn 是 in0/out0。两个都试，别写死一个。
+    for (const char *in_name : {"images", "in0"}) {
+        ncnn::Extractor ex = net.create_extractor();
+        if (ex.input(in_name, in) != 0) continue;
+        for (const char *out_name : {"output0", "out0"}) {
+            rc = ex.extract(out_name, out);
+            if (rc == 0) break;
+        }
+        if (rc == 0) break;
+    }
     double t1 = now_s();
     if (rc != 0 || out.w < 5) {
         printf("EXTRACT_FAIL %d %d\n", rc, out.w);

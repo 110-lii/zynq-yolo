@@ -85,13 +85,29 @@ def init_pl(repo):
 
 
 def detect(image_path, bin_path, param, model, conf=0.25, iou=0.45,
-           use_pl=False, repo=None):
-    """返回 (dets, infer_ms)。dets = [[x1,y1,x2,y2,score], ...]，原图坐标。"""
+           use_pl=False, repo=None, size=320, letterbox=True):
+    """返回 (dets, infer_ms)。dets = [[x1,y1,x2,y2,score], ...]，原图坐标。
+
+    size：送进网络的边长（默认 320）。换 640 模型时必须三处一起改 ——
+    这里、`ncnn_infer` 的第 8 个参数、以及模型的导出尺寸；任一不一致，
+    框会整体缩放错位（不报错，表现为"像没检出来"）。
+
+    letterbox：**保持宽高比、补灰边到正方形**（默认开，2026-11-02 改）。
+    以前是直接 `cv2.resize` 压成正方形（squash），854×480 的画面会被竖向拉伸 1.78×。
+    实测（100 张 val 图、conf 0.25、IoU 0.5，真值来自教师模型）：
+        基线模型 320：squash 召回 0.162 → letterbox **0.330**
+        640 微调 640：squash 召回 0.264 → letterbox **0.597**
+    也就是说同一份模型、同样的推理量，只改预处理就能翻倍 —— 因为训练时用的就是
+    letterbox，压扁等于把目标尺度/形状都换掉了。补边值 114 与 ultralytics 一致。
+    """
     im = cv2.imread(image_path)
     if im is None:
         return [], None
     h0, w0 = im.shape[:2]
+    size = int(size)
     planar = 0
+    pad_x = pad_y = 0
+    scale = 1.0
     fd, raw = tempfile.mkstemp(suffix=".rgb")
     os.close(fd)
     try:
@@ -101,11 +117,20 @@ def detect(image_path, bin_path, param, model, conf=0.25, iou=0.45,
             with open(raw, "wb") as fh:
                 fh.write(out.tobytes())
             planar = 1
+        elif letterbox:
+            scale = min(size / float(w0), size / float(h0))
+            nw, nh = max(1, int(round(w0 * scale))), max(1, int(round(h0 * scale)))
+            pad_x, pad_y = (size - nw) // 2, (size - nh) // 2
+            canvas = np.full((size, size, 3), 114, np.uint8)
+            canvas[pad_y:pad_y + nh, pad_x:pad_x + nw] = cv2.resize(im, (nw, nh))
+            rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
+            rgb.astype(np.uint8).tofile(raw)
         else:
-            rgb = cv2.cvtColor(cv2.resize(im, (320, 320)), cv2.COLOR_BGR2RGB)
+            rgb = cv2.cvtColor(cv2.resize(im, (size, size)), cv2.COLOR_BGR2RGB)
             rgb.astype(np.uint8).tofile(raw)
 
-        p = subprocess.run([bin_path, param, model, raw, str(conf), str(iou), str(planar)],
+        p = subprocess.run([bin_path, param, model, raw, str(conf), str(iou), str(planar),
+                            str(size)],
                            capture_output=True, text=True, timeout=180)
     finally:
         try:
@@ -115,7 +140,11 @@ def detect(image_path, bin_path, param, model, conf=0.25, iou=0.45,
     if p.returncode != 0:
         return [], None
 
-    sx, sy = w0 / 320.0, h0 / 320.0
+    if planar or not letterbox:
+        sx, sy = w0 / float(size), h0 / float(size)
+    else:
+        sx = sy = 1.0 / scale          # 逆变换：先减补边，再除缩放
+
     dets, infer_ms = [], None
     for line in p.stdout.splitlines():
         t = line.split()
@@ -123,7 +152,12 @@ def detect(image_path, bin_path, param, model, conf=0.25, iou=0.45,
             continue
         if t[0] == "DET":
             x1, y1, x2, y2, s = map(float, t[1:6])
-            dets.append([x1 * sx, y1 * sy, x2 * sx, y2 * sy, s])
+            if letterbox and not planar:
+                x1, x2 = (x1 - pad_x) * sx, (x2 - pad_x) * sx
+                y1, y2 = (y1 - pad_y) * sy, (y2 - pad_y) * sy
+            else:
+                x1, x2, y1, y2 = x1 * sx, x2 * sx, y1 * sy, y2 * sy
+            dets.append([x1, y1, x2, y2, s])
         elif t[0] == "INFER_MS":
             infer_ms = float(t[1])
     return dets, infer_ms

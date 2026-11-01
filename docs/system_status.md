@@ -363,3 +363,12 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
 - **带框视频回传（网口，用户授权的退路）**：`tools/video_back.py`；板端要 `--no-pl`、
   `--max-det 0`，无标定时加 `--no-camera-gate`（否则 `INVALID_VIEW` 会清空全部坐标），
   `--tracks` 必须给 **全流程 JSONL**（`build/flow/*.jsonl`），给 summary `.json` 会静默不出框。
+- **2026-11-02 检测预处理改 letterbox（D043）**：板上一直是 `cv2.resize(im, (320,320))` 把画面**压扁**成正方形
+  （1280×720 会被竖向拉伸 1.78×），而训练时用的是保比例补边。改法：`board_detect.detect()` 按
+  `scale=min(S/w, S/h)` 等比缩放、居中补 114 灰边，框逆变换 `(x-pad)/scale`；`--no-letterbox` 只作对照。
+  **部署同路径实测**（真实 `detect()` + PC 替身 `ncnn_infer`，val 前 100 张、470 个 person 真值框、conf 0.25 / IoU 0.5）：
+  在板 `person_v8n25@320` squash **0.183** → letterbox **0.313**（推理量不变）；
+  640 重训权重 `person_w05` letterbox@640 **0.609**、@480 **0.547**、@320 **0.405**。
+  ★ **一个模型只能跑导出时的边长**：ncnn 静态图把尺寸写进 param，640 模型喂 320 时召回精确为 0（`EXTRACT_FAIL`），
+  所以三档权重分别导出成 `build/models/person_w05_{320,480,640}`，文件名带尺寸。
+  ⚠️ 板子当日离线（ping 100% 丢包）⇒ **三档 `INFER_MS` 与 letterbox 上板均未验**，默认模型暂不改，记 todo。

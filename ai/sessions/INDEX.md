@@ -52,8 +52,10 @@
 
 | [028](028_demo_replay_and_mp4_export.md) | 2026-11-01 | 演示段跑完后：PC 录像出片（`--dump-video`）+ 软件/HDMI 循环播放 ★ | `claude`（主会话模型） | ① 板端 `--demo` 整段跑完：`HDMI_ALIGN shift=0 residue=0` → `LCD_PANEL_OK ×50` → `PIPELINE_OK frames=250 detections=50`，拉回 `evt_20261031_022109_00.jsonl`（250 行 / 210,791 B）32 帧坐标球 + 三条球权，与 10-31 逐帧一致；② PC 侧循环播放已开（`--replay … --loop`）；③ 新增 `--dump-video`，出片 `build/demo_c05_processed.mp4`（250 帧 / 1240×780 / 25 fps / 5.5 MB，判据 `PC_DASHBOARD_MP4 … frames=250 fps=25.0`），抽 f166 核图：红圈套球、`球权: #26 · 距球 1.09 m`；④ **自我纠错**：经 Jupyter 用 `bash -lc` 起 HDMI 循环把内核挂成 `busy`（`ping` 仍通，故不是掉线），改 `Popen(start_new_session=True)` 直起；⑤ ⚠️ **修完时板子已掉线（ping 100% 丢包、9090/5007 全断）⇒ HDMI 循环未起、未验证**，按 AGENTS.md §2 记 todo；⑥ 顺带修 `--selftest`（板端模板占位键 `flag`/`pid` 落后于实现，长期 FAIL）与 `.gitignore` 漏 `~$*`（Word 锁文件曾让命名检查误报） |
 
-> **统计**（2026-11-01 核对，取自本文件实际行数）：共 **28** 条记录 `001`–`028`；带自我纠错轨迹（★）的 17 条。
-> 编号连续、不复用；**下一条应为 `029_<slug>.md`**。新增记录后请顺手更新本行数字与「当前 max」。
+| [029](029_accuracy_letterbox_and_input_size.md) | 2026-11-02 | 用时间换识别率：预处理与输入尺寸的实测对照 ★ | `claude`（主会话模型） | ① **实测不靠 mAP、走部署同路径**：真实 `board_detect.detect()` + PC 替身 `ncnn_infer` + val 前 100 张（470 个 person 真值框，conf 0.25 / IoU 0.5），得到 2 模型 × 2 尺寸 × 2 预处理的召回表 —— 在板 `v8n25@320` squash **0.183**、同模型 letterbox **0.313**、640 重训权重 letterbox@640 **0.609**（3.3×）、@480 **0.547**；② 结论：涨分靠**预处理与训练一致** + **640 重训**，不是单纯调大输入（320 权重调大反而掉到 0.089–0.148）；③ 落地：`board_detect.detect(letterbox=True)`（等比缩放 + 114 补边 + 逆变换），`board_pipeline --no-letterbox` 仅作对照；权重分别导出 320/480/640 三档；④ **自我纠错**：以为一个 ncnn 模型能喂任意边长，实测 640 模型喂 320 召回精确为 `0.000` ⇒ 查 `EXTRACT_FAIL` 才知导出尺寸写死在 param 里，改为「一模型一尺寸、文件名带尺寸」；⑤ ⚠️ **板子离线（ping 100% 丢包）⇒ 三档 `INFER_MS` 未测、默认模型暂不改**，按 AGENTS.md §2 记 todo |
+
+> **统计**（2026-11-02 核对，取自本文件实际行数）：共 **29** 条记录 `001`–`029`；带自我纠错轨迹（★）的 18 条。
+> 编号连续、不复用；**下一条应为 `030_<slug>.md`**。新增记录后请顺手更新本行数字与「当前 max」。
 
 ---
 
@@ -72,7 +74,7 @@
 ## 怎么加一条记录
 
 ```powershell
-# 1) 复制模板，编号取本表 max+1（当前 max=027 ⇒ 下一个是 028）
+# 1) 复制模板，编号取本表 max+1（当前 max=029 ⇒ 下一个是 030）
 Copy-Item D:\zynq-yolo\ai\sessions\_TEMPLATE.md D:\zynq-yolo\ai\sessions\005_<slug>.md
 # 2) 逐项填写（字段不得删；「原文位置」必须真实）
 # 3) 回到本文件，在上表追加一行（顺序不可反）

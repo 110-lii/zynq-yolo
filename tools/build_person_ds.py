@@ -21,8 +21,8 @@ from ultralytics import YOLO
 
 REPO = Path(__file__).resolve().parents[1]
 VIDEOS = [
-    Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4"),
-    Path(r"D:\yt-dlp\downloads\migu_968460165\2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4"),
+    Path(r"clips\migu_5106947698\migu_5106947698.mp4"),
+    Path(r"clips\migu_968460165\2026中超第28轮全场回放_大连英博海发3-1深圳新鹏城.mp4"),
 ]
 OUT = REPO / "data" / "train" / "person_ds.npz"
 

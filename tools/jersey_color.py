@@ -71,8 +71,8 @@ import cv2  # noqa: E402
 import draw_detections as dd  # noqa: E402  只借它的字体/描边/底色，保证和人眼复核图一致
 import eval_calib_set as ecs  # noqa: E402
 
-FFMPEG = Path(r"D:\yt-dlp\ffmpeg\ffmpeg.exe")
-VIDEO = Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
+FFMPEG = Path(r"ffmpeg\ffmpeg.exe")
+VIDEO = Path(r"clips\migu_5106947698\migu_5106947698.mp4")
 RESEARCH = REPO / ".research" / "jersey"
 OUT_JSON = REPO / "data" / "results" / "jersey_color.json"
 OUT_VIZ = REPO / "data" / "results" / "viz" / "jersey"

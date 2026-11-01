@@ -4,6 +4,7 @@
 > 数字都来自 2026-11-01 22:42 的真机排练。
 > 相关：[`streaming_quickstart.md`](streaming_quickstart.md)（推流细节）、
 > [`report/demo_video_storyboard.md`](../report/demo_video_storyboard.md)（录像分镜）。
+> 📁 文中 `<视频目录>` / `<全场录像目录>` / `<ffmpeg 路径>` / `<本机下载目录>` 是**本机路径占位符**（2026-11-01 统一隐去），按你自己机器上的实际位置替换。
 
 ---
 
@@ -29,8 +30,8 @@ no_preview_flag
 **素材**（已切好，放本机即可）：
 
 ```
-D:\yt-dlp\downloads\964262880\clips_5min\clip_04_015min.mp4   ← 比赛画面（主用）
-D:\yt-dlp\downloads\964262880\clips_5min\clip_05_020min.mp4   ← 备用
+<视频目录>\clip_04_015min.mp4   ← 比赛画面（主用）
+<视频目录>\clip_05_020min.mp4   ← 备用
 ```
 
 > clip_01–03 是片头/演播室，**不要用**（clip_01 第 0 帧还是整幅白场）。
@@ -40,7 +41,7 @@ D:\yt-dlp\downloads\964262880\clips_5min\clip_05_020min.mp4   ← 备用
 ## 1. 主镜头：一条命令「PC 推流 → 板上处理 → 结果回上位机」
 
 ```bash
-py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_04_015min.mp4" --push-start 60 --push-max-frames 45 --csv build/demo_session.csv
+py tools/pc_dashboard.py --push "<视频目录>/clip_04_015min.mp4" --push-start 60 --push-max-frames 45 --csv build/demo_session.csv
 ```
 
 开窗口跑（不加 `--headless`），**屏上会依次看到**：
@@ -142,7 +143,7 @@ head -5 build/demo_session.csv
 |---|---|
 | 第 0 步不是 `active` / ping 不通 | **断电重启**板子，等 60–90 s 再跑第 0 步；期间先讲架构图 |
 | 推流卡在 `推流中` 不动超过 60 s | 看 HDMI 是否已成白屏：成白屏说明板端已处理完，等 `等板端落盘` 那步；连续两次超时就 Ctrl-C，走下行 |
-| 板子彻底掉线 | 回放**已经拉回来**的结果：`py tools/pc_dashboard.py --replay build/pull/net_20261030_224217_00.jsonl --video "D:/yt-dlp/downloads/964262880/clips_5min/clip_04_015min.mp4" --video-start 60` —— 画面照出、框对得上（`--video-start 60` 必须带，否则会从片头开始画，框和画面对不上），明确说「这段是刚才板上跑出来的结果」 |
+| 板子彻底掉线 | 回放**已经拉回来**的结果：`py tools/pc_dashboard.py --replay build/pull/net_20261030_224217_00.jsonl --video "<视频目录>/clip_04_015min.mp4" --video-start 60` —— 画面照出、框对得上（`--video-start 60` 必须带，否则会从片头开始画，框和画面对不上），明确说「这段是刚才板上跑出来的结果」 |
 | 评委问「事件呢」 | **照实说**：开机服务那条 `zynq-stream` 没开 `--proposal`、也没有匹配标定，所以事件流本来就不会有内容（`events` 恒为空）。出界/进球/球权需要「球 + 球场坐标 + 匹配标定」，clip_04 这种 854×480 转播远景三者都不满足。**要真给评委看事件**，走上面 §1.5 的 `--event` 那一镜（c05 中圈 720p 素材 + 配对标定 ⇒ 三帧球权，已上板验过） |
 | 想展示**球** | 本片源是 854×480 转播远景，球只有几个像素，**这一路没检出球**（435 帧实测 0 帧）。要展示球请用已有结果回放：`py tools/pc_dashboard.py --replay data/results/ball_air_c03_20261031.jsonl --video data/samples/scenes/c03_t01290.0.mp4 --dump-frame 106`，并说明这是**另一段素材**（1280×720）跑出来的 |
 

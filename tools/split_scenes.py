@@ -57,8 +57,8 @@ import cv2
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
-VIDEO_DEFAULT = Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
-FFMPEG = Path(r"D:\yt-dlp\ffmpeg\ffmpeg.exe")
+VIDEO_DEFAULT = Path(r"clips\migu_5106947698\migu_5106947698.mp4")
+FFMPEG = Path(r"ffmpeg\ffmpeg.exe")
 OUT_DEFAULT = REPO / "data" / "samples" / "scenes"
 MODEL_DEFAULT = REPO / "data" / "models" / "yolov8n.pt"
 

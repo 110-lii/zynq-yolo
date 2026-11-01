@@ -36,7 +36,7 @@ def scores(patches):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--video", default=r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
+    ap.add_argument("--video", default=r"clips\migu_5106947698\migu_5106947698.mp4")
     ap.add_argument("--t", type=float, required=True)
     ap.add_argument("--dur", type=float, default=8.0)
     ap.add_argument("--th", type=float, default=0.5)

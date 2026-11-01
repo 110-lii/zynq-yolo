@@ -182,7 +182,7 @@ RTL 模块名以**子系统前缀**开头，前缀与目录一一对应，便于
 | 网络 | 双千兆：PS 侧 YT8521S（GEM）· PL 侧 YT8531（RGMII） | `D:\FPGA\oi\CLAUDE.md:215`；分工决策见 **旧项目台账** `D:\FPGA\oi\ai\coordination\DECISIONS.md` 的 **D008/D012**（逐条还原见 [`../ref/hardware.md`](../ref/hardware.md) §D） |
 | PYNQ | 曾用 SD 启动 PYNQ（Ubuntu 20.04 / kernel 5.4.0）成功加载自研 Overlay（`.bit` + `.hwh`） | 旧项目 `board/ps/`；本队 2026-09-11 首次上板实测（`D:\FPGA\oi\CLAUDE.md:252-253`） |
 | ★ 算力警示 | 旧项目结论**中文原文**：**「DSP 仅 220 个 — 不做大算力 CNN」** | `D:\FPGA\oi\CLAUDE.md:206`（逐字，见 [`../ref/hardware.md`](../ref/hardware.md) §C） |
-| 引脚两条死线 | ⛔ **J4 pin 2 绝对禁用**（是 `cam_sda`，与板载座硬并联）· ⛔ **LCD 与 J3 互斥**（同一批 `B34_L13–L24`） | 见 [`../ref/hardware.md`](../ref/hardware.md) §F（逐条带 `ai/raw/*:行号`） |
+| 引脚两条死线 | ⛔ **J4 pin 2 绝对禁用**（是 `cam_sda`，与板载座硬并联）· ⛔ **LCD 与 J3 互斥**（同一批 `B34_L13–L24`） | 见 [`../ref/hardware.md`](../ref/hardware.md) §F（逐条带原始记录行号；`ai/raw/` 2026-11-01 起不随仓库分发） |
 | 本机 Python | `D:\python\python.exe` **3.13.1**；已有 `numpy 2.5.4` `cv2 5.0.0.93` `Pillow 12.3.0` `matplotlib 3.11.2` `pandas 3.0.6` `scipy 1.18.1` `openpyxl` `python-docx` `python-pptx` `PyYAML` `pymupdf` **`onnxruntime 1.31.0`** | 本机实测（2026-10-19） |
 | 本机 Python **缺** | **无 `onnx`**（只有 runtime）· **无 `torch`** · 无 `pdfplumber`/`PyPDF2` · 无 `zstandard`（导出器走 Node 解压）· 无 `soffice`/`libreoffice`/`pdftotext` | 本机实测 |
 | 本机 Node | **v24.18.0**（自带 `zlib.zstdDecompressSync`，DSH 会话导出依赖） | 本机实测 |

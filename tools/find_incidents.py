@@ -36,8 +36,8 @@ sys.dont_write_bytecode = True
 
 REPO = Path(__file__).resolve().parents[1]
 
-VIDEO = Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
-FFMPEG = Path(r"D:\yt-dlp\ffmpeg\ffmpeg.exe")
+VIDEO = Path(r"clips\migu_5106947698\migu_5106947698.mp4")
+FFMPEG = Path(r"ffmpeg\ffmpeg.exe")
 OUT = REPO / "data" / "samples" / "incidents"
 SCAN_JSON = OUT / "_cuts_scan.json"
 
@@ -57,7 +57,7 @@ def run(cmd):
 def frame_end(cuts, args):
     """素材末端的保守估计 = 最后一个切换点。
 
-    本机没有 ffprobe（只有 `D:\\yt-dlp\\ffmpeg\\ffmpeg.exe`），拿不到精确总时长；
+    本机没有 ffprobe（只有 `ffmpeg\\ffmpeg.exe`），拿不到精确总时长；
     而这里只需要「窗口别越过素材末尾」，用最后一个切换点当界足够。
     """
     return cuts[-1] if cuts else 0.0

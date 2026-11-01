@@ -42,7 +42,7 @@ def scores(patches):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=r"data/ball_roi_full2")
-    ap.add_argument("--video", default=r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
+    ap.add_argument("--video", default=r"clips\migu_5106947698\migu_5106947698.mp4")
     ap.add_argument("--n", type=int, default=20)
     ap.add_argument("--win", type=int, default=8, help="前后帧数")
     ap.add_argument("--th", type=float, default=0.6)

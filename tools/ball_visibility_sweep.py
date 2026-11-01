@@ -91,8 +91,8 @@ NATIVE_DIR = ".research/native"
 # 阳性对照：Wikimedia 足球图（球是几十像素的大目标，必须能检出）
 POS_DIR = "data/samples/calib_commons"
 SELECTION = "data/samples/calib_real/_scratch/selection.json"
-DEFAULT_VIDEO = Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
-DEFAULT_FFMPEG = Path(r"D:\yt-dlp\ffmpeg\ffmpeg.exe")
+DEFAULT_VIDEO = Path(r"clips\migu_5106947698\migu_5106947698.mp4")
+DEFAULT_FFMPEG = Path(r"ffmpeg\ffmpeg.exe")
 
 OUT_JSON = "data/results/ball_visibility_sweep.json"
 OUT_VIZ = "data/results/viz/sweep"

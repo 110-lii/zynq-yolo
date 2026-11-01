@@ -109,8 +109,8 @@ import cv2
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_VIDEO = Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
-FFMPEG = Path(r"D:\yt-dlp\ffmpeg\ffmpeg.exe")
+DEFAULT_VIDEO = Path(r"clips\migu_5106947698\migu_5106947698.mp4")
+FFMPEG = Path(r"ffmpeg\ffmpeg.exe")
 MANIFEST = ROOT / "data" / "samples" / "calib_real" / "MANIFEST.csv"
 TEST_DIR = ROOT / "data" / "samples" / "calib_real" / "frames_test"
 OUT_JSON = ROOT / "data" / "results" / "ball_cv.json"

@@ -80,7 +80,7 @@ CALIB_DIR = REPO / "data" / "samples" / "calib_real" / "frames_calib"
 TEST_DIR = REPO / "data" / "samples" / "calib_real" / "frames_test"
 MANIFEST = REPO / "data" / "samples" / "calib_real" / "MANIFEST.csv"
 # 第三方转播源，**只读**，绝不复制进仓库
-VIDEO = Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
+VIDEO = Path(r"clips\migu_5106947698\migu_5106947698.mp4")
 HD_CACHE = REPO / ".research" / "hd"
 
 # ---------------------------------------------------------------- 渲染配色

@@ -46,8 +46,8 @@ sys.dont_write_bytecode = True
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_VIDEO = Path(r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
-FFMPEG = Path(r"D:\yt-dlp\ffmpeg\ffmpeg.exe")
+DEFAULT_VIDEO = Path(r"clips\migu_5106947698\migu_5106947698.mp4")
+FFMPEG = Path(r"ffmpeg\ffmpeg.exe")
 MODEL = ROOT / "data" / "models" / "yolov8n.pt"
 OUT = ROOT / "data" / "samples" / "calib_real"
 FRAMES_CALIB = OUT / "frames_calib"

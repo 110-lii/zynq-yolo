@@ -56,7 +56,7 @@ def _hit(cands, x, y, tol=TOL):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=r"data/ball_roi_full2")
-    ap.add_argument("--video", default=r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
+    ap.add_argument("--video", default=r"clips\migu_5106947698\migu_5106947698.mp4")
     ap.add_argument("--eval", action="store_true")
     args = ap.parse_args()
 

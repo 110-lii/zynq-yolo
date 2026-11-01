@@ -12,7 +12,8 @@
 > `data/results/hdmi_visual_ok.json` 仍是 `HDMI_VISUAL_RETRACTED`，成片里不得出现
 > `HDMI_VISUAL_OK` 或「大屏画面已通过」之类的结论。屏上是否可拍，以现场人眼为准（§5.1 最后一条）。
 >
-> 所有命令在仓库根 `D:\zynq-yolo` 执行。板端没有免密 SSH，统一经 Jupyter：
+> 所有命令在仓库根 `D:\zynq-yolo` 执行。
+> 📁 文中 `<视频目录>` / `<全场录像目录>` / `<ffmpeg 路径>` / `<本机下载目录>` 是**本机路径占位符**（2026-11-01 统一隐去），按你自己机器上的实际位置替换。板端没有免密 SSH，统一经 Jupyter：
 > `py tools/board_jupyter.py "<Python 代码>"`（板 IP `192.168.2.99`，Jupyter 9090）。
 > 下表凡是「板端」命令，实际都通过这一行在 PC 上执行；板内终端命令同时给出，便于核对。
 >
@@ -252,7 +253,7 @@ py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/
 `docs/streaming_quickstart.md` §2.5）：
 
 ```bash
-py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_04_015min.mp4" --push-start 60 --push-max-frames 45
+py tools/pc_dashboard.py --push "<视频目录>/clip_04_015min.mp4" --push-start 60 --push-max-frames 45
 ```
 
 > 预期：`PUSH_DONE frames=45` → `BOARD_RESULT_READY lines=45` → `PULL_OK sha256=…` → 回放 45 帧，
@@ -476,7 +477,7 @@ py -c "import os;os.startfile(r'build\demo_session.csv')"
    - 不得把候选数当检出数，不得把 `--max-det` 当人数。
 6. **调大 `--ball-lost-sec` 后的球帧数**：该开关已否决（新增 38 帧人工抽查全非球），
    不得作为成果展示。
-7. **参考样片/其他作品画面**：`D:\xiazai\…mp4` 只是风格参考，不得剪进成片。
+7. **参考样片/其他作品画面**：`<本机下载目录>\…mp4` 只是风格参考，不得剪进成片。
 
 ---
 

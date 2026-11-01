@@ -35,7 +35,7 @@ D013 决定把板载 4.3 寸触摸屏当**数据输入端**：赛前由人录入
     & D:\\python\\python.exe tools\\match_setup.py --show migu968460165
     & D:\\python\\python.exe tools\\match_setup.py --list
     & D:\\python\\python.exe tools\\match_setup.py --print-cmd migu968460165 `
-        --video "D:\\yt-dlp\\downloads\\migu_968460165\\<全场 mp4>"
+        --video "clips\\migu_968460165\\<全场 mp4>"
 
 半场语义（2026-10-20 修正，用户反馈「半场的选择有问题」）
 ----------------------------------------------------------

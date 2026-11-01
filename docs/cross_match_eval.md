@@ -3,6 +3,7 @@
 > 结论先说：**现有颜色/门控结论的全部证据只来自 `migu_5106947698` 一场球**。
 > 这个工具把「换一场还剩多少」变成一条可复算的命令 + 一组**能失败的判据**，
 > 而不是跑完让人自己看数字。
+> 📁 文中 `<视频目录>` / `<全场录像目录>` / `<ffmpeg 路径>` / `<本机下载目录>` 是**本机路径占位符**（2026-11-01 统一隐去），按你自己机器上的实际位置替换。
 >
 > 📌 **本文讲「框架怎么用、判据怎么定、为什么这么定」；实测跑出来是什么、结论是什么，见
 > [`cross_match_results.md`](cross_match_results.md)**（两者分工，不要混写）。
@@ -347,7 +348,7 @@ $env:PYTHONIOENCODING='utf-8'
 cd D:\zynq-yolo
 
 # 0) 确认下载真的完成：目录里不应再有 *.ytdl
-Get-ChildItem D:\yt-dlp\downloads\migu_968460165 -Force
+Get-ChildItem <全场录像目录> -Force
 
 # 1) 先看片识色：抽几帧人工看队服颜色（不要假设还是红白）
 #    已知（2026-10-20 人工核帧）：大连英博海发 = 白衣，深圳新鹏城 = 深蓝衣，门将浅紫
@@ -358,7 +359,7 @@ Get-ChildItem D:\yt-dlp\downloads\migu_968460165 -Force
 #      会抽到广告/演播室/看台特写（实测 7453 s 那帧草坪占比 0.00），
 #      那些画面本来就没有「球员框」，却会被算进取色失败原因的构成里。
 D:\python\python.exe tools\cross_match_eval.py `
-  --video-dir "D:\yt-dlp\downloads\migu_968460165\<全场 mp4>" `
+  --video-dir "<全场录像目录>\<全场 mp4>" `
   --palette white,blue `
   --n-clips 12 --clip-len 20 --play-windows --max-total-s 0
 
@@ -392,13 +393,13 @@ D:\python\python.exe tools\cross_match_eval.py `
 | 项 | 值 |
 |---|---|
 | 比赛 | 2026 中超第 28 轮 大连英博海发 3–1 深圳新鹏城 |
-| 视频 | `D:\yt-dlp\downloads\migu_968460165\2026中超第28轮全场回放_….mp4`（854×480 @25fps，9554.6 s，1.85 GB） |
+| 视频 | `<全场录像目录>\2026中超第28轮全场回放_….mp4`（854×480 @25fps，9554.6 s，1.85 GB） |
 | 色板（人工录入） | `white,blue` —— 大连英博海发 **白**、深圳新鹏城 **深蓝**（用户 2026-10-20 确认） |
 | 布局 | `--play-windows`：草坪占比粗扫 478 点 → 288 点判为比赛画面 → **21 段**、合计 3680 s（占全片 38.5%）→ 在这 21 段内抽 12 个 20 s 窗口 |
 
 ```powershell
 D:\python\python.exe tools\cross_match_eval.py `
-  --video-dir "D:\yt-dlp\downloads\migu_968460165\<全场 mp4>" `
+  --video-dir "<全场录像目录>\<全场 mp4>" `
   --palette white,blue --n-clips 12 --play-windows --max-total-s 0
 # => CROSS_MATCH_OK 12 7886 0.371 WARN(G2;G3;G4)
 ```

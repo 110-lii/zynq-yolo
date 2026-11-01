@@ -20,7 +20,7 @@ TOL = 24.0     # 降采样后的容差（约等于原图 48 px）
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=r"data/ball_roi_full2")
-    ap.add_argument("--video", default=r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4")
+    ap.add_argument("--video", default=r"clips\migu_5106947698\migu_5106947698.mp4")
     ap.add_argument("--n", type=int, default=5)
     ap.add_argument("--stride", type=int, default=16)
     args = ap.parse_args()

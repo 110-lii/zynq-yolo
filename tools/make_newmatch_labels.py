@@ -40,7 +40,7 @@
 ----
     # 建包（约 2-4 分钟，取决于 --n-windows）
     & D:\\python\\python.exe tools\\make_newmatch_labels.py --build `
-        --video "D:\\yt-dlp\\downloads\\migu_968460165\\<全场 mp4>" `
+        --video "clips\\migu_968460165\\<全场 mp4>" `
         --palette white,blue --palette-refs data\\results\\kit_calib.json
 
     # 标（网页，键盘 p/n/u）

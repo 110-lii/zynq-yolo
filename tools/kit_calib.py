@@ -36,7 +36,7 @@
 用法
 ----
     & D:\\python\\python.exe tools\\kit_calib.py `
-        --video "D:\\yt-dlp\\downloads\\migu_968460165\\<全场 mp4>" `
+        --video "clips\\migu_968460165\\<全场 mp4>" `
         --palette white,blue --n-windows 12 --frames-per-window 3
 
 产物

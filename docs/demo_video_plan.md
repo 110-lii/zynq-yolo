@@ -12,6 +12,7 @@
 > 主镜头改为一条命令 `py tools/pc_dashboard.py --demo`，HDMI 屏可以入镜；
 > 但 `HDMI_VISUAL_OK` **仍未记**（人眼验收是 todo），成片不得声称「HDMI 已通过」。
 > 输出建议放 `dist/demo_<YYYYMMDD>.mp4`，不随代码包入库。
+> 📁 文中 `<视频目录>` / `<全场录像目录>` / `<ffmpeg 路径>` / `<本机下载目录>` 是**本机路径占位符**（2026-11-01 统一隐去），按你自己机器上的实际位置替换。
 
 ---
 
@@ -75,7 +76,7 @@
 ## 5. 剪辑命令（本机 ffmpeg 7.1）
 
 ```bash
-FF=/d/yt-dlp/ffmpeg/ffmpeg.exe
+FF=<ffmpeg 路径>
 # 1) 统一到 1280x720 / 30fps / H.264 / yuv420p（无音频或统一 AAC）
 "$FF" -i raw_01.mp4 -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,fps=30" \
   -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p -an clip_01.mp4

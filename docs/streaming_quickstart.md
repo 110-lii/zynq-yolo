@@ -2,6 +2,7 @@
 
 > 对应决策 **D029**（上电即用）与 **D027**（PC → 板的以太网视频入口）。
 > 一句话：**板子上电后什么都不用做；在电脑上跑一条 `video_send.py` 就是推流。**
+> 📁 文中 `<视频目录>` / `<全场录像目录>` / `<ffmpeg 路径>` / `<本机下载目录>` 是**本机路径占位符**（2026-11-01 统一隐去），按你自己机器上的实际位置替换。
 
 ---
 
@@ -52,7 +53,7 @@ py tools/video_send.py --video data/samples/scenes/c03_t01290.0.mp4 --host 192.1
 现在 `pc_dashboard.py --push` 把它们串成一条：
 
 ```bash
-py tools/pc_dashboard.py --push "D:/yt-dlp/downloads/964262880/clips_5min/clip_04_015min.mp4" --push-start 60 --push-max-frames 45
+py tools/pc_dashboard.py --push "<视频目录>/clip_04_015min.mp4" --push-start 60 --push-max-frames 45
 ```
 
 它会依次做四件事，屏上先显示进度、后显示带框画面：

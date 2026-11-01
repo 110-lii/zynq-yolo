@@ -75,7 +75,7 @@ too_small 14.7% / rect 3.8%）和「按取色失败原因门控」的结论，**
 
     # 新比赛（大连英博 vs 深圳新鹏城，队色未知 ⇒ 必须人给 palette）
     & D:\\python\\python.exe tools/cross_match_eval.py `
-        --video-dir D:\\yt-dlp\\downloads\\migu_968460165 --palette blue,orange
+        --video-dir clips\\migu_968460165 --palette blue,orange
 
 # 整场录像（2h39，混着广告 / 演播室 / 看台特写）：只在**比赛段**内抽窗口
     & D:\\python\\python.exe tools\\cross_match_eval.py `

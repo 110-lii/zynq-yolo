@@ -7,7 +7,7 @@ import numpy as np
 
 from ball_cv_probe import candidates
 
-VIDEO = r"D:\yt-dlp\downloads\migu_5106947698\migu_5106947698.mp4"
+VIDEO = r"clips\migu_5106947698\migu_5106947698.mp4"
 OUT = r"D:\zynq-yolo\data\ball_roi_full2"
 N = 800
 CTX, SZ, GRID = 64, 96, 8

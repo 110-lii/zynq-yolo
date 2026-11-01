@@ -250,15 +250,19 @@ def main(argv=None):
         if not docx_to_pdf(Path(args.pdf), Path(args.pdf_out)):
             rc = 1
     if args.rar:
-        rar_exe = find_rar(args.rar_exe)
-        if not rar_exe:
-            print("PORTAL_RAR_FAIL 未找到 Rar.exe；用 --rar-exe 或环境变量 RAR_EXE 指定")
-            rc = 1
+        src = Path(args.rar)
+        if src.is_file() and src.suffix.lower() == ".rar":
+            # --check 时顺带把已生成的 .rar 递进来是常见用法：它已经是产物，不再打包
+            print(f"PORTAL_RAR_EXISTS {src}（已是 .rar，跳过打包；要重出请传目录）")
         else:
-            src = Path(args.rar)
-            out = Path(args.rar_out) if args.rar_out else src.with_suffix(".rar")
-            if not make_rar(src, out, rar_exe):
+            rar_exe = find_rar(args.rar_exe)
+            if not rar_exe:
+                print("PORTAL_RAR_FAIL 未找到 Rar.exe；用 --rar-exe 或环境变量 RAR_EXE 指定")
                 rc = 1
+            else:
+                out = Path(args.rar_out) if args.rar_out else src.with_suffix(".rar")
+                if not make_rar(src, out, rar_exe):
+                    rc = 1
     if args.check and not check(args):
         rc = 1
     return rc

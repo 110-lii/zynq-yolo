@@ -60,7 +60,7 @@
 
 > **git 历史已重写**（2026-11-01 19:0x，`git filter-repo --invert-paths --path ai/raw` + force push）：
 > 旧历史里 `ai/raw` 的逐字原文与本机用户目录路径已从**所有提交**中移除，远端只剩新历史
-> （`main` = `6be2f51`，无其他分支/标签）。代价：旧 commit hash 全部作废，别人已 clone 的仓库需重新 clone。
+> （远端只有 `main` 一个分支、无标签）。代价：旧 commit hash 全部作废，别人已 clone 的仓库需重新 clone。
 > 若当初在对话里出现过的 GitHub PAT 还在用，建议到 GitHub 撤销并重新签发一次。
 
 ## 1. 工程包（指南 3.3.5.1）

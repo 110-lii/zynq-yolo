@@ -11,7 +11,7 @@
 
 单位与口径（全部沿用既有实现，不新造）
 ------------------------------------
-- 输入配置：`zynq-yolo/match-config/2`（`tools/lcd_ui.py` 屏上录入、`tools/match_setup.py` 校验）
+- 输入配置：`zynq-yolo/match-config/2`（`board/ui_config.json`；原屏上录入界面 `tools/lcd_ui.py` 已按 D028 删除）
   ⇒ `teams.A/B.{kit_color,keeper_color}`、`referee.kit_color`；
 - 取色：`classify_players.torso_rect()` + `torso_color()`（已含草坪/广告牌抑制）；
 - 判色：`classify_players.classify()`（默认 v1 口径，距离门限 0.16）；

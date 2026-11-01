@@ -14,7 +14,7 @@
 
 ---
 
-## 1. 总时长分配（合计 155 s，上限 180 s）
+## 1. 总时长分配（合计 139 s，上限 180 s）
 
 | 镜头 | 内容 | 起止 | 时长 |
 |---|---|---|---|
@@ -25,13 +25,15 @@
 | S5 | 网口回传带框视频（主演示通道） | 00:51–01:21 | 30 s |
 | S6 | PC 面板：比赛画面 + 球 + 框 | 01:21–01:41 | 20 s |
 | S7 | LCD 状态面板（同一份 JSONL） | 01:41–01:55 | 14 s |
-| S8 | 赛前 UI 真按键 | 01:55–02:11 | 16 s |
-| S9 | 逐帧 CSV（球坐标与人数） | 02:11–02:23 | 12 s |
-| S10 | 指标、边界与收尾 | 02:23–02:35 | 12 s |
+| ~~S8~~ | ~~赛前 UI 真按键~~ | — | **已删除（D028）** |
+| S9 | 逐帧 CSV（球坐标与人数） | 01:55–02:07 | 12 s |
+| S10 | 指标、边界与收尾 | 02:07–02:19 | 12 s |
 | — | 转场/淡入淡出预留 | — | 25 s |
-| **合计** | | | **155 s + 25 s = 180 s** |
+| **合计** | | | **139 s + 25 s = 164 s** |
 
-> 成片控制在 155 s 左右；预留的 25 s 只用于转场和片尾停留，不得靠加长镜头突破 180 s。
+> 成片控制在 139 s 左右，预留 25 s 转场后共 164 s，离 180 s 上限还有 16 s 余量。
+> **S8「赛前选色 UI」已按 D028 删除**（该界面只产出颜色标签、不影响检测，队别无真值可核）。
+> 为免与已录素材文件名冲突，S9/S10 的编号**保持不变**，不要重命名成 S08/S09。
 
 ---
 
@@ -47,10 +49,9 @@
 | 2 | S4 板上管线 | 刚开机，ncnn 最干净；`--no-pl` 不需要 overlay |
 | 3 | S5 网口回传 | 紧接着用 S4 刚写出的 JSONL，不重跑检测 |
 | 4 | 加载 overlay（只加载一次）→ S7 LCD 面板 | 减少 `Overlay()` 次数 |
-| 5 | S8 赛前 UI 真按键 | 同一片 overlay |
-| 6 | S2 实物 + LCD 界面 | 用 S8 结束后的界面，不再额外加载 |
-| 7 | S6 / S9 PC 面板与 CSV | 完全不需要板子，板子掉线也能拍 |
-| 8 | S1 / S3 / S10 字幕与静态图 | 后期完成 |
+| 5 | S2 实物 + LCD 面板 | 同一片 overlay，屏上就是 S7 的面板，不再额外加载 |
+| 6 | S6 / S9 PC 面板与 CSV | 完全不需要板子，板子掉线也能拍 |
+| 7 | S1 / S3 / S10 字幕与静态图 | 后期完成 |
 
 ---
 
@@ -68,7 +69,7 @@ py tools/board_jupyter.py "print('BOARD_OK')"
 ### P1 板上文件自检
 
 ```bash
-py tools/board_jupyter.py "import os;print('MISSING',[p for p in ['/home/xilinx/zynq-yolo/tools/board_pipeline.py','/home/xilinx/zynq-yolo/tools/video_back.py','/home/xilinx/zynq-yolo/tools/status_display.py','/home/xilinx/zynq-yolo/tools/pc_dashboard.py','/home/xilinx/zynq-yolo/tools/lcd_ui.py','/home/xilinx/zynq-yolo/tools/flow_overlay.py','/home/xilinx/zynq-yolo/tools/bram_fb.py','/home/xilinx/zynq-yolo/board/overlay/flow_system.bit','/home/xilinx/zynq-yolo/board/ui_config.json','/home/xilinx/zynq-yolo/data/samples/scenes/c03_t01290.0.mp4','/home/xilinx/ncnn_infer'] if not os.path.exists(p)])"
+py tools/board_jupyter.py "import os;print('MISSING',[p for p in ['/home/xilinx/zynq-yolo/tools/board_pipeline.py','/home/xilinx/zynq-yolo/tools/video_back.py','/home/xilinx/zynq-yolo/tools/status_display.py','/home/xilinx/zynq-yolo/tools/pc_dashboard.py','/home/xilinx/zynq-yolo/tools/flow_overlay.py','/home/xilinx/zynq-yolo/tools/bram_fb.py','/home/xilinx/zynq-yolo/board/overlay/flow_system.bit','/home/xilinx/zynq-yolo/board/ui_config.json','/home/xilinx/zynq-yolo/data/samples/scenes/c03_t01290.0.mp4','/home/xilinx/ncnn_infer'] if not os.path.exists(p)])"
 ```
 
 预期：`MISSING []`。板端布局来自 2026-10-31 17:45 的 deploy（`data/results/board_acceptance.json`：
@@ -77,7 +78,6 @@ py tools/board_jupyter.py "import os;print('MISSING',[p for p in ['/home/xilinx/
 ```bash
 py tools/board_jupyter.py --push tools/video_back.py /home/xilinx/zynq-yolo/tools/video_back.py
 py tools/board_jupyter.py --push tools/status_display.py /home/xilinx/zynq-yolo/tools/status_display.py
-py tools/board_jupyter.py --push tools/lcd_ui.py /home/xilinx/zynq-yolo/tools/lcd_ui.py
 py tools/board_jupyter.py --push tools/bram_fb.py /home/xilinx/zynq-yolo/tools/bram_fb.py
 py tools/board_jupyter.py --push board/overlay/flow_system.bit /home/xilinx/zynq-yolo/board/overlay/flow_system.bit
 py tools/board_jupyter.py --push board/overlay/flow_system.hwh /home/xilinx/zynq-yolo/board/overlay/flow_system.hwh
@@ -109,18 +109,18 @@ py tools/video_back.py --help
 | 预期屏幕结果 | 只有字幕，没有任何实拍画面、校名、教师名、赛事标识。 |
 | 支撑证据 | 无（纯字幕，不承载实测结论） |
 
-### S2 实物全貌 + LCD 赛前界面（00:05–00:17，12 s）
+### S2 实物全貌 + LCD 状态面板（00:05–00:17，12 s）
 
 | 字段 | 内容 |
 |---|---|
-| 画面内容 | 板子 45° 俯拍，LCD 与网口同框；LCD 上显示赛前设置界面（7 项）。可拍一下网口指示灯。**HDMI 显示器断电或移出画面**。 |
+| 画面内容 | 板子 45° 俯拍，LCD 与网口同框；LCD 上显示 4bpp 彩色状态面板（8 项，已人眼确认过）。可拍一下网口指示灯。**HDMI 显示器：按新要求通电并显示纯白待机**（白屏是均匀画面，整行旋转缺陷在纯白上看不出来，也不承载信息）。 |
 | 要执行的确切命令 | C2（见下） |
-| 预期屏幕结果 | LCD 800×480 显示赛前设置界面：A/B 队球衣色、A/B 守门员色、裁判色、上半场方向、开始比赛，共 7 项；Console 出现 `LCD_UI_DRAW once mode=…`。**本次实拍画面待上板人眼确认**（版式参考 `report/figures/lcd_ui_4bpp.png`，该 PNG 是主机侧渲染，不是屏摄）。 |
-| 支撑证据 | `ai/sessions/022_hdmi_osd_full_flow.md` §7.8（真按键链路 `LCD_UI_COLOR` / `LCD_UI_SELECT` / `LCD_UI_SAVED`，用户看屏确认）；`tools/lcd_ui.py` 文件头；`report/figures/lcd_ui_4bpp.png`（仅版式参考） |
+| 预期屏幕结果 | LCD 800×480 显示 8 行彩色状态面板（与 S7 同一画面）；Console 出现 `STATUS_DISPLAY` 字样。版式参考 `report/figures/lcd_panel_ball_20261031.png`（主机侧渲染，非屏摄）。**赛前选色 UI 已按 D028 删除**，不要再拍它。 |
+| 支撑证据 | `ai/sessions/023_pc_video_view_ball_air.md`（彩色状态面板上屏、用户看屏确认）；`tools/status_display.py`；`report/figures/lcd_panel_ball_20261031.png`（仅版式参考） |
 
 ```bash
-# C2 板端等价：python3 tools/lcd_ui.py --once（只画一次，退出后屏上保持）
-py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/lcd_ui.py','--once'],cwd='/home/xilinx/zynq-yolo',stdout=subprocess.PIPE,stderr=subprocess.STDOUT,universal_newlines=True);print(p.stdout[-1000:])"
+# C2 板端等价：python3 tools/status_display.py --size 800x480 --fb-bram 0x40000000 --once（只画一次，退出后屏上保持）
+py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/status_display.py','--size','800x480','--fb-bram','0x40000000','--once'],cwd='/home/xilinx/zynq-yolo',stdout=subprocess.PIPE,stderr=subprocess.STDOUT,universal_newlines=True);print(p.stdout[-1000:])"
 ```
 
 ### S3 系统架构与数据流（00:17–00:29，12 s）
@@ -290,20 +290,8 @@ py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/
 py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/status_display.py','--replay','build/flow/c03e_demo.jsonl','--frame','106','--size','800x480','--fb-bram','0x40000000','--lcd-cfg','0x41220000','--once'],cwd='/home/xilinx/zynq-yolo',stdout=subprocess.PIPE,stderr=subprocess.STDOUT,universal_newlines=True);print(p.stdout[-2000:])"
 ```
 
-### S8 赛前 UI 真按键（01:55–02:11，16 s）
-
-| 字段 | 内容 |
-|---|---|
-| 画面内容 | 特写：板子上标 KEY0/KEY1 的两颗用户按键（PL `L14` / `K16`）与 LCD 同框。手指按 KEY0 逐项下移，按 KEY1 换颜色；最后一项「开始比赛」按 KEY1 保存。 |
-| 要执行的确切命令 | C8（启动交互，120 s 内按完） |
-| 预期屏幕结果 | 每按 KEY0 高亮下移到下一项；按 KEY1 在当前项的 10 种球衣色里轮换；最后一项 KEY1 保存，Console 收尾出现 `LCD_UI_SELECT …` / `LCD_UI_COLOR …` / `LCD_UI_SAVED …`（022 实测：`ref=cyan side=left` 等）。按键顺序与颜色以现场为准。 |
-| 支撑证据 | `ai/sessions/022_hdmi_osd_full_flow.md` §7.8（真按键日志：`LCD_UI_COLOR item=裁判衣服 value=purple → cyan`、`LCD_UI_SELECT n=5 item=A 队上半场`、`LCD_UI_SELECT n=6 item=开始比赛`、`LCD_UI_SAVED …`）；`tools/lcd_ui.py` 文件头（key0=下一项，key1=换选项/确认） |
-
-```bash
-# C8 板端等价：python3 tools/lcd_ui.py --timeout 120
-# 启动交互（阻塞 120 s；启动后立刻按板上的 KEY0/KEY1，结束自动打印按键日志）
-py tools/board_jupyter.py "import subprocess;p=subprocess.run(['python3','tools/lcd_ui.py','--timeout','120'],cwd='/home/xilinx/zynq-yolo',stdout=subprocess.PIPE,stderr=subprocess.STDOUT,universal_newlines=True);print(p.stdout[-3000:])"
-```
+> **原 S8「赛前 UI 真按键」已删除**（D028：该界面只产出颜色标签、不影响检测，队别无真值可核）。
+> 成片不拍这一镜头；下面的 S9/S10 编号不变。
 
 ### S9 逐帧 CSV（球坐标与人数）（02:11–02:23，12 s）
 
@@ -340,12 +328,11 @@ py -c "import os;os.startfile(r'build\demo_session.csv')"
 - [ ] 板上电（12 V 适配器），网线接 PS 网口，另一端接 PC 同一交换机/直连；PC 网口地址在 `192.168.2.0/24`。
 - [ ] `py tools/board_jupyter.py "print('BOARD_OK')"` 通过。
 - [ ] P1 文件自检 `MISSING []`；缺什么补推什么。
-- [ ] 按第 2 节顺序：先拍 S4，再拍 S5，然后**只加载一次** overlay 拍 S7、S8、S2。
+- [ ] 按第 2 节顺序：先拍 S4，再拍 S5，然后**只加载一次** overlay 拍 S7、S2。
 - [ ] 拍 S4 时把终端字体调到 20–22 pt，窗口占屏幕 80% 以上；开头停 3 s 再回车。
 - [ ] 拍 S5 时先起板端服务（C5-b），等 1–2 s，再在 PC 上执行 C5-c；窗口标题应为 `board annotated`。
 - [ ] 拍 S7 前确认 `FLOW_OVERLAY_LCD OK`、`FLOW_OVERLAY_OK`；若 `LCD` 报 FAIL，先查 overlay 是否加载成功，不要硬拍。
-- [ ] 拍 S8 前把手指位置对准 KEY0/KEY1；按下后停 0.5 s 再松开，方便剪。
-- [ ] 拍 S2 时确认 LCD 上仍是赛前 UI（S8 结束后屏上保持），不要在拍之前再跑别的写屏命令。
+- [ ] 拍 S2 时确认 LCD 上仍是 S7 画的面板（同一屏，不要重跑写屏命令）；HDMI 已是纯白待机。
 
 ### 5.2 机位与屏
 
@@ -390,7 +377,7 @@ py -c "import os;os.startfile(r'build\demo_session.csv')"
 5. **未经上板验证的结论**：
    - 不得把 `report/figures/hdmi_osd_boxes.png` 当检测结果（该图是主机侧合成坐标渲染，
      仓库 `report/figures/README.md` 已注明「不能作为检测结果」）；
-   - 不得把 `report/figures/lcd_ui_4bpp.png`、`report/figures/lcd_panel_ball_20261031.png` 当屏摄；
+   - 不得把 `report/figures/lcd_panel_ball_20261031.png` 当屏摄；
    - 不得说「球检测已完成」——实际是 250 帧里 20 帧，且断续；
    - 不得把 CSV 里空白的出界/进球/球权列说成「事件判定通过」——c03 没有标定，这段没有 `events`；
    - 不得说「板→PC 实时推送已上板验证」——`result_stream` 只有本地回环记录；
@@ -428,9 +415,6 @@ PL 做像素预处理，PS 跑检测和跟踪。演示走 PS 检测；结果只�
 **S7（14 s）**
 同一份数据也写到 LCD 上。8 行状态里，第 3 行就是球：可见，坐标 739、212 像素；第 5 行是机位状态。
 
-**S8（16 s）**
-赛前用板上的两颗按键设置球衣颜色：KEY0 换下一项，KEY1 换颜色，最后一项确认保存。设置会写进板上的 `board/ui_config.json`。
-
 **S9（12 s）**
 每一帧落成 CSV，固定 12 列；事件三列这段为空。球有效的行只有 20 行，集中在第 100 到 114 帧和第 140 到 144 帧。
 
@@ -456,7 +440,7 @@ py -c "import os,cv2;c=cv2.VideoCapture(r'build/demo_final.mp4');print('size_MB=
 | 文件 | 用途 |
 |---|---|
 | `ai/sessions/023_pc_video_view_ball_air.md` | S4/S5/S6/S7：`PIPELINE_OK frames=250`、ball 20 帧、`--dump-frame 106`、LCD 9.9 s |
-| `ai/sessions/022_hdmi_osd_full_flow.md` | S5/S7/S8：`VIDEO_BACK_OK 250 19.61 5.1`、c03 137 帧 players 16、真按键日志、彩色面板人眼确认、`tag4` 人眼确认 |
+| `ai/sessions/022_hdmi_osd_full_flow.md` | S5/S7：`VIDEO_BACK_OK 250 19.61 5.1`、c03 137 帧 players 16、彩色面板人眼确认、`tag4` 人眼确认 |
 | `ai/sessions/021_lcd_probe_from_scratch.md` | LCD 4bpp 重做、读回判据与历史 |
 | `ai/sessions/010_board_pipeline_ball_backfill.md` | 202 帧板端运行与球链路指标 |
 | `data/results/ball_air_c03_20261031.jsonl` | c03 板上原始输出（250 行，20 行 ball），与 `build/flow_c03e.jsonl` 逐字节一致 |
@@ -470,7 +454,6 @@ py -c "import os,cv2;c=cv2.VideoCapture(r'build/demo_final.mp4');print('size_MB=
 | `report/figures/system_arch.png` | S3 框图 |
 | `report/figures/pc_dashboard_video_ball.png` | S6 第 106 帧参考出图（PC 侧渲染，非屏摄） |
 | `report/figures/lcd_panel_ball_20261031.png` | S7 同帧参考出图（PC 侧渲染，非屏摄） |
-| `report/figures/lcd_ui_4bpp.png` | S2 版式参考（主机侧渲染，非实拍） |
 | `report/figures/hdmi_osd_boxes.png` | **反面清单**：主机侧合成坐标渲染，不得当检测结果 |
 | `build/annotated_c03.mp4` | S5 掉线时的替代素材（022 回传产物，250 帧） |
 | `build/annotated_n03.mp4` | 备用回传素材（另一段，250 帧） |
@@ -481,17 +464,17 @@ py -c "import os,cv2;c=cv2.VideoCapture(r'build/demo_final.mp4');print('size_MB=
 
 | 风险 | 影响的镜头 | 现场征兆 | 处理 / 补拍 |
 |---|---|---|---|
-| 板子掉线（一天约三次） | S2、S4、S5、S7、S8 | `board_jupyter` 超时、连接拒绝、ping 不通 | 手动断电重启，等 60–90 s，`print('BOARD_OK')` 通过后只补拍缺的镜头；**不要**在离线状态声称已验证 |
-| Jupyter 半死（TCP 能连、HTTP 不应答） | S4–S8 | 一条 `print` 等 2 分钟以上 | 断电重启；不重试、不换参数猜；先拍 S6/S9 等无板镜头 |
+| 板子掉线（一天约三次） | S2、S4、S5、S7 | `board_jupyter` 超时、连接拒绝、ping 不通 | 手动断电重启，等 60–90 s，`print('BOARD_OK')` 通过后只补拍缺的镜头；**不要**在离线状态声称已验证 |
+| Jupyter 半死（TCP 能连、HTTP 不应答） | S4–S7 | 一条 `print` 等 2 分钟以上 | 断电重启；不重试、不换参数猜；先拍 S6/S9 等无板镜头 |
 | ncnn 返回 -5（SIGTRAP） | S4 | `DETECT_FAIL`、`ncnn_infer` 无输出 | 重启后只跑一次；仍失败则 S4 改为展示已有 JSONL 的头部并标注「此前板端运行产物」，S5 用 `build/annotated_c03.mp4` 补 |
 | 回传连不上/花屏 | S5 | `VIDEO_BACK_FAIL`、PC 收不到 | 查防火墙 5006/TCP、同网段、先 serve 后 recv；重试一次。替代：播放 `build/annotated_c03.mp4`（022 回传产物，250 帧；早于空中球修复，**没有球红圈**，字幕要注明） |
 | S4 输出与 023 不完全一致 | S4、S5、S7 | 帧数不是 250、f106 无球 | 帧数必须是 250；若 f106 无球，先列出实际带球帧再改 `--frame`：`py tools/board_jupyter.py "import json;rows=[json.loads(l) for l in open('/home/xilinx/zynq-yolo/build/flow/c03e_demo.jsonl')];print([r['frame'] for r in rows if r.get('ball')])"` |
-| LCD 反光/频闪/拍不清 | S2、S7、S8 | 屏上有条纹、过曝 | 调角度、快门 1/50 s、侧面柔光；不要用闪光灯直打 |
+| LCD 反光/频闪/拍不清 | S2、S7 | 屏上有条纹、过曝 | 调角度、快门 1/50 s、侧面柔光；不要用闪光灯直打 |
 | HDMI 缺陷误入画面 | 全片 | 显示器亮着、反光里出现错位画面 | 开拍前拔 HDMI 或关显示器；后期逐帧检查 |
 | 合规遮罩没盖干净 | S5、S6、S9 | 比分牌/台标仍可见 | 固定区域遮罩；若遮罩影响球员框，换片段重跑（成本高，尽量一次遮好） |
 | 成片超 300 MB | 全片 | 自检命令 `size_MB` > 300 | 码率降到 6 Mbps（约 116 MB / 155 s），分辨率保持 1080p；不要靠删证据镜头压时长 |
 | 原始素材丢失 | 全片 | 只剩成片 | 保留 `build/demo_raw/S01…S10` 与 `build/demo_final.mp4`，不要覆盖；提交包只放成片 |
 
-> 板子离线时的最小成片：S1、S3、S6、S9、S10 可以照常完成；S2、S4、S5、S7、S8 记为
+> 板子离线时的最小成片：S1、S3、S6、S9、S10 可以照常完成；S2、S4、S5、S7 记为
 > 「待补拍」。**绝不能用主机侧渲染图冒充实拍屏摄**；若当天补不齐，宁可少一个镜头，
 > 也不要把「待上板确认」的内容说成已验证。

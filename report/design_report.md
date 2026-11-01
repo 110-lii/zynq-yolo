@@ -30,7 +30,7 @@
 | PS 球链路 | 白块/圆度候选 + 3 层 C 分类器 + 轨迹确认 | 候选召回 **87.3 %**；分类器 P **0.667** / R **0.848**；逐帧确认 **80 %（16/20）** |
 | 事件 | 出界（FIFA 整球过线口径）、进球、球权 | 202 帧板上运行：**144 帧**输出球场坐标球，**49 帧**给出球权，`events` 字段同步输出 |
 | PL 跟踪辅助 | `track_preproc`：预处理 + 白/运动掩码，单 IP / 4 HP | **已出片并上板逐位对通过**（LUT 7,374 / WNS +2.457 ns；720p 32.39 ms、管线 20.03 ms） |
-| 存储/显示/上位机 | SD JSONL + PC Dashboard（含**比赛画面视图**）+ LCD 面板 + **HDMI 带框环出（D026）** | 软件自检通过；LCD/HDMI overlay 已出片；**上板实测**：LCD 4bpp 读侧 `READBACK_OK bad=0 checked=10`，自证图 / 彩色状态面板 / 赛前 UI 均经人眼确认（`LCD_VISUAL_OK`）；整链 `FULL_FLOW_OK ok=8 fail=0`；2026-10-31 新增 **PC 比赛画面视图**（`pc_dashboard --video`），与 LCD / HDMI 共用**同一份** JSONL。**HDMI 带框环出：`BRAM_OK` 级通过**（`HDMI_VIDEO_BOARD_OK frames=313 under=0`），**`VISUAL_OK` 不成立** —— 13:56 曾人眼确认六屏「全对」，19:50 复测「现在可以了」，**20:23 再测又出现整行循环移位**（`px = c + 437 / +441`），今日逐像素探针为恒定 **`+313` 列**（21 个源列 × 7 行全部一致，`sum=1` 无丢点无重复，行映射正确）⇒ 判定为**间歇性缺陷**，`HDMI_VISUAL_OK` 已于当日撤回（`data/results/hdmi_visual_ok.json` = `HDMI_VISUAL_RETRACTED`）。**交付演示不走 HDMI 通道**，改走 PC / 网口 |
+| 存储/显示/上位机 | SD JSONL + PC Dashboard（含**比赛画面视图**）+ LCD 面板 + **HDMI 带框环出（D026）** | 软件自检通过；LCD/HDMI overlay 已出片；**上板实测**：LCD 4bpp 读侧 `READBACK_OK bad=0 checked=10`，自证图 / 彩色状态面板均经人眼确认（`LCD_VISUAL_OK`）；整链 `FULL_FLOW_OK ok=8 fail=0`；2026-10-31 新增 **PC 比赛画面视图**（`pc_dashboard --video`），与 LCD / HDMI 共用**同一份** JSONL。**HDMI 带框环出：`BRAM_OK` 级通过**（`HDMI_VIDEO_BOARD_OK frames=313 under=0`），**`VISUAL_OK` 不成立** —— 13:56 曾人眼确认六屏「全对」，19:50 复测「现在可以了」，**20:23 再测又出现整行循环移位**（`px = c + 437 / +441`），今日逐像素探针为恒定 **`+313` 列**（21 个源列 × 7 行全部一致，`sum=1` 无丢点无重复，行映射正确）⇒ 判定为**间歇性缺陷**，`HDMI_VISUAL_OK` 已于当日撤回（`data/results/hdmi_visual_ok.json` = `HDMI_VISUAL_RETRACTED`）。**交付演示不走 HDMI 通道**，改走 PC / 网口 |
 | 历史验证 | PL 通用卷积引擎 `conv_engine` | 单层逐值 **6/6 bit-exact**；整网 416/YOLOv5n **9.63 s/帧**，已退出主线 |
 
 **设计取舍一句话**：在 7020 上，PL 卷积引擎“算得动但喂不快”；把像素级预处理放 PL、
@@ -263,12 +263,13 @@ LCD 面板、HDMI 环出与 PC 面板，三处显示因此不会再各说各话�
   `cap_row==1` 的装载行是场消隐行（`de_last` 恒 0）。不写明这点，陈旧值会假通过；
   脚本已按此改判并写进文件头。
 
-**调色板与赛前 UI（D013）**：`tools/lcd_ui.py` 在 800×480 4bpp 屏上做赛前配置，
-按键操作 7 项（A/B 队球衣、A/B 队守门员、裁判衣服、A 队上半场方向、开始比赛），
-确认时用 `tools/match_setup.py` 的校验（两队同色直接拒绝），落盘 `board/ui_config.json`，
-schema 与 PC 侧校验器同为 `zynq-yolo/match-config/2`；屏上色块 RGB 由 `classify_players.PALETTE_REF`
-的名字换算 ⇒ 屏上所见即分类器判色的参考色。16 色调色板 = 6 个界面色 + 10 个球衣色。
-主机侧回放自测 `LCD_UI_SAVED`；**真按键未按过**（待上板人工）。
+**赛前配置界面（D013 / D028：已退线删除）**：曾实现 `tools/lcd_ui.py`，在 800×480 4bpp 屏上
+按键录入 7 项（A/B 队球衣、A/B 队守门员、裁判衣服、A 队上半场方向、开始比赛），落盘
+`board/ui_config.json`（schema `zynq-yolo/match-config/2`），主机侧回放自测 `LCD_UI_SAVED`。
+**2026-11-01 删除**：按 D013-a 自己定的判定标准（「只产出颜色标签、没有提升识别指标就不算完成」），
+它不影响检测（检测走 ncnn，与球衣色无关），唯一产出是给 `team_assign.py` 贴队别标签，
+而队别没有人工真值、板上真按键也从未完整走过一遍 ⇒ 拿不出指标证据，判为对识别无用。
+保留的是配置文件本身（仍可手写）与 `team_assign.py` 的读取路径。
 
 **合并显示（D023）与跟踪+双屏（D024）**：`display_both.bit` / `track_display.bit` 一次加载同时驱动两块屏
 （HDMI `0x40000000`、LCD `0x40020000`，跟踪版为 `0x40020000`/`0x40040000`）。
@@ -288,13 +289,6 @@ schema 与 PC 侧校验器同为 `zynq-yolo/match-config/2`；屏上色块 RGB �
 ![PC 端球场视图示意图](figures/pc_pitch.png)
 
 > 图 6：PC 端 105×68 球场视图（合成样本；由 `tools/pc_dashboard.py` 渲染）。
-
-![LCD 4bpp 赛前 UI](figures/lcd_ui_4bpp.png)
-
-> 图 4b：800×480 **4bpp / 16 色**的赛前 UI（`tools/lcd_ui.py --preview-only` 生成，
-> 已按调色板量化后还原 ⇒ 等于面板所见）。16 色 = 6 个界面色 + 10 个球衣色；
-> 球衣色块的 RGB 由 `classify_players.PALETTE_REF` 的名字换算，**屏上所见即分类器判色的参考色**。
-> 该图是**主机侧渲染**，不是屏的实拍——上板是否如此仍待人眼。
 
 ### 2.10 HDMI 带框环出（D026）
 
@@ -790,8 +784,6 @@ python3 tools/status_display.py --replay /home/xilinx/out.json --size 1280x720 \
 python3 tools/status_display.py --size 800x480 --fb-bram 0x40000000 --once
 # 板端：LCD 4bpp 地址/行映射自证（机器判据，期望 READBACK_OK bad=0）
 python3 tools/check_lcd4_board.py
-# 板端：赛前 UI（先在 800x480 4bpp 屏上跑；--keys 为交互，--script 为回放）
-python3 tools/lcd_ui.py --keys
 # 板端：HDMI 带框环出（D026）——先看 status 的 under 是否稳定为 0
 python3 tools/hdmi_video.py --replay /home/xilinx/out.json --video <clips.mp4> \
   --bit board/overlay/hdmi_video.bit
@@ -848,7 +840,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 | 板上球输出 | `tools/board_pipeline.py` + `data/calib/field_calib.json`（汇总见 `board/logs/board_pipeline_20261024.md`） | 144/202 帧球场坐标；49 帧球权；`events` 非空 |
 | 球链路（已知球评估） | `ai/sessions/009` 的 20 个已知球、15 px 容差 | 16/20 确认（80 %） |
 | HDMI 状态面板 | `board/overlay/hdmi_status.bit` + `status_display.py --fb-bram 0x40000000` | `BRAM_OK`：`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`；`VISUAL_OK` 待人眼 |
-| LCD 4bpp 面板 | `board/overlay/lcd_probe.bit` + `tools/check_lcd4_board.py` | **`READBACK_OK bad=0 checked=10`（2026-10-30 实跑两次）**；自证图 `tag4` 人眼确认 ⇒ `VISUAL_OK`；彩色状态面板/赛前 UI 画面仍待人眼 |
+| LCD 4bpp 面板 | `board/overlay/lcd_probe.bit` + `tools/check_lcd4_board.py` | **`READBACK_OK bad=0 checked=10`（2026-10-30 实跑两次）**；自证图 `tag4` 人眼确认 ⇒ `VISUAL_OK`；彩色状态面板画面仍待人眼 |
 | HDMI 带框环出（D026） | `board/overlay/hdmi_video.bit` + `tools/hdmi_video.py` | **`under` 实测为 0**（`HDMI_VIDEO_BOARD_OK frames=313 under=0`）+ 画面尚待人眼 |
 | SD 存储 | `python tools/result_store.py --selftest` | `RESULT_STORE_SELFTEST OK` |
 | PC 软件 | `python tools/pc_dashboard.py --selftest` + 回放 | `PC_DASHBOARD_SELFTEST OK` |
@@ -921,7 +913,8 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
      （`HDMI_VIDEO_BOARD_OK frames=313 under=0`）。
    - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4` 已由人眼确认**（斜向 16 色条纹）、
      **彩色状态面板已由人眼确认**（2026-10-30 修掉「overlay 刚装载时 `cfg=0` 显示的是 PL 彩条」之后）、
-     **赛前 UI 由人在屏上按键逐项走通**（`LCD_UI_SELECT` → `LCD_UI_SAVED`）。
+     ~~赛前 UI 由人在屏上按键逐项走通~~（2026-11-01 该界面已按 D028 删除：只产出颜色标签、
+     不影响检测，队别无真值可核；当时的 `LCD_UI_SAVED` 记录保留在 `ai/sessions/022`）。
      **HDMI 画面的 `VISUAL_OK` 不成立（`HDMI_VISUAL_OK` 已于 2026-10-31 20:23 撤回）**：
      2026-10-30 机器判据全过（`frames` 60 帧/s、`under=0`、帧缓存地址与 `pack` 解出来全对）
      而屏上**纯白**，后定位为「DDR 帧缓存 → `fb_scanout`」段的三处叠加缺陷
@@ -1008,6 +1001,15 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
     与主机 17.4 同量级；**「0.45 人」是机位有效性判定在没给 `--calib` 时按设计清空坐标**
     （`n_det≥8 且 valid_frac<0.10 -> INVALID_VIEW/calibration_mismatch`）。
     带标定重跑、并核对 `camera_state` 分布的这一步被板子第三次系统级崩溃打断，**尚未完成**。
+14. **上电即用：HDMI 白屏待机 + 网口等推流（D029，2026-11-01）**：两个 systemd 服务
+    `zynq-idle`（加载 `flow_system.bit`、HDMI 写纯白并常驻）与 `zynq-stream`（在 5007
+    等 PC 推流，`Restart=always`）。**为什么要常驻**：HDMI 帧缓存是 PYNQ `allocate()` 的 DDR
+    缓冲，进程退出缓冲即释放，扫描输出会读到失效页。**为什么白屏不是敷衍**：已知缺陷是整行
+    循环旋转（恒定 `+313` 列），纯白没有内容可旋转，也不承载信息——空闲屏上不该出现任何
+    「像检测结果」的东西。**实测**：装后 `BOOT_SERVICE_STATE active active`、
+    `IDLE_HDMI_WHITE_OK frames=31 under=0`；**真重启**后 18 s 自动恢复（`frames=35 under=0`），
+    重启后 PC 推 20 帧 → `PIPELINE_OK` 且落盘 20 行。**边界**：白屏只有机器判据，
+    **屏上颜色未经人眼确认**；推流时 HDMI 仍是白屏（不回显画面）。
 
 ---
 
@@ -1039,7 +1041,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 扩展侧交付了 SD 增量存储、PC 上位机、PL 跟踪辅助（上板逐位对通过）与 HDMI 带框环出
 （仿真与主机侧出图通过）。
 显示部分按两级口径如实表述：**HDMI 状态面板 `BRAM_OK` 通过、1bpp 文字面板的 `VISUAL_OK` 仍待人眼；
-LCD 4bpp 上板通过机器判据（`READBACK_OK bad=0`），自证图、彩色状态面板与赛前 UI 已经人眼确认；
+LCD 4bpp 上板通过机器判据（`READBACK_OK bad=0`），自证图与彩色状态面板已经人眼确认；
 HDMI 带框环出（`flow_system.bit`）的 `VISUAL_OK` **不成立**：13:56 曾人眼记 `HDMI_VISUAL_OK`，
 20:23 同片复测出现整行循环移位、当日撤回，今日定量为恒定 `+313` 列（间歇性缺陷）；
 实时叠框回放只到 `HDMI_VIDEO_OK` 25 帧 `under=0`（机器级），不宣称画面已目视通过**。

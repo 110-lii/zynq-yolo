@@ -58,7 +58,9 @@
 | `lcd_probe.py` | **LCD 双分辨率探针（板端）**：加载 `lcd_probe.bit`，用 cfg 切 800×480@33.333 / 480×272@9.000、切纯 PL 图案/帧缓存，读 ID/时序/实测像素时钟并写帧缓存读回；帧缓存**默认 4bpp 16 色**（`--bpp 1` 回落黑白），地址 `0x40000000`（800，192 KB）/`0x40080000`（480）；`--keys` 读按键 GPIO `0x41260000`；`--dbg-row` / `--dbg-scan` 逐行读回「读侧实际送屏的字」（`0x4123`=line_buf、`0x4124`=stag_flat、`0x4125`=行 DE 拍数/预取次数，cfg[15:6] 选行） | 上板实测 800×480 / pclk 33.337 MHz；读侧根因已定位（见 `ai/sessions/021`） |
 | `lcd_data.py` | **LCD 帧缓存打包器（独立口径，不经过 PIL）**：每行 W/(32/bpp) 个 32-bit 字、字内**最低 bpp 位 = 最左像素**；`--bpp 4`（默认）生成 16 色 tag4 诊断图（第 r 行第 k 字 = `0x11111111*((r+k)&15)`）+ 末尾 16 个调色板字，`--bpp 1` 是旧黑白口径；`--selftest` 验两种 bpp 的打包/地址 | `--selftest` 通过（1bpp 800=12000、4bpp 800=48000+16） |
 | `lcd_probe_host.py` | 主机侧包装：`build` / `deploy` / `run`，把出片与 Jupyter 通道串起来 | ⚠️ Vivado 一步**不能在工具沙箱内跑**（见 021 记录） |
-| `lcd_ui.py` | **赛前设置界面（板端，800×480 4bpp）**：球衣颜色 A/B + 双方守门员，**用板载两颗 PL 键操作**（key0=下一项、key1=换色/确认，GPIO `0x41260000`），显式 16 色调色板（8 种球衣色必须精确在板内，否则量化会把红/橙、蓝/紫并掉）；确认后落 `board/ui_config.json`（颜色名 + RGB + 时间戳）供下游读；`--once` / `--script 0,1,1`（回放按键）/ `--keys`（只读电平判极性）/ `--preview-only`（主机侧出「面板真实所见」的量化 PNG） | ⚠️ 版面主机侧已过；**上板待验** |
+| `video_send.py` | **PC 端推流**（D027）：`--video` 文件或 `--camera` 摄像头 → JPEG（默认 q95）→ TCP `ZYVI` 帧头 → 板端 `board_pipeline --listen 5007`；`--selftest` 本机回环 | ✅ 主机回环通过；文件源上板验过等价（q95 带球帧与文件源逐帧一致）；⚠️ `--camera` 未联调 |
+| `board_idle.py` | **上电待机白屏**（D029）：加载 `flow_system.bit`，HDMI 写纯白并**常驻**（进程退出 PYNQ 缓冲即释放）；`--seconds` 只挂 N 秒、`--status` 只看扫描 | ✅ 上板：`IDLE_HDMI_WHITE_OK frames=31/35 under=0`（含真重启后自启）；⏳ 白屏人眼未确认 |
+| `install_boot.py` | **把上面两个固化进 systemd**（`zynq-idle` / `zynq-stream`）：推文件 → 写 unit → enable → 启动；`--dry-run` 不连板子、`--uninstall` 撤掉 | ✅ 上板：`BOOT_SERVICE_STATE active active`；真重启后两服务自启；⏳ 白屏人眼未确认 |
 | `board_jupyter.py` | **Jupyter 控制通道**（SSH 不通时的唯一入口）：`run(code)` 在板端内核执行；`--push` 分片 base64 写**任意路径**并回读 sha256（`--put` 只能写 Jupyter 根目录 `/home/xilinx/jupyter_notebooks`）；`--get` 取回文件 | ✅ 已用于本仓多数板端实验 |
 | `result_store.py` | **SD 卡增量存储**：JSONL + `summary.json` + fsync + 轮转 | ✅ 已创建（`RESULT_STORE_SELFTEST OK`） |
 | `result_stream.py` | **板→PC 推送**：按行 TCP 发 JSONL，断线重连/尾随 | ✅ 已创建（本地回环 `sent=2`） |

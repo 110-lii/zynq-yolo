@@ -42,9 +42,10 @@
 | [022](022_hdmi_osd_full_flow.md) | 2026-10-30 | HDMI 带框环出自证 + 整体流程一条命令 + 赛前 UI 升级到 match-config/2 | `mythos-magpie-5487751739`（Claude 桌面端） | ① 不重出片：确认 `lcd_probe.bit` 23:11 / `hdmi_video.bit` 晚于其 RTL ⇒ 与源码同批；② `tb_fb_scanout` 注册进 `run_sim.py` 并 **`SIM_PASS 1/1`**（判据 `TB_FB_SCANOUT_OK`：AR/R 握手、stride≠width*4 换行、显示像素==DDR 像素）；③ `hdmi_video.py --selftest` 打包往返 dmax=0；主机侧出图 `.scratch/hdmi_osd_boxes.png`（4 绿框+#id、红圈、顶部信息条）——**框是合成坐标**，只证渲染器不证检测器；④ 新增 `tools/check_full_flow.py`：时间对齐/赛前配置/落盘/推流/面板/UI 六步各认令牌，主机 **`FULL_FLOW_OK` ok=5 skip=1 fail=0**；⑤ 踩坑：`result_stream` 默认从 EOF 读（必须 `--from-start`）、**不要用试连端口探活**（会把 `pc_dashboard --listen` 弄死）；⑥ 赛前 UI 改成 D013 的 `zynq-yolo/match-config/2`（A/B 队球衣+守门员+裁判+上半场，颜色只能取 `PALETTE_REF` 十分之一，确认时复用 `match_setup._validate`）；⑦ **板子全天离线（三次 ping 全丢）⇒ 4bpp 上屏/配色/按键/HDMI 环出/双屏全部未验**，待验清单见 022 §5；⑧ **下午续（022 §7）**：报告 v1.1（§1.2 把 HDMI 环出移入范围、§2.9/§4.7/§8/§9/§10 统一 BRAM_OK/VISUAL_OK 两级判据、新增 §2.10 D026、重生成 docx）+ system_status/submission_checklist/architecture/repo_spec/DECISIONS 计数同步 + `llm_logs/05` + 36 个目录 README；队别接入主线（`team_assign.py`/`check_team_assign.py`/`possession_team`，令牌 `TEAM_ASSIGN_SELFTEST OK`、inc_01 `labeled=55/77`、inc_06 `labeled=53/64`，**非准确率**） |
 | [023](023_pc_video_view_ball_air.md) | 2026-10-31 | PC 端视频视图、球的空中候选、三屏统一到一份数据 ★ | `mythos-magpie-5487751739`（客户端 `claude`） | ① 「人数 0」根因：`normalize()` 要求 `tracks` 有 8 项（球场坐标），转播机位只有 6 项 ⇒ 整行被丢；改成框中心当画面坐标后与画面框数一致（13 / 15）；② 球不是看不见，是飞在草场掩膜外（c03 f140–158 白块 769,182→857,235）—— 板上 C 分类器对真球给 0.92–0.97，对白球衣 0.5–0.68；③ 顺带修两个既有 bug：`bc` 不清零（候选重复计命中）、`ball` 永不清空（150/250 帧假「可见」）；④ 三屏同一份 c03e JSONL：LCD 9.9 s 一屏、HDMI 375 帧 under=0、PC 出图见红圈；⑤ HDMI 仍整行 +313 列（21 列 × 7 行全 SHIFT、sum=1 无丢点）⇒ 022 §7.31 的间歇缺陷未解 |
 | [024](024_honesty_audit_and_repack.md) | 2026-10-31 | 撤回结论的全文清理；按修订后的事实重出文档与交付包 ★ | `mythos-magpie-5487751739`（客户端 `claude`） | ① `HDMI_VISUAL_OK` 已于 20:23 撤回，但 5 个提交件（设计报告 6 处、清单 4 处、技术文档、docs 2 个、llm_logs 2 处）仍在宣称它成立 —— 全部降级为「当时记录、现已撤回」，并写明 `under=0`/累加和/「每源列 1 次」三类判据**对整行旋转都是瞎的**；② 修报告内部矛盾（§12 说队别未接主线 vs §8 说已接）；③ 补今日事实与边界（球 20/50 扫球帧、D015 只落地输出半条 `VIDEO_BACK_OK 250 19.61 5.1`、PC 比赛画面视图两张图）；④ 并发跑完 14 项自检 + `SIM_PASS 12/12`；⑤ 重出 docx/pdf/图，`SUBMISSION_PACK_OK` 678 文件 28.8 MB + RAR 23.2 MB，旧包删除，push 后 ahead=0 |
+| [025](025_boot_idle_stream_ui_removal.md) | 2026-11-01 | 删选色 UI、HDMI 待机白屏、上电即用、PC 推流 ★ | `mythos-magpie-5487751739`（客户端 `claude`） | ① 按 D013-a 自己的判据判定「选颜色 UI」对识别无用（不影响检测、只产出队别标签、队别无真值）⇒ D028 删除 `tools/lcd_ui.py`，同步 8 个文档与分镜（删 S8，155 s→139 s）；② D029：`board_idle.py` 常驻白屏 + `install_boot.py` 装两个 systemd 服务，**上板并真重启验过**（`BOOT_SERVICE_STATE active active`、`IDLE_HDMI_WHITE_OK frames=31/35 under=0`、重启后推流 `PIPELINE_OK`），踩到并修掉「系统 python 没有 pynq」「systemd 无 XILINX_XRT」两个坑；③ 新增 `docs/streaming_quickstart.md`（电脑推流手册）；⏳ 白屏仍待人眼 |
 
-> **统计**：共 **22** 条记录；带自我纠错轨迹（★）**16** 条。
-> 编号连续、不复用；下一条应为 `025_<slug>.md`。
+> **统计**：共 **23** 条记录；带自我纠错轨迹（★）**16** 条。
+> 编号连续、不复用；下一条应为 `026_<slug>.md`。
 
 ---
 
@@ -63,7 +64,7 @@
 ## 怎么加一条记录
 
 ```powershell
-# 1) 复制模板，编号取本表 max+1（当前 max=024 ⇒ 下一个是 025）
+# 1) 复制模板，编号取本表 max+1（当前 max=025 ⇒ 下一个是 026）
 Copy-Item D:\zynq-yolo\ai\sessions\_TEMPLATE.md D:\zynq-yolo\ai\sessions\005_<slug>.md
 # 2) 逐项填写（字段不得删；「原文位置」必须真实）
 # 3) 回到本文件，在上表追加一行（顺序不可反）

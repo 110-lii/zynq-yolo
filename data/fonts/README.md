@@ -20,4 +20,4 @@
 
 ## 怎么用
 
-- 由 `tools/status_display.py` / `tools/lcd_ui.py` 读取
+- 由 `tools/status_display.py` 读取

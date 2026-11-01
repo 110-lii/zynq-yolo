@@ -37,7 +37,7 @@ PY = sys.executable
 
 # 板端布局（AGENTS.md：只有 Jupyter 通道可用；这块目录是历次推送留下的）
 BOARD_ROOT = "/home/xilinx/zynq-yolo"
-BOARD_TOOLS = ["status_display.py", "pc_dashboard.py", "bram_fb.py", "lcd_ui.py",
+BOARD_TOOLS = ["status_display.py", "pc_dashboard.py", "bram_fb.py",
                "match_setup.py"]
 BOARD_DATA = ["data/fonts/simhei_subset.ttf", "board/ui_config.json"]
 
@@ -150,7 +150,10 @@ def step_clock(board):
 
 # ---------------------------------------------------------------- 2 赛前配置
 def step_ui_config(path):
-    """读赛前配置：优先 v2 schema（lcd_ui / match_setup 写的），兼容旧的扁平格式。"""
+    """读赛前配置：优先 v2 schema（match_setup / 手写的 ui_config.json），兼容旧的扁平格式。
+
+    lcd_ui.py 已于 2026-11-01 按 D028 删除，这里只校验配置文件本身。
+    """
     p = Path(path)
     if not p.is_file():
         step("ui_config", "SKIP", "no %s（下游用默认球衣色）" % p.name,
@@ -351,27 +354,6 @@ def step_panel(board, out_dir, fb_base, jsonl=None):
          human="颜色/版面要人眼看")
 
 
-# ---------------------------------------------------------------- 6 赛前 UI
-def step_ui(board, out_dir, fb_base):
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    png = out_dir / "lcd_ui.png"
-    if board:
-        rc, out = run_board(["python3", "tools/lcd_ui.py", "--fb-bram", fb_base, "--once"])
-        tok = next((ln for ln in out if "LCD_UI_DRAW" in ln), "")
-        step("lcd_ui", "OK" if tok else "FAIL", tok or (out[-1] if out else "rc=%d" % rc),
-             human="按键操作与配色要人眼/手验")
-        return
-    rc, out = run_mod([str(HERE / "lcd_ui.py"), "--preview-only", "--preview", str(png)],
-                      timeout=300)
-    tok = next((ln for ln in out if "LCD_UI_DRAW" in ln), "")
-    ok = png.is_file() and png.stat().st_size > 5000
-    step("lcd_ui", "OK" if ok else "FAIL",
-         "%s png=%d B" % (tok.split(" preview=")[0] if tok else (out[-1] if out else ""),
-                          png.stat().st_size if png.is_file() else 0),
-         human="量化的颜色与按键交互要人眼看/手按")
-
-
 # ---------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser()
@@ -411,7 +393,6 @@ def main():
     jsonl = step_store(Path(args.out) / "store", args.replay, args.n_synth)
     step_stream(jsonl)
     step_panel(args.board, args.out, args.fb_base, jsonl)
-    step_ui(args.board, args.out, args.fb_base)
 
     nfail = sum(1 for r in RESULTS if r[1] == "FAIL")
     nskip = sum(1 for r in RESULTS if r[1] == "SKIP")

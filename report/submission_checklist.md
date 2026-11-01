@@ -29,7 +29,7 @@
 | 可复现构建脚本 | `build/scripts/bd_preproc.tcl`、`bd_conv_engine.tcl`、`bd_axi_bw.tcl`、`bd_mask_preproc.tcl` | ✅ |
 | 运行必需件（模型/标定） | `build/models/person_v8n25.{param,bin,table}`、`build/models/ball_roi.npz`、`data/calib/*.json` | ✅（`tools/make_submission.py` 显式带入） |
 | PL 跟踪辅助源码/BD | `src/hls/track/`、`build/scripts/bd_track_preproc.tcl`、`tools/track_preproc.py`、`board/overlay/track_preproc.bit` | ✅ 已出片；✅ 上板逐位对通过（`TRACK_PREPROC_BOARD_OK`） |
-| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`docs/flow_overlay.md`、`docs/hdmi_video_osd.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/hdmi_video.py`、`board/overlay/*.bit` | 软件 ✅；HDMI 状态面板 **`BRAM_OK` 通过 / 1bpp `VISUAL_OK` 待人眼**；LCD 4bpp **上板 `READBACK_OK bad=0` 且自证图/彩色面板/赛前 UI 人眼确认**；PC 面板 ✅ 含比赛画面视图（`--video`）；HDMI 带框环出 **`BRAM_OK` 通过、`VISUAL_OK` 不成立**（13:56 曾记 `HDMI_VISUAL_OK`，20:23 复测出现整行循环移位，**当日撤回**；今日定量为恒定 `+313` 列，间歇缺陷）——**演示不走 HDMI**（见 §3.1、§3.2、§7.5） |
+| HDMI/LCD/PC 方案 | `docs/display_overlay_plan.md`、`docs/flow_overlay.md`、`docs/hdmi_video_osd.md`、`tools/status_display.py`、`tools/pc_dashboard.py`、`tools/hdmi_video.py`、`board/overlay/*.bit` | 软件 ✅；HDMI 状态面板 **`BRAM_OK` 通过 / 1bpp `VISUAL_OK` 待人眼**；LCD 4bpp **上板 `READBACK_OK bad=0` 且自证图/彩色面板人眼确认（赛前选色 UI 已按 D028 删除）**；PC 面板 ✅ 含比赛画面视图（`--video`）；HDMI 带框环出 **`BRAM_OK` 通过、`VISUAL_OK` 不成立**（13:56 曾记 `HDMI_VISUAL_OK`，20:23 复测出现整行循环移位，**当日撤回**；今日定量为恒定 `+313` 列，间歇缺陷）——**演示不走 HDMI**（见 §3.1、§3.2、§7.5） |
 
 ## 2. 技能包（指南 3.3.5.2）
 
@@ -62,12 +62,13 @@
 | HDMI/LCD 状态面板 | `tools/status_display.py`（fbdev/PNG） | ✅ 自检通过；硬件看 fbdev |
 | PL 跟踪辅助 | `src/hls/track/` + `build/scripts/bd_track_preproc.tcl` + `board/overlay/track_preproc.bit` + `tools/track_preproc.py` | ✅ 已出片（WNS +2.457 ns）；✅ 上板逐位对通过（720p 32.39 ms） |
 | HDMI 状态面板 | `src/rtl/io/hdmi/` + `build/scripts/bd_hdmi_status.tcl` + `tools/bram_fb.py` | 已出片；✅ `BRAM_OK`（整场仿真 + 上板 `HDMI_LIVE`）；⏳ `VISUAL_OK` 待人眼 |
-| LCD 状态面板（10-29 重做） | `src/rtl/io/lcd/lcd_probe_*.v` + `build/scripts/bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 已出片（4bpp/16 色/按键；WNS +1.839 ns）；✅ **上板 `READBACK_OK bad=0 checked=10`**（10-30，两次一致）；✅ 自证图 `tag4` 人眼确认；⏳ 彩色面板/赛前 UI 画面待人眼 |
+| LCD 状态面板（10-29 重做） | `src/rtl/io/lcd/lcd_probe_*.v` + `build/scripts/bd_lcd_probe.tcl` + `tools/check_lcd4_board.py` | 已出片（4bpp/16 色/按键；WNS +1.839 ns）；✅ **上板 `READBACK_OK bad=0 checked=10`**（10-30，两次一致）；✅ 自证图 `tag4` 人眼确认；⏳ 彩色面板画面待人眼 |
 | HDMI+LCD 合并（现行） | `build/scripts/bd_flow_system.tcl` + `board/overlay/flow_system.bit` | ✅ `FLOW_SYSTEM_BD_OK`（10-30：WNS +3.042 ns、LUT 44.9%、BRAM 86/140）+ 10-31 修复片 **WNS +4.184 ns**；✅ 上板 `flow_overlay.py --selftest`：LCD `bad=0/16`、HDMI `frames +492 under=0`；✅ **真视频环出 `HDMI_VIDEO_OK` 25 帧 `under=0`**（机器级）。❌ **静态六屏 `HDMI_VISUAL_OK` 已于 20:23 撤回**（13:56 人眼记过，同片复测出现整行循环移位；今日定量恒定 `+313` 列，间歇缺陷，sha256 仍为 `ad628200…104a`）；实时叠框回放仍无人眼结论 |
 | HDMI+LCD 合并（旧） | `build/scripts/bd_display_both.tcl` + `board/overlay/display_both.bit` | ❌ 已由 `flow_system` 取代：1bpp 文字方案，且落后于 018–021 的新读侧，不再重出片 |
 | 跟踪+双屏合并 | `build/scripts/bd_track_display.tcl` + `board/overlay/track_display.bit` | ✅ `TRACK_PREPROC_BOARD_OK`（逐字节对拍）；⚠️ 合并画面同上门槛 |
 | 板上管线 + SD + PC | `board_pipeline.py --pl-track` 20 帧；`result_stream` → Dashboard | ✅ `PIPELINE_OK`、20 行 JSONL、`PC_DASHBOARD_OK frames=20` |
-| 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025/D026 | ✅ |
+| 上电即用（D029，11-01） | `tools/board_idle.py` + `tools/install_boot.py` + `docs/streaming_quickstart.md` | ✅ **上板并真重启验过**：两服务自启、白屏 `frames=31/35 under=0`、重启后推流 `PIPELINE_OK`；⏳ 白屏待人眼 |
+| 决策登记 | D018/D019/D020/D021/D022/D023/D024/D025/D026/D027/D028/D029 | ✅ |
 
 ## 3.2 交付前补齐（2026-10-27，D026）
 
@@ -130,7 +131,7 @@ python tools/make_portal_assets.py --check --video <demo.mp4> --auth <授权书.
    - `BRAM_OK`（写得进、读得回、扫描范围/速率对）：**HDMI 状态面板已过**；
      **LCD 4bpp 上板已过**（`READBACK_OK bad=0 checked=10`，PCLK 33.335 MHz）；
      **HDMI 带框环出已过**（`HDMI_VIDEO_BOARD_OK frames=313 under=0`）。
-   - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4`、彩色状态面板、赛前 UI（真按键）已人眼确认**；
+   - `VISUAL_OK`（人眼看画面）：LCD **自证图 `tag4`、彩色状态面板已人眼确认**（赛前选色 UI 曾真按键走通，2026-11-01 按 D028 删除）；
      **HDMI 带框环出静态六屏 `HDMI_VISUAL_OK` 已于当日 20:23 撤回** —— 13:56 人眼记过一次
      （证据当时在 `data/results/hdmi_visual_ok.json`），同片复测又出现整行循环移位
      （`px = c + 437 / +441`），今日定量为恒定 `+313` 列；证据文件现为 `HDMI_VISUAL_RETRACTED`。

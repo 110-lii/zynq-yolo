@@ -14,7 +14,6 @@
 |---|---|
 | `system_arch.png` | 系统功能框图 |
 | `optimization.png` | 优化前后对比 |
-| `lcd_ui_4bpp.png` | 4bpp 赛前 UI（调色板量化后的主机侧渲染） |
 | `hdmi_osd_boxes.png` | HDMI 带框环出的主机侧渲染（框坐标为演示给定） |
 
 ## 规则

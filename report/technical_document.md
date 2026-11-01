@@ -128,7 +128,7 @@ PL 预处理 + PS 检测）→ PL 预处理 HLS 与 AXI 带宽标定 → PS 检�
 
 软件分三层：板上 PYNQ 驱动与调度（`tools/board_pipeline.py`）、结果存储与推送
 （`result_store.py` / `result_stream.py`）、PC 上位机与显示（`pc_dashboard.py` /
-`status_display.py` / `lcd_ui.py` / `hdmi_video.py`）。所有模块以 JSONL 为统一数据契约，
+`status_display.py` / `hdmi_video.py`）。所有模块以 JSONL 为统一数据契约，
 因此检测、事件、显示、上位机可以分别替换而不互相绑定。
 
 ![软件数据流](figures/software_pipeline.png)
@@ -147,9 +147,8 @@ PL 预处理 + PS 检测）→ PL 预处理 HLS 与 AXI 带宽标定 → PS 检�
 | `result_stream.py` | JSONL | TCP 帧 | 默认从 EOF 读，流程必须带 `--from-start` |
 | `pc_dashboard.py` | TCP/回放 | 球场画布、事件流、CSV | 状态条 + 证据帧 + 12 列 CSV |
 | `status_display.py` | JSONL/回放 | PNG 或 fb/BRAM | 8 项状态，800×480 / 1280×720 |
-| `lcd_ui.py` | 按键、色板 | `board/ui_config.json` | 赛前 UI，色值只能取 `PALETTE_REF` 十分之一 |
 | `hdmi_video.py` | JSONL + 原视频 | 32bpp 帧缓存 | 画球员框、球圈、事件条；双缓冲 |
-| `check_full_flow.py` | 上述模块 | 令牌表 | 时间/配置/落盘/推流/面板/UI 六步验收 |
+| `check_full_flow.py` | 上述模块 | 令牌表 | 时间/配置/落盘/推流/面板/赛前配置 六步验收 |
 
 每个模块的失败都会打印明确令牌（如 `STORE_UNAVAILABLE`、`TEAM_ASSIGN_OFF`），
 不静默继续；这也是后续能在板上快速定位问题的原因。
@@ -213,6 +212,7 @@ HDMI 显示带框视频；PC 端显示球场画布与事件流。
 | LCD 显示 | `READBACK_OK` + 人眼 | 4bpp/16 色、按键、赛前 UI | 1bpp 文字面板未做人眼终验 |
 | HDMI 显示 | 六屏静态 + 真视频 | 机器级 `BRAM_OK`；视频 25 帧 `under=0` | 静态 `VISUAL_OK` 当日撤回（复测出现整行循环移位 `+313` 列），实时叠框回放未目视确认 |
 | 视频入口（PC → 板） | 同一段 c03 走文件源与网络源 | 两边 `frames=250 detections=17`，带球帧集合同为 20 帧 | JPEG 有损，档位影响判决（q80 多 10 帧假球 ⇒ 默认 q95）；摄像头源未验 |
+| 上电即用（D029） | `install_boot.py` + 真重启 | `BOOT_SERVICE_STATE active active`；白屏 `frames=31/35 under=0`；重启后推流 `PIPELINE_OK` | 白屏未经人眼；推流时 HDMI 不回显 |
 | 整链 | `FULL_FLOW_OK` | 主机 ok=6；板上 ok=8 | — |
 
 ## 第四部分  总结

@@ -13,7 +13,7 @@
 
 | bitstream | 提供 | 谁在用 |
 |---|---|---|
-| `lcd_probe.bit` | LCD 800×480 / 480×272 4bpp 帧缓存、两颗按键、逐行自证抓取 | `status_display.py`、`lcd_ui.py`、`check_lcd4_board.py` |
+| `lcd_probe.bit` | LCD 800×480 / 480×272 4bpp 帧缓存、两颗按键、逐行自证抓取 | `status_display.py`、`check_lcd4_board.py`（`lcd_ui.py` 已按 D028 删除） |
 | `hdmi_video.bit` | HDMI 1280×720 32bpp 扫描输出（S_AXI_HP0 读 DDR） | `hdmi_video.py` |
 | `display_both.bit` | HDMI + LCD **同时**（1bpp 文字面板，D023 试验） | 未进主线 |
 
@@ -94,7 +94,7 @@ GPIO → `fb_scanout` 的跨域路径被当成同步路径收敛，**实测 WNS 
 两条迁移是合并的代价：`0x4120/0x4121` 被 HDMI 占用（那两个地址是 `hdmi_video.py`
 写死的，改它风险更大）。影响面：
 
-- `tools/status_display.py`、`tools/lcd_ui.py`、`tools/hdmi_video.py`、`tools/bram_fb.py`
+- `tools/status_display.py`、`tools/hdmi_video.py`、`tools/bram_fb.py`
   —— **完全不受影响**，用的地址一个没动；
 - `tools/lcd_probe.py` —— 本来就按 IP 名从 hwh 解地址（`find_ip`），自动跟随；
 - `tools/check_lcd4_board.py` —— 已改成同样按 IP 名解地址（2026-10-30）。

@@ -89,7 +89,7 @@ python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
 | PC 端软件 | `tools/pc_dashboard.py`（TCP/回放 + 球场画布 + **比赛画面视图** + CSV） | `PC_DASHBOARD_SELFTEST OK`，本地端到端 3 帧通过；2026-10-31 增 `--video`：左栏直接显示真比赛画面 + 检测框 + 球（`space=px` 时按画面坐标画圈），与 LCD/HDMI 共用同一份 JSONL；无球场坐标时用框中心当画面坐标（修掉「视频 15 个框、顶栏人数 0」） |
 | HDMI 状态面板（PL overlay） | `src/rtl/io/hdmi/`、`build/scripts/bd_hdmi_status.tcl`、`tools/bram_fb.py` | **已出片** `board/overlay/hdmi_status.bit`（1bpp BRAM 28,800×32，基址 0x40000000）；**BRAM_OK 通过**：`BRAM_FB_FRAME_OK 1280x720` + 上板 `HDMI_LIVE`（扫描范围/DE/59.2 fps）；**VISUAL_OK 待人眼**（10-31 曾记的 `HDMI_VISUAL_OK` 既只覆盖 `flow_system.bit` 的视频通路、不含本 1bpp 状态面板，**且已于当日 20:23 撤回**）。读侧已在 019 重写为预取移位寄存器（原缺陷：把「地址到数据 1 拍」写死 + `pixel_data` 寄存器输出被组合选通） |
 | LCD 状态面板（**10-29 整体重做**） | `src/rtl/io/lcd/lcd_probe_core.v`、`lcd_probe_top.v`、`build/scripts/bd_lcd_probe.tcl`、`tools/check_lcd4_board.py` | **已出片** `board/overlay/lcd_probe.bit`（10-29 23:11；800×480@33.333 MHz **4bpp/16 色**，48,000 图像字 + 16 调色板字 = 192 KB，AXI 段 256 K；480×272@9.000 MHz 核心供 A/B；cfg 切核心/图案/帧缓存；按键 `key[0]=L14/key[1]=K16` @ `0x41260000`；WNS **+1.839 ns** / WHS **+0.018 ns**）。**10-30 上板**：`READBACK_OK bad=0 checked=10`（重启前后各一次，PCLK 33.335 MHz）⇒ `BRAM_OK` 过；`tag4` 自证图**人眼确认**（斜向 16 色条纹）⇒ 该图 `VISUAL_OK` 过。判据例外：第 0/1 行只判 `lb`（RTL 的 `st/cnt` 在上一行装载拍更新，0 被排除、1 撞消隐行），脚本已写清。历史：016 把像素时钟从 25 改到 33.333 MHz；017 复测乱码；018/020 重写读侧；020 板端 480×272 基本正确但用户要求 800×480；021 从零重做 |
-| LCD 4bpp 赛前 UI（D013） | `tools/lcd_ui.py`、`tools/match_setup.py` | schema `zynq-yolo/match-config/2`，7 项（A/B 球衣、A/B 守门员、裁判、上半场方向、开始比赛）；确认时校验两队不同色；落盘 `board/ui_config.json`；主机侧回放 `LCD_UI_SAVED`；**真按键未按过** |
+| ~~LCD 4bpp 赛前 UI（D013）~~ | ~~`tools/lcd_ui.py`~~ | **2026-11-01 删除（D028）**：该界面只产出球衣色标签，不影响检测，队别又无真值可核，按 D013-a 的判定标准「只产出标签、没提升识别指标」判为无用；`board/ui_config.json` 仍可手写供 `team_assign.py` 读 |
 | LCD 软件回退 | `tools/status_display.py`（fbdev/PNG） | `STATUS_DISPLAY_SELFTEST OK` |
 | SD 证据帧 | `tools/result_store.py::save_evidence`、`board_pipeline --store-evidence` | `RESULT_STORE_OK`（evidence=2；限流 6/分钟）；**未上板端到端** |
 | PC 上位机界面 | `tools/pc_dashboard.py`（状态条/球场/事件流/证据帧/12 列 CSV） | `PC_DASHBOARD_SELFTEST OK`；界面 PNG 已人眼核对 |
@@ -162,6 +162,20 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
      **板上还没验**。离线 `tools/track_players.py` 不输出每人的队别（只有颜色过滤）；`--calib` 可把脚点映射到米制（`points[].X/Y`，输入 `sx/sy`）。
   3. **显示两级判据的未做部分**见上文「边界」。
   4. 202 帧板上运行的原始 `/tmp/out.json` 未随包归档（证据链缺口）。
+## 上电即用：HDMI 白屏待机 + 网口等推流（2026-11-01，D029）
+
+- **两个 systemd 服务**（`tools/install_boot.py` 装）：`zynq-idle` 加载 `flow_system.bit`
+  并把 HDMI 写成纯白且常驻（进程退出 PYNQ 的 DDR 缓冲会被释放）；`zynq-stream` 在 5007
+  等 PC 推流，收完一段 `Restart=always` 自动回来等下一段。
+- **实测**：装后 `BOOT_SERVICE_STATE active active`；`IDLE_HDMI_WHITE_OK frames=31 under=0`；
+  **真重启一次**后 18 s 自动恢复（`frames=35 under=0`），两服务 `active`；重启后 PC 推 20 帧
+  → `PIPELINE_OK`、落盘 `net_*_00.jsonl` 20 行。
+- **两个坑**：systemd 里必须用 `/usr/local/share/pynq-venv/bin/python3`（系统 python 没有 pynq），
+  且必须 `Environment=XILINX_XRT=/usr`（否则 `No Devices Found`）。
+- ⏳ **白屏只有机器判据**（配置生效、`frames` 增长、`under=0`），**屏上是不是白的要人眼看** ——
+  与 10-31 `HDMI_VISUAL_OK` 撤回同一条纪律。
+- 电脑侧怎么推流：见 [`streaming_quickstart.md`](streaming_quickstart.md)。
+
 ## 分层测试集与全流程 overlay（2026-10-30）
 
 - **测试集分层**（`tools/split_scenes.py`）：从整场比赛按「人员聚集度」切成

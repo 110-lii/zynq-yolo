@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| 本目录装什么 | 仓库根：项目简介、**复现步骤**、目录对照说明；以及三份治理文件 `LICENSE` / `.gitignore` / `.gitattributes` / `Makefile` |
+| 本目录装什么 | 仓库根：项目简介、**复现步骤**、目录对照说明；以及四份治理文件 `LICENSE` / `.gitignore` / `.gitattributes` / `Makefile` |
 | 谁产生 | 手写 |
 | 进 git | 是（`README.md` 是评审入口，指南 3.3.5.4 将其列为仓库必备文件） |
 
@@ -30,7 +30,7 @@ python tools/pc_dashboard.py --demo
 ```
 
 板端体检 → 起事件管线（HDMI 回显 + LCD 面板）→ 推 `data/samples/scenes/c05_t01730.0.mp4`
-整段 250 帧 → 等板端算完 → 拉回并回放。端到端 8–10 分钟；参数与踩坑见
+整段 250 帧 → 等板端算完 → 拉回并回放。端到端 8–10 分钟；想让回放循环就加 `--loop`；参数与踩坑见
 [`docs/streaming_quickstart.md`](docs/streaming_quickstart.md)、现场操作卡见
 [`docs/demo_run_sheet.md`](docs/demo_run_sheet.md)。
 - 目录职责与命名规则的**唯一事实源**是 [`docs/repo_spec.md`](docs/repo_spec.md)；本 README 与之冲突时，以该文件为准。
@@ -51,7 +51,7 @@ python tools/pc_dashboard.py --demo
 | 资源上限（7020） | 53 200 LUT6 / 106 400 FF / **220 DSP48** / **4.9 Mb BRAM** / 1 GB DDR3（★ 见下方口径告诫） | `docs/repo_spec.md` §6 · 一手还原 [`ref/hardware.md`](ref/hardware.md) §B |
 | 外设硬限制 | **无 MIPI D-PHY**（只能 DVP 摄像头）· **无 HDMI 输入** · **无 GTX/GTH**（无 PCIe/SFP/10G）· DDR3 挂在 PS 侧，PL 须走 AXI HP | `docs/repo_spec.md` §6 |
 | 网络 | 双千兆：PS 侧 YT8521S（GEM）· PL 侧 YT8531（RGMII） | `docs/repo_spec.md` §6 |
-| 视频输入（本项目） | **不使用板载摄像头**；所有视频由 **PC 经以太网**送入（D015）。具体走 PS GEM 还是 PL RGMII、用什么协议，尚未冻结 | `ai/coordination/DECISIONS.md` D015 |
+| 视频输入（本项目） | **不使用板载摄像头**；所有视频由 **PC 经以太网**送入（D015），落地方式由 **D027** 定为 **PS 侧 GEM + TCP + JPEG 帧（`ZYVI` 头，默认端口 5007）** | `ai/coordination/DECISIONS.md` D015 / D027 |
 | ★ 算力警示 | 旧项目结论**中文原文**：**「DSP 仅 220 个 — 不做大算力 CNN」** | `D:\FPGA\oi\CLAUDE.md:206` 逐字，见 [`ref/hardware.md`](ref/hardware.md) §C |
 | 引脚两条死线 | ⛔ **J4 pin 2 绝对禁用**（是 `cam_sda`，与板载座硬并联）· ⛔ **LCD 与 J3 互斥**（同一批 `B34_L13–L24`） | [`ref/hardware.md`](ref/hardware.md) §F |
 | 许可 | MIT（指南 3.3.3.3 推荐 MIT / Apache-2.0），见 [`LICENSE`](LICENSE) | 指南 3.3.3.3 |
@@ -81,8 +81,8 @@ Zynq-7020 对比赛视频做**可观测的目标与事件分析**，而不是做
 **创新点（正式口径见 `report/design_report.md`）**：在只有 220 DSP 的 7020 上，把**像素级预处理**
 （BGR→320×320 RGB 平面、LUT 7%、18.8 ms/帧）放在 PL，把 **YOLOv8n-0.25 单类 person** 检测放在 PS ncnn，
 用「PL 预处理 + PS 轻量检测 + 几何/事件」的异构划分绕开 7020 的算力上限；球不靠全图检测，而用
-ROI/白块候选 + 小型 C 分类器 + 轨迹确认；用触屏人工录入双方/裁判球衣颜色与半场，把不可靠的颜色
-自动推断变成一次人工设置，服务于球员/非球员区分（D012）与球权判定。
+ROI/白块候选 + 小型 C 分类器 + 轨迹确认；队别由 `board/ui_config.json` 的颜色先验辅助
+（赛前选色 UI 已按 D028 删除），服务于球员/非球员区分（D012）与球权判定。
 
 ---
 
@@ -91,7 +91,7 @@ ROI/白块候选 + 小型 C 分类器 + 轨迹确认；用触屏人工录入双�
 **数据流**（D015 后的主线）：
 
 ```text
-PC（视频文件 / 推流；见 tools/stream_sender.py）
+PC（视频文件 / 推流；见 tools/video_send.py；`stream_sender.py` 为 `conv_engine` 时期历史资产）
    │  以太网（D015；板上接收/落盘后由 tools/board_pipeline.py 读入）
    ▼
 PS：网络接收 → 帧重组 → DDR 帧缓冲
@@ -115,7 +115,7 @@ PS：单应 → 球场坐标 → 事件（出界/进球/球权）
 PL 承担**像素级、规则、可流水化**的预处理与**运动/白块掩码**（D017/D019）——这是 7020 上
 真正能落地且有收益的部分。`conv_engine`（PL 通用 INT8 卷积引擎）整网实测 **9.63 s/帧
 （≈0.10 FPS）**，已退出主线，仅作逐层 bit-exact（6/6）与 AXI 带宽/时序的技术验证资产。
-触屏 LCD 现在既作**数据输入端**，也可显示**状态面板**（D018）。
+触屏 LCD 现为 **D030 运行时状态面板**（帧号/人数/球/事件/机位）；赛前选色 UI 已按 D028 删除。
 **HDMI 侧有两个并列方案**（D026）：1bpp 文字状态面板（D020–D025，便宜、常驻）与
 **视频环出（带检测框的画面）**—— PS 画框写 DDR 帧缓存，PL `fb_scanout` 经 `S_AXI_HP0`
 读出来走 TMDS；设计与验收见 [`docs/hdmi_video_osd.md`](docs/hdmi_video_osd.md)。
@@ -227,6 +227,7 @@ python tools/install_boot.py
 #    推 data/samples/scenes/c05_t01730.0.mp4 整段 250 帧 → 等板端算完 → 拉回 → 回放
 #    期望：PUSH_DONE frames=250 → BOARD_PIPELINE_EXITED → PULL_OK sha256=… → PC_DASHBOARD_OK
 python tools/pc_dashboard.py --demo
+#    处理完想让回放循环就加 --loop：python tools/pc_dashboard.py --demo --loop
 #    只推流、不等事件时用：--push <视频> --push-start <秒> --push-max-frames <N>
 #    详细参数与踩坑见 docs/streaming_quickstart.md；现场操作卡见 docs/demo_run_sheet.md
 
@@ -339,7 +340,7 @@ python tools/make_portal_assets.py --rar dist/zynq-yolo_submission_<stamp>  # �
 2. **核心算法的具体形态与输入规格** —— ★ **原则已由用户 2026-10-19 裁定：识别判定交给 YOLO 模型**（台账 **D004**）。
    **参数已由 D017 定案**：单类 `person` 的 **YOLOv8n-0.25 @320×320**（约 0.386 GMAC/帧），
    推理在 PS ncnn；D016 的 YOLOv5n@416 路线已被实测淘汰（原文保留，不删）。
-   **视频来源已另行裁定（D015）**：不使用板载摄像头，视频由 PC 经以太网送入；网络端口/协议仍待定。
+   **视频来源已另行裁定（D015）**：不使用板载摄像头，视频由 PC 经以太网送入；**端口/协议已由 D027 定案**（PS GEM + TCP + JPEG + `ZYVI`，默认 5007）。
 3. ~~数据集来源与许可（台账 **D005**）~~ —— ✅ **已裁定 2026-10-30：(a) 内部使用声明**（仅作业内部评测、不随包分发）。
 4. ~~软硬件划分边界与 AXI 接口契约的具体数值（台账 **D006**）~~ —— ✅ **已裁定 2026-10-30：冻结为 v1 契约**（改地址/格式须新开 decision）。
 5. ~~与 `D:\FPGA\oi` 旧项目资产的具体复用范围（台账 **D007**）~~ —— ✅ **已裁定 2026-10-30：只复用引脚/电气资料**；旧项目的现象结论不再作为依据，不复用其任何 RTL/Python 源码。
@@ -373,7 +374,7 @@ python tools/make_portal_assets.py --rar dist/zynq-yolo_submission_<stamp>  # �
 | [`docs/yolo_on_zynq7020_survey.md`](docs/yolo_on_zynq7020_survey.md) | **YOLO on XC7Z020 技术调研**：五条路线判定（含「Vitis AI DPU 在 7000 系不存在」一手核查）、同芯片实测锚点（ARC2020 / 1.88 fps）、开源实现清单、推荐路线与验证阶梯。**引用其数字前必读 §9 未验证项** |
 | [`ref/hardware.md`](ref/hardware.md) | **硬件能力清单**（逐条 `文件:行号`）+ **UNVERIFIED 清单** —— 写报告取数的**一手**来源 |
 | [`ref/pitfalls_from_oi.md`](ref/pitfalls_from_oi.md) | **踩坑清单 P1–P10**（现象 / 触发 / 定位 / 规避 / 出处），承旧项目已验证经验 |
-| [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) | 决策台账（**D001–D031 共 31 条**：26 条整行 `decided`，5 条是「一部分已定、另一部分仍 `discussing`」，无整行 `discussing` 的条目；**具体条数以台账为准，不在此写死**）+ **编号纪律**（本仓库 `DNNN` 与旧项目台账不是同一命名空间） |
+| [`ai/coordination/DECISIONS.md`](ai/coordination/DECISIONS.md) | 决策台账（**D001–D043**；条数与状态以台账为准，不在此写死。含 2026-11-01/02 的 D027–D031、D043）+ **编号纪律**（本仓库 `DNNN` 与旧项目台账不是同一命名空间） |
 | [`report/README.md`](report/README.md) | 设计报告必须覆盖的 7 项、优化前后对比表与权重表 |
 | [`skill/README.md`](skill/README.md) | 技能包规范（适用范围 / 使用方法 / 失效条件） |
 | [`ai/README.md`](ai/README.md) | 大模型协作三层记录体系（原始层 / 整理层 / 沉淀层） |

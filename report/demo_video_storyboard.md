@@ -27,8 +27,11 @@
 ### 0.1 命令与现场判据
 
 ```bash
-py tools/pc_dashboard.py --demo
+py tools/pc_dashboard.py --demo --loop
 ```
+
+> `--loop`：板端处理完、结果拉回后，**PC 回放循环**，直到关窗口为止；拍长镜头时不用反复重启命令
+> （2026-11-02 起 `--loop` 对 `--demo`/`--push` 生效，此前只作用于 `--replay`）。只放一遍就不加。
 
 > 板子必须在线、`board/overlay/flow_system.bit` 已部署、`data/samples/scenes/c05_*.mp4` 在板上。
 > 命令会自己起板端管线（`--proposal --calib`，事件模式）、推流、等板端算完、拉回结果、回放面板。

@@ -1,4 +1,4 @@
-# 提交前检查清单（2026-11-01）
+# 提交前检查清单（2026-11-02）
 
 > 本清单按指南 **3.3.5** 的四类提交物与**赛事门户「作品管理」提交流程**逐项核对（门户口径以
 > 2026-11-01 的页面截图为准，共 13 项，其中 10 项标红星必填）。勾选状态以**仓库内实际产物**为准，
@@ -11,13 +11,13 @@
 | # | 门户字段 | 必填 | 门户要求 | 当前产物 | 状态 |
 |---|---|---|---|---|---|
 | 1 | 作品名称 | — | 文本 | 面向争抢场景的足球视频分析系统 | ✅ 已填 |
-| 2 | **演示视频** | ★ | MP4 / AVC(H.264) / **≤3 min** / ≤300 MB；**不得出现校名、指导教师姓名** | **尚无成片**；分镜脚本 `report/demo_video_storyboard.md` 已按 `--demo` 改写，命令逐条上板验证过 | ⛔ **待拍摄/剪辑**（只能人工） |
-| 3 | **技术文档** | ★ | PDF / ≤50 MB；门户提供模板（五部分：作品概述/系统组成/完成情况/总结/参考文献） | `report/technical_document.md` → `.docx`（1.7 MB）+ `.pdf`（**5.1 MB**），2026-11-01 18:2x 按本文重生成；已补 D027–D031 与整段实测 | ✅ **正文已更新**；文中 `【待补…】` 三处实物照片仍待补 |
-| 4 | **上传全部代码** | ★ | **RAR** / ≤200 MB | `dist/zynq-yolo_submission_<stamp>.rar`（本次 41.6 MB / 740 项，`tools/make_portal_assets.py --rar dist/zynq-yolo_submission_<stamp>` 生成）+ 同名 `.zip`（48.2 MB，备用）；只留当天最新一份 | ✅ 已生成；改完代码要重出，WinRAR 在 `D:\软件\winrar\Rar.exe`（脚本会查注册表，查不到就设 `RAR_EXE`） |
-| 5 | **参赛作品承诺及使用授权书** | ★ | PDF / ≤50 MB | 官方空白模板（`<本机下载目录>` 下） | ⛔ **需打印、签名、扫描上传**（只能人工操作） |
-| 6 | 作品海报 | 选填 | PDF 或 PPT / ≤50 MB | 提示词与版式已备好，可出 A4 一页 | ⏳ 选填；进决赛另需**英文一页 A4 海报**（指南「六、其它」） |
-| 7 | **GitHub 链接** | ★ | ≤200 字 | `https://github.com/110-lii/zynq-yolo`（MIT LICENSE） | ✅ 已推送：2026-11-01 18:38 `origin/main` 与本地 `main` 一致（`0 0`） |
-| 8 | **作品全貌图** | ★ | JPG/PNG / ≤10 MB / **1 张** | `report/figures/board/board_01_full.jpg`（1920×1080 / 0.42 MB） 可先顶上，但它是**未通电**的板卡俯拍，没有 HDMI/LCD/PC 同框 | ⚠️ **建议重拍**：板子 + 两屏点亮 + PC 同框；来不及就用 board_01_full |
+| 2 | **演示视频** | ★ | MP4 / AVC(H.264) / **≤3 min** / ≤300 MB；**不得出现校名、指导教师姓名** | **尚无成片**；分镜脚本 `report/demo_video_storyboard.md` 已按 `--demo --loop` 改写，命令逐条上板验证过 | ⛔ **待拍摄/剪辑**（只能人工） |
+| 3 | **技术文档** | ★ | PDF / ≤50 MB；门户提供模板（五部分：作品概述/系统组成/完成情况/总结/参考文献） | `report/technical_document.md` → `.docx`（3.6 MB）+ `.pdf`（**6.03 MB / 21 页**），2026-11-02 按本文重生成；已补 D027–D043（输入尺度分档、帧级闸门）、整段实测与 **3.1 节实物实拍图**（`board_06_hdmi_live.jpg`，原「待补实物照片」占位已删除） | ✅ **正文已更新** |
+| 4 | **上传全部代码** | ★ | **RAR** / ≤200 MB | `dist/zynq-yolo_submission_20261102_1234.rar`（**103.6 MB / 758 项**，`tools/make_portal_assets.py --rar …` 生成）+ 同名 `.zip`（119.7 MB，备用）+ 中文名副本 `dist/portal_cn/全部代码.rar`；只留当天最新一份 | ✅ 已生成；改完代码要重出，WinRAR 在 `D:\软件\winrar\Rar.exe`（脚本会查注册表，查不到就设 `RAR_EXE`） |
+| 5 | **参赛作品承诺及使用授权书** | ★ | PDF / ≤50 MB | `dist/auth_letter.pdf`（0.7 MB / A4 / 300 dpi）：2026-11-01 签字页手机拍摄 → 四点透视校正 + 轻增强，未改动任何文字与签名；队伍编号 41836，**两名队员签名齐全**；中文名副本 `dist/portal_cn/参赛作品承诺及使用授权书.pdf` | ✅ 可直接上传（校正图另存 `dist/auth_page.png`，原图不留仓库） |
+| 6 | 作品海报 | 选填 | PDF 或 PPT / ≤50 MB | `dist/portal_cn/作品海报.pdf`（0.64 MB / A4 / 300 dpi，由 `report/figures/poster_render.jpg` 排版）；**插图为示意渲染图，非实拍，海报上已注明** | ✅ 已生成（2026-11-02）；进决赛另需按 AMD 模板的**英文一页 A4 海报** |
+| 7 | **GitHub 链接** | ★ | ≤200 字 | `https://github.com/110-lii/zynq-yolo`（MIT LICENSE） | ✅ 已推送（2026-11-02 全部提交已同步） |
+| 8 | **作品全貌图** | ★ | JPG/PNG / ≤10 MB / **1 张** | `report/figures/board/board_05_live_hdmi_lcd.jpg`（1279×1706 / 0.14 MB / 2026-11-02 实拍）：**板子 + HDMI 带框画面 + LCD 状态面板同框**；中文名副本 `dist/portal_cn/作品全貌图.jpg` | ✅ **已重拍到位**（旧 `board_01_full.jpg` 仅作备用） |
 | 9 | **开发板重要角度高清照片** | ★ | JPG/PNG / ≤10 MB / **最多 4 张** | `report/figures/board/` 四张 2026-11-01 实拍：`board_01_full.jpg`（全貌）、`board_02_core.jpg`（核心板）、`board_03_usb_eth.jpg`（接口侧）、`board_04_hdmi_lcd.jpg`（HDMI+LCD 走线），均为 1920×1080 / 0.41–0.47 MB | ✅ 齐了（4 张，含两张竖拍已转正） |
 | 10 | **作品简介** | ★ | 文本框（约 300–500 字） | 已拟稿（见 §0.1） | ⚠️ 门户里那段末尾疑似多了 `PRINT` 字样，粘贴前核对 |
 | 11 | 是否参加其他赛事或往届赛事并获奖 | ★ | 单选 | 否 | ✅ |
@@ -55,13 +55,29 @@
 |---|---|---|
 | `ai/raw/`（21 份逐字对话，6 MB） | **从仓库与提交包移除**，只在本机留存 | `ai/sessions/` 里的「原文位置」指针在公开仓库中悬空；「逐字可核」只在评审方拿到本地原文时成立 |
 | `report/llm_logs/`（7 篇协作记录） | **保留** | 指南 3.3.5.3⑤ 的评分项；已是整理稿，可回指 `ai/sessions/` |
-| 本机绝对路径（下载目录 / 用户名路径） | 统一改为相对占位 `clips/…`、`<视频目录>` 等 | 脚本默认值需按本机实际位置覆盖；`data/results/*.json` 只改路径前缀，**测量数值未动** |
+| 本机绝对路径（下载目录 / 用户名路径） | 统一改为相对占位 `clips/…`、`<视频目录>` 等 | 脚本默认值需按本机实际位置覆盖；`data/results/*.json` 只改路径前缀，**测量数值未动**。工具链路径（`D:\Xilinx\…`、`D:\iverilogin`、`D:\FPGA\oi
+ef`）按 AGENTS.md §3 保留，属复现必需、非个人信息 |
 | 学校 / 指导教师 / 学号 / 姓名 | 全仓库 0 命中（规则文本除外） | 视频与照片仍需拍摄时注意 |
 
 > **git 历史已重写**（2026-11-01 19:0x，`git filter-repo --invert-paths --path ai/raw` + force push）：
 > 旧历史里 `ai/raw` 的逐字原文与本机用户目录路径已从**所有提交**中移除，远端只剩新历史
 > （远端只有 `main` 一个分支、无标签）。代价：旧 commit hash 全部作废，别人已 clone 的仓库需重新 clone。
 > 若当初在对话里出现过的 GitHub PAT 还在用，建议到 GitHub 撤销并重新签发一次。
+
+## 0.4 中文命名上传件（`dist/portal_cn/`，2026-11-02）
+
+门户按「字段」收文件，仓库内部按指南 3.3.5.4 用纯英文文件名；两边是同一批产物，只改显示名。
+**逐项对照与视频拍摄步骤见 `dist/portal_cn/提交说明.md`**，速查：
+
+| 门户字段 | 上传文件 |
+|---|---|
+| 技术文档 ★ | `技术文档.pdf` |
+| 上传全部代码 ★ | `全部代码.rar` |
+| 参赛作品承诺及使用授权书 ★ | `参赛作品承诺及使用授权书.pdf` |
+| 作品全貌图 ★ | `作品全貌图.jpg` |
+| 开发板重要角度照片 ★ | `开发板照片1-整板.jpg` ~ `开发板照片4-HDMI与LCD.jpg`（4 张） |
+| 作品海报（选填） | `作品海报.pdf`（预览 `作品海报预览.png`） |
+| 演示视频 ★ | **缺** —— 唯一还需人工完成的项 |
 
 ## 1. 工程包（指南 3.3.5.1）
 
@@ -82,6 +98,8 @@
 |---|---|---|
 | 通用 PYNQ（加分项） | `skill/pynq_overlay_bringup/`（README + PITFALLS + prompts + checks） | ✅ |
 | HLS/AXI 通用 | `skill/hls_axi_stream_accel/`（README + PITFALLS） | ✅ |
+| 部署评测通用 | `skill/edge_infer_scale_ladder/`（README + PITFALLS；D043 输入尺度分档） | ✅ |
+| 固定机位视觉通用 | `skill/scene_validity_gating/`（README + PITFALLS；草坪占比/机位三态/检测节奏） | ✅ |
 | 每包五节齐全 | 适用范围 / 使用方法 / 失效条件 / 提炼来源 / 已验证效果 | ✅ |
 | 清单回填 | `skill/README.md` 清单表 | ✅ |
 
@@ -93,7 +111,7 @@
 | 2 | 设计原理与功能框图 | §2 + `report/figures/system_arch.png`、`software_pipeline.png` | ✅ |
 | 3 | 软硬件划分依据与接口设计 | §3 + `docs/architecture.md` | ✅ |
 | 4 | 优化过程（前后性能/资源对比） | §4（基线行 + 优化行 + 出处） | ✅ |
-| 5 | 大模型协作记录 | `report/llm_logs/01–06` + 索引 | ✅ |
+| 5 | 大模型协作记录 | `report/llm_logs/01–07` + 索引 | ✅ |
 | 6 | 技能包提炼过程 | §6 + `skill/` | ✅ |
 | 7 | 复现说明 | §7 + 根 `README.md` §5 | ✅ |
 
@@ -161,7 +179,7 @@ python tools/make_portal_assets.py --check --video <demo.mp4> --auth <授权书.
   与包内 `SUBMISSION_MANIFEST.csv`（本表不再抄具体数字，避免像 10-25 版那样与实物不符）；
 - 新增自检（2026-10-30）：`py tools/check_full_flow.py --dry-run` → `FULL_FLOW_OK ok=6 skip=1 fail=0`（含队别投票步）；
   **接板** `py tools/check_full_flow.py --board` → **`FULL_FLOW_OK ok=8 skip=0 fail=0`**（新增 deploy 步）；
-  `py sim/scripts/run_sim.py` → `SIM_PASS 9/9`。
+  `py sim/scripts/run_sim.py` → `SIM_PASS 12/12`（当前 `CASES` 12 项）。
 
 ## 7. 已知开放项（不阻塞提交，但必须如实写在报告里）
 
@@ -201,8 +219,8 @@ python tools/make_portal_assets.py --check --video <demo.mp4> --auth <授权书.
 
 ## 8. 签字
 
-- 报告版本：`design_report.md` **v1.3（2026-10-31）**；`design_report.docx` 由同一 md 重新生成
-- 门户技术文档：`report/technical_document.md` → `.docx` → `.pdf`（13 页 / 1.1 MB）
+- 报告版本：`design_report.md` **v1.4（2026-11-02，D043 输入尺度分档）**；`design_report.docx` 由同一 md 重新生成
+- 门户技术文档：`report/technical_document.md` → `.docx` → `.pdf`（21 页 / 6.03 MB）
 - 提交包：`dist/zynq-yolo_submission_<YYYYMMDD_HHMM>/` + 同名 `.zip`（旧包删除，只留当天一份）
-- 门户代码包：同一目录打成 `.rar`（`tools/make_portal_assets.py --rar …`）
+- 门户代码包：同一目录打成 `.rar`（`tools/make_portal_assets.py --rar …`）；中文名副本在 `dist/portal_cn/`
 - 校验：`SUBMISSION_MANIFEST.csv` 的 `sha256` 列逐文件可核

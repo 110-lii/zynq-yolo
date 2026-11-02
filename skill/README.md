@@ -18,7 +18,7 @@
 | `<skill_name>/README.md` | 单个技能包本体（目录名纯 ASCII 小写 `snake_case`） |
 | `<skill_name>/...` | 该技能包自带资产：提示词模板、工程骨架、校验脚本、踩坑清单等 |
 
-> 当前技能包清单：**2 个**（见下方清单表）；均来自 `ai/sessions/` 的真实失败/观察。
+> 当前技能包清单：**4 个**（见下方清单表）；均来自 `ai/sessions/` 的真实失败/观察。
 
 ---
 
@@ -58,9 +58,11 @@
 |---|---|---|---|---|---|
 | [`pynq_overlay_bringup`](pynq_overlay_bringup/README.md) | 通用 PYNQ（额外加分） | Zynq-7000 + PYNQ 2.7 + `.bit`/`.hwh`；AXI-Lite + `m_axi` | `.hwh` 不匹配 / 漏接 `s_axi_control_r` / 缓存未 flush / PYNQ 3.x API 差异 | `ai/sessions/003`、`ai/sessions/013` 的 overlay 反复失效；README §4 | ✅ 2 块 overlay 各 20 min 满载无掉线；`checks/overlay_health.py` 给出 `OVERLAY_HEALTH_OK` |
 | [`hls_axi_stream_accel`](hls_axi_stream_accel/README.md) | HLS/AXI 通用 | Vitis_HLS/Vivado 2020.2 + Zynq-7000 `m_axi` 流式核 | 字节指针/条件读/散读权重/DATAFLOW 同 bundle 多读/只跑 csim | `ai/sessions/005`/`007`/`008` 的 8 条踩坑；`PITFALLS.md` P1–P8 | ✅ 6/6 bit-exact、AXI 四模式、整网 20.8→9.63 s；`checks/axis_stream_check.py` 自证 `AXIS_CHECK_SELFTEST OK` |
+| [`edge_infer_scale_ladder`](edge_infer_scale_ladder/README.md) | 部署评测通用 | 静态导出模型（ncnn/TFLite/ONNX）+ 有真值框的检测任务 | 导出尺寸≠评测尺寸 / 训练与评测预处理不一致 / 只测 PC 不测板 | `ai/sessions/029` 的 `0.000` 误判与逆变换 `202.5`；D043 | ✅ 8 行矩阵；board 实测 micro 召回 0.326→0.474（同权重只换预处理，耗时不变 1048 ms）；`LETTERBOX_CHECK OK` 9 项 |
+| [`scene_validity_gating`](scene_validity_gating/README.md) | 固定机位视觉通用 | 固定/半固定机位 + 检测跟踪 + 几何映射 | 非草地球场 / 低饱和夜景 / 框底不在脚点 / 闸门顺手丢帧 | `ai/sessions/009`/`026`/`027` 的「0.45 人/帧」误判 | ✅ `CAMERA_SELFTEST OK` 5 用例；377 帧 300 LIMITED / 77 INVALID；c05 250 帧仍产出事件 |
 
 > 技能包只能来自本队**真实发生过**的失败或观察；没有 `ai/` 原始记录支撑的条目不得补行
-> （承 `docs/repo_spec.md` §7）。本表两个包的原始出处分别见各自 README §4。
+> （承 `docs/repo_spec.md` §7）。本表各包的原始出处见各自 README §4。
 
 ---
 

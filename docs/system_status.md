@@ -1,4 +1,4 @@
-# 系统状态（2026-10-31）
+# 系统状态（2026-11-02）
 
 ## 架构
 
@@ -28,9 +28,9 @@
 | 球分类器 | P 0.67 / R 0.85（th=0.7），板上 8 ms/候选 |
 | 球链路确认 | 逐帧 80%（16/20 已知球，15 px 内）|
 | 球片段标定（中圈 5 点） | 残差 **0.11–0.56 m**（均值 0.33 m）|
-| 板上球输出（已标定片段） | **144/202 帧全部为球场坐标**，`events` 同步输出 |
-| 事件判定 | 144 帧全部 `out_of_play=false`（球未越线，符合画面）|
-| 球权判定 | 144 帧中 **49 帧**给出球员 ID（最近距离 1.87 m）|
+| 板上球输出（已标定片段，**2026-10-24 历史值**） | **144/202 帧全部为球场坐标**（原始 JSON 未归档、**不可复现，报告不引用**；现役口径见文末 2026-11 记录），`events` 同步输出 |
+| 事件判定（同上历史值） | 144 帧全部 `out_of_play=false`（球未越线，符合画面）|
+| 球权判定（同上历史值） | 144 帧中 **49 帧**给出球员 ID（最近距离 1.87 m）|
 
 ## 运行方式（板上）
 
@@ -94,7 +94,7 @@ python3 tools/board_pipeline.py --video <clips.mp4> --every 25 \
 | SD 证据帧 | `tools/result_store.py::save_evidence`、`board_pipeline --store-evidence` | `RESULT_STORE_OK`（evidence=2；限流 6/分钟）；**未上板端到端** |
 | PC 上位机界面 | `tools/pc_dashboard.py`（状态条/球场/事件流/证据帧/12 列 CSV） | `PC_DASHBOARD_SELFTEST OK`；界面 PNG 已人眼核对 |
 | LCD/HDMI 状态面板 8 项 | `tools/status_display.py`（800x480 / 1280x720） | `STATUS_DISPLAY_SELFTEST OK`；两尺寸 PNG 已人眼核对 |
-| HDMI 视频环出（带框，D026） | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`build/scripts/bd_hdmi_video.tcl`、`tools/hdmi_video.py` | 仿真 `TB_FB_SCANOUT_OK`（2048 像素逐点 0 错，覆盖 stride≠width×4）；`HDMI_VIDEO_SELFTEST OK`（32bpp 打包往返 dmax=0）；主机侧 OSD 出图正确（图 `report/figures/hdmi_osd_boxes.png`，坐标为演示给定）；**10-30 上板 `HDMI_VIDEO_BOARD_OK frames=313 under=0`**（305 帧内行欠载 0）⇒ `BRAM_OK` 级过；**VISUAL_OK 已过**（2026-10-31 13:56 人眼确认 13:37 片「全对」；同一片固化 overlay 上跑真视频环出 `HDMI_VIDEO_OK` 25 帧 `under=0`） |
+| HDMI 视频环出（带框，D026） | `src/rtl/io/hdmi/fb_scanout.v`、`hdmi_video_top.v`、`build/scripts/bd_hdmi_video.tcl`、`tools/hdmi_video.py` | 仿真 `TB_FB_SCANOUT_OK`（2048 像素逐点 0 错，覆盖 stride≠width×4）；`HDMI_VIDEO_SELFTEST OK`（32bpp 打包往返 dmax=0）；主机侧 OSD 出图正确（图 `report/figures/hdmi_osd_boxes.png`，坐标为演示给定）；**10-30 上板 `HDMI_VIDEO_BOARD_OK frames=313 under=0`**（305 帧内行欠载 0）⇒ `BRAM_OK` 级过；**`VISUAL_OK` 已撤回、不记**（2026-10-31 13:56 曾人眼记过一次；同日 20:23 同片复测出现整行循环移位，证据改为 `HDMI_VISUAL_RETRACTED`）；D031 起每次起管线现场标定并补正（`HDMI_ALIGN shift=… residue=0`），**屏上观感仍待人眼** |
 
 板上命令（板端）：
 
@@ -128,7 +128,7 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 > `VISUAL_OK` = 屏幕上真的看到且内容正确（只能人眼）。
 > 当前（2026-10-30 上板）：HDMI 状态面板 `BRAM_OK` 通过；**LCD 4bpp `READBACK_OK bad=0 checked=10`
 > 通过，且 `tag4` 自证图人眼确认**；**HDMI 带框环出 `under=0` 通过（机器级）**；
-> 已过人眼：LCD 自证图、彩色状态面板、赛前 UI（真按键）、HDMI 彩条与带框环出（2026-10-31 13:56，证据 `data/results/hdmi_visual_ok.json`）。
+> 已过人眼：LCD 自证图、彩色状态面板（赛前选色 UI 已按 D028 删除）；**HDMI 带框环出的 `VISUAL_OK` 已于 2026-10-31 撤回**（同日 20:23 复测出现整行循环移位，证据改为 `HDMI_VISUAL_RETRACTED`），屏上观感仍待人眼。
 > 合并版 `display_both.bit`/`track_display.bit` 落后于 018–021 的新读侧，需重出片。
 > 任何一级都不得代替另一级 —— 本文件此前把 `DISPLAY_BOARD_OK` 与「画面已通过」混写，
 > 2026-10-30 已按此口径更正。
@@ -136,7 +136,8 @@ python tools\pc_dashboard.py --replay data\results\run_*.jsonl --speed 1
 ## 已有验证与待办
 
 - **已完成**：中圈片段 5 点标定 + 202 帧板上运行，144 帧球场坐标、49 帧球权、
-  `events` 同步输出（`report/design_report.md` §2.7/§4.6）。
+  `events` 同步输出（`report/design_report.md` §2.7/§4.6）。⚠️ **2026-10-24 历史值**：逐帧原始 JSON 未归档、
+  不可复现，报告已不把它作为当前指标（现役指标见文末 2026-11 记录）。
 - **仍待人工输入**：其它机位各标一次（`tools/label_field_points.py`），才能验收新机位的 `events`；
   多机位可后续做镜头切换检测 + 标定切换。
 - **未完成**：球 backfill 结构改动（`ai/sessions/010`）；倒地识别仍是候选粗筛：只输出**候选**，
@@ -239,7 +240,7 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
 | 板端本机（`--video`） | 250 帧 / 3 min 50 s | 32 | **7**（110/111/130/131/166/167/169，最近 **1.12 m**） | 6 帧（170–175，`side=top`） |
 | 推流（`pc_dashboard --event`） | 250 帧 / 5 min 04 s | 28 | **10**（110/111/130/131/166–171，最近 0.50 m） | 0 |
 
-截短版 `--push-start 4.0 --push-max-frames 80`（板端回 70 行）**1 min 37 s**，
+截短版 `--push-start 4.0 --push-max-frames 80`（板端回 **80 行**）**约 4 min**（早期一次 1 min 37 s 是拉早了、只拿到 70 行，已修）,
 事件与整段那次逐帧一致 ⇒ 现场用截短版。
 
 **人工核图**（`build/c05_evt_f110/130/166/167.png`，球场坐标投回画面叠圈）：
@@ -367,8 +368,13 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
   （1280×720 会被竖向拉伸 1.78×），而训练时用的是保比例补边。改法：`board_detect.detect()` 按
   `scale=min(S/w, S/h)` 等比缩放、居中补 114 灰边，框逆变换 `(x-pad)/scale`；`--no-letterbox` 只作对照。
   **部署同路径实测**（真实 `detect()` + PC 替身 `ncnn_infer`，val 前 100 张、470 个 person 真值框、conf 0.25 / IoU 0.5）：
-  在板 `person_v8n25@320` squash **0.183** → letterbox **0.313**（推理量不变）；
-  640 重训权重 `person_w05` letterbox@640 **0.609**、@480 **0.547**、@320 **0.405**。
+  在板 `person_v8n25@320` squash **0.326** → letterbox **0.474**（**按真值框求平均 micro**；推理量不变）；
+  `person_w05` letterbox@480 **0.689**、@640 **0.668**、@320 **0.549**。
   ★ **一个模型只能跑导出时的边长**：ncnn 静态图把尺寸写进 param，640 模型喂 320 时召回精确为 0（`EXTRACT_FAIL`），
   所以三档权重分别导出成 `build/models/person_w05_{320,480,640}`，文件名带尺寸。
-  ⚠️ 板子当日离线（ping 100% 丢包）⇒ **三档 `INFER_MS` 与 letterbox 上板均未验**，默认模型暂不改，记 todo。
+  ✅ **当日下午板子上电后补验**（sha/型号见 `ai/sessions/029` 轮次 3）：
+  单帧 `INFER_MS`（3 次中位）`v8n25@320` **1048** / `w05@320` 2566 / `w05@480` **5674** / `w05@640` 10470；
+  板端 40 张复核 squash 0.476 / letterbox **0.623**（191 真值框），与主机替身逐框一致（171/165 个框）。
+  ⇒ **定档**：默认 `v8n25@320 + letterbox`（耗时不变、召回 +45%）；精度优先 `w05@480`（+5.4× 时间）；
+  **640 退役**（0.668 不如 480，却贵 1.8×）。球路径不经该缩放，c05 整段 250 帧有效球帧 32→**35**（未退化）。
+  ⚠️ 仍未验：`w05@480` 整段 250 帧端到端耗时、HDMI 回显人眼观感。

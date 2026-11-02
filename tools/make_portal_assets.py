@@ -127,9 +127,10 @@ def docx_to_pdf(src: Path, dst: Path) -> bool:
         encoding="utf-8",
     )
     dst.parent.mkdir(parents=True, exist_ok=True)
+    # Word 的工作目录是 System32，相对路径会被当成 C:\WINDOWS 下的文件 → 必须传绝对路径
     proc = subprocess.run(
         ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
-         str(src), str(dst)],
+         str(src.resolve()), str(dst.resolve())],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, encoding="utf-8", errors="replace", check=False,
     )
@@ -141,7 +142,13 @@ def docx_to_pdf(src: Path, dst: Path) -> bool:
     if size > MAX_PDF_BYTES:
         print(f"PORTAL_PDF_FAIL {dst} {human(size)} > 50 MB")
         return False
-    print(f"PORTAL_PDF_OK {dst} {human(size)} pages~")
+    pages = "?"
+    try:
+        import pymupdf  # 可选：只为日志里报真实页数，缺失不影响转换
+        pages = pymupdf.open(str(dst)).page_count
+    except Exception:
+        pass
+    print(f"PORTAL_PDF_OK {dst} {human(size)} pages={pages}")
     return True
 
 

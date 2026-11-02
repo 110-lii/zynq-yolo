@@ -16,10 +16,10 @@
 |---|---|---|
 | [`repo_spec.md`](repo_spec.md) | ★ **仓库骨架规范（唯一事实源）**：目录职责、命名规则、README 模板、真源/产物规则、构建判据、本机环境事实、待定项 | ✅ 已完成 |
 | [`architecture.md`](architecture.md) | 系统架构：已按 D017 填入数据流、软硬件划分依据、`preproc` 接口契约与实测资源/时序 | ✅ 已完成（D017） |
-| [`system_status.md`](system_status.md) | **当前系统状态（唯一现役口径）**：PL 预处理 + PS ncnn 架构、实测指标、板上运行命令、已知边界 | ✅ 已完成（2026-10-31） |
+| [`system_status.md`](system_status.md) | **当前系统状态（唯一现役口径）**：PL 预处理 + PS ncnn 架构、实测指标、板上运行命令、已知边界 | ✅ 已完成（2026-11-02） |
 | [`display_overlay_plan.md`](display_overlay_plan.md) | **HDMI/LCD 显示 overlay**：1bpp BRAM + TMDS/LCD 驱动、引脚/资源/出片门禁 | ✅ 均已出片；LCD 读回/人眼已过，HDMI 1bpp 状态面板待目视（现行方案见 `flow_overlay.md` / `hdmi_video_osd.md`） |
 | [`flow_overlay.md`](flow_overlay.md) | **全流程固化 overlay（2026-10-30）**：LCD 4bpp + 按键 + HDMI 32bpp 合成一片，地址表/资源/上板命令与两级判据 | ✅ 已出片并上板；LCD 侧人眼通过；**HDMI 静态六屏 `HDMI_VISUAL_OK` 已撤回**（间歇整行移位，见文内 20:23 记录） |
-| [`hdmi_video_osd.md`](hdmi_video_osd.md) | **HDMI 带框环出（D026）**：PS 画 32bpp → DDR → `fb_scanout` → TMDS 的数据通路、寄存器与验收记录 | ⚠️ `BRAM_OK` 通过；实时叠框回放机器级 `HDMI_VIDEO_OK`；**`VISUAL_OK` 不成立**（间歇整行移位，`+313` 列） |
+| [`hdmi_video_osd.md`](hdmi_video_osd.md) | **HDMI 带框环出（D026）**：PS 画 32bpp → DDR → `fb_scanout` → TMDS 的数据通路、寄存器与验收记录 | ⚠️ `BRAM_OK` 通过；实时叠框回放机器级 `HDMI_VIDEO_OK`；**`VISUAL_OK` 不成立**（间歇整行移位；D031 定量 K 随起管线变化，实测 414/415，`+313` 为 10-31 历史值） |
 | [`streaming_quickstart.md`](streaming_quickstart.md) | **电脑推流到板子：怎么用（2026-11-01）** —— 上电即用（HDMI 白屏待机 + 5007 监听）、`video_send.py` 的命令、q95 的原因、结果落盘位置与故障表 | ✅ 上板：服务自启、重启后仍 active、推流能处理；⏳ 白屏人眼未确认 |
 | [`demo_run_sheet.md`](demo_run_sheet.md) | **现场演示操作卡（2026-11-01 排练实测版）** —— 开场前三行检查命令、主镜头一条命令与逐秒预期（含 HDMI 同步变化）、板端证据、结果文件、四档故障降级、**不能说的话** | ✅ 22:42 真机排练 34 s 全程走通（`PULL_OK sha256=5fde1f82…`、`PIPELINE_OK frames=45`） |
 | [`demo_video_plan.md`](demo_video_plan.md) | **演示视频制作方案**：门户硬要求、实拍镜头清单、既有素材、分镜与 ffmpeg 命令 | ⏳ 待拍摄/剪辑；**2026-11-01 起 HDMI 带框环出可入镜**（`--demo` 自标定 `residue=0` + 人眼确认），逐镜头命令见 `report/demo_video_storyboard.md` |

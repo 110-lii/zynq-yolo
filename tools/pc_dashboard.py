@@ -1470,7 +1470,7 @@ def push_worker(video, q, stop, host="192.168.2.99", port=5007,
                 store_dir="/home/xilinx/zynq-yolo/build/flow",
                 pattern="net_*.jsonl", out_dir="build/pull",
                 fps=25.0, quality=95, max_frames=0, scale=1.0, speed=1.0,
-                start_sec=0.0, video_src=None, log=print, event=None):
+                start_sec=0.0, video_src=None, log=print, event=None, loop=False):
     """线程体：推流 → 等板端落盘 → 拉回 → 交给回放线程。
 
     一切进度都通过队列 (`("status", ...)` / `("frame", ...)`) 回报，
@@ -1483,7 +1483,7 @@ def push_worker(video, q, stop, host="192.168.2.99", port=5007,
     try:
         _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
                        out_dir, fps, quality, max_frames, scale, speed,
-                       start_sec, video_src, log, event)
+                       start_sec, video_src, log, event, loop=loop)
     except Exception as e:                                   # noqa: BLE001
         # 线程里抛出去的异常不会有人接：不在这里兜住，屏上就会永远停在「推流中」
         # （2026-11-01 实测：sendall 超时后界面静默十分钟）。宁可报错也要说出来。
@@ -1492,7 +1492,7 @@ def push_worker(video, q, stop, host="192.168.2.99", port=5007,
 
 def _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
                    out_dir, fps, quality, max_frames, scale, speed,
-                   start_sec, video_src, log, event=None):
+                   start_sec, video_src, log, event=None, loop=False):
     started = None
     if event:
         q.put(("status", "PUSH 起事件管线 :%d" % event["port"]))
@@ -1526,7 +1526,8 @@ def _push_pipeline(video, q, stop, host, port, jupyter, store_dir, pattern,
 
 def _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
                out_dir, fps, quality, max_frames, scale, speed,
-               start_sec, video_src, log, await_pidfile=None, await_pid=None):
+               start_sec, video_src, log, await_pidfile=None, await_pid=None,
+               loop=False):
     q.put(("status", "PUSH 连接板子"))
     before = board_snapshot(store_dir, pattern, jupyter)
 
@@ -1569,7 +1570,7 @@ def _push_body(video, q, stop, host, port, jupyter, store_dir, pattern,
         log("PULL_OK %s lines=%d sha256=%s" % (local, lines, sha[:16]))
 
     # 到这里数据已经在本机：后面的回放与 `--replay` 完全一样
-    replay_worker(local, q, stop, speed=speed, loop=False)
+    replay_worker(local, q, stop, speed=speed, loop=loop)
 
 
 # ---------------------------------------------------------------- 回放线程
@@ -1817,7 +1818,8 @@ def main():
                          "回放同一份 JSONL 时要补回来，否则框和画面对不上）")
     ap.add_argument("--csv", default="", help="把每帧写成 CSV（列固定）")
     ap.add_argument("--speed", type=float, default=1.0, help="回放倍速，0=不限速")
-    ap.add_argument("--loop", action="store_true", help="回放循环")
+    ap.add_argument("--loop", action="store_true",
+                    help="回放循环：--replay 直接循环；--push / --demo 在板端处理完回放时循环")
     ap.add_argument("--headless", action="store_true", help="不打开 GUI，只打印摘要")
     ap.add_argument("--dump-png", default="", help="把（最后）一帧渲染成 PNG 后退出")
     ap.add_argument("--dump-video", default="", metavar="MP4",
@@ -1993,7 +1995,7 @@ def main():
                                      max_frames=args.push_max_frames,
                                      start_sec=args.push_start,
                                      video_src=_vid,
-                                     speed=args.speed, event=ev), daemon=True).start()
+                                     speed=args.speed, event=ev, loop=args.loop), daemon=True).start()
         base_dir, source = None, "推流 %s" % Path(args.push).name
     else:
         rp = Path(args.replay)
@@ -2018,9 +2020,10 @@ def main():
                 if kind == "status":
                     dash.status(payload)
                     print("STATUS", payload)
-                    if (str(payload).startswith("REPLAY_DONE")
-                            or str(payload).startswith("PUSH_FAIL")
-                            or str(payload) == "DISCONNECTED"):
+                    if (str(payload).startswith("PUSH_FAIL")
+                            or str(payload) == "DISCONNECTED"
+                            or (str(payload).startswith("REPLAY_DONE")
+                                and not args.loop)):
                         break
                 elif kind == "frame":
                     dash.frame(payload)

@@ -64,6 +64,16 @@ py tools/pc_dashboard.py --push "<视频目录>/clip_04_015min.mp4" --push-start
 
 > 帧号对得上：`PUSH_FRAME_OFFSET start_frame=1500`，记分牌 00:55 就是视频第 60 秒 + 45 帧。
 
+### 1.4 处理完之后**反复播放**（演示常驻画面）
+
+```bash
+py tools/pc_dashboard.py --demo --loop
+```
+
+`--loop` 让「板端处理完 → 拉回 → PC 回放」这一段**循环播放**，直到关窗口为止；
+`--demo` 之外也适用于推流：`py tools/pc_dashboard.py --push "<视频>" --loop`。
+（2026-11-02 前 `--loop` 只作用于 `--replay`，推流路径里写死只放一遍；已改为透传。）
+
 ## 1.5 第二镜：让评委看到**事件**（球权）
 
 开机服务那条路**不产事件**（没 `--proposal`、没标定）。要看到事件，加 `--event`：

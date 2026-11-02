@@ -13,7 +13,7 @@
 | 1 | 作品名称 | — | 文本 | 面向争抢场景的足球视频分析系统 | ✅ 已填 |
 | 2 | **演示视频** | ★ | MP4 / AVC(H.264) / **≤3 min** / ≤300 MB；**不得出现校名、指导教师姓名** | **尚无成片**；分镜脚本 `report/demo_video_storyboard.md` 已按 `--demo --loop` 改写，命令逐条上板验证过 | ⛔ **待拍摄/剪辑**（只能人工） |
 | 3 | **技术文档** | ★ | PDF / ≤50 MB；门户提供模板（五部分：作品概述/系统组成/完成情况/总结/参考文献） | `report/technical_document.md` → `.docx`（3.6 MB）+ `.pdf`（**6.03 MB / 21 页**），2026-11-02 按本文重生成；已补 D027–D043（输入尺度分档、帧级闸门）、整段实测与 **3.1 节实物实拍图**（`board_06_hdmi_live.jpg`，原「待补实物照片」占位已删除） | ✅ **正文已更新** |
-| 4 | **上传全部代码** | ★ | **RAR** / ≤200 MB | `dist/zynq-yolo_submission_20261102_1234.rar`（**103.6 MB / 758 项**，`tools/make_portal_assets.py --rar …` 生成）+ 同名 `.zip`（119.7 MB，备用）+ 中文名副本 `dist/portal_cn/全部代码.rar`；只留当天最新一份 | ✅ 已生成；改完代码要重出，WinRAR 在 `D:\软件\winrar\Rar.exe`（脚本会查注册表，查不到就设 `RAR_EXE`） |
+| 4 | **上传全部代码** | ★ | **RAR** / ≤200 MB | `dist/zynq-yolo_submission_<stamp>.rar`（**约 103.6 MB / 758 项**，`tools/make_portal_assets.py --rar …` 生成）+ 同名 `.zip`（约 119.7 MB，备用）+ 中文名副本 `dist/portal_cn/全部代码.rar`；只留当天最新一份，具体 stamp 以 `dist/` 为准 | ✅ 已生成；改完代码要重出，WinRAR 在 `D:\软件\winrar\Rar.exe`（脚本会查注册表，查不到就设 `RAR_EXE`） |
 | 5 | **参赛作品承诺及使用授权书** | ★ | PDF / ≤50 MB | `dist/auth_letter.pdf`（0.7 MB / A4 / 300 dpi）：2026-11-01 签字页手机拍摄 → 四点透视校正 + 轻增强，未改动任何文字与签名；队伍编号 41836，**两名队员签名齐全**；中文名副本 `dist/portal_cn/参赛作品承诺及使用授权书.pdf` | ✅ 可直接上传（校正图另存 `dist/auth_page.png`，原图不留仓库） |
 | 6 | 作品海报 | 选填 | PDF 或 PPT / ≤50 MB | `dist/portal_cn/作品海报.pdf`（0.64 MB / A4 / 300 dpi，由 `report/figures/poster_render.jpg` 排版）；**插图为示意渲染图，非实拍，海报上已注明** | ✅ 已生成（2026-11-02）；进决赛另需按 AMD 模板的**英文一页 A4 海报** |
 | 7 | **GitHub 链接** | ★ | ≤200 字 | `https://github.com/110-lii/zynq-yolo`（MIT LICENSE） | ✅ 已推送（2026-11-02 全部提交已同步） |

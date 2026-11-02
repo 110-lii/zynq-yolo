@@ -1404,7 +1404,8 @@ def board_preflight(jupyter="192.168.2.99:9090", timeout=30.0):
 
 def _event_argv(port=5009, calib=EVENT_CALIB_DEFAULT,
                 store_dir="/home/xilinx/zynq-yolo/build/flow", prefix="evt",
-                hdmi=True, py=EVENT_PY, every=25, ball_every=2, lcd=5):
+                hdmi=True, py=EVENT_PY, every=25, ball_every=2, lcd=5,
+                letterbox=True):
     """事件模式板端管线（与装机服务分开起）：参数是 2026-10-31 板上验收那一组。
 
     `--every 25 --ball-every 2 --max-det 0` 三个都不能省，省了就采不到东西：
@@ -1413,6 +1414,9 @@ def _event_argv(port=5009, calib=EVENT_CALIB_DEFAULT,
       · `--every 25`：与验收/报告里的数字同口径，别单独改。
     `--proposal` 是 events 的唯一开关；`--calib` 必须与素材配对（中圈片段配
     `field_calib_ball.json`，配错了球会退回画面坐标、events 恒空）。
+
+    `letterbox=False` 给 `--demo` 专用：用户 2026-11-02 要求演示沿用旧预处理
+    （压扁成正方形），见 D044。其余路径仍默认 letterbox（保比例 + 补 114 边）。
     """
     argv = [py, "tools/board_pipeline.py",
             "--listen", str(int(port)),
@@ -1421,6 +1425,8 @@ def _event_argv(port=5009, calib=EVENT_CALIB_DEFAULT,
             "--proposal", "--calib", calib,
             "--no-pl", "--no-camera-gate",
             "--store-dir", store_dir, "--store-prefix", prefix]
+    if not letterbox:
+        argv.append("--no-letterbox")
     if hdmi:
         argv.append("--hdmi-preview")
     if lcd and int(lcd) > 0:
@@ -1800,6 +1806,10 @@ def _selftest():
         check(flag in eargv, "事件管线缺参数 %s：%s" % (flag, eargv))
     check(eargv[eargv.index("--max-det") + 1] == "0", "--max-det 必须是 0")
     check("--hdmi-preview" not in eargv, "hdmi=False 时不该带 --hdmi-preview")
+    # 10) 预处理开关：默认 letterbox；--demo 走旧压扁（D044）
+    check("--no-letterbox" not in eargv, "默认事件管线不该带 --no-letterbox")
+    check("--no-letterbox" in _event_argv(letterbox=False),
+          "letterbox=False 时要带 --no-letterbox")
 
     print("PC_DASHBOARD_SELFTEST", "OK" if ok else "FAIL")
     print("PC_DASHBOARD_SELFTEST_PNG", png)
@@ -1984,7 +1994,8 @@ def main():
                                       hdmi=not args.event_no_hdmi,
                                       lcd=args.event_lcd,
                                       every=args.event_every,
-                                      ball_every=args.event_ball_every)}
+                                      ball_every=args.event_ball_every,
+                                      letterbox=not args.demo)}
         threading.Thread(target=push_worker, args=(args.push, q, stop),
                          kwargs=dict(host=bhost, port=port,
                                      jupyter=args.jupyter,

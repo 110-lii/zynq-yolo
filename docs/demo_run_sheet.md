@@ -71,6 +71,10 @@ py tools/pc_dashboard.py --demo --loop
 ```
 
 `--loop` 让「板端处理完 → 拉回 → PC 回放」这一段**循环播放**，直到关窗口为止；
+
+> **预处理口径（D044，2026-11-02）**：`--demo` 起板端管线时固定带 `--no-letterbox`，即沿用旧版
+> 「压扁成正方形」预处理；`--push` / `--event` / 装机服务仍默认 letterbox。两者推理耗时相同，
+> 差别只在球员召回（演示口径约 0.326，letterbox 约 0.474）。
 `--demo` 之外也适用于推流：`py tools/pc_dashboard.py --push "<视频>" --loop`。
 （2026-11-02 前 `--loop` 只作用于 `--replay`，推流路径里写死只放一遍；已改为透传。）
 

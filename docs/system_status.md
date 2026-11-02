@@ -378,3 +378,5 @@ py tools/pc_dashboard.py --event --event-every 5 --push data/samples/scenes/c05_
   ⇒ **定档**：默认 `v8n25@320 + letterbox`（耗时不变、召回 +45%）；精度优先 `w05@480`（+5.4× 时间）；
   **640 退役**（0.668 不如 480，却贵 1.8×）。球路径不经该缩放，c05 整段 250 帧有效球帧 32→**35**（未退化）。
   ⚠️ 仍未验：`w05@480` 整段 250 帧端到端耗时、HDMI 回显人眼观感。
+  ✅ **2026-11-02 追加（D044）**：按用户要求，**演示路径 `--demo` 固定带 `--no-letterbox`**（旧压扁预处理），
+  `--push` / `--event` / 装机服务仍默认 letterbox；`pc_dashboard` 自检加第 10 组断言。

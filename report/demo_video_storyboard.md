@@ -30,6 +30,7 @@
 py tools/pc_dashboard.py --demo --loop
 ```
 
+> **预处理（D044）**：`--demo` 固定带 `--no-letterbox`，即旧版「压扁」预处理；其余路径仍默认 letterbox。
 > `--loop`：板端处理完、结果拉回后，**PC 回放循环**，直到关窗口为止；拍长镜头时不用反复重启命令
 > （2026-11-02 起 `--loop` 对 `--demo`/`--push` 生效，此前只作用于 `--replay`）。只放一遍就不加。
 

@@ -233,6 +233,8 @@ PS 检测）→ PL 预处理 HLS 与 AXI 带宽标定 → PS 检测/跟踪/球�
 PS 侧运行 `board_pipeline.py`；LCD 显示运行时状态面板，HDMI 显示带框视频；PC 端显示比赛画面 +
 球场画布与事件流。**演示主路径是 `py tools/pc_dashboard.py --demo`**：它在 PC 上推入一段
 10 s 的争抢素材，板端处理后把结果拉回 PC 回放，同时 HDMI 大屏显示带框画面、LCD 小屏显示事件面板。
+演示命令按 2026-11-02 的要求固定沿用旧预处理（`--no-letterbox`，D044）；其余路径默认 letterbox，
+两者推理耗时相同，差别只在球员召回（演示口径 0.326，letterbox 0.474）。
 
 ![实物实拍（2026-11-02）：HDMI 大屏显示带框画面，OSD 为「帧 179 · players 15 · CAM:VALID_FIELD_VIEW」，球位红圈](figures/board/board_06_hdmi_live.jpg)
 
